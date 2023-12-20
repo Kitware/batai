@@ -1,0 +1,42 @@
+<script lang="ts">
+import { defineComponent, inject, computed, ref, watch } from 'vue';
+import OAuthClient from '@girder/oauth-client';
+import { useRoute } from 'vue-router';
+
+export default defineComponent({
+  setup() {
+    const route = useRoute();
+    const oauthClient = inject<OAuthClient>('oauthClient');
+    if (oauthClient === undefined) {
+      throw new Error('Must provide "oauthClient" into component.');
+    }
+
+    const loginText = computed(() => (oauthClient.isLoggedIn ? 'Logout' : 'Login'));
+    const logInOrOut = () => {
+      if (oauthClient.isLoggedIn) {
+        oauthClient.logout();
+      } else {
+        oauthClient.redirectToLogin();
+      }
+    };
+    return { oauthClient, loginText, logInOrOut };
+  },
+});
+</script>
+
+<template>
+  <v-app id="app">
+    <v-app-bar app>
+      <v-spacer />
+      <v-btn
+        @click="logInOrOut"
+      >
+        {{ loginText }}
+      </v-btn>
+    </v-app-bar>
+
+    <v-main>
+      <router-view />
+    </v-main>
+  </v-app>
+</template>

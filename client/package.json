@@ -1,0 +1,39 @@
+{
+  "name": "vue-project-template",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "format": "eslint --ext .js,.ts,.vue --ignore-path .gitignore --fix src",
+    "lint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore --no-fix src",
+    "test:unit": "jest",
+    "type": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@girder/oauth-client": "^0.8.0",
+    "@mdi/font": "^6.5.95",
+    "@sentry/vue": "^6.16.1",
+    "@types/d3": "^7.4.0",
+    "axios": "^1.6.0",
+    "d3": "^7.8.5",
+    "vue": "^3.3.1",
+    "vue-router": "^4.0.12",
+    "vuetify": "^3.3.12"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.13",
+    "@types/jest": "^27.4.1",
+    "@vitejs/plugin-vue": "^2.2.0",
+    "@vue/eslint-config-typescript": "^10.0.0",
+    "@vuetify/vite-plugin": "^1.0.0-alpha.10",
+    "eslint": "^8.9.0",
+    "eslint-plugin-vue": "^8.4.1",
+    "jest": "^27.5.1",
+    "sass": "^1.49.8",
+    "typescript": "^4.5.4",
+    "vite": "^2.8.0",
+    "vue-tsc": "^0.29.8"
+  }
+}
