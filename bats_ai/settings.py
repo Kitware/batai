@@ -14,7 +14,6 @@ from configurations import values
 
 
 class BatsAiMixin(ConfigMixin):
-    SCHEMA_TO_INSPECT = 'nabatmonitoring'
     WSGI_APPLICATION = 'bats_ai.wsgi.application'
     ROOT_URLCONF = 'bats_ai.urls'
 

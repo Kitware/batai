@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { GeoJsonObject } from 'geojson';
+import { createS3ffClient } from '../plugins/S3FileField';
+import { S3FileFieldProgressCallback } from 'django-s3-file-field';
+
 export interface PaginatedResponse<E> {
     count: number,
     next: string,
@@ -161,6 +164,19 @@ async function getSurvey(uuid: string, offset=0, limit=100) {
 
 }
 
+async function uploadRecordingFile(file: File, progressFunc: S3FileFieldProgressCallback ) {
+    const s3ffClient = createS3ffClient(axiosInstance);
+    const videoS3Field = await s3ffClient.uploadFile(
+      file,
+      'core.models.Recording.audio_file',
+      progressFunc,
+    );
+    const data = {
+      audio_file: videoS3Field.value,
+    };
+    await axiosInstance.put('/recording', data);
+  }
+  
 
 
 export {
