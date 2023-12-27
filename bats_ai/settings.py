@@ -44,7 +44,7 @@ class BatsAiMixin(ConfigMixin):
             environ_name='DATABASE_URL',
             environ_required=True,
             # Additional kwargs to DatabaseURLValue are passed to dj-database-url
-            engine='django.db.backends.postgresql',
+            engine='django.contrib.gis.db.backends.postgis',
             conn_max_age=600,
         )
         db_dict = db_val.value

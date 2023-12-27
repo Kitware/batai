@@ -4,7 +4,12 @@ import tempfile
 from datetime import datetime
 
 from ninja import Field, FilterSchema, Query, Router, Schema
+
+from ninja.errors import HttpError
+
 from pydantic import UUID4
+from django.core.files.storage import default_storage
+from django.contrib.auth.models import User
 
 from django.conf import settings
 from django.contrib.gis.db.models.aggregates import Collect
@@ -46,3 +51,20 @@ def update_recording(request: HttpRequest, payload: RecordingSchema):
     recording.save()
 
     return {"message": "Recording updated successfully", "data": RecordingSchema.from_orm(recording)}
+
+@router.get('/')
+def get_recordings(request: HttpRequest):
+    # Check if the user is authenticated
+    if not request.user.id:
+        raise HttpError(401, 'Authentication credentials were not provided.')
+
+    # Filter recordings based on the owner's id
+    recordings = Recording.objects.filter(owner=request.user.id).values()
+
+    for recording in recordings:
+        user = User.objects.get(id=recording['owner_id'])
+        recording['owner_username'] = user.username
+        recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
+
+    # Return the serialized data
+    return list(recordings)

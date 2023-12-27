@@ -10,6 +10,23 @@ export interface PaginatedResponse<E> {
     results: E[];
 }
 
+export interface Recording {
+    id: number,
+    created: string,
+    modified: string,
+    name: string,
+    audio_file: string,
+    audio_file_presigned_url: string,
+    owner_id: number;
+    owner_username: string;
+    recorded_date: string;
+    equipment?: string,
+    comments?: string;
+    recording_location?: null | [number, number],
+    grts_cell_id?: null | number;
+    grts_cell?: null | number;
+}
+
 export interface AcousticFiles {
     id: number,
     recording_time: string;
@@ -164,7 +181,7 @@ async function getSurvey(uuid: string, offset=0, limit=100) {
 
 }
 
-async function uploadRecordingFile(file: File, progressFunc: S3FileFieldProgressCallback ) {
+async function uploadRecordingFile(file: File, name: string, equipment: string, comments: string, progressFunc: S3FileFieldProgressCallback ) {
     const s3ffClient = createS3ffClient(axiosInstance);
     const videoS3Field = await s3ffClient.uploadFile(
       file,
@@ -177,6 +194,9 @@ async function uploadRecordingFile(file: File, progressFunc: S3FileFieldProgress
     await axiosInstance.put('/recording', data);
   }
   
+async function getRecordings() {
+    return axiosInstance.get<Recording[]>('/recording/');
+}
 
 
 export {
@@ -187,5 +207,7 @@ export {
  getProjects,
  getProject,
  getSurveys,
- getSurvey
+ getSurvey,
+ uploadRecordingFile,
+ getRecordings,
 };

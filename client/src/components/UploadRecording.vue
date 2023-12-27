@@ -3,6 +3,7 @@ import { defineComponent, ref, Ref } from 'vue';
 import { S3FileFieldProgress, S3FileFieldProgressState } from 'django-s3-file-field';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
+import { uploadRecordingFile } from '../api/api';
 
 const progressStateMap: Record<S3FileFieldProgressState, string> = {
   [S3FileFieldProgressState.Initializing]: 'Initializing',
@@ -18,6 +19,9 @@ export default defineComponent({
     const errorText = ref('');
     const progressState = ref('');
     const uploadProgress = ref(0);
+    const name = ref('');
+    const equipment = ref('');
+    const comments = ref('');
     const readFile = (e: Event) => {
       const target = (e.target as HTMLInputElement);
       if (target?.files?.length) {
@@ -49,7 +53,7 @@ export default defineComponent({
       if (props.harvestId || !file) {
         throw new Error('Unreachable');
       }
-      await uploadHarvestVideo(file, props.harvestId, progressCallback);
+      await uploadRecordingFile(file, name.value, equipment.value, comments.value, progressCallback);
       emit('done');
     });
     return {
@@ -60,6 +64,9 @@ export default defineComponent({
       successfulUpload,
       progressState,
       uploadProgress,
+      name,
+      equipment,
+      comments,
       selectFile,
       readFile,
       submit,
@@ -106,16 +113,20 @@ export default defineComponent({
           v-else-if="fileModel === undefined"
           class="mx-2"
         >
-          <v-btn
-            block
-            color="primary"
-            @click="chooseVideo"
-          >
-            <v-icon class="pr-2">
-              mdi-audio
-            </v-icon>
-            Choose Audio
-          </v-btn>
+          <div>
+            <v-row>
+              <v-btn
+                block
+                color="primary"
+                @click="selectFile"
+              >
+                <v-icon class="pr-2">
+                  mdi-audio
+                </v-icon>
+                Choose Audio
+              </v-btn>
+            </v-row>
+          </div>
         </v-row>
         <v-row
           v-else-if="progressState !== ''"
@@ -137,6 +148,28 @@ export default defineComponent({
           <v-alert type="error">
             {{ errorText }}
           </v-alert>
+        </v-row>
+        <v-row>
+          <div>
+            <v-row>
+              <v-text-field
+                v-model="name"
+                label="name"
+              />
+            </v-row>
+            <v-row>
+              <v-text-field
+                v-model="equipment"
+                label="equipment"
+              />
+            </v-row>
+            <v-row>
+              <v-text-area
+                v-model="comments"
+                label="comments"
+              />
+            </v-row>
+          </div>
         </v-row>
       </v-col>
       <v-spacer class="grow" />
@@ -164,4 +197,5 @@ export default defineComponent({
         </v-btn>
       </v-card-actions>
     </v-card>
-  </div></template>
+  </div>
+</template>
