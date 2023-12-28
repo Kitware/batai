@@ -14,17 +14,17 @@ export default defineComponent({
     const recordingList: Ref<Recording[]> = ref([]);
     const uploadDialog = ref(false);
     const headers = ref([
-    {
+        {
             title:'Name',
             key:'name',
         },
         {
             title:'Owner',
-            key:'owner_usename',
+            key:'owner_username',
         },
         {
-            title:'Date',
-            key:'recording_date',
+            title:'Recorded Date',
+            key:'recorded_date',
         },
         {
             title:'Equipment',
@@ -37,7 +37,6 @@ export default defineComponent({
     ]);
 
     const fetchRecordings = async () => {
-        console.log('fetching recordings');
         const recordings = await getRecordings();
         recordingList.value = recordings.data;
     };
@@ -54,7 +53,7 @@ export default defineComponent({
 </script>
 
 <template>
-<v-card>
+  <v-card>
     <v-card-title>
       Recordings
     </v-card-title>
@@ -67,8 +66,15 @@ export default defineComponent({
         class="elevation-1"
       >
         <template #item.name="{ item }">
-          <router-link :to="`/recording/${item.id}`">
-            {{ item.name }}</router-link>
+          <div>
+            {{ item.raw.name }}
+          </div>
+          <router-link
+            v-if="false"
+            :to="`/recording/${item.id}`"
+          >
+            {{ item.name }}
+          </router-link>
         </template>
       </v-data-table>
     </v-card-text>

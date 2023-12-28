@@ -6,6 +6,7 @@ from datetime import datetime
 from ninja import Field, FilterSchema, Query, Router, Schema
 
 from ninja.errors import HttpError
+from ninja.security import HttpBearer
 
 from pydantic import UUID4
 from django.core.files.storage import default_storage
@@ -17,12 +18,20 @@ from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.paginator import Paginator
 from django.db import transaction
+from ninja.pagination import RouterPaginated
 from django.db.models import Count, Q, QuerySet
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from bats_ai.core.models import Recording
-router = Router()
+from oauth2_provider.models import AccessToken
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+router = RouterPaginated()
 
 
 class RecordingSchema(Schema):
@@ -54,12 +63,15 @@ def update_recording(request: HttpRequest, payload: RecordingSchema):
 
 @router.get('/')
 def get_recordings(request: HttpRequest):
-    # Check if the user is authenticated
-    if not request.user.id:
+    # Check if the user is authenticated and get userId
+    token = request.headers.get('Authorization').replace('Bearer ', '')
+    token_found = AccessToken.objects.get(token=token)
+    logger.warning(token_found.user.pk)
+    if not token_found:
         raise HttpError(401, 'Authentication credentials were not provided.')
 
     # Filter recordings based on the owner's id
-    recordings = Recording.objects.filter(owner=request.user.id).values()
+    recordings = Recording.objects.filter(owner=token_found.user.pk).values()
 
     for recording in recordings:
         user = User.objects.get(id=recording['owner_id'])

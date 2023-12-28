@@ -32,5 +32,6 @@ maybeRestoreLogin().then(() => {
   app.use(Vuetify);
   app.provide('oauthClient', oauthClient);
   Object.assign(axiosInstance.defaults.headers.common, oauthClient.authHeaders);
+  console.log(oauthClient.authHeaders);
   app.mount('#app');
 });

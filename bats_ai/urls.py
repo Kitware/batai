@@ -27,7 +27,6 @@ urlpatterns = [
     path('api/docs/redoc/', schema_view.with_ui('redoc'), name='docs-redoc'),
     path('api/docs/swagger/', schema_view.with_ui('swagger'), name='docs-swagger'),
     path('api/v1/', api.urls),
-    path('api/s3-upload/', include('s3_file_field.urls')),
 ]
 
 if settings.DEBUG:

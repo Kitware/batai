@@ -1,6 +1,20 @@
 from ninja import NinjaAPI
+from bats_ai.core.views import RecordingRouter
+from ninja.security import HttpBearer
+import logging
+from oauth2_provider.models import AccessToken
+logger = logging.getLogger(__name__)
 
-from bats_ai.core.rest import RecordingRouter
+class GlobalAuth(HttpBearer):
+    def authenticate(self, request, token):
+        logger.warning(f'Checking Token: {token}')
+        print(token)
+        logger.warning(AccessToken.objects.get(token=token))
+        if AccessToken.objects.get(token=token):
+            logger.warning('returning token')
+            return token
+
+
 api = NinjaAPI()
 
 api.add_router('/recording/', RecordingRouter)

@@ -12,6 +12,10 @@ from composed_configuration import (
 )
 from configurations import values
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+
 
 class BatsAiMixin(ConfigMixin):
     WSGI_APPLICATION = 'bats_ai.wsgi.application'
@@ -32,6 +36,8 @@ class BatsAiMixin(ConfigMixin):
         ]
 
         configuration.MIDDLEWARE = [
+            "corsheaders.middleware.CorsMiddleware",
+            "django.middleware.common.CommonMiddleware",
             'allauth.account.middleware.AccountMiddleware',
         ] + configuration.MIDDLEWARE
 
