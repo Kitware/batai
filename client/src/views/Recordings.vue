@@ -4,10 +4,12 @@ import { getRecordings, Recording } from '../api/api';
 import {
   VDataTable,
 } from "vuetify/labs/VDataTable";
+import UploadRecording from '../components/UploadRecording.vue';
 
 export default defineComponent({
     components: {
         VDataTable,
+        UploadRecording,
     },
   setup() {
     const itemsPerPage = ref(-1);
@@ -42,11 +44,17 @@ export default defineComponent({
     };
     onMounted(() => fetchRecordings());
 
+    const uploadDone = () => {
+        uploadDialog.value = false;
+        fetchRecordings();
+    };
+
     return {
         itemsPerPage,
         headers,
         recordingList,
         uploadDialog,
+        uploadDone,
      };
   },
 });
@@ -55,7 +63,18 @@ export default defineComponent({
 <template>
   <v-card>
     <v-card-title>
-      Recordings
+      <v-row class="py-2">
+        <div>
+          Recordings
+        </div>
+        <v-spacer />
+        <v-btn 
+          color="primary"
+          @click="uploadDialog=true"
+        >
+          Upload <v-icon> mdi-plus</v-icon>
+        </v-btn>
+      </v-row>
     </v-card-title>
     <v-card-text>
       <v-data-table
@@ -78,5 +97,11 @@ export default defineComponent({
         </template>
       </v-data-table>
     </v-card-text>
+    <v-dialog
+      v-model="uploadDialog"
+      width="400"
+    >
+      <upload-recording  @done="uploadDone()"/>
+    </v-dialog>
   </v-card>
 </template>

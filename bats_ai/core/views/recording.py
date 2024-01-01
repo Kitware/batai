@@ -1,32 +1,15 @@
-import json
-import sys
-import tempfile
-from datetime import datetime
+import logging
 
-from ninja import Field, FilterSchema, Query, Router, Schema
-
-from ninja.errors import HttpError
-from ninja.security import HttpBearer
-
-from pydantic import UUID4
-from django.core.files.storage import default_storage
 from django.contrib.auth.models import User
-
-from django.conf import settings
-from django.contrib.gis.db.models.aggregates import Collect
-from django.contrib.gis.db.models.functions import Transform
-from django.contrib.postgres.aggregates import JSONBAgg
-from django.core.paginator import Paginator
-from django.db import transaction
+from django.core.files.storage import default_storage
+from django.http import HttpRequest
+from ninja import File, Form, Schema
+from ninja.errors import HttpError
+from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
-from django.db.models import Count, Q, QuerySet
-from django.db.models.functions import JSONObject  # type: ignore
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404
-from bats_ai.core.models import Recording
 from oauth2_provider.models import AccessToken
 
-import logging
+from bats_ai.core.models import Recording
 
 logger = logging.getLogger(__name__)
 
@@ -38,28 +21,45 @@ class RecordingSchema(Schema):
     name: str
     audio_file: str
     owner: int
-    recorded_date: str
+    recorded_date: str | None
     equipment: str
     comments: str
-    recording_location: str
-    grts_cell_id: int
-    grts_cell: int
+    recording_location: str | None
+    grts_cell_id: int | None
+    grts_cell: int | None
 
 
+class RecordingUploadSchema(Schema):
+    name: str
+    equipment: str | None
+    comments: str | None
 
 
-@router.put("/")
-def update_recording(request: HttpRequest, payload: RecordingSchema):
+def get_owner_id(request: HttpRequest):
+    token = request.headers.get('Authorization').replace('Bearer ', '')
+    token_found = AccessToken.objects.get(token=token)
+    if not token_found:
+        raise HttpError(401, 'Authentication credentials were not provided.')
+
+    return token_found.user.pk
+
+
+@router.post('/')
+def update_recording(
+    request: HttpRequest, payload: Form[RecordingUploadSchema], audio_file: File[UploadedFile]
+):
+    user_id = get_owner_id(request)
     recording = Recording(
         name=payload.name,
-        owner_id=request.user.id,
-        audio_file=payload.audio_file,
+        owner_id=user_id,
+        audio_file=audio_file,
         equipment=payload.equipment,
         comments=payload.comments,
     )
     recording.save()
 
-    return {"message": "Recording updated successfully", "data": RecordingSchema.from_orm(recording)}
+    return {'message': 'Recording updated successfully', 'id': recording.pk}
+
 
 @router.get('/')
 def get_recordings(request: HttpRequest):

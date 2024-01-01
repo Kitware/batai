@@ -5,6 +5,8 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
 
+from bats_ai.core.rest import ImageViewSet
+
 from .api import api
 
 router = routers.SimpleRouter()
@@ -17,6 +19,7 @@ schema_view = get_schema_view(
     public=True,
     permission_classes=(permissions.AllowAny,),
 )
+router.register(r'images', ImageViewSet)
 
 urlpatterns = [
     path('accounts/', include('allauth.urls')),

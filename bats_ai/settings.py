@@ -13,7 +13,7 @@ from composed_configuration import (
 from configurations import values
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    'http://localhost:3000',
 ]
 
 
@@ -36,11 +36,10 @@ class BatsAiMixin(ConfigMixin):
         ]
 
         configuration.MIDDLEWARE = [
-            "corsheaders.middleware.CorsMiddleware",
-            "django.middleware.common.CommonMiddleware",
+            'corsheaders.middleware.CorsMiddleware',
+            'django.middleware.common.CommonMiddleware',
             'allauth.account.middleware.AccountMiddleware',
         ] + configuration.MIDDLEWARE
-
 
     @property
     def DATABASES(self):  # noqa

@@ -50,7 +50,7 @@ export default defineComponent({
 
     const { request: submit, loading: submitLoading } = useRequest(async () => {
       const file = fileModel.value;
-      if (props.harvestId || !file) {
+      if (!file) {
         throw new Error('Unreachable');
       }
       await uploadRecordingFile(file, name.value, equipment.value, comments.value, progressCallback);
@@ -96,106 +96,96 @@ export default defineComponent({
       @change="readFile"
     >
     <v-card
-      class="fill-height overflow-auto"
       width="100%"
     >
-      <v-card-title class="text-h5">
-        Upload Video
-      </v-card-title>
-      <v-col>
-        <v-row
-          v-if="errorText === '' && progressState === '' && fileModel !== undefined"
-          class="mx-2"
-        >
-          Upload {{ fileModel.name }} ?
-        </v-row>
-        <v-row
-          v-else-if="fileModel === undefined"
-          class="mx-2"
-        >
-          <div>
-            <v-row>
-              <v-btn
-                block
-                color="primary"
-                @click="selectFile"
-              >
-                <v-icon class="pr-2">
-                  mdi-audio
-                </v-icon>
-                Choose Audio
-              </v-btn>
-            </v-row>
-          </div>
-        </v-row>
-        <v-row
-          v-else-if="progressState !== ''"
-          class="mx-2"
-        >
-          <v-progress-linear
-            v-model="uploadProgress"
-            color="secondary"
-            height="25"
-            class="ma-auto text-xs-center"
+      <v-container>
+        <v-card-title>
+          Upload Video
+        </v-card-title>
+        <v-card-text>
+          <v-row
+            v-if="errorText === '' && progressState === '' && fileModel !== undefined"
+            class="mx-2"
           >
-            <strong>{{ progressState }} : {{ Math.ceil(uploadProgress) }}%</strong>
-          </v-progress-linear>
-        </v-row>
-        <v-row
-          v-else
-          class="mx-2"
-        >
-          <v-alert type="error">
-            {{ errorText }}
-          </v-alert>
-        </v-row>
-        <v-row>
-          <div>
-            <v-row>
-              <v-text-field
-                v-model="name"
-                label="name"
-              />
-            </v-row>
-            <v-row>
-              <v-text-field
-                v-model="equipment"
-                label="equipment"
-              />
-            </v-row>
-            <v-row>
-              <v-text-area
-                v-model="comments"
-                label="comments"
-              />
-            </v-row>
-          </div>
-        </v-row>
-      </v-col>
-      <v-spacer class="grow" />
-      <v-card-actions>
-        <v-spacer />
-        <v-btn
-          variant="text"
-          :disabled="submitLoading"
-          @click="$emit('cancel', true)"
-        >
-          Cancel
-        </v-btn>
-        <v-btn
-          :disabled="!fileModel ||errorText !== '' || submitLoading"
-          color="primary"
-          variant="contained-text"
-          @click="submit"
-        >
-          <span v-if="!submitLoading">
-            Submit
-          </span>
-          <v-icon v-else>
-            mdi-loading mdi-spin
-          </v-icon>
-        </v-btn>
-      </v-card-actions>
+            Upload {{ fileModel.name }} ?
+          </v-row>
+          <v-row
+            v-else-if="fileModel === undefined"
+            class="mx-2 my-2"
+          >
+            <v-btn
+              block
+              color="primary"
+              @click="selectFile"
+            >
+              <v-icon class="pr-2">
+                mdi-audio
+              </v-icon>
+              Choose Audio
+            </v-btn>
+          </v-row>
+          <v-row
+            v-else-if="progressState !== ''"
+            class="mx-2"
+          >
+            <v-progress-linear
+              v-model="uploadProgress"
+              color="secondary"
+              height="25"
+              class="ma-auto text-xs-center"
+            >
+              <strong>{{ progressState }} : {{ Math.ceil(uploadProgress) }}%</strong>
+            </v-progress-linear>
+          </v-row>
+          <v-row
+            v-else
+            class="mx-2"
+          >
+            <v-alert type="error">
+              {{ errorText }}
+            </v-alert>
+          </v-row>
+          <v-row>
+            <v-text-field
+              v-model="name"
+              label="name"
+            />
+          </v-row>
+          <v-row>
+            <v-text-field
+              v-model="equipment"
+              label="equipment"
+            />
+          </v-row>
+          <v-row>
+            <v-text-field
+              v-model="comments"
+              label="comments"
+            />
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            :disabled="submitLoading"
+            @click="$emit('cancel', true)"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            :disabled="!fileModel ||errorText !== '' || submitLoading"
+            color="primary"
+            @click="submit"
+          >
+            <span v-if="!submitLoading">
+              Submit
+            </span>
+            <v-icon v-else>
+              mdi-loading mdi-spin
+            </v-icon>
+          </v-btn>
+        </v-card-actions>
+      </v-container>
     </v-card>
   </div>
 </template>

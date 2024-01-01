@@ -18,7 +18,6 @@ class ImageSerializer(serializers.ModelSerializer):
         read_only_fields = ['checksum', 'created']
 
 
-
 class ImageViewSet(ReadOnlyModelViewSet):
     queryset = Image.objects.all()
 
