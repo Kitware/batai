@@ -8,7 +8,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from bats_ai.core.models import Image
-from bats_ai.core.rest.user import UserSerializer
 from bats_ai.core.tasks import image_compute_checksum
 
 
@@ -17,8 +16,6 @@ class ImageSerializer(serializers.ModelSerializer):
         model = Image
         fields = ['id', 'name', 'checksum', 'created', 'owner']
         read_only_fields = ['checksum', 'created']
-
-    owner = UserSerializer()
 
 
 class ImageViewSet(ReadOnlyModelViewSet):

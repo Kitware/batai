@@ -12,9 +12,12 @@ from composed_configuration import (
 )
 from configurations import values
 
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+]
+
 
 class BatsAiMixin(ConfigMixin):
-    SCHEMA_TO_INSPECT = 'nabatmonitoring'
     WSGI_APPLICATION = 'bats_ai.wsgi.application'
     ROOT_URLCONF = 'bats_ai.urls'
 
@@ -33,9 +36,10 @@ class BatsAiMixin(ConfigMixin):
         ]
 
         configuration.MIDDLEWARE = [
+            'corsheaders.middleware.CorsMiddleware',
+            'django.middleware.common.CommonMiddleware',
             'allauth.account.middleware.AccountMiddleware',
         ] + configuration.MIDDLEWARE
-
 
     @property
     def DATABASES(self):  # noqa
@@ -45,7 +49,7 @@ class BatsAiMixin(ConfigMixin):
             environ_name='DATABASE_URL',
             environ_required=True,
             # Additional kwargs to DatabaseURLValue are passed to dj-database-url
-            engine='django.db.backends.postgresql',
+            engine='django.contrib.gis.db.backends.postgis',
             conn_max_age=600,
         )
         db_dict = db_val.value

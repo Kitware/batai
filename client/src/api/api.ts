@@ -1,10 +1,30 @@
 import axios from 'axios';
 import { GeoJsonObject } from 'geojson';
+import { createS3ffClient } from '../plugins/S3FileField';
+import { S3FileFieldProgressCallback } from 'django-s3-file-field';
+
 export interface PaginatedResponse<E> {
     count: number,
     next: string,
     previous:string,
     results: E[];
+}
+
+export interface Recording {
+    id: number,
+    created: string,
+    modified: string,
+    name: string,
+    audio_file: string,
+    audio_file_presigned_url: string,
+    owner_id: number;
+    owner_username: string;
+    recorded_date: string;
+    equipment?: string,
+    comments?: string;
+    recording_location?: null | [number, number],
+    grts_cell_id?: null | number;
+    grts_cell?: null | number;
 }
 
 export interface AcousticFiles {
@@ -113,63 +133,35 @@ export const axiosInstance = axios.create({
 });
 
 
-async function getAcousticFiles(offset=0, limit=-1) {
-  const data = (await axiosInstance.get<PaginatedResponse<AcousticFiles>>(`/acoustic_file?offset=${offset}&limit=${limit}`)).data;
-  return data;
-}
-
-async function getAcoustFilesS3Exists(offset=0, limit=-1) {
-    const data = (await axiosInstance.get<PaginatedResponse<AcousticFiles>>(`/acoustic_file/s3_exists?offset=${offset}&limit=${limit}`)).data;
-    return data;
+async function uploadRecordingFile(file: File, name: string, equipment: string, comments: string ) {
+    const formData = new FormData();
+    formData.append('audio_file', file);
+    formData.append('name', name);
+    formData.append('equipment', equipment);
+    formData.append('comments', comments);
+    
+    const recordingParams = {
+      name,
+      equipment,
+      comments
+    };
+    const payloadBlob = new Blob([JSON.stringify(recordingParams)], { type: 'application/json' });
+    formData.append('payload', payloadBlob);
+  await axiosInstance.post('/recording/',
+    formData,
+    { 
+        headers: {
+            'Content-Type': 'multipart/form-data',   
+        }
+     });
+  }
   
+async function getRecordings() {
+    return axiosInstance.get<Recording[]>('/recording/');
 }
-
-async function getSpecies(offset=0, limit=-1) {
-    const data = (await axiosInstance.get<PaginatedResponse<Species>>(`/species/?offset=${offset}&limit=${limit}`)).data;
-    return data;
-
-}
-
-async function getSpectrogram(id: string, offset=0, limit=-1) {
-    const data = (await axiosInstance.get<Spectrogram>(`/spectrogram/${id}?offset=${offset}&limit=${limit}`)).data;
-    return data;
-
-}
-
-async function getProjects(offset=0, limit=100) {
-    const data = (await axiosInstance.get<PaginatedNinjaResponse<Project>>(`/project/?offset=${offset}&limit=${limit}`)).data;
-    return data;
-
-}
-
-async function getProject(projectKey: string, offset=0, limit=100) {
-    const data = (await axiosInstance.get<PaginatedNinjaResponse<Survey>>(`/project/${projectKey}?offset=${offset}&limit=${limit}`)).data;
-    return data;
-
-}
-
-
-async function getSurveys(offset=0, limit=100) {
-    const data = (await axiosInstance.get<PaginatedNinjaResponse<Survey>>(`/survey/?offset=${offset}&limit=${limit}`)).data;
-    return data;
-
-}
-
-async function getSurvey(uuid: string, offset=0, limit=100) {
-    const data = (await axiosInstance.get<PaginatedNinjaResponse<SurveyDetails>>(`/survey/${uuid}?offset=${offset}&limit=${limit}`)).data;
-    return data;
-
-}
-
 
 
 export {
- getAcousticFiles,
- getAcoustFilesS3Exists,
- getSpecies,
- getSpectrogram,
- getProjects,
- getProject,
- getSurveys,
- getSurvey
+ uploadRecordingFile,
+ getRecordings,
 };

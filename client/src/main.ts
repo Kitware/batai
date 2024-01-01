@@ -7,6 +7,7 @@ import { createVuetify } from 'vuetify';
 import App from './App.vue';
 import oauthClient, { maybeRestoreLogin } from './plugins/Oauth';
 import initRouter from './router';
+import { axiosInstance } from './api/api';
 
 const app = createApp(App);
 const Vuetify = createVuetify({});
@@ -30,6 +31,7 @@ maybeRestoreLogin().then(() => {
   app.use(router);
   app.use(Vuetify);
   app.provide('oauthClient', oauthClient);
-  // Object.assign(axiosInstance.defaults.headers.common, oauthClient.authHeaders);
+  Object.assign(axiosInstance.defaults.headers.common, oauthClient.authHeaders);
+  console.log(oauthClient.authHeaders);
   app.mount('#app');
 });

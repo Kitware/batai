@@ -1,6 +1,5 @@
-from . import projects, surveys
+from .recording import router as RecordingRouter
 
 __all__ = [
-    'projects',
-    'surveys',
+    'RecordingRouter',
 ]

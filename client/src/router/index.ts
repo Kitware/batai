@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, RouteLocationNormalized } from 'vue-router';
 import HomePage from '../views/HomePage.vue';
+import Recordings from '../views/Recordings.vue';
 
 // import oauthClient from '../plugins/Oauth';
 
@@ -25,6 +26,10 @@ function routerInit(){
       {
         path: '/',
         component: HomePage,
+      },
+      {
+        path: '/recordings',
+        component: Recordings,
       },
     ],
   });
