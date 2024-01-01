@@ -4,20 +4,19 @@ import { S3FileFieldProgress, S3FileFieldProgressState } from 'django-s3-file-fi
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
 import { uploadRecordingFile } from '../api/api';
+import { VDatePicker } from 'vuetify/labs/VDatePicker';
 
-const progressStateMap: Record<S3FileFieldProgressState, string> = {
-  [S3FileFieldProgressState.Initializing]: 'Initializing',
-  [S3FileFieldProgressState.Sending]: 'Sending',
-  [S3FileFieldProgressState.Finalizing]: 'Finalizing',
-  [S3FileFieldProgressState.Done]: 'Done',
-};
 export default defineComponent({
+  components: {
+    VDatePicker,
+  },  
   setup(props, { emit }) {
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref();
     const successfulUpload = ref(false);
     const errorText = ref('');
     const progressState = ref('');
+    const recordedDate = ref(new Date().toISOString().split('T')[0]); // YYYY-MM-DD Time
     const uploadProgress = ref(0);
     const name = ref('');
     const equipment = ref('');
@@ -41,21 +40,20 @@ export default defineComponent({
         fileInputEl.value.click();
       }
     }
-    function progressCallback (progress: S3FileFieldProgress) {
-      if (progress.uploaded && progress.total) {
-        uploadProgress.value = (progress.uploaded / progress.total) * 100;
-      }
-      progressState.value = progressStateMap[progress.state];
-    }
 
     const { request: submit, loading: submitLoading } = useRequest(async () => {
       const file = fileModel.value;
       if (!file) {
         throw new Error('Unreachable');
       }
-      await uploadRecordingFile(file, name.value, equipment.value, comments.value, progressCallback);
+      await uploadRecordingFile(file, name.value, recordedDate.value, equipment.value, comments.value);
       emit('done');
     });
+
+    const updateTime = (time: any)  => {
+    recordedDate.value = new Date(time as string).toISOString().split('T')[0];
+  };
+
     return {
       errorText,
       fileModel,
@@ -67,9 +65,11 @@ export default defineComponent({
       name,
       equipment,
       comments,
+      recordedDate,
       selectFile,
       readFile,
       submit,
+      updateTime,
     };
   },
 });
@@ -149,6 +149,14 @@ export default defineComponent({
             <v-text-field
               v-model="name"
               label="name"
+            />
+          </v-row>
+          <v-row class="pb-4">
+            <h3>Recorded Date:</h3>
+            <v-date-picker
+              :model-value="[recordedDate]"
+              hide-actions
+              @update:model-value="updateTime($event)"
             />
           </v-row>
           <v-row>

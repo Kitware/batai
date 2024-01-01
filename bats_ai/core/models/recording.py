@@ -1,6 +1,9 @@
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django_extensions.db.models import TimeStampedModel
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.core.files.storage import FileSystemStorage
 
 
 # TimeStampedModel also provides "created" and "modified" fields
@@ -14,3 +17,42 @@ class Recording(TimeStampedModel, models.Model):
     recording_location = models.GeometryField(srid=0, blank=True, null=True)
     grts_cell_id = models.IntegerField(blank=True, null=True)
     grts_cell = models.IntegerField(blank=True, null=True)
+
+    def generate_spectrogram(self):
+        import librosa
+        import librosa.display
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from io import BytesIO
+        import base64
+
+        # Load audio file
+        local_storage = FileSystemStorage()
+        bytefile = self.audio_file.read()
+        newfile = ContentFile(bytefile)
+
+        relative_path = local_storage.save(self.audio_file.file.name, newfile)
+
+        y, sr = librosa.load(relative_path)
+
+        # Generate spectrogram
+        D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+
+        # Plot and save the spectrogram
+        plt.figure(figsize=(10, 4))
+        librosa.display.specshow(D, sr=sr, x_axis='time', y_axis='log')
+        plt.colorbar(format='%+2.0f dB')
+        plt.title('Spectrogram')
+        plt.xlabel('Time')
+        plt.ylabel('Frequency')
+        plt.tight_layout()
+
+        # Convert the plot to base64
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        base64_image = base64.b64encode(buffer.read()).decode('utf-8')
+
+        plt.close()
+
+        return base64_image

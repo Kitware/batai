@@ -133,10 +133,11 @@ export const axiosInstance = axios.create({
 });
 
 
-async function uploadRecordingFile(file: File, name: string, equipment: string, comments: string ) {
+async function uploadRecordingFile(file: File, name: string, recorded_date: string, equipment: string, comments: string ) {
     const formData = new FormData();
     formData.append('audio_file', file);
     formData.append('name', name);
+    formData.append('recorded_date', recorded_date);
     formData.append('equipment', equipment);
     formData.append('comments', comments);
     
