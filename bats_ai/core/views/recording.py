@@ -1,5 +1,6 @@
+from datetime import datetime
 import logging
-from datetime import datetime 
+
 from django.contrib.auth.models import User
 from django.core.files.storage import default_storage
 from django.http import HttpRequest
@@ -50,7 +51,7 @@ def create_recording(
     request: HttpRequest, payload: Form[RecordingUploadSchema], audio_file: File[UploadedFile]
 ):
     user_id = get_owner_id(request)
-    converted_date = datetime.strptime(payload.recorded_date, "%Y-%m-%d")
+    converted_date = datetime.strptime(payload.recorded_date, '%Y-%m-%d')
     recording = Recording(
         name=payload.name,
         owner_id=user_id,
@@ -91,4 +92,3 @@ def get_spectrogram(request: HttpRequest, id: int):
     base64_spectrogram = recording.generate_spectrogram()
 
     return {'base64_spectrogram': base64_spectrogram}
-

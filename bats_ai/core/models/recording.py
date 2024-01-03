@@ -1,9 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django_extensions.db.models import TimeStampedModel
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from django.core.files.storage import FileSystemStorage
 
 
 # TimeStampedModel also provides "created" and "modified" fields
@@ -19,21 +16,18 @@ class Recording(TimeStampedModel, models.Model):
     grts_cell = models.IntegerField(blank=True, null=True)
 
     def generate_spectrogram(self):
+        import base64
+        from io import BytesIO
+
         import librosa
         import librosa.display
         import matplotlib.pyplot as plt
         import numpy as np
-        from io import BytesIO
-        import base64
 
         # Load audio file
-        local_storage = FileSystemStorage()
         bytefile = self.audio_file.read()
-        newfile = ContentFile(bytefile)
 
-        relative_path = local_storage.save(self.audio_file.file.name, newfile)
-
-        y, sr = librosa.load(relative_path)
+        y, sr = librosa.load(BytesIO(bytefile))
 
         # Generate spectrogram
         D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)

@@ -17,6 +17,7 @@ module.exports = {
     'vue/script-setup-uses-vars': 'error',
     "vue/valid-v-slot": ["error", {
       "allowModifiers": true
-    }]
+    }],
+    'vue/multi-word-component-names': 'off'
   },
 };

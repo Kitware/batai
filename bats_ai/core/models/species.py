@@ -8,4 +8,3 @@ class Species(models.Model):
     species = models.CharField(max_length=100, blank=True, null=True)
     common_name = models.CharField(max_length=100, blank=True, null=True)
     species_code_6 = models.CharField(max_length=10, blank=True, null=True)
-

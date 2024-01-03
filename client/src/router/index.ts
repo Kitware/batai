@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteLocationNormalized } from 'vue-router';
 import HomePage from '../views/HomePage.vue';
 import Recordings from '../views/Recordings.vue';
+import Spectrogram from '../views/Spectrogram.vue';
 
 // import oauthClient from '../plugins/Oauth';
 
@@ -31,6 +32,12 @@ function routerInit(){
         path: '/recordings',
         component: Recordings,
       },
+      {
+        path: '/recording/:id/spectrogram',
+        component: Spectrogram,
+        props: true,
+      },
+
     ],
   });
   router.beforeEach(beforeEach);

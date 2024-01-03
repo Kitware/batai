@@ -1,7 +1,8 @@
+from django.contrib.auth.models import User
 from django.db import models
+
 from .recording import Recording
 from .species import Species
-from django.contrib.auth.models import User
 
 
 class Species(models.Model):
@@ -13,4 +14,3 @@ class Species(models.Model):
     high_freq = models.IntegerField(blank=True, null=True)
     species = models.ManyToManyField(Species)
     comments = models.TextField(blank=True, null=True)
-
