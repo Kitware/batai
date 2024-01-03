@@ -46,29 +46,17 @@ export interface Species {
     species_code_6?: string;
 }
 
-export interface SpeciesBatch {
-    species: string,
-
-}
-
 export interface SpectrogramAnnotation {
     offset: number,
     frequency: number,
 }
 
-export interface SpectrogramBatches {
-    vetter: string | null;
-    auto?: Species;
-    manual?: Species;
-}
 
 export interface Spectrogram {
-    url: string;
-    filename: string;
-    project: number;
+    'base64_spectrogram': string;
+    url?: string;
+    filename?: string;
     annotations?: SpectrogramAnnotation[];
-    batches?: SpectrogramBatches[];
-    images: string[];
 
 }
 
@@ -77,55 +65,6 @@ interface PaginatedNinjaResponse<T> {
     items: T[],
 }
 
-export interface Project {
-    projectKey: string;
-    name: string;
-    description: string;
-    grtsIds: number[];
-    grtsCellIds: number[];
-    surveyUUID: string[];
-    eventGeometryName: string[];
-    eventGeometryDesc: string[];
-    eventGeometryGeom: GeoJsonObject;
-    surveys: number;
-}
-
-export interface Survey {
-    id: number;
-    startTime: Date;
-    endTime: Date;
-    createdDate: Date;
-    modifiedDate: Date;
-    uuid: string;
-    eventGeom: GeoJsonObject;
-    createdBy: string;
-    modifiedBy: string;
-    fileCount: number;
-    surveyTypeDesc?: string;
-    surveyMapColor?: string;
-
-}
-
-export interface SurveyDetails {
-    id: string;
-    batchId: number;
-    fileId: number;
-    fileName: string;
-    auto?: Species;
-    manual?: Species;
-    software?: {
-        name?: string;
-        developer?: string;
-        version?: string;
-    };
-    classifier: {
-        name?: string;
-        description?: string;
-        public?: boolean;
-    }
-    annotationCount: number;
-
-}
 
 
 export const axiosInstance = axios.create({
@@ -133,10 +72,11 @@ export const axiosInstance = axios.create({
 });
 
 
-async function uploadRecordingFile(file: File, name: string, equipment: string, comments: string ) {
+async function uploadRecordingFile(file: File, name: string, recorded_date: string, equipment: string, comments: string ) {
     const formData = new FormData();
     formData.append('audio_file', file);
     formData.append('name', name);
+    formData.append('recorded_date', recorded_date);
     formData.append('equipment', equipment);
     formData.append('comments', comments);
     
@@ -160,8 +100,13 @@ async function getRecordings() {
     return axiosInstance.get<Recording[]>('/recording/');
 }
 
+async function getSpectrogram(id: string) {
+    return axiosInstance.get<Spectrogram>(`/recording/${id}/spectrogram`);
+}
+
 
 export {
  uploadRecordingFile,
  getRecordings,
+ getSpectrogram,
 };

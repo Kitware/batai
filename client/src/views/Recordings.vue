@@ -85,14 +85,10 @@ export default defineComponent({
         class="elevation-1"
       >
         <template #item.name="{ item }">
-          <div>
-            {{ item.raw.name }}
-          </div>
           <router-link
-            v-if="false"
-            :to="`/recording/${item.id}`"
+            :to="`/recording/${item.raw.id.toString()}/spectrogram`"
           >
-            {{ item.name }}
+            {{ item.raw.name }}
           </router-link>
         </template>
       </v-data-table>
@@ -101,7 +97,10 @@ export default defineComponent({
       v-model="uploadDialog"
       width="400"
     >
-      <upload-recording  @done="uploadDone()"/>
+      <upload-recording
+        @done="uploadDone()"
+        @cancel="uploadDialog = false"
+      />
     </v-dialog>
   </v-card>
 </template>

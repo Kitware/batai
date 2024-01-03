@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 
 from django.contrib.auth.models import User
@@ -31,6 +32,7 @@ class RecordingSchema(Schema):
 
 class RecordingUploadSchema(Schema):
     name: str
+    recorded_date: str
     equipment: str | None
     comments: str | None
 
@@ -45,14 +47,16 @@ def get_owner_id(request: HttpRequest):
 
 
 @router.post('/')
-def update_recording(
+def create_recording(
     request: HttpRequest, payload: Form[RecordingUploadSchema], audio_file: File[UploadedFile]
 ):
     user_id = get_owner_id(request)
+    converted_date = datetime.strptime(payload.recorded_date, '%Y-%m-%d')
     recording = Recording(
         name=payload.name,
         owner_id=user_id,
         audio_file=audio_file,
+        recorded_date=converted_date,
         equipment=payload.equipment,
         comments=payload.comments,
     )
@@ -64,14 +68,10 @@ def update_recording(
 @router.get('/')
 def get_recordings(request: HttpRequest):
     # Check if the user is authenticated and get userId
-    token = request.headers.get('Authorization').replace('Bearer ', '')
-    token_found = AccessToken.objects.get(token=token)
-    logger.warning(token_found.user.pk)
-    if not token_found:
-        raise HttpError(401, 'Authentication credentials were not provided.')
+    user_id = get_owner_id(request)
 
     # Filter recordings based on the owner's id
-    recordings = Recording.objects.filter(owner=token_found.user.pk).values()
+    recordings = Recording.objects.filter(owner=user_id).values()
 
     for recording in recordings:
         user = User.objects.get(id=recording['owner_id'])
@@ -80,3 +80,15 @@ def get_recordings(request: HttpRequest):
 
     # Return the serialized data
     return list(recordings)
+
+
+@router.get('/{id}/spectrogram')
+def get_spectrogram(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+    base64_spectrogram = recording.generate_spectrogram()
+
+    return {'base64_spectrogram': base64_spectrogram}
