@@ -19,6 +19,7 @@ export default defineComponent({
         oauthClient.redirectToLogin();
       }
     };
+    const activeTab = ref('recordings');
     return { oauthClient, loginText, logInOrOut };
   },
 });
@@ -27,6 +28,23 @@ export default defineComponent({
 <template>
   <v-app id="app">
     <v-app-bar app>
+      <v-tabs
+        fixed-tabs
+        :model-value="activeTab"
+      >
+        <v-tab
+          to="/"
+          value="home"
+        >
+          Home
+        </v-tab>
+        <v-tab
+          to="/recordings"
+          value="recordings"
+        >
+          Recordings
+        </v-tab>
+      </v-tabs>
       <v-spacer />
       <v-btn
         @click="logInOrOut"
