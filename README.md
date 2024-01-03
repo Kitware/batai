@@ -25,6 +25,15 @@ maintenance. To non-destructively update your development stack at any time:
 This configuration still uses Docker to run attached services in the background,
 but allows developers to run Python code on their native system.
 
+### Dev Tool Endpoints
+1. Main Site Interface [http://localhost:3000/](http://localhost:3000/)
+2. Site Administration [http://localhost:8000/admin/](http://localhost:8000/admin/)
+3. Swagger API (These are default swagger endpoints using Django-REST) [http://localhost:8000/api/docs/swagger/](http://localhost:8000/api/docs/swagger/)
+4. Django Ninja API [http://localhost:8000/api/v1/docs#/](http://localhost:8000/api/v1/docs#/)
+5. MinIO (S3 local management) [http://localhost:9001/browser](http://localhost:9001/browser) 
+   Username: 'minioAccessKey'
+   Password: 'minioSecretKey'
+
 ### Initial Setup
 1. Run `docker compose -f ./docker-compose.yml up -d`
 2. Install Python 3.10
