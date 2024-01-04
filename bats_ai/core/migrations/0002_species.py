@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0001_initial'),
     ]
@@ -13,7 +12,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Species',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('species_code', models.CharField(blank=True, max_length=10, null=True)),
                 ('family', models.CharField(blank=True, max_length=50, null=True)),
                 ('genus', models.CharField(blank=True, max_length=50, null=True)),

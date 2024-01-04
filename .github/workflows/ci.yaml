@@ -83,6 +83,13 @@ jobs:
           MINIO_ROOT_PASSWORD: minioSecretKey
         ports:
           - 9000:9000
+        options: >-
+            --health-cmd "curl -I http://localhost:9000/minio/health/live"
+            --health-interval 10s
+            --health-timeout 5s
+            --health-retries 6
+            --health-start-period 30s
+  
     steps:
       - name: Update Package References
         run: sudo apt-get update
