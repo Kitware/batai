@@ -20,7 +20,7 @@ export default defineComponent({
       }
     };
     const activeTab = ref('recordings');
-    return { oauthClient, loginText, logInOrOut };
+    return { oauthClient, loginText, logInOrOut, activeTab };
   },
 });
 </script>

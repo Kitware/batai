@@ -67,7 +67,7 @@ To do so, before running any `docker compose` commands, set any of the environme
 
 The Django server must be informed about the changes:
 * When running the "Develop with Docker" configuration, override the environment variables:
-  * `DJANGO_MINIO_STORAGE_MEDIA_URL`, using the port from `DOCKER_MINIO_PORT`.
+  * `DJANGO_MINIO_STORAGE_ENDPOINT`, using the port from `DOCKER_MINIO_PORT`.
 * When running the "Develop Natively" configuration, override the environment variables:
   * `DJANGO_DATABASE_URL`, using the port from `DOCKER_POSTGRES_PORT`
   * `DJANGO_CELERY_BROKER_URL`, using the port from `DOCKER_RABBITMQ_PORT`

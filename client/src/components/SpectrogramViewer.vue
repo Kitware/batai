@@ -17,7 +17,6 @@ export default defineComponent({
 
     const initializeViewer = (width: number, height: number) => {
       if (containerRef.value) {
-        console.log('Initializing Container');
         const params = geo.util.pixelCoordinateParams(
          '#spectro',
           width,

@@ -1,0 +1,127 @@
+name: CI
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches:
+      - "main"
+env:
+  DJANGO_CONFIGURATION: DevelopmentConfiguration
+  DJANGO_DATABASE_URL: postgres://postgres:postgres@postgres:5432/django
+  DJANGO_CELERY_BROKER_URL: amqp://rabbitmq:5672/
+  DJANGO_MINIO_STORAGE_ACCESS_KEY: minioAccessKey
+  DJANGO_MINIO_STORAGE_SECRET_KEY: minioSecretKey
+  DJANGO_STORAGE_BUCKET_NAME: django-storage
+jobs:
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install pre-commit
+        run: pip install pre-commit
+      - name: Cache pre-commit hooks
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit/
+          key: pre-commit-cache|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Run pre-commit checks
+        run: pre-commit run --all-files
+  lint-node:
+    strategy:
+      fail-fast: false
+      matrix:
+        linter: [eslint, typescript]
+    name: Lint [${{ matrix.linter }}]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node environment
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - name: Install packages
+        run: npm ci
+        working-directory: client
+      - name: Run ${{ matrix.linter }}
+        run: npm run lint:${{ matrix.linter }}
+        working-directory: client
+  test-django:
+    name: Test Django [${{ matrix.tox-env }}]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tox-env: [test, check-migrations]
+    services:
+      postgres:
+        image: postgis/postgis:latest
+        env:
+          POSTGRES_DB: django
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+      rabbitmq:
+        image: rabbitmq:latest
+        ports:
+          - 5672:5672
+      minio:
+        # This image does not require any command arguments (which GitHub Actions don't support)
+        image: bitnami/minio:latest
+        env:
+          MINIO_ROOT_USER: minioAccessKey
+          MINIO_ROOT_PASSWORD: minioSecretKey
+        ports:
+          - 9000:9000
+        options: >-
+            --health-cmd "curl -I http://localhost:9000/minio/health/live"
+            --health-interval 10s
+            --health-timeout 5s
+            --health-retries 6
+            --health-start-period 30s
+  
+    steps:
+      - name: Update Package References
+        run: sudo apt-get update
+      - name: Install system dependencies
+        run: apt-fast install --no-install-recommends --yes
+          libgdal30
+          libproj22
+          python3-cachecontrol
+          python3-dev
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install tox
+        run: pip install tox
+      - name: Run tests
+        run: tox -e ${{ matrix.tox-env }}
+        working-directory: bats_ai
+  test-vue:
+    name: Test [vue]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node environment
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - name: Install packages
+        run: npm ci
+        working-directory: client
+      - name: Run tests
+        run: npm run test
+        working-directory: client
