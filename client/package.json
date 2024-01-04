@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "format": "eslint --ext .js,.ts,.vue --ignore-path .gitignore --fix src",
     "lint:eslint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore --no-fix src",
-    "test:unit": "jest",
+    "test": "jest",
     "lint:typescript": "vue-tsc --noEmit"
   },
   "dependencies": {
