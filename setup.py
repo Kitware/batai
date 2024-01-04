@@ -61,6 +61,7 @@ setup(
             'django-debug-toolbar',
             'django-s3-file-field[minio]',
             'django-click',
+            'django-minio-storage>=0.5.2',
             'ipython',
             'tox',
         ]

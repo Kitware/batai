@@ -57,7 +57,23 @@ class BatsAiMixin(ConfigMixin):
 
 
 class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
-    pass
+    SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
+
+    DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
+    MINIO_STORAGE_ENDPOINT = values.Value(
+        'localhost:9000',
+    )
+    MINIO_STORAGE_USE_HTTPS = values.BooleanValue(False)
+    MINIO_STORAGE_ACCESS_KEY = values.SecretValue()
+    MINIO_STORAGE_SECRET_KEY = values.SecretValue()
+    MINIO_STORAGE_MEDIA_BUCKET_NAME = values.Value(
+        environ_name='STORAGE_BUCKET_NAME',
+        environ_required=True,
+    )
+    MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
+    MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
+    MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
+    MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/rdwatch'
 
 
 class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
