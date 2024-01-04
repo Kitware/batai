@@ -75,10 +75,6 @@ jobs:
         image: rabbitmq:latest
         ports:
           - 5672:5672
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
       minio:
         # This image does not require any command arguments (which GitHub Actions don't support)
         image: bitnami/minio:latest
