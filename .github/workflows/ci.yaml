@@ -100,7 +100,7 @@ jobs:
         run: pip install tox
       - name: Run tests
         run: tox -e ${{ matrix.tox-env }}
-        working-directory: django
+        working-directory: bats_ai
   test-vue:
     name: Test [vue]
     runs-on: ubuntu-latest
