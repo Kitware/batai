@@ -1,14 +1,8 @@
-from datetime import datetime
 import logging
 
-from django.contrib.auth.models import User
-from django.core.files.storage import default_storage
 from django.http import HttpRequest
-from ninja import File, Form, Schema
-from ninja.errors import HttpError
-from ninja.files import UploadedFile
+from ninja import Schema
 from ninja.pagination import RouterPaginated
-from oauth2_provider.models import AccessToken
 
 from bats_ai.core.models import Species
 
@@ -25,8 +19,6 @@ class SpeciesSchema(Schema):
     species: str | None
     common_name: str | None
     species_code_6: str | None
-
-
 
 
 @router.get('/')
