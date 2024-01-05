@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, Ref, watch } from "vue";
 import geo, { GeoEvent } from "geojs";
+import { useGeoJS } from './geoJS/geoJSUtils';
 
 export default defineComponent({
   name: "SpectroViewer",
@@ -12,87 +13,13 @@ export default defineComponent({
   },
   setup(props) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
-    const geoViewer: Ref<any> = ref();
-    let quadFeature: any;
+    const geoJS = useGeoJS();
 
-    const initializeViewer = (width: number, height: number) => {
-      if (containerRef.value) {
-        const params = geo.util.pixelCoordinateParams(
-         '#spectro',
-          width,
-          height
-        );
-        geoViewer.value = geo.map(params.map);
-        const interactorOpts = geoViewer.value.interactor().options();
-        interactorOpts.keyboard.focusHighlight = false;
-        interactorOpts.keyboard.actions = {};
-        interactorOpts.click.cancelOnMove = 5;
-
-        interactorOpts.actions = [
-          interactorOpts.actions[0],
-          // The action below is needed to have GeoJS use the proper handler
-          // with cancelOnMove for right clicks
-          {
-            action: geo.geo_action.select,
-            input: { right: true },
-            name: "button edit",
-            owner: "geo.MapInteractor",
-          },
-          // The action below adds middle mouse button click to panning
-          // It allows for panning while in the process of polygon editing or creation
-          {
-            action: geo.geo_action.pan,
-            input: "middle",
-            modifiers: { shift: false, ctrl: false },
-            owner: "geo.mapInteractor",
-            name: "button pan",
-          },
-          interactorOpts.actions[2],
-          interactorOpts.actions[6],
-          interactorOpts.actions[7],
-          interactorOpts.actions[8],
-          interactorOpts.actions[9],
-        ];
-        // Set > 2pi to disable rotation
-        interactorOpts.zoomrotateMinimumRotation = 7;
-        interactorOpts.zoomAnimation = {
-          enabled: false,
-        };
-        interactorOpts.momentum = {
-          enabled: false,
-        };
-        interactorOpts.wheelScaleY = 0.2;
-        geoViewer.value.interactor().options(interactorOpts);
-        geoViewer.value.bounds({
-            left: 0,
-            top: 0,
-            bottom: height,
-            right: width,
-        });
-
-        const quadFeatureLayer = geoViewer.value.createLayer("feature", {
-          features: ["quad"],
-          autoshareRenderer: false,
-          renderer: "canvas",
-        });
-        quadFeature = quadFeatureLayer.createFeature("quad");
-      }
-    };
     watch(containerRef, () => {
       const { width, height } = props.image;
-      initializeViewer(width, height);
-      // Draw Image
-      if (quadFeature) {
-        quadFeature
-          .data([
-            {
-              ul: { x: 0, y: 0 },
-              lr: { x: width, y: height },
-              image: props.image,
-            },
-          ])
-          .draw();
-      }
+      if (containerRef.value)
+      geoJS.initializeViewer(containerRef.value, width, height);
+      geoJS.drawImage(props.image, width, height);
     });
 
     return {
