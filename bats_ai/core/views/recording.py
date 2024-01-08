@@ -47,20 +47,24 @@ class AnnotationSchema(Schema):
     comments: str
 
 
-def get_owner_id(request: HttpRequest):
-    token = request.headers.get('Authorization').replace('Bearer ', '')
-    token_found = AccessToken.objects.get(token=token)
-    if not token_found:
-        raise HttpError(401, 'Authentication credentials were not provided.')
-
-    return token_found.user.pk
+def get_user(request: HttpRequest):
+    auth_header = request.headers.get('Authorization', None)
+    if auth_header is not None:
+        token = request.headers.get('Authorization').replace('Bearer ', '')
+        token_found = AccessToken.objects.get(token=token)
+        if not token_found:
+            raise HttpError(401, 'Authentication credentials were not provided.')
+        return token_found.user
+    elif request.user:
+        logger.warning(f'User: {request.user}')
+        return request.user
 
 
 @router.post('/')
 def create_recording(
     request: HttpRequest, payload: Form[RecordingUploadSchema], audio_file: File[UploadedFile]
 ):
-    user_id = get_owner_id(request)
+    user_id = get_user(request).pk
     converted_date = datetime.strptime(payload.recorded_date, '%Y-%m-%d')
     recording = Recording(
         name=payload.name,
@@ -78,7 +82,7 @@ def create_recording(
 @router.get('/')
 def get_recordings(request: HttpRequest):
     # Check if the user is authenticated and get userId
-    user_id = get_owner_id(request)
+    user_id = get_user(request)
 
     # Filter recordings based on the owner's id
     recordings = Recording.objects.filter(owner=user_id).values()
@@ -106,7 +110,7 @@ def get_spectrogram(request: HttpRequest, id: int):
 
 @router.get('/{id}/annotations')
 def get_annotations(request: HttpRequest, id: int):
-    user_id = get_owner_id(request)
+    user_id = get_user(request)
 
     try:
         recording = Recording.objects.get(pk=id, owner=user_id)
@@ -128,20 +132,20 @@ def get_annotations(request: HttpRequest, id: int):
 def put_annotation(
     request,
     id: int,
-    annotation: Form[AnnotationSchema],
+    annotation: AnnotationSchema,
     species_ids: list[int],
 ):
-    user_id = get_owner_id(request)
+    user = get_user(request)
 
     try:
-        recording = Recording.objects.get(pk=id, owner=user_id)
+        recording = Recording.objects.get(pk=id, owner=user.pk)
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
     # Create a new annotation
     new_annotation = Annotations.objects.create(
         recording=recording,
-        owner=request.auth.user,  # Assuming request.auth.user contains the authenticated user
+        owner=user,
         start_time=annotation.start_time,
         end_time=annotation.end_time,
         low_freq=annotation.low_freq,
@@ -166,10 +170,10 @@ def patch_annotation(
     request,
     recording_id: int,
     id: int,
-    annotation: Form[AnnotationSchema],
+    annotation: AnnotationSchema,
     species_ids: list[int],
 ):
-    user_id = get_owner_id(request)
+    user_id = get_user(request)
 
     try:
         recording = Recording.objects.get(pk=recording_id, owner=user_id)
@@ -204,7 +208,7 @@ def patch_annotation(
 
 @router.delete('/{recording_id}/annotations/{id}')
 def delete_annotation(request, recording_id: int, id: int):
-    user_id = get_owner_id(request)
+    user_id = get_user(request)
 
     try:
         recording = Recording.objects.get(pk=recording_id, owner=user_id)
