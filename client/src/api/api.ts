@@ -47,8 +47,11 @@ export interface Species {
 }
 
 export interface SpectrogramAnnotation {
-    offset: number,
-    frequency: number,
+    start_time: number;
+    end_time: number;
+    low_freq: number;
+    high_feq: number;
+    id: number;
 }
 
 
