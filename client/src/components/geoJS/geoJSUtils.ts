@@ -1,11 +1,13 @@
 
-import { defineComponent, PropType, ref, Ref, watch } from "vue";
-import geo, { GeoEvent } from "geojs";
+import { ref, Ref } from "vue";
+import geo from "geojs";
 
 const useGeoJS = () => {
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const geoViewer: Ref<any> = ref();
     const container: Ref<HTMLElement| undefined> = ref();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let quadFeature: any;
     let originalBounds = {
         left: 0,
@@ -142,6 +144,88 @@ const useGeoJS = () => {
     };
 };
 
+import { SpectrogramAnnotation } from "../../api/api";
+
+export interface SpectroInfo {
+    width: number;
+    height: number;
+    start_time: number;
+    end_time: number;
+    low_freq: number;
+    high_freq: number;
+}
+function spectroToGeoJSon(annotation: SpectrogramAnnotation, spectroInfo: SpectroInfo): GeoJSON.Polygon  {
+    //scale pixels to time and frequency ranges
+    const widthScale =  spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
+    const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
+    // Now we remap our annotation to pixel coordinates
+    const low_freq = annotation.low_freq * heightScale;
+    const high_freq = annotation.high_feq * heightScale;
+    const start_time = annotation.start_time * widthScale;
+    const end_time = annotation.end_time * widthScale;
+
+    return {
+        type: 'Polygon',
+        coordinates: [
+            [
+              [start_time, high_freq],
+              [start_time, low_freq],
+              [end_time, low_freq],
+              [end_time, high_freq],
+              [start_time, high_freq],
+            ],
+          ],
+      
+    };
+}
+
+/* beginning at bottom left, rectangle is defined clockwise */
+function geojsonToSpectro(geojson: GeoJSON.Feature<GeoJSON.Polygon>, spectroInfo: SpectroInfo): { start_time: number, end_time: number, low_freq: number, high_freq: number} {
+  const coords = geojson.geometry.coordinates[0];
+  const widthScale =  spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
+  const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
+  const start_time = coords[1][0] / widthScale;
+  const end_time = coords[3][0] / widthScale;
+  const low_freq = coords[1][1] / heightScale;
+  const high_freq = coords[3][1] / heightScale;
+  return {
+    start_time,
+    end_time,
+    low_freq,
+    high_freq
+  };
+}
+
+
+/**
+ * This will take the current geoJSON Coordinates for a rectangle and reorder it
+ * to keep the vertices index the same with respect to how geoJS uses it
+ * Example: UL, LL, LR, UR, UL
+ */
+function reOrdergeoJSON(coords: GeoJSON.Position[]) {
+  let x1 = Infinity;
+  let x2 = -Infinity;
+  let y1 = Infinity;
+  let y2 = -Infinity;
+  coords.forEach((coord) => {
+    x1 = Math.min(x1, coord[0]);
+    x2 = Math.max(x2, coord[0]);
+    y1 = Math.min(y1, coord[1]);
+    y2 = Math.max(y2, coord[1]);
+  });
+  return [
+    [x1, y2],
+    [x1, y1],
+    [x2, y1],
+    [x2, y2],
+    [x1, y2],
+  ];
+}
+
+
 export {
-    useGeoJS,
+  spectroToGeoJSon,
+  geojsonToSpectro,
+  reOrdergeoJSON,
+  useGeoJS,
 };
