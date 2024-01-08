@@ -4,7 +4,7 @@ from ninja import NinjaAPI
 from ninja.security import HttpBearer
 from oauth2_provider.models import AccessToken
 
-from bats_ai.core.views import RecordingRouter
+from bats_ai.core.views import RecordingRouter, SpeciesRouter
 
 logger = logging.getLogger(__name__)
 
@@ -22,3 +22,4 @@ class GlobalAuth(HttpBearer):
 api = NinjaAPI()
 
 api.add_router('/recording/', RecordingRouter)
+api.add_router('/species/', SpeciesRouter)

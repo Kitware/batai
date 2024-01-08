@@ -3,19 +3,19 @@ import HomePage from '../views/HomePage.vue';
 import Recordings from '../views/Recordings.vue';
 import Spectrogram from '../views/Spectrogram.vue';
 
-// import oauthClient from '../plugins/Oauth';
+import oauthClient from '../plugins/Oauth';
 
 function beforeEach(
   to: RouteLocationNormalized,
   _: RouteLocationNormalized,
   next: (route?: string) => void,
 ) {
-  // if (!oauthClient.isLoggedIn && to.name !== '/') {
-  //   next('/');
-  // }
-  // if (oauthClient.isLoggedIn && to.name === '/') {
-  //   next('/');
-  // }
+  if (!oauthClient.isLoggedIn && to.name !== '/') {
+    next('/');
+  }
+  if (oauthClient.isLoggedIn && to.name === '/') {
+    next('/');
+  }
   next();
 }
 
