@@ -45,6 +45,7 @@ class AnnotationSchema(Schema):
     high_freq: int
     species: list[SpeciesSchema]
     comments: str
+    id: int
 
 
 def get_user(request: HttpRequest):
@@ -98,14 +99,22 @@ def get_recordings(request: HttpRequest):
 
 @router.get('/{id}/spectrogram')
 def get_spectrogram(request: HttpRequest, id: int):
+    user_id = get_user(request)
     try:
         recording = Recording.objects.get(pk=id)
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    base64_spectrogram = recording.generate_spectrogram()
+    spectro_data = recording.generate_spectrogram()
 
-    return {'base64_spectrogram': base64_spectrogram}
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=user_id)
+
+    # Serialize the annotations using AnnotationSchema
+    annotations_data = [
+        AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs
+    ]
+    spectro_data['annotations'] = annotations_data
+    return spectro_data
 
 
 @router.get('/{id}/annotations')
@@ -118,7 +127,7 @@ def get_annotations(request: HttpRequest, id: int):
         return {'error': 'Recording not found'}
 
     # Query annotations associated with the recording
-    annotations_qs = Annotations.objects.filter(recording=recording)
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=user_id)
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [

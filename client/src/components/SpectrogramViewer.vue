@@ -1,29 +1,45 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, Ref, watch } from "vue";
-import geo, { GeoEvent } from "geojs";
-import { useGeoJS } from './geoJS/geoJSUtils';
+import { SpectroInfo, useGeoJS } from './geoJS/geoJSUtils';
+import { SpectrogramAnnotation } from "../api/api";
+import LayerManager from "./geoJS/LayerManager.vue";
 
 export default defineComponent({
   name: "SpectroViewer",
+  components: {
+    LayerManager
+  },
   props: {
     image: {
       type: Object as PropType<HTMLImageElement>,
       required: true,
     },
+    spectroInfo: {
+      type: Object as PropType<SpectroInfo | undefined>,
+      default: () => undefined,
+    },
+    annotations: {
+      type: Array as PropType<SpectrogramAnnotation[]>,
+      default: () => [],
+    }
   },
   setup(props) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
+    const initialized  = ref(false);
 
     watch(containerRef, () => {
-      const { width, height } = props.image;
+      const { naturalWidth, naturalHeight } = props.image;
       if (containerRef.value)
-      geoJS.initializeViewer(containerRef.value, width, height);
-      geoJS.drawImage(props.image, width, height);
+      geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight);
+      geoJS.drawImage(props.image, naturalWidth, naturalHeight);
+      initialized.value = true;
     });
 
     return {
       containerRef,
+      geoViewerRef: geoJS.getGeoViewer(),
+      initialized,
     };
   },
 });
@@ -35,6 +51,12 @@ export default defineComponent({
       id="spectro"
       ref="containerRef"
       class="playback-container"
+    />
+    <layer-manager
+      v-if="initialized"
+      :geo-viewer-ref="geoViewerRef"
+      :spectro-info="spectroInfo"
+      :annotations="annotations"
     />
   </div>
 </template>
@@ -49,6 +71,7 @@ export default defineComponent({
   z-index: 0;
   width:100vw;
   height: 100vh;
+  background-color: black;
 
   display: flex;
   flex-direction: column;

@@ -1,29 +1,38 @@
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { defineComponent, onMounted, PropType } from 'vue';
+import { SpectrogramAnnotation } from '../../api/api';
 import { SpectroInfo } from './geoJSUtils';
 import RectangleLayer from './layers/rectangleLayer';
 
 export default defineComponent({
     name:'LayerManager',
     props: {
-        geoJSRef: {
+        geoViewerRef: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             type: Object as PropType<any>,
             required: true,
         },
         spectroInfo: {
-            type: Object as PropType<SpectroInfo>,
-            required: true,
+            type: Object as PropType<SpectroInfo | undefined>,
+            default: () => undefined
+        },
+        annotations: {
+            type: Array as PropType<SpectrogramAnnotation[]>,
+            default: () => [],
         }
     },
     setup(props) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
         const event = (type: string, data: any) => {
             // Will handle clicking, selecting and editing here
-            //console.log(type);
-            //console.log(data);
         };
-        const rectAnnotationLayer = new RectangleLayer(props.geoJSRef, event, props.spectroInfo);
+        onMounted(() => {
+            if (props.spectroInfo) {
+                const rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
+                rectAnnotationLayer.formatData(props.annotations);
+                rectAnnotationLayer.redraw();
+            }
+        });
 
         return {
             

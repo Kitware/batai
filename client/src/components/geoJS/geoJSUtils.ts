@@ -16,6 +16,10 @@ const useGeoJS = () => {
         right: 1,
     };
 
+    const getGeoViewer = () => {
+        return geoViewer;
+    };
+
     const initializeViewer = (sourceContainer: HTMLElement, width: number, height: number) => {
         container.value = sourceContainer;
         const params = geo.util.pixelCoordinateParams(
@@ -137,6 +141,7 @@ const useGeoJS = () => {
     };
 
     return {
+        getGeoViewer,
         initializeViewer,
         drawImage,
         resetMapDimensions,
@@ -156,23 +161,22 @@ export interface SpectroInfo {
 }
 function spectroToGeoJSon(annotation: SpectrogramAnnotation, spectroInfo: SpectroInfo): GeoJSON.Polygon  {
     //scale pixels to time and frequency ranges
-    const widthScale =  spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
+    const widthScale =   spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
     const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
-    const low_freq = annotation.low_freq * heightScale;
-    const high_freq = annotation.high_feq * heightScale;
+    const low_freq = spectroInfo.height - (annotation.low_freq * heightScale);
+    const high_freq = spectroInfo.height - (annotation.high_freq * heightScale);
     const start_time = annotation.start_time * widthScale;
     const end_time = annotation.end_time * widthScale;
-
     return {
         type: 'Polygon',
-        coordinates: [
+        coordinates: [  
             [
-              [start_time, high_freq],
               [start_time, low_freq],
-              [end_time, low_freq],
-              [end_time, high_freq],
               [start_time, high_freq],
+              [end_time, high_freq],
+              [end_time, low_freq],
+              [start_time, low_freq],
             ],
           ],
       

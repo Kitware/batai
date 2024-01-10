@@ -19,6 +19,7 @@ class SpeciesSchema(Schema):
     species: str | None
     common_name: str | None
     species_code_6: str | None
+    pk: int = None
 
 
 @router.get('/')

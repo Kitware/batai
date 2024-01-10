@@ -2,6 +2,7 @@
 import geo, { GeoEvent } from 'geojs';
 import { SpectroInfo, spectroToGeoJSon } from '../geoJSUtils';
 import { SpectrogramAnnotation } from '../../../api/api';
+import { LayerStyle } from './types';
 
 interface RectGeoJSData{
   id: number;
@@ -9,31 +10,6 @@ interface RectGeoJSData{
   editing: boolean | string;
   polygon: GeoJSON.Polygon;
 }
-
-// eslint-disable-next-line max-len
-export type StyleFunction<T, D> = T | ((point: [number, number], index: number, data: D) => T | undefined);
-export type ObjectFunction<T, D> = T | ((data: D, index: number) => T | undefined);
-export type PointFunction<T, D> = T | ((data: D) => T | undefined);
-
-export interface LayerStyle<D> {
-    strokeWidth?: StyleFunction<number, D> | PointFunction<number, D>;
-    strokeOffset?: StyleFunction<number, D> | PointFunction<string, D>;
-    strokeOpacity?: StyleFunction<number, D> | PointFunction<string, D>;
-    strokeColor?: StyleFunction<string, D> | PointFunction<string, D>;
-    fillColor?: StyleFunction<string, D> | PointFunction<string, D>;
-    fillOpacity?: StyleFunction<number, D> | PointFunction<number, D>;
-    position?: (point: [number, number]) => { x: number; y: number };
-    color?: (data: D) => string;
-    textOpacity?: (data: D) => number;
-    fontSize?: (data: D) => string | undefined;
-    offset?: (data: D) => { x: number; y: number };
-    fill?: ObjectFunction<boolean, D> | boolean;
-    radius?: PointFunction<number, D> | number;
-    textAlign?: ((data: D) => string) | string;
-    textScaled?: ((data: D) => number | undefined) | number | undefined;
-    [x: string]: unknown;
-  }
-  
 
 export default class RectangleLayer{
     formattedData: RectGeoJSData[];
@@ -54,6 +30,8 @@ export default class RectangleLayer{
 
     spectroInfo: SpectroInfo;
 
+    style: LayerStyle<RectGeoJSData>;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(geoViewerRef: any, event: (name: string, data: any) => void, spectroInfo: SpectroInfo) {
     this.geoViewerRef = geoViewerRef;
@@ -64,11 +42,7 @@ export default class RectangleLayer{
       this.selectedIndex = [];
       this.event = event;
       //Only initialize once, prevents recreating Layer each edit
-      this.initialize();
-    }
-
-    initialize() {
-      const layer = this.geoViewerRef.value.createLayer('feature', {
+      const layer = this.geoViewerRef.createLayer('feature', {
         features: ['polygon'],
       });
       this.featureLayer = layer
@@ -98,6 +72,7 @@ export default class RectangleLayer{
             this.event('annotation-clicked', { id: null, edit: false });
         }
       });
+      this.style = this.createStyle();
     }
 
     hoverAnnotations(e: GeoEvent) {
@@ -146,13 +121,15 @@ export default class RectangleLayer{
         arr.push(newAnnotation);
 
       });
-      return arr;
+      this.formattedData = arr;
     }
 
     redraw() {
+        // add some styles
       this.featureLayer
         .data(this.formattedData)
         .polygon((d: RectGeoJSData) => d.polygon.coordinates[0])
+        .style(this.createStyle())
         .draw();
     }
 
@@ -163,15 +140,22 @@ export default class RectangleLayer{
     }
 
     createStyle(): LayerStyle<RectGeoJSData> {
-      return {
-        // Style conversion to get array objects to work in geoJS
-        position: (point) => ({ x: point[0], y: point[1] }),
-        strokeColor: (_point, _index, data) => {
-          if (data.selected) {
-            return 'cyan';
-          }
-          return 'red';
-        },
-      };
-    }
+        return {
+            ...{
+                strokeColor: 'black',
+                strokeWidth: 4.0,
+                antialiasing: 0,
+                stroke: true,
+                uniformPolygon: true,
+                fill: false,      
+            },
+            // Style conversion to get array objects to work in geoJS
+            position: (point) => {
+                return ({ x: point[0], y: point[1] });
+            },
+            strokeColor: (_point, _index, data) => {
+              
+              return 'red';
+            },          };
+        }
 }

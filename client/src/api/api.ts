@@ -1,7 +1,5 @@
 import axios from 'axios';
-import { GeoJsonObject } from 'geojson';
-import { createS3ffClient } from '../plugins/S3FileField';
-import { S3FileFieldProgressCallback } from 'django-s3-file-field';
+import { SpectroInfo } from '../components/geoJS/geoJSUtils';
 
 export interface PaginatedResponse<E> {
     count: number,
@@ -50,7 +48,7 @@ export interface SpectrogramAnnotation {
     start_time: number;
     end_time: number;
     low_freq: number;
-    high_feq: number;
+    high_freq: number;
     id: number;
 }
 
@@ -60,6 +58,7 @@ export interface Spectrogram {
     url?: string;
     filename?: string;
     annotations?: SpectrogramAnnotation[];
+    spectroInfo?: SpectroInfo;
 
 }
 

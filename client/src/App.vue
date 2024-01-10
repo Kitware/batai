@@ -1,11 +1,9 @@
 <script lang="ts">
-import { defineComponent, inject, computed, ref, watch } from 'vue';
+import { defineComponent, inject, computed, ref } from 'vue';
 import OAuthClient from '@girder/oauth-client';
-import { useRoute } from 'vue-router';
 
 export default defineComponent({
   setup() {
-    const route = useRoute();
     const oauthClient = inject<OAuthClient>('oauthClient');
     if (oauthClient === undefined) {
       throw new Error('Must provide "oauthClient" into component.');
