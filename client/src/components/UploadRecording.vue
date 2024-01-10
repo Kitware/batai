@@ -1,6 +1,5 @@
 <script lang="ts">
 import { defineComponent, ref, Ref } from 'vue';
-import { S3FileFieldProgress, S3FileFieldProgressState } from 'django-s3-file-field';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
 import { uploadRecordingFile } from '../api/api';
@@ -51,6 +50,7 @@ export default defineComponent({
       emit('done');
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateTime = (time: any)  => {
     recordedDate.value = new Date(time as string).toISOString().split('T')[0];
   };

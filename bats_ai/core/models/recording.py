@@ -34,7 +34,7 @@ class Recording(TimeStampedModel, models.Model):
 
         # Plot and save the spectrogram
         plt.figure(figsize=(10, 4))
-        librosa.display.specshow(D, sr=sr, x_axis='time', y_axis='log')
+        librosa.display.specshow(D, sr=sr, x_axis='time', y_axis='linear')
         plt.colorbar(format='%+2.0f dB')
         plt.title('Spectrogram')
         plt.xlabel('Time')
@@ -49,4 +49,22 @@ class Recording(TimeStampedModel, models.Model):
 
         plt.close()
 
-        return base64_image
+        start_time = 0.0
+        end_time = librosa.get_duration(y=y, sr=sr) * 1000  # in milliseconds
+        low_frequency = 0  # Set your desired low frequency
+        high_frequency = sr / 2  # Set your desired high frequency
+        image_width = 10 * 100  # 10 inches at 100 dpi
+        image_height = 4 * 100  # 4 inches at 100 dpi
+
+        # Return dictionary with all required fields
+        return {
+            'base64_spectrogram': base64_image,
+            'spectroInfo': {
+                'width': image_width,
+                'height': image_height,
+                'start_time': start_time,
+                'end_time': end_time,
+                'low_freq': low_frequency,
+                'high_freq': high_frequency,
+            },
+        }
