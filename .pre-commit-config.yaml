@@ -48,7 +48,7 @@ repos:
     hooks:
       - id: markdownlint-fix-docker
         name: MarkdownLint for Markdown files
-        args: ["--fix", "--disable", "MD013"]
+        args: ["--fix"]
 
   - repo: https://github.com/sirwart/ripsecrets
     rev: v0.1.7
