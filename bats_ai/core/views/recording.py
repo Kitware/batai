@@ -103,7 +103,6 @@ def get_recordings(request: HttpRequest):
 
 @router.get('/{id}/spectrogram')
 def get_spectrogram(request: HttpRequest, id: int):
-    user_id = get_user(request)
     try:
         recording = Recording.objects.get(pk=id)
     except Recording.DoesNotExist:
@@ -111,7 +110,7 @@ def get_spectrogram(request: HttpRequest, id: int):
 
     spectro_data = recording.generate_spectrogram()
 
-    annotations_qs = Annotations.objects.filter(recording=recording, owner=user_id)
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [
@@ -129,7 +128,7 @@ def get_annotations(request: HttpRequest, id: int):
         return {'error': 'Recording not found'}
 
     # Query annotations associated with the recording
-    annotations_qs = Annotations.objects.filter(recording=recording, owner=user_id)
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [

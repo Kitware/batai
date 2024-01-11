@@ -14,6 +14,7 @@ RUN set -ex \
         libc6-dev \
         libgdal32 \
         libpq-dev \
+        libsndfile1-dev \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 

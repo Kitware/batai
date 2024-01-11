@@ -13,6 +13,11 @@ This is the simplest configuration for developers to start with.
                             --username your.super.user@email.address \
                             --uri http://localhost:3000/`
 
+### Run Vue Frontend
+
+1. Run `npm install`
+2. Run `npm run dev`
+
 ### Run Application
 
 1. Run `docker compose up`
