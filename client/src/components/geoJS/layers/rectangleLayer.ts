@@ -108,13 +108,13 @@ export default class RectangleLayer{
     }
 
 
-    formatData(annotationData: SpectrogramAnnotation[]) {
+    formatData(annotationData: SpectrogramAnnotation[], selectedIndex: number | null) {
       const arr: RectGeoJSData[] = [];
       annotationData.forEach((annotation: SpectrogramAnnotation, ) => {
         const polygon = spectroToGeoJSon(annotation, this.spectroInfo);
         const newAnnotation: RectGeoJSData = {
             id: annotation.id,
-            selected: false,
+            selected: annotation.id === selectedIndex,
             editing: false,
             polygon,
           };
@@ -154,7 +154,9 @@ export default class RectangleLayer{
                 return ({ x: point[0], y: point[1] });
             },
             strokeColor: (_point, _index, data) => {
-              
+              if (data.selected) {
+                return 'cyan';
+              }
               return 'red';
             },          };
         }

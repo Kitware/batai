@@ -6,9 +6,6 @@ import { LayerStyle } from "./types";
 import { GeoJSON } from "geojson";
 
 export type EditAnnotationTypes = "rectangle";
-interface EditAnnotationLayerParams {
-  type: EditAnnotationTypes;
-}
 
 interface RectGeoJSData {
   id: number;
