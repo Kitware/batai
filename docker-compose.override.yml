@@ -4,9 +4,9 @@ services:
     build:
       context: .
       dockerfile: ./dev/django.Dockerfile
-    entrypoint: ["/bin/bash"]
-    command: ""
-    # command: ["./manage.py", "runserver", "0.0.0.0:8000", "--noreload"]
+    command: ["./manage.py", "runserver", "0.0.0.0:8000", "--noreload"]
+    # entrypoint: ["/bin/bash"]
+    # command: ""
     # Log printing via Rich is enhanced by a TTY
     tty: true
     env_file: ./dev/.env.docker-compose

@@ -94,9 +94,10 @@ class Recording(TimeStampedModel, models.Model):
             img = Image.open(buf)
             w, h = img.size
 
-            import IPython
-            IPython.embed()
-            img.save('temp.png')
+            # import IPython
+
+            # IPython.embed()
+            # img.save('temp.png')
 
             buf = io.BytesIO()
             img.save(buf, format='JPEG')
