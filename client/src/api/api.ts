@@ -50,6 +50,7 @@ export interface SpectrogramAnnotation {
     low_freq: number;
     high_freq: number;
     id: number;
+    editing?: boolean
 }
 
 
