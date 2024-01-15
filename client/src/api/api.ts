@@ -50,7 +50,9 @@ export interface SpectrogramAnnotation {
     low_freq: number;
     high_freq: number;
     id: number;
-    editing?: boolean
+    editing?: boolean;
+    species?: Species[];
+    comments?: string;
 }
 
 
@@ -107,9 +109,12 @@ async function getSpectrogram(id: string) {
     return axiosInstance.get<Spectrogram>(`/recording/${id}/spectrogram`);
 }
 
-
+async function getSpecies() {
+    return axiosInstance.get<Species[]>('/species/');
+}
 export {
  uploadRecordingFile,
  getRecordings,
  getSpectrogram,
+ getSpecies,
 };

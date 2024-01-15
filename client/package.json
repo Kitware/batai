@@ -29,6 +29,7 @@
   "devDependencies": {
     "@types/geojson": "^7946.0.13",
     "@types/jest": "^27.4.1",
+    "@types/lodash": "^4.14.202",
     "@vitejs/plugin-vue": "^2.2.0",
     "@vue/eslint-config-typescript": "^10.0.0",
     "@vuetify/vite-plugin": "^1.0.0-alpha.10",

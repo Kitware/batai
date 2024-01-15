@@ -21,7 +21,12 @@ export default defineComponent({
     annotations: {
       type: Array as PropType<SpectrogramAnnotation[]>,
       default: () => [],
+    },
+    selectedId: {
+        type: Number as PropType<number | null>,
+        default: null,
     }
+
   },
   setup(props) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
@@ -57,6 +62,8 @@ export default defineComponent({
       :geo-viewer-ref="geoViewerRef"
       :spectro-info="spectroInfo"
       :annotations="annotations"
+      :selected-id="selectedId"
+      @selected="$emit('selected',$event)"
     />
   </div>
 </template>
@@ -69,8 +76,7 @@ export default defineComponent({
   top: 0;
   bottom: 0;
   z-index: 0;
-  width:100vw;
-  height: 100vh;
+  height: 90vh;
   background-color: black;
 
   display: flex;

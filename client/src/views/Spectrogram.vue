@@ -1,13 +1,17 @@
 <script lang="ts">
-import { defineComponent, onMounted, Ref, ref, } from 'vue';
-import { getSpectrogram, SpectrogramAnnotation } from '../api/api';
+import { computed, defineComponent, onMounted, Ref, ref, } from 'vue';
+import { getSpecies, getSpectrogram, Species, SpectrogramAnnotation } from '../api/api';
 import SpectrogramViewer from '../components/SpectrogramViewer.vue';
 import { SpectroInfo } from '../components/geoJS/geoJSUtils';
+import AnnotationList from '../components/AnnotationList.vue';
+import AnnotationEditor from '../components/AnnotationEditor.vue';
 
 export default defineComponent({
   name: "Spectrogram",
   components: {
     SpectrogramViewer,
+    AnnotationList,
+    AnnotationEditor,
   },
   props: {
     id: {
@@ -19,6 +23,8 @@ export default defineComponent({
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const annotations: Ref<SpectrogramAnnotation[] | undefined> = ref([]);
+    const selectedId: Ref<number | null> = ref(null);
+    const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const loadData = async () => {
       const response = await getSpectrogram(props.id);
@@ -26,23 +32,60 @@ export default defineComponent({
       spectroInfo.value = response.data['spectroInfo'];
       annotations.value = response.data['annotations'];
       loadedImage.value = true;
+      const speciesResponse = await getSpecies();
+      speciesList.value = speciesResponse.data;
     };
+    const setSelection = (annotationId: number) => {
+      selectedId.value= annotationId;
+    };
+    const selectedAnnotation = computed(() => {
+      if (selectedId.value !== null && annotations.value) {
+        const found = annotations.value.findIndex((item) => item.id === selectedId.value);
+          if (found !== -1) {
+            return annotations.value[found];
+          }
+        }
+      return null;
+    });
     onMounted(() => loadData());
     return { 
       loadedImage,
       image,
       spectroInfo,
       annotations,
+      selectedId,
+      setSelection,
+      speciesList,
+      selectedAnnotation,
     };
   },
 });
 </script>
 
 <template>
-  <spectrogram-viewer
-    v-if="loadedImage"
-    :image="image"
-    :spectro-info="spectroInfo"
-    :annotations="annotations"
-  />
+  <v-row>
+    <v-col>
+      <spectrogram-viewer
+        v-if="loadedImage"
+        :image="image"
+        :spectro-info="spectroInfo"
+        :annotations="annotations"
+        :selected-id="selectedId"
+        @selected="setSelection($event)"
+      />
+    </v-col>
+    <v-col style="max-width:300px">
+      <annotation-list
+        :annotations="annotations"
+        :selected-id="selectedId"
+        @select="selectedId = $event"
+      />
+      <annotation-editor
+        v-if="selectedAnnotation"
+        :species="speciesList"
+        :annotation="selectedAnnotation"
+        class="mt-4"
+      />
+    </v-col>
+  </v-row>
 </template>
