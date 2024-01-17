@@ -398,6 +398,7 @@ export default class EditAnnotationLayer {
         this.event("update:geojson", {
           status: "editing",
           creating: this.getMode() === "creation",
+          geoJSON: geoJSONData[0],
           type: this.type,
           selectedKey: this.selectedKey,
         });

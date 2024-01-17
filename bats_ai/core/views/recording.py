@@ -48,6 +48,16 @@ class AnnotationSchema(Schema):
     id: int
 
 
+class UpdateAnnotationsSchema(Schema):
+    start_time: int | None
+    end_time: int | None
+    low_freq: int | None
+    high_freq: int | None
+    species: list[SpeciesSchema] | None
+    comments: str | None
+    id: int | None
+
+
 def get_user(request: HttpRequest):
     auth_header = request.headers.get('Authorization', None)
     if auth_header is not None:
@@ -179,7 +189,7 @@ def patch_annotation(
     request,
     recording_id: int,
     id: int,
-    annotation: AnnotationSchema,
+    annotation: UpdateAnnotationsSchema,
     species_ids: list[int],
 ):
     user_id = get_user(request)
@@ -193,11 +203,16 @@ def patch_annotation(
         return {'error': 'Annotation not found'}
 
     # Update annotation details
-    annotation_instance.start_time = annotation.start_time
-    annotation_instance.end_time = annotation.end_time
-    annotation_instance.low_freq = annotation.low_freq
-    annotation_instance.high_freq = annotation.high_freq
-    annotation_instance.comments = annotation.comments
+    if annotation.start_time:
+        annotation_instance.start_time = annotation.start_time
+    if annotation.end_time:
+        annotation_instance.end_time = annotation.end_time
+    if annotation.low_freq:
+        annotation_instance.low_freq = annotation.low_freq
+    if annotation.high_freq:
+        annotation_instance.high_freq = annotation.high_freq
+    if annotation.comments:
+        annotation_instance.comments = annotation.comments
     annotation_instance.save()
 
     # Clear existing species associations

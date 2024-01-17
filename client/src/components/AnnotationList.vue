@@ -1,7 +1,8 @@
 <script lang="ts">
-import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
-import { SpectroInfo, useGeoJS } from './geoJS/geoJSUtils';
-import { Species, SpectrogramAnnotation } from "../api/api";
+import { defineComponent, PropType } from "vue";
+import { SpectroInfo } from './geoJS/geoJSUtils';
+import { SpectrogramAnnotation } from "../api/api";
+import useState from "../use/useState";
 
 export default defineComponent({
   name: "AnnotationList",
@@ -21,8 +22,12 @@ export default defineComponent({
         default: null,
     }
   },
-  setup(props) {
+  emits: ['select'],
+  setup() {
+    const { annotationState, setAnnotationState } = useState();
     return {
+        annotationState,
+        setAnnotationState,
     };
   },
 });
@@ -30,7 +35,18 @@ export default defineComponent({
 
 <template>
   <v-card class="pa-0 ma-0">
-    <v-card-title>Annotations</v-card-title>
+    <v-card-title>
+      <v-row class="pa-2">
+        Annotations
+        <v-spacer />
+        <v-btn
+          :disabled="annotationState === 'creating'"
+          @click="annotationState = 'creating'"
+        >
+          Add<v-icon>mdi-plus</v-icon>
+        </v-btn>
+      </v-row>
+    </v-card-title>
     <v-list>
       <v-list-item
         v-for="annotation in annotations"

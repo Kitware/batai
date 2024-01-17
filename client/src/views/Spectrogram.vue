@@ -1,6 +1,6 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, Ref, ref, } from 'vue';
-import { getSpecies, getSpectrogram, Species, SpectrogramAnnotation } from '../api/api';
+import { getSpecies, getAnnotations, getSpectrogram, Species, SpectrogramAnnotation } from '../api/api';
 import SpectrogramViewer from '../components/SpectrogramViewer.vue';
 import { SpectroInfo } from '../components/geoJS/geoJSUtils';
 import AnnotationList from '../components/AnnotationList.vue';
@@ -26,6 +26,14 @@ export default defineComponent({
     const selectedId: Ref<number | null> = ref(null);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
+    const getAnnotationsList= async (annotationId?: number) => {
+        const response = await getAnnotations(props.id);
+        annotations.value = response.data;
+        if (annotationId !== undefined) {
+          selectedId.value = annotationId;
+        }
+        
+    };
     const loadData = async () => {
       const response = await getSpectrogram(props.id);
       image.value.src = `data:image/png;base64,${response.data['base64_spectrogram']}`;
@@ -55,6 +63,7 @@ export default defineComponent({
       annotations,
       selectedId,
       setSelection,
+      getAnnotationsList,
       speciesList,
       selectedAnnotation,
     };
@@ -69,9 +78,11 @@ export default defineComponent({
         v-if="loadedImage"
         :image="image"
         :spectro-info="spectroInfo"
+        :recording-id="id"
         :annotations="annotations"
         :selected-id="selectedId"
         @selected="setSelection($event)"
+        @create:annotation="getAnnotationsList($event)"
       />
     </v-col>
     <v-col style="max-width:300px">
@@ -83,8 +94,11 @@ export default defineComponent({
       <annotation-editor
         v-if="selectedAnnotation"
         :species="speciesList"
+        :recording-id="id"
         :annotation="selectedAnnotation"
         class="mt-4"
+        @update:annotation="getAnnotationsList()"
+        @delete:annotation="getAnnotationsList()"
       />
     </v-col>
   </v-row>

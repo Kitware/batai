@@ -5,6 +5,7 @@ import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
 import { cloneDeep } from "lodash";
+import useState from "../../use/useState";
 export default defineComponent({
   name: "LayerManager",
   props: {
@@ -22,11 +23,13 @@ export default defineComponent({
       default: () => [],
     },
     selectedId: {
-        type: Number as PropType<number | null>,
-        default: null,
-    }
+      type: Number as PropType<number | null>,
+      default: null,
+    },
   },
+  emits: ['selected', 'update:annotation', 'create:annotation'],
   setup(props, { emit }) {
+    const { annotationState } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
     const localAnnotations: Ref<SpectrogramAnnotation[]> = ref(cloneDeep(props.annotations));
@@ -46,8 +49,7 @@ export default defineComponent({
         const copy: SpectrogramAnnotation[] = cloneDeep(localAnnotations.value);
         copy.forEach((item) => (item.editing = undefined));
         localAnnotations.value = copy;
-        emit('selected', selectedAnnotationId.value);
-
+        emit("selected", selectedAnnotationId.value);
       }
       if (type === "annotation-clicked") {
         if (selectedAnnotationId.value !== null) {
@@ -64,7 +66,7 @@ export default defineComponent({
         selectedAnnotationId.value = data.id;
         editing.value = data.edit;
         editingAnnotation.value = null;
-        emit('selected', selectedAnnotationId.value);
+        emit("selected", selectedAnnotationId.value);
         triggerUpdate();
       }
       if (type === "annotation-hover") {
@@ -85,29 +87,56 @@ export default defineComponent({
           editingAnnotation.value = null;
           localAnnotations.value[foundIndex].editing = undefined;
         }
-        emit('selected', selectedAnnotationId.value);
+        emit("selected", selectedAnnotationId.value);
         triggerUpdate();
       }
-      if (type === 'update:geojson') {
-        const status = data['status'];
-        const creating = data['creating'];
-        const geoJSON = data['geoJSON'];
-        if (geoJSON && selectedAnnotationId.value !== null && status === 'editing' && !creating) {
-            const index = localAnnotations.value.findIndex((item) => item.id === selectedAnnotationId.value);
+      if (type === "update:geojson") {
+        const status = data["status"];
+        const creating = data["creating"];
+        const geoJSON = data["geoJSON"];
+        if (geoJSON && selectedAnnotationId.value !== null && status === "editing" && !creating) {
+          if (annotationState.value !== "creating") {
+            const index = localAnnotations.value.findIndex(
+              (item) => item.id === selectedAnnotationId.value
+            );
             if (index !== -1 && props.spectroInfo) {
-                // update bounds for the localAnnotation
-                const { low_freq, high_freq, start_time, end_time } = geojsonToSpectro(geoJSON, props.spectroInfo);
-                localAnnotations.value[index] = {
-                    ...localAnnotations.value[index],
-                    low_freq,
-                    high_freq,
-                    start_time,
-                    end_time,
-                };
-                editingAnnotation.value = localAnnotations.value[index];
+              // update bounds for the localAnnotation
+              const { low_freq, high_freq, start_time, end_time } = geojsonToSpectro(
+                geoJSON,
+                props.spectroInfo
+              );
+              localAnnotations.value[index] = {
+                ...localAnnotations.value[index],
+                low_freq,
+                high_freq,
+                start_time,
+                end_time,
+              };
+              editingAnnotation.value = localAnnotations.value[index];
             }
             triggerUpdate();
-            emit('update:annotaton', {annotation: editingAnnotation.value });
+            emit("update:annotation", editingAnnotation.value);
+          }
+        } else if (creating) {
+          if (geoJSON && props.spectroInfo) {
+            const { low_freq, high_freq, start_time, end_time } = geojsonToSpectro(
+              geoJSON,
+              props.spectroInfo
+            );
+            const newAnnotation: SpectrogramAnnotation = {
+              low_freq,
+              high_freq,
+              start_time,
+              end_time,
+              comments: "",
+              species: [],
+              id: 0,
+            };
+            emit("create:annotation", newAnnotation);
+            editAnnotationLayer.disable();
+            annotationState.value = '';
+            editing.value = false;
+          }
         }
       }
     };
@@ -120,16 +149,21 @@ export default defineComponent({
       if (editing.value && editingAnnotation.value) {
         setTimeout(() => {
           editAnnotationLayer.changeData(editingAnnotation.value);
-        }, 100);
+        }, 0);
       }
     };
-    watch(props.annotations, () => {
+    watch(() => props.annotations, () => {
       localAnnotations.value = props.annotations;
+      rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value);
+      rectAnnotationLayer.redraw();
     });
-    watch(() => props.selectedId, () => {
+    watch(
+      () => props.selectedId,
+      () => {
         selectedAnnotationId.value = props.selectedId;
         triggerUpdate();
-    });
+      }
+    );
     onMounted(() => {
       if (props.spectroInfo) {
         rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
@@ -138,8 +172,22 @@ export default defineComponent({
         rectAnnotationLayer.redraw();
       }
     });
-
-    return {};
+    watch(
+      () => annotationState.value,
+      () => {
+        if (annotationState.value === "creating") {
+          editing.value = false;
+          selectedAnnotationId.value = null;
+          editingAnnotation.value = null;
+          editAnnotationLayer.changeData(null);
+          triggerUpdate();
+        }
+      }
+    );
+    return {
+      annotationState,
+      localAnnotations,
+    };
   },
 });
 </script>

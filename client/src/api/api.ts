@@ -42,6 +42,7 @@ export interface Species {
     genus: string;
     common_name: string;
     species_code_6?: string;
+    id: number;
 }
 
 export interface SpectrogramAnnotation {
@@ -55,6 +56,16 @@ export interface SpectrogramAnnotation {
     comments?: string;
 }
 
+export interface UpdateSpectrogramAnnotation {
+    start_time?: number;
+    end_time?: number;
+    low_freq?: number;
+    high_freq?: number;
+    id?: number;
+    editing?: boolean;
+    species?: Species[];
+    comments?: string;
+}
 
 export interface Spectrogram {
     'base64_spectrogram': string;
@@ -109,12 +120,34 @@ async function getSpectrogram(id: string) {
     return axiosInstance.get<Spectrogram>(`/recording/${id}/spectrogram`);
 }
 
+async function getAnnotations(recordingId: string) {
+    return axiosInstance.get<SpectrogramAnnotation[]>(`/recording/${recordingId}/annotations`);
+
+}
+
 async function getSpecies() {
     return axiosInstance.get<Species[]>('/species/');
 }
+
+async function patchAnnotation(recordingId: string, annotationId: number, annotation: UpdateSpectrogramAnnotation, speciesList: number[] = []) {
+    return axiosInstance.patch(`/recording/${recordingId}/annotations/${annotationId}`, { annotation, species_ids: speciesList});
+}
+
+async function putAnnotation(recordingId: string, annotation: UpdateSpectrogramAnnotation, speciesList: number[] = []) {
+    return axiosInstance.put<{message: string, id: number}>(`/recording/${recordingId}/annotations`, { annotation, species_ids: speciesList});
+}
+
+async function deleteAnnotation(recordingId: string, annotationId: number) {
+    return axiosInstance.delete(`/recording/${recordingId}/annotations/${annotationId}`);
+}
+
 export {
  uploadRecordingFile,
  getRecordings,
  getSpectrogram,
  getSpecies,
+ getAnnotations,
+ patchAnnotation,
+ putAnnotation,
+ deleteAnnotation
 };

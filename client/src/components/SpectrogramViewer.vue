@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo, useGeoJS } from './geoJS/geoJSUtils';
-import { SpectrogramAnnotation } from "../api/api";
+import { patchAnnotation, putAnnotation, SpectrogramAnnotation } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 
 export default defineComponent({
@@ -25,10 +25,14 @@ export default defineComponent({
     selectedId: {
         type: Number as PropType<number | null>,
         default: null,
+    },
+    recordingId: {
+      type: String as PropType<string | null>,
+      required: true,
     }
-
   },
-  setup(props) {
+  emits: ['update:annotation', 'create:annotation', 'selected'],
+  setup(props, { emit }) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized  = ref(false);
@@ -41,10 +45,29 @@ export default defineComponent({
       initialized.value = true;
     });
 
+    const updateAnnotation = async (annotation: SpectrogramAnnotation) => {
+      // We call the patch on the selected annotation
+      if (props.recordingId !== null && props.selectedId !== null) {
+        await patchAnnotation(props.recordingId, props.selectedId, annotation);
+        emit('update:annotation', annotation);
+      }
+    };
+
+    const createAnnotation = async (annotation: SpectrogramAnnotation) => {
+      // We call the patch on the selected annotation
+      if (props.recordingId !== null) {
+        const response =  await putAnnotation(props.recordingId, annotation);
+        emit('create:annotation', response.data.id);
+      }
+    };
+
+
     return {
       containerRef,
       geoViewerRef: geoJS.getGeoViewer(),
       initialized,
+      updateAnnotation,
+      createAnnotation,
     };
   },
 });
@@ -64,6 +87,8 @@ export default defineComponent({
       :annotations="annotations"
       :selected-id="selectedId"
       @selected="$emit('selected',$event)"
+      @update:annotation="updateAnnotation($event)"
+      @create:annotation="createAnnotation($event)"
     />
   </div>
 </template>
