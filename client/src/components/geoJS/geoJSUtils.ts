@@ -188,10 +188,10 @@ function geojsonToSpectro(geojson: GeoJSON.Feature<GeoJSON.Polygon>, spectroInfo
   const coords = geojson.geometry.coordinates[0];
   const widthScale =  spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
   const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
-  const start_time = coords[1][0] / widthScale;
-  const end_time = coords[3][0] / widthScale;
-  const low_freq = coords[1][1] / heightScale;
-  const high_freq = coords[3][1] / heightScale;
+  const start_time = Math.round(coords[1][0] / widthScale);
+  const end_time = Math.round(coords[3][0] / widthScale);
+  const low_freq = Math.round(spectroInfo.high_freq - (coords[1][1]) / heightScale);
+  const high_freq = Math.round(spectroInfo.high_freq - (coords[3][1]) / heightScale);
   return {
     start_time,
     end_time,

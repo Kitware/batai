@@ -21,6 +21,7 @@
     "d3": "^7.8.5",
     "django-s3-file-field": "^1.0.0",
     "geojs": "^1.11.1",
+    "lodash": "^4.17.21",
     "vue": "^3.3.1",
     "vue-router": "^4.0.12",
     "vuetify": "^3.3.12"
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@types/geojson": "^7946.0.13",
     "@types/jest": "^27.4.1",
+    "@types/lodash": "^4.14.202",
     "@vitejs/plugin-vue": "^2.2.0",
     "@vue/eslint-config-typescript": "^10.0.0",
     "@vuetify/vite-plugin": "^1.0.0-alpha.10",

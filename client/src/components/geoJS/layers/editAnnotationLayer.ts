@@ -6,9 +6,6 @@ import { LayerStyle } from "./types";
 import { GeoJSON } from "geojson";
 
 export type EditAnnotationTypes = "rectangle";
-interface EditAnnotationLayerParams {
-  type: EditAnnotationTypes;
-}
 
 interface RectGeoJSData {
   id: number;
@@ -92,11 +89,11 @@ export default class EditAnnotationLayer {
   ) {
     (this.geoViewerRef = geoViewerRef), (this.event = event);
     this.type = "rectangle";
-    this.style =  {
-        strokeColor: 'black',
-        strokeWidth: 1.0,
-        antialiasing: 0,
-      };
+    this.style = {
+      strokeColor: "black",
+      strokeWidth: 1.0,
+      antialiasing: 0,
+    };
     this.formattedData = [];
     this.spectroInfo = spectroInfo;
     this.skipNextExternalUpdate = false;
@@ -199,12 +196,10 @@ export default class EditAnnotationLayer {
       // triggers a mouse up while editing to make it seem like a point was placed
       window.setTimeout(
         () =>
-          this.geoViewerRef
-            .interactor()
-            .simulateEvent("mouseup", {
-              map: { x: e.mouse.geo.x, y: e.mouse.geo.y },
-              button: "left",
-            }),
+          this.geoViewerRef.interactor().simulateEvent("mouseup", {
+            map: { x: e.mouse.geo.x, y: e.mouse.geo.y },
+            button: "left",
+          }),
         0
       );
     } else if (this.shapeInProgress) {
@@ -319,7 +314,7 @@ export default class EditAnnotationLayer {
   }
 
   /** overrides default function to disable and clear anotations before drawing again */
-  async changeData(frameData: SpectrogramAnnotation) {
+  async changeData(frameData: SpectrogramAnnotation | null) {
     if (this.skipNextExternalUpdate === false) {
       // disable resets things before we load a new/different shape or mode
       this.disable();
@@ -344,25 +339,40 @@ export default class EditAnnotationLayer {
    *
    * @param frameData a single FrameDataTrack Array that is the editing item
    */
-  formatData(annotationData: SpectrogramAnnotation) {
+  formatData(annotationData: SpectrogramAnnotation | null) {
     this.selectedHandleIndex = -1;
     this.hoverHandleIndex = -1;
     this.event("update:selectedIndex", {
       selectedIndex: this.selectedHandleIndex,
       selectedKey: this.selectedKey,
     });
-    const geoJSONData = spectroToGeoJSon(annotationData, this.spectroInfo);
-    const geojsonFeature: GeoJSON.Feature = {
-      type: "Feature",
-      geometry: geoJSONData,
-      properties: {
-        annotationType: typeMapper.get(this.type),
-      },
-    };
-    this.featureLayer.geojson(geojsonFeature);
-    const annotation = this.applyStylesToAnnotations();
-    this.setMode("rectangle", annotation);
-    this.formattedData = [geojsonFeature];
+    if (annotationData) {
+      const geoJSONData = spectroToGeoJSon(annotationData, this.spectroInfo);
+      const geojsonFeature: GeoJSON.Feature = {
+        type: "Feature",
+        geometry: geoJSONData,
+        properties: {
+          annotationType: typeMapper.get(this.type),
+        },
+      };
+      this.featureLayer.geojson(geojsonFeature);
+      const annotation = this.applyStylesToAnnotations();
+      this.setMode("rectangle", annotation);
+      this.formattedData = [geojsonFeature];
+      return;
+    } else {
+      this.setMode(this.type);
+    }
+    if (typeof this.type !== "string") {
+      throw new Error(
+        `editing props needs to be a string of value 
+        ${geo.listAnnotations().join(", ")}
+          when geojson prop is not set`
+      );
+    } else {
+      // point or rectangle mode for the editor
+      this.setMode(this.type);
+    }
   }
 
   /**
@@ -388,6 +398,7 @@ export default class EditAnnotationLayer {
         this.event("update:geojson", {
           status: "editing",
           creating: this.getMode() === "creation",
+          geoJSON: geoJSONData[0],
           type: this.type,
           selectedKey: this.selectedKey,
         });
@@ -415,10 +426,12 @@ export default class EditAnnotationLayer {
               );
               // The corners need to update for the indexes to update
               // coordinates are in a different system than display
-              const coords = (newGeojson.geometry.coordinates[0]  as GeoJSON.Position[]).map((coord) => ({
-                x: coord[0],
-                y: coord[1],
-              }));
+              const coords = (newGeojson.geometry.coordinates[0] as GeoJSON.Position[]).map(
+                (coord) => ({
+                  x: coord[0],
+                  y: coord[1],
+                })
+              );
               // only use the 4 coords instead of 5
               const remapped = this.geoViewerRef.worldToGcs(coords.splice(0, 4));
               e.annotation.options("corners", remapped);
@@ -446,7 +459,7 @@ export default class EditAnnotationLayer {
             type: this.type,
             selectedKey: this.selectedKey,
           });
-          }
+        }
       }
     }
   }
@@ -476,7 +489,7 @@ export default class EditAnnotationLayer {
         fill: false,
       },
       fill: false,
-      strokeColor: "red",
+      strokeColor: "cyan",
     };
   }
 

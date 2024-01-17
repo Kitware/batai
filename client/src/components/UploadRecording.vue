@@ -8,7 +8,8 @@ import { VDatePicker } from 'vuetify/labs/VDatePicker';
 export default defineComponent({
   components: {
     VDatePicker,
-  },  
+  },
+  emits: ['done', 'cancel'],
   setup(props, { emit }) {
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref();
