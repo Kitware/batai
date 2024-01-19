@@ -56,19 +56,6 @@ class UpdateAnnotationsSchema(Schema):
     id: int | None
 
 
-def get_user(request: HttpRequest):
-    auth_header = request.headers.get('Authorization', None)
-    if auth_header is not None:
-        token = request.headers.get('Authorization').replace('Bearer ', '')
-        token_found = AccessToken.objects.get(token=token)
-        if not token_found:
-            raise HttpError(401, 'Authentication credentials were not provided.')
-        return token_found.user
-    elif request.user:
-        logger.warning(f'User: {request.user}')
-        return request.user
-
-
 @router.post('/')
 def create_recording(
     request: HttpRequest, payload: Form[RecordingUploadSchema], audio_file: File[UploadedFile]
@@ -108,7 +95,51 @@ def get_spectrogram(request: HttpRequest, id: int):
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    spectro_data = recording.generate_spectrogram()
+    spectrogram = recording.spectrogram
+
+    spectro_data = {
+        'base64_spectrogram': spectrogram.base64,
+        'spectroInfo': {
+            'width': spectrogram.width,
+            'height': spectrogram.height,
+            'start_time': 0,
+            'end_time': spectrogram.duration,
+            'low_freq': spectrogram.frequency_min,
+            'high_freq': spectrogram.frequency_max,
+        },
+    }
+
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
+
+    # Serialize the annotations using AnnotationSchema
+    annotations_data = [
+        AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs
+    ]
+    spectro_data['annotations'] = annotations_data
+    return spectro_data
+
+
+@router.get('/{id}/spectrogram/compressed')
+def get_spectrogram_compressed(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+    spectrogram = recording.spectrogram
+    compressed, starts, ends = spectrogram.compressed
+
+    spectro_data = {
+        'base64_spectrogram': compressed,
+        'spectroInfo': {
+            'width': spectrogram.width,
+            'height': spectrogram.height,
+            'start_times': starts,
+            'end_times': ends,
+            'low_freq': spectrogram.frequency_min,
+            'high_freq': spectrogram.frequency_max,
+        },
+    }
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
