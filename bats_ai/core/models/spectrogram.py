@@ -16,7 +16,7 @@ import scipy
 from bats_ai.core.models import Recording
 
 FREQ_MIN = 5e3
-FREQ_MAX = 200e3
+FREQ_MAX = 120e3
 FREQ_PAD = 2e3
 
 
@@ -77,9 +77,11 @@ class Spectrogram(TimeStampedModel, models.Model):
 
         freq_low = int(FREQ_MIN - FREQ_PAD)
         freq_high = int(FREQ_MAX + FREQ_PAD)
+        vmin = window.min()
+        vmax = window.max()
         dpi = 300
 
-        chunksize = int(1e4)
+        chunksize = int(5e3)
         arange = np.arange(chunksize, window.shape[1], chunksize)
         chunks = np.array_split(window, arange, axis=1)
 
@@ -94,7 +96,7 @@ class Spectrogram(TimeStampedModel, models.Model):
 
             # Plot
             librosa.display.specshow(
-                chunk, sr=sr, hop_length=hop_length, x_axis='s', y_axis='linear', ax=ax
+                chunk, sr=sr, hop_length=hop_length, x_axis='s', y_axis='linear', ax=ax, vmin=vmin, vmax=vmax,
             )
 
             ax.set_ylim(freq_low, freq_high)
