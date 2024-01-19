@@ -96,7 +96,14 @@ class Spectrogram(TimeStampedModel, models.Model):
 
             # Plot
             librosa.display.specshow(
-                chunk, sr=sr, hop_length=hop_length, x_axis='s', y_axis='linear', ax=ax, vmin=vmin, vmax=vmax,
+                chunk,
+                sr=sr,
+                hop_length=hop_length,
+                x_axis='s',
+                y_axis='linear',
+                ax=ax,
+                vmin=vmin,
+                vmax=vmax,
             )
 
             ax.set_ylim(freq_low, freq_high)
