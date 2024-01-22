@@ -5,10 +5,8 @@ from django.contrib.auth.models import User
 from django.core.files.storage import default_storage
 from django.http import HttpRequest
 from ninja import File, Form, Schema
-from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
-from oauth2_provider.models import AccessToken
 
 from bats_ai.core.models import Annotations, Recording, Species
 from bats_ai.core.views.species import SpeciesSchema
@@ -58,28 +56,14 @@ class UpdateAnnotationsSchema(Schema):
     id: int | None
 
 
-def get_user(request: HttpRequest):
-    auth_header = request.headers.get('Authorization', None)
-    if auth_header is not None:
-        token = request.headers.get('Authorization').replace('Bearer ', '')
-        token_found = AccessToken.objects.get(token=token)
-        if not token_found:
-            raise HttpError(401, 'Authentication credentials were not provided.')
-        return token_found.user
-    elif request.user:
-        logger.warning(f'User: {request.user}')
-        return request.user
-
-
 @router.post('/')
 def create_recording(
     request: HttpRequest, payload: Form[RecordingUploadSchema], audio_file: File[UploadedFile]
 ):
-    user_id = get_user(request).pk
     converted_date = datetime.strptime(payload.recorded_date, '%Y-%m-%d')
     recording = Recording(
         name=payload.name,
-        owner_id=user_id,
+        owner_id=request.user.pk,
         audio_file=audio_file,
         recorded_date=converted_date,
         equipment=payload.equipment,
@@ -92,11 +76,8 @@ def create_recording(
 
 @router.get('/')
 def get_recordings(request: HttpRequest):
-    # Check if the user is authenticated and get userId
-    user_id = get_user(request)
-
     # Filter recordings based on the owner's id
-    recordings = Recording.objects.filter(owner=user_id).values()
+    recordings = Recording.objects.filter(owner=request.user).values()
 
     for recording in recordings:
         user = User.objects.get(id=recording['owner_id'])
@@ -109,15 +90,58 @@ def get_recordings(request: HttpRequest):
 
 @router.get('/{id}/spectrogram')
 def get_spectrogram(request: HttpRequest, id: int):
-    user_id = get_user(request)
     try:
         recording = Recording.objects.get(pk=id)
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    spectro_data = recording.generate_spectrogram()
+    spectrogram = recording.spectrogram
 
-    annotations_qs = Annotations.objects.filter(recording=recording, owner=user_id)
+    spectro_data = {
+        'base64_spectrogram': spectrogram.base64,
+        'spectroInfo': {
+            'width': spectrogram.width,
+            'height': spectrogram.height,
+            'start_time': 0,
+            'end_time': spectrogram.duration,
+            'low_freq': spectrogram.frequency_min,
+            'high_freq': spectrogram.frequency_max,
+        },
+    }
+
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
+
+    # Serialize the annotations using AnnotationSchema
+    annotations_data = [
+        AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs
+    ]
+    spectro_data['annotations'] = annotations_data
+    return spectro_data
+
+
+@router.get('/{id}/spectrogram/compressed')
+def get_spectrogram_compressed(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+    spectrogram = recording.spectrogram
+    compressed, starts, ends = spectrogram.compressed
+
+    spectro_data = {
+        'base64_spectrogram': compressed,
+        'spectroInfo': {
+            'width': spectrogram.width,
+            'height': spectrogram.height,
+            'start_times': starts,
+            'end_times': ends,
+            'low_freq': spectrogram.frequency_min,
+            'high_freq': spectrogram.frequency_max,
+        },
+    }
+
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [
@@ -129,15 +153,13 @@ def get_spectrogram(request: HttpRequest, id: int):
 
 @router.get('/{id}/annotations')
 def get_annotations(request: HttpRequest, id: int):
-    user_id = get_user(request)
-
     try:
-        recording = Recording.objects.get(pk=id, owner=user_id)
+        recording = Recording.objects.get(pk=id, owner=request.user)
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
     # Query annotations associated with the recording
-    annotations_qs = Annotations.objects.filter(recording=recording, owner=user_id)
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [
@@ -154,17 +176,15 @@ def put_annotation(
     annotation: AnnotationSchema,
     species_ids: list[int],
 ):
-    user = get_user(request)
-
     try:
-        recording = Recording.objects.get(pk=id, owner=user.pk)
+        recording = Recording.objects.get(pk=id, owner=request.user)
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
     # Create a new annotation
     new_annotation = Annotations.objects.create(
         recording=recording,
-        owner=user,
+        owner=request.user,
         start_time=annotation.start_time,
         end_time=annotation.end_time,
         low_freq=annotation.low_freq,
@@ -192,10 +212,8 @@ def patch_annotation(
     annotation: UpdateAnnotationsSchema,
     species_ids: list[int],
 ):
-    user_id = get_user(request)
-
     try:
-        recording = Recording.objects.get(pk=recording_id, owner=user_id)
+        recording = Recording.objects.get(pk=recording_id, owner=request.user)
         annotation_instance = Annotations.objects.get(pk=id, recording=recording)
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
@@ -232,10 +250,8 @@ def patch_annotation(
 
 @router.delete('/{recording_id}/annotations/{id}')
 def delete_annotation(request, recording_id: int, id: int):
-    user_id = get_user(request)
-
     try:
-        recording = Recording.objects.get(pk=recording_id, owner=user_id)
+        recording = Recording.objects.get(pk=recording_id, owner=request.user)
         annotation_instance = Annotations.objects.get(pk=id, recording=recording)
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}

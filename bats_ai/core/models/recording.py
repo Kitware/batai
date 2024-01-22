@@ -15,56 +15,30 @@ class Recording(TimeStampedModel, models.Model):
     grts_cell_id = models.IntegerField(blank=True, null=True)
     grts_cell = models.IntegerField(blank=True, null=True)
 
-    def generate_spectrogram(self):
-        import base64
-        from io import BytesIO
+    @property
+    def has_spectrogram(self):
+        return len(self.spectrograms) > 0
 
-        import librosa
-        import librosa.display
-        import matplotlib.pyplot as plt
-        import numpy as np
+    @property
+    def spectrograms(self):
+        from bats_ai.core.models import Spectrogram
 
-        # Load audio file
-        bytefile = self.audio_file.read()
+        query = Spectrogram.objects.filter(recording=self).order_by('-created')
+        return query.all()
 
-        y, sr = librosa.load(BytesIO(bytefile))
+    @property
+    def spectrogram(self):
+        from bats_ai.core.models import Spectrogram
 
-        # Generate spectrogram
-        D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+        spectrograms = self.spectrograms
 
-        # Plot and save the spectrogram
-        plt.figure(figsize=(10, 4))
-        librosa.display.specshow(D, sr=sr, x_axis='time', y_axis='linear')
-        plt.colorbar(format='%+2.0f dB')
-        plt.title('Spectrogram')
-        plt.xlabel('Time')
-        plt.ylabel('Frequency')
-        plt.tight_layout()
+        if len(spectrograms) == 0:
+            Spectrogram.generate(self)
 
-        # Convert the plot to base64
-        buffer = BytesIO()
-        plt.savefig(buffer, format='png')
-        buffer.seek(0)
-        base64_image = base64.b64encode(buffer.read()).decode('utf-8')
+            spectrograms = self.spectrograms
+            assert len(spectrograms) == 1
 
-        plt.close()
+        assert len(spectrograms) >= 1
+        spectrogram = spectrograms[0]  # most recently created
 
-        start_time = 0.0
-        end_time = librosa.get_duration(y=y, sr=sr) * 1000  # in milliseconds
-        low_frequency = 0  # Set your desired low frequency
-        high_frequency = sr / 2  # Set your desired high frequency
-        image_width = 10 * 100  # 10 inches at 100 dpi
-        image_height = 4 * 100  # 4 inches at 100 dpi
-
-        # Return dictionary with all required fields
-        return {
-            'base64_spectrogram': base64_image,
-            'spectroInfo': {
-                'width': image_width,
-                'height': image_height,
-                'start_time': start_time,
-                'end_time': end_time,
-                'low_freq': low_frequency,
-                'high_freq': high_frequency,
-            },
-        }
+        return spectrogram
