@@ -5,6 +5,7 @@ import SpectrogramViewer from '../components/SpectrogramViewer.vue';
 import { SpectroInfo } from '../components/geoJS/geoJSUtils';
 import AnnotationList from '../components/AnnotationList.vue';
 import AnnotationEditor from '../components/AnnotationEditor.vue';
+import ThumbnailViewer from '../components/ThumbnailViewer.vue';
 
 export default defineComponent({
   name: "Spectrogram",
@@ -12,6 +13,7 @@ export default defineComponent({
     SpectrogramViewer,
     AnnotationList,
     AnnotationEditor,
+    ThumbnailViewer,
   },
   props: {
     id: {
@@ -56,6 +58,11 @@ export default defineComponent({
       return null;
     });
     onMounted(() => loadData());
+    const parentGeoViewerRef: Ref<any> = ref(null);
+    const setParentGeoViewer = (data: any) => {
+      parentGeoViewerRef.value = data;
+
+    }
     return { 
       loadedImage,
       image,
@@ -64,8 +71,10 @@ export default defineComponent({
       selectedId,
       setSelection,
       getAnnotationsList,
+      setParentGeoViewer,
       speciesList,
       selectedAnnotation,
+      parentGeoViewerRef,
     };
   },
 });
@@ -83,6 +92,17 @@ export default defineComponent({
         :selected-id="selectedId"
         @selected="setSelection($event)"
         @create:annotation="getAnnotationsList($event)"
+        @geo-viewer-ref="setParentGeoViewer($event)"
+      />
+      <thumbnail-viewer
+        v-if="loadedImage && parentGeoViewerRef"
+        :image="image"
+        :spectro-info="spectroInfo"
+        :recording-id="id"
+        :annotations="annotations"
+        :selected-id="selectedId"
+        :parent-geo-viewer-ref="parentGeoViewerRef"
+        @selected="setSelection($event)"
       />
     </v-col>
     <v-col style="max-width:300px">

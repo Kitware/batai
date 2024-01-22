@@ -9,6 +9,9 @@ const useGeoJS = () => {
     const container: Ref<HTMLElement| undefined> = ref();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let quadFeature: any;
+
+    const thumbnail = ref(false);
+
     let originalBounds = {
         left: 0,
         top: 0,
@@ -20,7 +23,8 @@ const useGeoJS = () => {
         return geoViewer;
     };
 
-    const initializeViewer = (sourceContainer: HTMLElement, width: number, height: number) => {
+    const initializeViewer = (sourceContainer: HTMLElement, width: number, height: number, thumbanilVal=false) => {
+        thumbnail.value = thumbanilVal;
         container.value = sourceContainer;
         const params = geo.util.pixelCoordinateParams(
         container.value,
@@ -71,6 +75,14 @@ const useGeoJS = () => {
         enabled: false,
         };
         interactorOpts.wheelScaleY = 0.2;
+        if (thumbnail.value) {
+          interactorOpts.actions = [{
+                action: 'overview_pan',
+                input: 'left',
+                modifiers: {shift: false, ctrl: false},
+                name: 'button pan'
+            }];
+        }
         geoViewer.value.interactor().options(interactorOpts);
         geoViewer.value.bounds({
             left: 0,
@@ -102,14 +114,17 @@ const useGeoJS = () => {
         resetMapDimensions(width, height);
     };
     const resetZoom = () => {
+      const mapWidth = geoViewer.value.camera().viewport.width;
+      const bounds = !thumbnail.value ? {left: 0, top: 0, right: mapWidth, bottom: originalBounds.bottom } : originalBounds;
         const zoomAndCenter = geoViewer.value.zoomAndCenterFromBounds(
-          originalBounds, 0,
+          bounds, 0,
         );
         geoViewer.value.zoom(zoomAndCenter.zoom);
         geoViewer.value.center(zoomAndCenter.center);
     };
   
     const resetMapDimensions = ( width: number, height: number, margin = 0.3) => {
+        // Want the height to be the main view and whe width to be  relative to the width of the geo.amp
         geoViewer.value.bounds({
             left: 0,
             top: 0,
@@ -132,7 +147,7 @@ const useGeoJS = () => {
               min: -Infinity,
               // 4x zoom max
               max: 4,
-            });
+          });
             geoViewer.value.clampBoundsX(true);
             geoViewer.value.clampBoundsY(true);
             geoViewer.value.clampZoom(true);

@@ -31,7 +31,7 @@ export default defineComponent({
       required: true,
     }
   },
-  emits: ['update:annotation', 'create:annotation', 'selected'],
+  emits: ['update:annotation', 'create:annotation', 'selected', 'geoViewerRef'],
   setup(props, { emit }) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
@@ -43,6 +43,7 @@ export default defineComponent({
       geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight);
       geoJS.drawImage(props.image, naturalWidth, naturalHeight);
       initialized.value = true;
+      emit('geoViewerRef', geoJS.getGeoViewer());
     });
 
     const updateAnnotation = async (annotation: SpectrogramAnnotation) => {
@@ -101,7 +102,7 @@ export default defineComponent({
   top: 0;
   bottom: 0;
   z-index: 0;
-  height: 90vh;
+  height: 60vh;
   background-color: black;
 
   display: flex;
