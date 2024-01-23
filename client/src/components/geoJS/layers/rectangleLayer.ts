@@ -143,7 +143,7 @@ export default class RectangleLayer {
     return {
       ...{
         strokeColor: "black",
-        strokeWidth: 4.0,
+        strokeWidth: 2.0,
         antialiasing: 0,
         stroke: true,
         uniformPolygon: true,

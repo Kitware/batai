@@ -37,6 +37,8 @@ export default defineComponent({
     const editingAnnotation: Ref<null | SpectrogramAnnotation> = ref(null);
     let rectAnnotationLayer: RectangleLayer;
     let editAnnotationLayer: EditAnnotationLayer;
+    const displayError = ref(false);
+    const errorMsg = ref('');
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     const event = (type: string, data: any) => {
       // Will handle clicking, selecting and editing here
@@ -101,10 +103,16 @@ export default defineComponent({
             );
             if (index !== -1 && props.spectroInfo) {
               // update bounds for the localAnnotation
-              const { low_freq, high_freq, start_time, end_time } = geojsonToSpectro(
+              const conversionResult =  geojsonToSpectro(
                 geoJSON,
                 props.spectroInfo
               );
+              if (conversionResult.error) {
+                displayError.value = true;
+                errorMsg.value = conversionResult.error;
+                return;
+              } 
+              const { low_freq, high_freq, start_time, end_time } = conversionResult;
               localAnnotations.value[index] = {
                 ...localAnnotations.value[index],
                 low_freq,
@@ -119,10 +127,17 @@ export default defineComponent({
           }
         } else if (creating) {
           if (geoJSON && props.spectroInfo) {
-            const { low_freq, high_freq, start_time, end_time } = geojsonToSpectro(
-              geoJSON,
-              props.spectroInfo
-            );
+            const conversionResult =  geojsonToSpectro(
+                geoJSON,
+                props.spectroInfo
+              );
+
+            if (conversionResult.error) {
+                displayError.value = true;
+                errorMsg.value = conversionResult.error;
+                return;
+              } 
+            const { low_freq, high_freq, start_time, end_time } = conversionResult;
             const newAnnotation: SpectrogramAnnotation = {
               low_freq,
               high_freq,
@@ -187,11 +202,34 @@ export default defineComponent({
     return {
       annotationState,
       localAnnotations,
+      displayError,
+      errorMsg,
     };
   },
 });
 </script>
 
 <template>
+  <v-dialog
+    v-model="displayError"
+    width="500"
+  >
+    <v-card>
+      <v-card-title>Error</v-card-title>
+      <v-card-text>{{ errorMsg }}</v-card-text>
+      <v-card-actions>
+        <v-row>
+          <v-spacer />
+          <v-btn
+            variant="outlined"
+            @click="displayError=false;"
+          >
+            Dismiss
+          </v-btn>
+          <v-spacer />
+        </v-row>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
   <div />
 </template>

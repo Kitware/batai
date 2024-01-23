@@ -1,10 +1,12 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, Ref, ref, } from 'vue';
-import { getSpecies, getAnnotations, getSpectrogram, Species, SpectrogramAnnotation } from '../api/api';
+import { getSpecies, getAnnotations, getSpectrogram, Species, SpectrogramAnnotation, getSpectrogramCompressed } from '../api/api';
 import SpectrogramViewer from '../components/SpectrogramViewer.vue';
 import { SpectroInfo } from '../components/geoJS/geoJSUtils';
 import AnnotationList from '../components/AnnotationList.vue';
 import AnnotationEditor from '../components/AnnotationEditor.vue';
+import ThumbnailViewer from '../components/ThumbnailViewer.vue';
+import { watch } from 'vue';
 
 export default defineComponent({
   name: "Spectrogram",
@@ -12,12 +14,13 @@ export default defineComponent({
     SpectrogramViewer,
     AnnotationList,
     AnnotationEditor,
+    ThumbnailViewer,
   },
   props: {
     id: {
       type: String,
       required: true,
-    }
+    },
   },
   setup(props) {
     const image: Ref<HTMLImageElement> = ref(new Image());
@@ -26,6 +29,7 @@ export default defineComponent({
     const selectedId: Ref<number | null> = ref(null);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
+    const compressed = ref(false);
     const getAnnotationsList= async (annotationId?: number) => {
         const response = await getAnnotations(props.id);
         annotations.value = response.data;
@@ -35,7 +39,8 @@ export default defineComponent({
         
     };
     const loadData = async () => {
-      const response = await getSpectrogram(props.id);
+      loadedImage.value = false;
+      const response = compressed.value ? await getSpectrogramCompressed(props.id) : await getSpectrogram(props.id);
       image.value.src = `data:image/png;base64,${response.data['base64_spectrogram']}`;
       spectroInfo.value = response.data['spectroInfo'];
       annotations.value = response.data['annotations'];
@@ -56,7 +61,16 @@ export default defineComponent({
       return null;
     });
     onMounted(() => loadData());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parentGeoViewerRef: Ref<any> = ref(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const setParentGeoViewer = (data: any) => {
+      parentGeoViewerRef.value = data;
+
+    };
+    watch(compressed, () => loadData());
     return { 
+      compressed,
       loadedImage,
       image,
       spectroInfo,
@@ -64,8 +78,10 @@ export default defineComponent({
       selectedId,
       setSelection,
       getAnnotationsList,
+      setParentGeoViewer,
       speciesList,
       selectedAnnotation,
+      parentGeoViewerRef,
     };
   },
 });
@@ -83,9 +99,26 @@ export default defineComponent({
         :selected-id="selectedId"
         @selected="setSelection($event)"
         @create:annotation="getAnnotationsList($event)"
+        @geo-viewer-ref="setParentGeoViewer($event)"
+      />
+      <thumbnail-viewer
+        v-if="loadedImage && parentGeoViewerRef"
+        :image="image"
+        :spectro-info="spectroInfo"
+        :recording-id="id"
+        :annotations="annotations"
+        :selected-id="selectedId"
+        :parent-geo-viewer-ref="parentGeoViewerRef"
+        @selected="setSelection($event)"
       />
     </v-col>
     <v-col style="max-width:300px">
+      <v-switch
+        v-model="compressed"
+        label="Compressed"
+        density="compact"
+        class="ma-0 pa-0"
+      />
       <annotation-list
         :annotations="annotations"
         :selected-id="selectedId"

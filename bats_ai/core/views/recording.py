@@ -133,6 +133,8 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
         'base64_spectrogram': compressed,
         'spectroInfo': {
             'width': spectrogram.width,
+            'start_time': 0,
+            'end_time': spectrogram.duration,
             'height': spectrogram.height,
             'start_times': starts,
             'end_times': ends,
