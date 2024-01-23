@@ -271,7 +271,7 @@ class Spectrogram(TimeStampedModel, models.Model):
         buf.seek(0)
         img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
 
-        return img_base64, starts_, stops_, self.duration
+        return img_base64, starts_, stops_
 
     @property
     def image_np(self):
