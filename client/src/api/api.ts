@@ -120,6 +120,11 @@ async function getSpectrogram(id: string) {
     return axiosInstance.get<Spectrogram>(`/recording/${id}/spectrogram`);
 }
 
+async function getSpectrogramCompressed(id: string) {
+    return axiosInstance.get<Spectrogram>(`/recording/${id}/spectrogram/compressed`);
+
+}
+
 async function getAnnotations(recordingId: string) {
     return axiosInstance.get<SpectrogramAnnotation[]>(`/recording/${recordingId}/annotations`);
 
@@ -145,6 +150,7 @@ export {
  uploadRecordingFile,
  getRecordings,
  getSpectrogram,
+ getSpectrogramCompressed,
  getSpecies,
  getAnnotations,
  patchAnnotation,

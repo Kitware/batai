@@ -1,5 +1,6 @@
+<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script lang="ts">
-import { defineComponent, PropType, ref, Ref, watch } from "vue";
+import { defineComponent, nextTick, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo, useGeoJS } from './geoJS/geoJSUtils';
 import { SpectrogramAnnotation } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
@@ -38,7 +39,7 @@ export default defineComponent({
     }
   },
   emits: ['selected'],
-  setup(props, { emit }) {
+  setup(props) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized  = ref(false);
@@ -49,30 +50,30 @@ export default defineComponent({
       center: any,
       rotate: any,
       zoom:any,
-    }
+      distanceToOutline: any,
+    };
 
     const createPolyLayer = () => {
       const geoViewer = geoJS.getGeoViewer();
       const featureLayer = geoViewer.value.createLayer('feature', {feattures: ['polygon']});
-      const outlineFeature = featureLayer.createFeature('polygon', {
-        style: {
+      const outlineFeature = featureLayer.createFeature('polygon', {});
+      const outlineStyle = {
           stroke: true,
-          strokeCoor: 'yellow',
+          strokeColor: 'yellow',
           strokeWidth: 1,
-          fille: false,
-        }
-      });
+          fill: false,
+      };
       featureLayer.geoOn(geo.event.mouseclick, (evt: GeoEvent) => {
             props.parentGeoViewerRef.value.center(evt.geo);
       });
-      featureLayer.geoOn(geo.event.actiondown, (evt) => {
+      featureLayer.geoOn(geo.event.actiondown, (evt: GeoEvent) => {
             downState = {
                 state: evt.state,
                 mouse: evt.mouse,
                 center:  props.parentGeoViewerRef.value.center(),
                 zoom:  props.parentGeoViewerRef.value.zoom(),
                 rotate:  props.parentGeoViewerRef.value.rotation(),
-                //distanceToOutline: geo.util.distanceToPolygon2d(evt.mouse.geo, this._outlineFeature.data()[0]) / this.viewer.unitsPerPixel(this.viewer.zoom())
+                distanceToOutline: geo.util.distanceToPolygon2d(evt.mouse.geo, outlineFeature.data()[0]) / props.parentGeoViewerRef.value.unitsPerPixel(props.parentGeoViewerRef.value.zoom())
             };
         });
         featureLayer.geoOn(geo.event.actionmove, (evt: GeoEvent) => {
@@ -98,16 +99,33 @@ export default defineComponent({
                     break;
             }
         });
+        const onParentPan = () => {
+          const parent = props.parentGeoViewerRef.value;
+        if (parent.rotation() !== props.parentGeoViewerRef.value.rotation()) {
+            props.parentGeoViewerRef.value.rotation(parent.rotation());
+            props.parentGeoViewerRef.value.zoom(props.parentGeoViewerRef.value.zoom() - 1);
+        }
+        const size = parent.size();
+        outlineFeature.style(outlineStyle);
+        outlineFeature.data([[
+            parent.displayToGcs({x: 0, y: 0}),
+            parent.displayToGcs({x: size.width, y: 0}),
+            parent.displayToGcs({x: size.width, y: size.height}),
+            parent.displayToGcs({x: 0, y: size.height})
+        ]]).draw();
+        };
+        onParentPan();
+        // Bind parent pan to the outline feature
+        props.parentGeoViewerRef.value.geoOn(geo.event.pan, onParentPan);
         polyLayerCreated.value = true;
     };
     watch(containerRef, () => {
       const { naturalWidth, naturalHeight } = props.image;
-      if (containerRef.value)
+      if (containerRef.value) {
       geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true);
       geoJS.drawImage(props.image, naturalWidth, naturalHeight);
       initialized.value = true;
-      if (!polyLayerCreated.value) {
-        createPolyLayer();
+        nextTick(() => createPolyLayer());
       }
     });
 
