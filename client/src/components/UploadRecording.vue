@@ -2,7 +2,7 @@
 import { defineComponent, ref, Ref } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
-import { uploadRecordingFile } from '../api/api';
+import { UploadLocation, uploadRecordingFile } from '../api/api';
 import { VDatePicker } from 'vuetify/labs/VDatePicker';
 
 export default defineComponent({
@@ -22,6 +22,9 @@ export default defineComponent({
     const equipment = ref('');
     const comments = ref('');
     const validForm = ref(false);
+    const latitude: Ref<number | undefined> = ref();
+    const longitude: Ref<number | undefined> = ref();
+    const gridCellId: Ref<number | undefined> = ref();
     const readFile = (e: Event) => {
       const target = (e.target as HTMLInputElement);
       if (target?.files?.length) {
@@ -47,7 +50,20 @@ export default defineComponent({
       if (!file) {
         throw new Error('Unreachable');
       }
-      await uploadRecordingFile(file, name.value, recordedDate.value, equipment.value, comments.value);
+      let location: UploadLocation = null;
+      if (latitude.value && longitude.value) {
+        location = {
+          latitude: latitude.value,
+          longitude: longitude.value,
+        };
+      }
+      if (gridCellId.value !== null) {
+        if (location === null) {
+          location  = {};
+        }
+        location['gridCellId'] = gridCellId.value;
+      }
+      await uploadRecordingFile(file, name.value, recordedDate.value, equipment.value, comments.value, location);
       emit('done');
     });
 
@@ -69,6 +85,9 @@ export default defineComponent({
       comments,
       recordedDate,
       validForm,
+      latitude,
+      longitude,
+      gridCellId,
       selectFile,
       readFile,
       submit,
@@ -100,6 +119,7 @@ export default defineComponent({
     >
     <v-card
       width="100%"
+      style="max-height:90vh; overflow-y: scroll;"
     >
       <v-container>
         <v-card-title>
@@ -157,24 +177,71 @@ export default defineComponent({
               />
             </v-row>
             <v-row class="pb-4">
-              <h3>Recorded Date:</h3>
-              <v-date-picker
-                :model-value="[recordedDate]"
-                hide-actions
-                @update:model-value="updateTime($event)"
-              />
+              <v-menu
+                open-delay="20"
+                :close-on-content-click="false"
+              >
+                <template #activator="{ props:subProps }">
+                  <v-btn
+                    color="primary"
+                    v-bind="subProps"
+                    class="mr-2"
+                  >
+                    <b>Recorded:</b>
+                    <span> {{ recordedDate }}</span>
+                  </v-btn>
+                </template>
+                <v-date-picker
+                  :model-value="[recordedDate]"
+                  hide-actions
+                  @update:model-value="updateTime($event)"
+                />
+              </v-menu>
             </v-row>
             <v-row>
-              <v-text-field
-                v-model="equipment"
-                label="equipment"
-              />
-            </v-row>
-            <v-row>
-              <v-text-field
-                v-model="comments"
-                label="comments"
-              />
+              <v-expansion-panels>
+                <v-expansion-panel>
+                  <v-expansion-panel-title>Location</v-expansion-panel-title>
+                  <v-expansion-panel-text>
+                    <v-row>
+                      <v-text-field
+                        v-model="latitude"
+                        type="number"
+                        label="LAT:"
+                      />
+                      <v-text-field
+                        v-model="longitude"
+                        type="number"
+                        label="LON:"
+                      />
+                    </v-row>
+                    <v-row>
+                      <v-text-field
+                        v-model="gridCellId"
+                        type="number"
+                        label="NABat Gird Cell"
+                      />
+                    </v-row>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+                <v-expansion-panel>
+                  <v-expansion-panel-title>Details</v-expansion-panel-title>
+                  <v-expansion-panel-text>
+                    <v-row>
+                      <v-text-field
+                        v-model="equipment"
+                        label="equipment"
+                      />
+                    </v-row>
+                    <v-row>
+                      <v-text-field
+                        v-model="comments"
+                        label="comments"
+                      />
+                    </v-row>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
             </v-row>
           </v-form>
         </v-card-text>

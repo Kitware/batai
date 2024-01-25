@@ -81,20 +81,29 @@ interface PaginatedNinjaResponse<T> {
     items: T[],
 }
 
-
+export type UploadLocation =  null | { latitude?: number, longitude?: number, gridCellId?: number};
 
 export const axiosInstance = axios.create({
   baseURL: import.meta.env.VUE_APP_API_ROOT as string,
 });
 
 
-async function uploadRecordingFile(file: File, name: string, recorded_date: string, equipment: string, comments: string ) {
+async function uploadRecordingFile(file: File, name: string, recorded_date: string, equipment: string, comments: string, location: UploadLocation = null ) {
     const formData = new FormData();
     formData.append('audio_file', file);
     formData.append('name', name);
     formData.append('recorded_date', recorded_date);
     formData.append('equipment', equipment);
     formData.append('comments', comments);
+    if (location) {
+        if (location.latitude && location.longitude) {
+            formData.append('latitude', location.latitude.toString());
+            formData.append('longitude', location.longitude.toString());
+        }
+        if (location.gridCellId) {
+            formData.append('gridCellId', location.gridCellId.toString());
+        }
+    }
     
     const recordingParams = {
       name,

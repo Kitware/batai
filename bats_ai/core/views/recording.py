@@ -1,7 +1,9 @@
 from datetime import datetime
+import json
 import logging
 
 from django.contrib.auth.models import User
+from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
 from django.http import HttpRequest
 from ninja import File, Form, Schema
@@ -34,6 +36,9 @@ class RecordingUploadSchema(Schema):
     recorded_date: str
     equipment: str | None
     comments: str | None
+    latitude: float = None
+    longitude: float = None
+    gridCellId: int = None
 
 
 class AnnotationSchema(Schema):
@@ -61,16 +66,20 @@ def create_recording(
     request: HttpRequest, payload: Form[RecordingUploadSchema], audio_file: File[UploadedFile]
 ):
     converted_date = datetime.strptime(payload.recorded_date, '%Y-%m-%d')
+    point = None
+    if payload.latitude and payload.longitude:
+        point = Point(payload.longitude, payload.latitude)
     recording = Recording(
         name=payload.name,
         owner_id=request.user.pk,
         audio_file=audio_file,
         recorded_date=converted_date,
         equipment=payload.equipment,
+        grts_cell_id=payload.gridCellId,
+        recording_location=point,
         comments=payload.comments,
     )
     recording.save()
-
     return {'message': 'Recording updated successfully', 'id': recording.pk}
 
 
@@ -79,12 +88,14 @@ def get_recordings(request: HttpRequest):
     # Filter recordings based on the owner's id
     recordings = Recording.objects.filter(owner=request.user).values()
 
+    # TODO with larger dataset it may be better to do this in a queryset instead of python
     for recording in recordings:
         user = User.objects.get(id=recording['owner_id'])
         recording['owner_username'] = user.username
         recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
+        if recording['recording_location']:
+            recording['recording_location'] = json.loads(recording['recording_location'].json)
 
-    # Return the serialized data
     return list(recordings)
 
 

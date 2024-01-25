@@ -11,7 +11,7 @@ class Recording(TimeStampedModel, models.Model):
     recorded_date = models.DateField(blank=True, null=True)
     equipment = models.TextField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
-    recording_location = models.GeometryField(srid=0, blank=True, null=True)
+    recording_location = models.GeometryField(srid=4326, blank=True, null=True)
     grts_cell_id = models.IntegerField(blank=True, null=True)
     grts_cell = models.IntegerField(blank=True, null=True)
 
