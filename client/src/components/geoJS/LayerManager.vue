@@ -4,6 +4,7 @@ import { SpectrogramAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
+import LegendLayer from "./layers/legendLayer";
 import { cloneDeep } from "lodash";
 import useState from "../../use/useState";
 export default defineComponent({
@@ -26,6 +27,14 @@ export default defineComponent({
       type: Number as PropType<number | null>,
       default: null,
     },
+    thumbnail: {
+      type: Boolean,
+      default: false,
+    },
+    grid: {
+      type: Boolean,
+      default: true,
+    }
   },
   emits: ['selected', 'update:annotation', 'create:annotation'],
   setup(props, { emit }) {
@@ -37,6 +46,7 @@ export default defineComponent({
     const editingAnnotation: Ref<null | SpectrogramAnnotation> = ref(null);
     let rectAnnotationLayer: RectangleLayer;
     let editAnnotationLayer: EditAnnotationLayer;
+    let legendLayer: LegendLayer;
     const displayError = ref(false);
     const errorMsg = ref('');
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
@@ -161,6 +171,9 @@ export default defineComponent({
         rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value);
         rectAnnotationLayer.redraw();
       }
+      if (!props.thumbnail) {
+        legendLayer.redraw();
+      }
       if (editing.value && editingAnnotation.value) {
         setTimeout(() => {
           editAnnotationLayer.changeData(editingAnnotation.value);
@@ -185,6 +198,16 @@ export default defineComponent({
         editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
         rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value);
         rectAnnotationLayer.redraw();
+        if (!props.thumbnail) {
+          legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
+          legendLayer.redraw();
+        }
+      }
+    });
+    watch(() => props.grid, () => {
+      if (!props.thumbnail && legendLayer) {
+        legendLayer.setGridEnabled(props.grid);
+        triggerUpdate();
       }
     });
     watch(

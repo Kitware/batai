@@ -29,6 +29,10 @@ export default defineComponent({
     recordingId: {
       type: String as PropType<string | null>,
       required: true,
+    },
+    grid: {
+      type: Boolean,
+      default: true,
     }
   },
   emits: ['update:annotation', 'create:annotation', 'selected', 'geoViewerRef'],
@@ -63,6 +67,7 @@ export default defineComponent({
     };
 
 
+
     return {
       containerRef,
       geoViewerRef: geoJS.getGeoViewer(),
@@ -87,6 +92,7 @@ export default defineComponent({
       :spectro-info="spectroInfo"
       :annotations="annotations"
       :selected-id="selectedId"
+      :grid="grid"
       @selected="$emit('selected',$event)"
       @update:annotation="updateAnnotation($event)"
       @create:annotation="createAnnotation($event)"

@@ -30,6 +30,7 @@ export default defineComponent({
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const compressed = ref(false);
+    const gridEnabled = ref(true);
     const getAnnotationsList= async (annotationId?: number) => {
         const response = await getAnnotations(props.id);
         annotations.value = response.data;
@@ -82,6 +83,7 @@ export default defineComponent({
       speciesList,
       selectedAnnotation,
       parentGeoViewerRef,
+      gridEnabled,
     };
   },
 });
@@ -97,6 +99,7 @@ export default defineComponent({
         :recording-id="id"
         :annotations="annotations"
         :selected-id="selectedId"
+        :grid="gridEnabled"
         @selected="setSelection($event)"
         @create:annotation="getAnnotationsList($event)"
         @geo-viewer-ref="setParentGeoViewer($event)"
@@ -113,9 +116,15 @@ export default defineComponent({
       />
     </v-col>
     <v-col style="max-width:300px">
-      <v-switch
+      <v-checkbox
         v-model="compressed"
         label="Compressed"
+        density="compact"
+        class="ma-0 pa-0"
+      />
+      <v-checkbox
+        v-model="gridEnabled"
+        label="Grid"
         density="compact"
         class="ma-0 pa-0"
       />
