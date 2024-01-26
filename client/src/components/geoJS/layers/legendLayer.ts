@@ -126,7 +126,7 @@ export default class LegendLayer {
         // We need a pixel time to map to the 0 position
         let pixelOffset = 0;
         for (let i =0; i< start_times.length; i+= 1) {
-            const length = this.axisBuffer * 8;
+            const length = this.axisBuffer * 4;
             const start_time = start_times[i];
             const end_time = end_times[i];
             this.lineData.push({
@@ -153,6 +153,16 @@ export default class LegendLayer {
                 line: {
                   type: "LineString",
                   coordinates: [
+                    [((end_time - start_time) * timeToPixels) + pixelOffset, 0],
+                    [((end_time - start_time) * timeToPixels) + pixelOffset, -length],
+                  ],
+                },
+                thicker:true,
+              });
+              this.lineData.push({
+                line: {
+                  type: "LineString",
+                  coordinates: [
                     [((end_time - start_time) * timeToPixels) + pixelOffset, this.spectroInfo.height + this.axisBuffer],
                     [((end_time - start_time) * timeToPixels) + pixelOffset, 0],
                   ],
@@ -160,23 +170,23 @@ export default class LegendLayer {
                 grid:true,
               });
 
-            // Need to decide what text to add to the label
-            //   this.textData.push({
-            //     text: `${start_time}ms`,
-            //     x: (0 + pixelOffset),
-            //     y: this.spectroInfo.height + length,
-            //     offsetX: 3,
-            //     offsetY: i > 0 ? 24: 8,
-            //   });
-            //   this.textData.push({
-            //     text: `${end_time}ms`,
-            //     x: ((start_time - end_time) * timeToPixels) + pixelOffset,
-            //     y: this.spectroInfo.height + length,
-            //     offsetX: 3,
-            //     offsetY: i != start_times.length -1 ? 8 : 24,
-            //   });
+            //Need to decide what text to add to the label
+              this.textData.push({
+                text: `${start_time}ms`,
+                x: (0 + pixelOffset),
+                y: this.spectroInfo.height + length,
+                offsetX: 3,
+                offsetY: 16,
+              });
+              this.textData.push({
+                text: `${end_time}ms`,
+                x: ((end_time - start_time ) * timeToPixels) + pixelOffset,
+                y: -length,
+                offsetX: 3,
+                offsetY: -16,
+              });
+              pixelOffset += (end_time - start_time) * timeToPixels;
             // Need to add the current 
-            pixelOffset += (end_time - start_time) * timeToPixels;
         }
     }
 
@@ -217,7 +227,7 @@ export default class LegendLayer {
         thicker: i % 10000 === 0,
       });
       this.textData.push({
-        text: `${i / 1000}KHz`,
+        text: `${(i + this.spectroInfo.low_freq) / 1000}KHz`,
         x: 0 - this.axisBuffer - length,
         y: this.spectroInfo.height - i * hzToPixels,
         offsetX: -25,
