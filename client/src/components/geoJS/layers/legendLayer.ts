@@ -57,7 +57,7 @@ export default class LegendLayer {
     this.textData = [];
     this.axisBuffer = 5;
     this.event = event;
-    this.gridEnabled = true;
+    this.gridEnabled = false;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["text", "line"],

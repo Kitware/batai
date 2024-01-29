@@ -33,7 +33,7 @@ export default defineComponent({
     },
     grid: {
       type: Boolean,
-      default: true,
+      default: false,
     }
   },
   emits: ['selected', 'update:annotation', 'create:annotation'],

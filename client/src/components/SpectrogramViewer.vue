@@ -34,7 +34,7 @@ export default defineComponent({
     },
     grid: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
   emits: ["update:annotation", "create:annotation", "selected", "geoViewerRef", "hoverData"],

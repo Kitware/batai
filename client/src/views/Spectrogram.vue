@@ -30,7 +30,7 @@ export default defineComponent({
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const compressed = ref(false);
-    const gridEnabled = ref(true);
+    const gridEnabled = ref(false);
     const getAnnotationsList= async (annotationId?: number) => {
         const response = await getAnnotations(props.id);
         annotations.value = response.data;
