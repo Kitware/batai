@@ -115,6 +115,15 @@ export default class RectangleLayer {
     const arr: RectGeoJSData[] = [];
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
         const polygon = spectroToGeoJSon(annotation, this.spectroInfo);
+        const [xmin, ymin] = polygon.coordinates[0][0];
+        const [xmax, ymax] = polygon.coordinates[0][2];
+        // For the compressed view we need to filter out default or NaN numbers
+        if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+          return;
+        }
+        if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
+          return;
+        }  
         const newAnnotation: RectGeoJSData = {
           id: annotation.id,
           selected: annotation.id === selectedIndex,
