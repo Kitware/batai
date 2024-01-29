@@ -303,7 +303,6 @@ export default class EditAnnotationLayer {
       this.skipNextExternalUpdate = false;
       this.featureLayer.removeAllAnnotations(false, true);
       this.setMode(null);
-      this.featureLayer.clear();
       this.shapeInProgress = null;
       if (this.selectedHandleIndex !== -1) {
         this.selectedHandleIndex = -1;

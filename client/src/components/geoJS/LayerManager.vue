@@ -5,6 +5,8 @@ import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
 import LegendLayer from "./layers/legendLayer";
+import TimeLayer from "./layers/timeLayer";
+import FreqLayer from "./layers/freqLayer";
 import { cloneDeep } from "lodash";
 import useState from "../../use/useState";
 export default defineComponent({
@@ -47,6 +49,8 @@ export default defineComponent({
     let rectAnnotationLayer: RectangleLayer;
     let editAnnotationLayer: EditAnnotationLayer;
     let legendLayer: LegendLayer;
+    let timeLayer: TimeLayer;
+    let freqLayer: FreqLayer;
     const displayError = ref(false);
     const errorMsg = ref('');
 
@@ -181,6 +185,10 @@ export default defineComponent({
       }
       if (!props.thumbnail) {
         legendLayer.redraw();
+        timeLayer.formatData(localAnnotations.value);
+        timeLayer.redraw();
+        freqLayer.formatData(localAnnotations.value);
+        freqLayer.redraw();
       }
       if (editing.value && editingAnnotation.value) {
         setTimeout(() => {
@@ -201,6 +209,7 @@ export default defineComponent({
           nextTick(() => {
             if (editAnnotationLayer && editAnnotationLayer.getMode() === 'disabled' && props.selectedId === null) {
               emit('set-mode', 'disabled');
+              editAnnotationLayer.featureLayer.clear();
 
             }
           });
@@ -218,7 +227,15 @@ export default defineComponent({
         rectAnnotationLayer.redraw();
         if (!props.thumbnail) {
           legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
+          timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
+          timeLayer.formatData(localAnnotations.value);
+          freqLayer = new FreqLayer(props.geoViewerRef, event, props.spectroInfo);
+          freqLayer.formatData(localAnnotations.value);
+
+
           legendLayer.redraw();
+          timeLayer.redraw();
+          freqLayer.redraw();
         }
       }
     });
@@ -274,3 +291,4 @@ export default defineComponent({
   </v-dialog>
   <div />
 </template>
+./layers/timeLalyer
