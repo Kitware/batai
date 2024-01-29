@@ -78,6 +78,13 @@ export default class TimeLayer {
       const {start_time, end_time } = annotation;
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
+      // For the compressed view we need to filter out default or NaN numbers
+      if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+        return;
+      }
+      if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
+        return;
+      }
       // We create two small lines for the beginning/end of annotation
       this.lineData.push({
         line: {
