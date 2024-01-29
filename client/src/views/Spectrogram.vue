@@ -114,6 +114,36 @@ export default defineComponent({
               <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
             </div>
           </v-col>
+          <v-spacer />
+          <v-tooltip bottom>
+            <template #activator="{ props:subProps }">
+              <v-icon
+                v-bind="subProps"
+                size="35"
+                class="mr-5 mt-5"
+
+                :color="gridEnabled ? 'blue' : ''"
+                @click="gridEnabled = !gridEnabled"
+              >
+                mdi-grid
+              </v-icon>
+            </template>
+            <span> Turn Legend Grid On/Off</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template #activator="{ props:subProps }">
+              <v-icon
+                v-bind="subProps"
+                size="35"
+                class="mr-5 mt-5"
+                :color="compressed ? 'blue' : ''"
+                @click="compressed = !compressed"
+              >
+                mdi-calendar-collapse-horizontal
+              </v-icon>
+            </template>
+            <span> Toggle Compressed View</span>
+          </v-tooltip>
         </v-row>
       </v-toolbar>
       <spectrogram-viewer
@@ -141,18 +171,6 @@ export default defineComponent({
       />
     </v-col>
     <v-col style="max-width:300px">
-      <v-checkbox
-        v-model="compressed"
-        label="Compressed"
-        density="compact"
-        class="ma-0 pa-0"
-      />
-      <v-checkbox
-        v-model="gridEnabled"
-        label="Grid"
-        density="compact"
-        class="ma-0 pa-0"
-      />
       <annotation-list
         :annotations="annotations"
         :selected-id="selectedId"
