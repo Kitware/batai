@@ -272,8 +272,10 @@ export default class EditAnnotationLayer {
         this._mode = "editing";
         newLayerMode = "edit";
         this.event("update:cursor", { cursor: "default" });
+        this.event("update:mode", { mode: "editing" });
       } else if (typeMapper.has(mode)) {
         this._mode = "creation";
+        this.event("update:mode", { mode: "creation" });
         newLayerMode = typeMapper.get(mode) as string;
         this.event("update:cursor", { cursor: "crosshair" });
       } else {
@@ -281,6 +283,7 @@ export default class EditAnnotationLayer {
       }
       this.featureLayer.mode(newLayerMode, geom);
     } else {
+      this.event("update:mode", { mode: "disabled" });
       this.featureLayer.mode(null);
     }
   }
@@ -298,8 +301,9 @@ export default class EditAnnotationLayer {
   disable() {
     if (this.featureLayer) {
       this.skipNextExternalUpdate = false;
+      this.featureLayer.removeAllAnnotations(false, true);
       this.setMode(null);
-      this.featureLayer.removeAllAnnotations(false);
+      this.featureLayer.clear();
       this.shapeInProgress = null;
       if (this.selectedHandleIndex !== -1) {
         this.selectedHandleIndex = -1;
@@ -310,6 +314,7 @@ export default class EditAnnotationLayer {
         });
       }
       this.event("update:cursor", { cursor: "default" });
+      this.event("update:mode", { mode: "disabled" });
     }
   }
 
@@ -479,10 +484,11 @@ export default class EditAnnotationLayer {
    * The base style used to represent the annotation
    */
   createStyle(): LayerStyle<GeoJSON.Feature> {
+
     return {
       ...{
-        strokeColor: "black",
-        strokeWidth: 4.0,
+        strokeColor: 'black',
+        strokeWidth: 1.0,
         antialiasing: 0,
         stroke: true,
         uniformPolygon: true,

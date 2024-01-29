@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted, PropType, Ref, ref, watch } from "vue";
+import { defineComponent, nextTick, onMounted, PropType, Ref, ref, watch } from "vue";
 import { SpectrogramAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
@@ -36,9 +36,9 @@ export default defineComponent({
       default: false,
     }
   },
-  emits: ['selected', 'update:annotation', 'create:annotation'],
+  emits: ['selected', 'update:annotation', 'create:annotation', 'set-cursor', 'set-mode'],
   setup(props, { emit }) {
-    const { annotationState } = useState();
+    const { annotationState, setAnnotationState } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
     const localAnnotations: Ref<SpectrogramAnnotation[]> = ref(cloneDeep(props.annotations));
@@ -49,9 +49,17 @@ export default defineComponent({
     let legendLayer: LegendLayer;
     const displayError = ref(false);
     const errorMsg = ref('');
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     const event = (type: string, data: any) => {
       // Will handle clicking, selecting and editing here
+      if (type === "update:mode") {
+        emit('set-mode', data.mode);
+        setAnnotationState(data.mode);
+      }
+      if (type === "update:cursor") {
+        emit('set-cursor', data.cursor);
+      }
       if (type === "annotation-cleared") {
         editing.value = false;
         selectedAnnotationId.value = null;
@@ -189,6 +197,16 @@ export default defineComponent({
       () => props.selectedId,
       () => {
         selectedAnnotationId.value = props.selectedId;
+        if (editAnnotationLayer && editAnnotationLayer.getMode() === 'editing' && props.selectedId === null) {
+          nextTick(() => {
+            if (editAnnotationLayer && editAnnotationLayer.getMode() === 'disabled' && props.selectedId === null) {
+              emit('set-mode', 'disabled');
+
+            }
+          });
+          editAnnotationLayer.disable();
+          return;
+        }
         triggerUpdate();
       }
     );
