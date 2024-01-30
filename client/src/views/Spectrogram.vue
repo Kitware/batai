@@ -99,13 +99,6 @@ export default defineComponent({
 
     const timeRef = ref(0);
     const freqRef = ref(0);
-    const setHoverData = ({ time, freq }: { time: number; freq: number }) => {
-      timeRef.value = time;
-      freqRef.value = freq;
-    };
-
-    const timeRef = ref(0);
-    const freqRef = ref(0);
     const setHoverData = ({time, freq}: {time: number, freq: number})  => {
       timeRef.value = time;
       freqRef.value = freq;
