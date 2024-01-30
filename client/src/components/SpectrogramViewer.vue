@@ -32,10 +32,6 @@ export default defineComponent({
       type: String as PropType<string | null>,
       required: true,
     },
-    grid: {
-      type: Boolean,
-      default: false,
-    },
   },
   emits: ["update:annotation", "create:annotation", "selected", "geoViewerRef", "hoverData", 'set-mode',],
   setup(props, { emit }) {
@@ -198,7 +194,6 @@ export default defineComponent({
       :spectro-info="spectroInfo"
       :annotations="annotations"
       :selected-id="selectedId"
-      :grid="grid"
       @selected="clickSelected($event)"
       @update:annotation="updateAnnotation($event)"
       @create:annotation="createAnnotation($event)"

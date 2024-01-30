@@ -123,8 +123,8 @@ export default class RectangleLayer {
         }
         if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
           return;
-        }
-          const newAnnotation: RectGeoJSData = {
+        }  
+        const newAnnotation: RectGeoJSData = {
           id: annotation.id,
           selected: annotation.id === selectedIndex,
           editing: annotation.editing,

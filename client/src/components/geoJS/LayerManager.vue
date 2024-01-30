@@ -5,6 +5,9 @@ import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
 import LegendLayer from "./layers/legendLayer";
+import TimeLayer from "./layers/timeLayer";
+import FreqLayer from "./layers/freqLayer";
+import SpeciesLayer from "./layers/speciesLayer";
 import { cloneDeep } from "lodash";
 import useState from "../../use/useState";
 export default defineComponent({
@@ -31,14 +34,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    grid: {
-      type: Boolean,
-      default: false,
-    }
   },
   emits: ['selected', 'update:annotation', 'create:annotation', 'set-cursor', 'set-mode'],
   setup(props, { emit }) {
-    const { annotationState, setAnnotationState } = useState();
+    const { annotationState, setAnnotationState, layerVisibility, } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
     const localAnnotations: Ref<SpectrogramAnnotation[]> = ref(cloneDeep(props.annotations));
@@ -47,6 +46,9 @@ export default defineComponent({
     let rectAnnotationLayer: RectangleLayer;
     let editAnnotationLayer: EditAnnotationLayer;
     let legendLayer: LegendLayer;
+    let timeLayer: TimeLayer;
+    let freqLayer: FreqLayer;
+    let speciesLayer: SpeciesLayer;
     const displayError = ref(false);
     const errorMsg = ref('');
 
@@ -180,7 +182,30 @@ export default defineComponent({
         rectAnnotationLayer.redraw();
       }
       if (!props.thumbnail) {
+        if (layerVisibility.value.includes('grid')) {
+          legendLayer.setGridEnabled(true);
+        } else {
+          legendLayer.setGridEnabled(false);
+        }
         legendLayer.redraw();
+        if (layerVisibility.value.includes('time')) {
+          timeLayer.formatData(localAnnotations.value);
+          timeLayer.redraw();
+        } else {
+          timeLayer.disable();
+        }
+        if (layerVisibility.value.includes('freq')) {
+          freqLayer.formatData(localAnnotations.value);
+          freqLayer.redraw();
+        } else {
+          freqLayer.disable();
+        }
+        if (layerVisibility.value.includes('species')) {
+          speciesLayer.formatData(localAnnotations.value);
+          speciesLayer.redraw();
+        } else {
+          speciesLayer.disable();
+        }
       }
       if (editing.value && editingAnnotation.value) {
         setTimeout(() => {
@@ -201,6 +226,7 @@ export default defineComponent({
           nextTick(() => {
             if (editAnnotationLayer && editAnnotationLayer.getMode() === 'disabled' && props.selectedId === null) {
               emit('set-mode', 'disabled');
+              editAnnotationLayer.featureLayer.clear();
 
             }
           });
@@ -218,13 +244,23 @@ export default defineComponent({
         rectAnnotationLayer.redraw();
         if (!props.thumbnail) {
           legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
+          timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
+          timeLayer.formatData(localAnnotations.value);
+          freqLayer = new FreqLayer(props.geoViewerRef, event, props.spectroInfo);
+          freqLayer.formatData(localAnnotations.value);
+          speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
+          speciesLayer.formatData(localAnnotations.value);
+
+
           legendLayer.redraw();
+          timeLayer.disable();
+          freqLayer.disable();
+          speciesLayer.disable();
         }
       }
     });
-    watch(() => props.grid, () => {
+    watch(layerVisibility, () => {
       if (!props.thumbnail && legendLayer) {
-        legendLayer.setGridEnabled(props.grid);
         triggerUpdate();
       }
     });
@@ -272,5 +308,5 @@ export default defineComponent({
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <div />
 </template>
+./layers/timeLalyer

@@ -14,7 +14,7 @@ import AnnotationList from "../components/AnnotationList.vue";
 import AnnotationEditor from "../components/AnnotationEditor.vue";
 import ThumbnailViewer from "../components/ThumbnailViewer.vue";
 import { watch } from "vue";
-
+import useState from "../use/useState";
 export default defineComponent({
   name: "Spectrogram",
   components: {
@@ -30,6 +30,7 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const { toggleLayerVisibility, layerVisibility } = useState();
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const annotations: Ref<SpectrogramAnnotation[] | undefined> = ref([]);
@@ -89,6 +90,9 @@ export default defineComponent({
       }
       return null;
     });
+    watch(gridEnabled, () => {
+      toggleLayerVisibility('grid');
+    });
     onMounted(() => loadData());
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
@@ -99,7 +103,7 @@ export default defineComponent({
 
     const timeRef = ref(0);
     const freqRef = ref(0);
-    const setHoverData = ({time, freq}: {time: number, freq: number})  => {
+    const setHoverData = ({ time, freq }: { time: number; freq: number }) => {
       timeRef.value = time;
       freqRef.value = freq;
     };
@@ -134,10 +138,12 @@ export default defineComponent({
       setParentGeoViewer,
       setHoverData,
       setMode,
+      toggleLayerVisibility,
       speciesList,
       selectedAnnotation,
       parentGeoViewerRef,
       gridEnabled,
+      layerVisibility,
       timeRef,
       freqRef,
       mode,
@@ -170,6 +176,48 @@ export default defineComponent({
             <span> {{ mode }}</span>
           </v-col>
           <v-spacer />
+          <v-tooltip bottom>
+            <template #activator="{ props: subProps }">
+              <v-icon
+                v-bind="subProps"
+                size="35"
+                class="mr-5 mt-5"
+                :color="layerVisibility.includes('species') ? 'blue' : ''"
+                @click="toggleLayerVisibility('species')"
+              >
+                mdi-bat
+              </v-icon>
+            </template>
+            <span> Turn Species Label On/Off</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template #activator="{ props: subProps }">
+              <v-btn
+                v-bind="subProps"
+                size="35"
+                class="mr-5 mt-5"
+                :color="layerVisibility.includes('time') ? 'blue' : ''"
+                @click="toggleLayerVisibility('time')"
+              >
+                <h3>ms</h3>
+              </v-btn>
+            </template>
+            <span> Turn Time Label On/Off</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template #activator="{ props: subProps }">
+              <v-btn
+                v-bind="subProps"
+                size="35"
+                class="mr-5 mt-5"
+                :color="layerVisibility.includes('freq') ? 'blue' : ''"
+                @click="toggleLayerVisibility('freq')"
+              >
+                <h3>KHz</h3>
+              </v-btn>
+            </template>
+            <span> Turn Time Label On/Off</span>
+          </v-tooltip>
           <v-tooltip bottom>
             <template #activator="{ props: subProps }">
               <v-icon
