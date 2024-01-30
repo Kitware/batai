@@ -255,6 +255,7 @@ export default defineComponent({
         :recording-id="id"
         :annotations="annotations"
         :selected-id="selectedId"
+        :grid="gridEnabled"
         @selected="setSelection($event)"
         @create:annotation="getAnnotationsList($event)"
         @update:annotation="getAnnotationsList()"
