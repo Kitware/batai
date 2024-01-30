@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, Ref, watch } from "vue";
-import { SpectroInfo, useGeoJS } from "./geoJS/geoJSUtils";
+import { SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
 import { patchAnnotation, putAnnotation, SpectrogramAnnotation } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 import { GeoEvent } from "geojs";
@@ -37,11 +37,38 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["update:annotation", "create:annotation", "selected", "geoViewerRef", "hoverData"],
+  emits: ["update:annotation", "create:annotation", "selected", "geoViewerRef", "hoverData", 'set-mode',],
   setup(props, { emit }) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized = ref(false);
+    const cursor = ref('');
+    const imageCursorRef: Ref<HTMLElement | undefined> = ref();
+    const setCursor = (newCursor: string) => {
+      cursor.value = newCursor;
+    };
+
+    const cursorHandler = {
+      handleMouseLeave() {
+        if (imageCursorRef.value) {
+          imageCursorRef.value.style.display = 'none';
+        }
+      },
+      handleMouseEnter() {
+        if (imageCursorRef.value) {
+          imageCursorRef.value.style.display = 'block';
+        }
+      },
+      handleMouseMove(evt: MouseEvent) {
+        const offsetX = evt.clientX + 10;
+        const offsetY = evt.clientY - 25;
+        window.requestAnimationFrame(() => {
+          if (imageCursorRef.value) {
+            imageCursorRef.value.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+          }
+        });
+      },
+    };
 
     const mouseMoveEvent = (e: GeoEvent) => {
       const { x, y } = e.geo;
@@ -108,6 +135,7 @@ export default defineComponent({
       }
     };
 
+    
     const createAnnotation = async (annotation: SpectrogramAnnotation) => {
       // We call the patch on the selected annotation
       if (props.recordingId !== null) {
@@ -115,13 +143,39 @@ export default defineComponent({
         emit("create:annotation", response.data.id);
       }
     };
+    let skipNextSelected = false;
+    watch(() => props.selectedId, () => {
+      if (skipNextSelected) {
+        skipNextSelected = false;
+        return;
+      }
+      const found = props.annotations.find((item) => item.id === props.selectedId);
+      if (found && props.spectroInfo) {
+        
+        const center = spectroToCenter(found, props.spectroInfo);
+        const x = center[0];
+        const y = center[1];
+        geoJS.getGeoViewer().value.center({x, y});
+      }
+    });
+
+
+    const clickSelected = (annotation: SpectrogramAnnotation) => {
+      skipNextSelected = true;
+      emit('selected', annotation);
+    };
 
     return {
       containerRef,
       geoViewerRef: geoJS.getGeoViewer(),
       initialized,
+      cursor,
+      clickSelected,
+      setCursor,
       updateAnnotation,
       createAnnotation,
+      cursorHandler,
+      imageCursorRef,
     };
   },
 });
@@ -133,6 +187,10 @@ export default defineComponent({
       id="spectro"
       ref="containerRef"
       class="playback-container"
+      :style="{cursor : cursor }"
+      @mousemove="cursorHandler.handleMouseMove"
+      @mouseleave="cursorHandler.handleMouseLeave"
+      @mouseover="cursorHandler.handleMouseEnter"
     />
     <layer-manager
       v-if="initialized"
@@ -141,10 +199,20 @@ export default defineComponent({
       :annotations="annotations"
       :selected-id="selectedId"
       :grid="grid"
-      @selected="$emit('selected', $event)"
+      @selected="clickSelected($event)"
       @update:annotation="updateAnnotation($event)"
       @create:annotation="createAnnotation($event)"
+      @set-cursor="setCursor($event)"
+      @set-mode="$emit('set-mode', $event)"
     />
+    <div
+      ref="imageCursorRef"
+      class="imageCursor"
+    >
+      <v-icon color="white">
+        {{ cursor }}
+      </v-icon>
+    </div>
   </div>
 </template>
 
@@ -184,4 +252,13 @@ export default defineComponent({
     cursor: inherit;
   }
 }
+.imageCursor {
+  z-index: 9999; //So it will be above the annotator layers
+  position: fixed;
+  backface-visibility: hidden;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
 </style>

@@ -1,12 +1,19 @@
 <script lang="ts">
-import { computed, defineComponent, onMounted, Ref, ref, } from 'vue';
-import { getSpecies, getAnnotations, getSpectrogram, Species, SpectrogramAnnotation, getSpectrogramCompressed } from '../api/api';
-import SpectrogramViewer from '../components/SpectrogramViewer.vue';
-import { SpectroInfo } from '../components/geoJS/geoJSUtils';
-import AnnotationList from '../components/AnnotationList.vue';
-import AnnotationEditor from '../components/AnnotationEditor.vue';
-import ThumbnailViewer from '../components/ThumbnailViewer.vue';
-import { watch } from 'vue';
+import { computed, defineComponent, onMounted, onUnmounted, Ref, ref } from "vue";
+import {
+  getSpecies,
+  getAnnotations,
+  getSpectrogram,
+  Species,
+  SpectrogramAnnotation,
+  getSpectrogramCompressed,
+} from "../api/api";
+import SpectrogramViewer from "../components/SpectrogramViewer.vue";
+import { SpectroInfo } from "../components/geoJS/geoJSUtils";
+import AnnotationList from "../components/AnnotationList.vue";
+import AnnotationEditor from "../components/AnnotationEditor.vue";
+import ThumbnailViewer from "../components/ThumbnailViewer.vue";
+import { watch } from "vue";
 
 export default defineComponent({
   name: "Spectrogram",
@@ -31,34 +38,55 @@ export default defineComponent({
     const loadedImage = ref(false);
     const compressed = ref(false);
     const gridEnabled = ref(false);
-    const getAnnotationsList= async (annotationId?: number) => {
-        const response = await getAnnotations(props.id);
-        annotations.value = response.data;
-        if (annotationId !== undefined) {
-          selectedId.value = annotationId;
-        }
-        
+    const mode: Ref<"creation" | "editing" | "disabled"> = ref("disabled");
+    const getAnnotationsList = async (annotationId?: number) => {
+      const response = await getAnnotations(props.id);
+      annotations.value = response.data.sort((a, b) => a.start_time - b.start_time);
+      if (annotationId !== undefined) {
+        selectedId.value = annotationId;
+      }
     };
+    const selectedIndex = computed(() => {
+      if (annotations.value && selectedId.value !== null) {
+        return annotations.value.findIndex((item) => item.id === selectedId.value);
+      }
+      return -1;
+    });
+    const selectNextIndex = (dir: -1 | 1) => {
+      if (annotations.value && annotations.value.length) {
+        const newIndex = selectedIndex.value + dir;
+        if (newIndex < 0) {
+          selectedId.value = annotations.value[annotations.value.length - 1].id;
+        } else if (newIndex > annotations.value.length - 1) {
+          selectedId.value = annotations.value[0].id;
+        } else {
+          selectedId.value = annotations.value[newIndex].id;
+        }
+      }
+    };
+
     const loadData = async () => {
       loadedImage.value = false;
-      const response = compressed.value ? await getSpectrogramCompressed(props.id) : await getSpectrogram(props.id);
-      image.value.src = `data:image/png;base64,${response.data['base64_spectrogram']}`;
-      spectroInfo.value = response.data['spectroInfo'];
-      annotations.value = response.data['annotations'];
+      const response = compressed.value
+        ? await getSpectrogramCompressed(props.id)
+        : await getSpectrogram(props.id);
+      image.value.src = `data:image/png;base64,${response.data["base64_spectrogram"]}`;
+      spectroInfo.value = response.data["spectroInfo"];
+      annotations.value = response.data["annotations"]?.sort((a, b) => a.start_time - b.start_time);
       loadedImage.value = true;
       const speciesResponse = await getSpecies();
       speciesList.value = speciesResponse.data;
     };
     const setSelection = (annotationId: number) => {
-      selectedId.value= annotationId;
+      selectedId.value = annotationId;
     };
     const selectedAnnotation = computed(() => {
       if (selectedId.value !== null && annotations.value) {
         const found = annotations.value.findIndex((item) => item.id === selectedId.value);
-          if (found !== -1) {
-            return annotations.value[found];
-          }
+        if (found !== -1) {
+          return annotations.value[found];
         }
+      }
       return null;
     });
     onMounted(() => loadData());
@@ -67,7 +95,6 @@ export default defineComponent({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const setParentGeoViewer = (data: any) => {
       parentGeoViewerRef.value = data;
-
     };
 
     const timeRef = ref(0);
@@ -77,7 +104,25 @@ export default defineComponent({
       freqRef.value = freq;
     };
     watch(compressed, () => loadData());
-    return { 
+
+    const setMode = (newMode: "creation" | "editing" | "disabled") => {
+      mode.value = newMode;
+    };
+
+    const keyboardEvent = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        selectNextIndex(1);
+      } else if (e.key === "ArrowUp") {
+        selectNextIndex(-1);
+      }
+    };
+    onMounted(() => {
+      window.addEventListener("keydown", keyboardEvent);
+    });
+    onUnmounted(() => {
+      window.removeEventListener("keydown", keyboardEvent);
+    });
+    return {
       compressed,
       loadedImage,
       image,
@@ -88,12 +133,14 @@ export default defineComponent({
       getAnnotationsList,
       setParentGeoViewer,
       setHoverData,
+      setMode,
       speciesList,
       selectedAnnotation,
       parentGeoViewerRef,
       gridEnabled,
       timeRef,
       freqRef,
+      mode,
     };
   },
 });
@@ -104,24 +151,31 @@ export default defineComponent({
     <v-col>
       <v-toolbar>
         <v-row>
-          <v-col>
+          <v-col cols="2">
             <div>
-              <b>Time:</b> 
-              <span v-if="timeRef >= 0 ">{{ timeRef.toFixed(0) }}ms</span>
+              <b>Time:</b>
+              <span v-if="timeRef >= 0">{{ timeRef.toFixed(0) }}ms</span>
             </div>
             <div>
-              <b>Frequency:</b> 
+              <b>Frequency:</b>
               <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
             </div>
           </v-col>
+          <v-col
+            v-if="mode !== 'disabled'"
+            cols="1"
+            style="font-size: 20px"
+          >
+            <b>Mode:</b>
+            <span> {{ mode }}</span>
+          </v-col>
           <v-spacer />
           <v-tooltip bottom>
-            <template #activator="{ props:subProps }">
+            <template #activator="{ props: subProps }">
               <v-icon
                 v-bind="subProps"
                 size="35"
                 class="mr-5 mt-5"
-
                 :color="gridEnabled ? 'blue' : ''"
                 @click="gridEnabled = !gridEnabled"
               >
@@ -131,7 +185,7 @@ export default defineComponent({
             <span> Turn Legend Grid On/Off</span>
           </v-tooltip>
           <v-tooltip bottom>
-            <template #activator="{ props:subProps }">
+            <template #activator="{ props: subProps }">
               <v-icon
                 v-bind="subProps"
                 size="35"
@@ -156,8 +210,10 @@ export default defineComponent({
         :grid="gridEnabled"
         @selected="setSelection($event)"
         @create:annotation="getAnnotationsList($event)"
+        @update:annotation="getAnnotationsList()"
         @geo-viewer-ref="setParentGeoViewer($event)"
         @hover-data="setHoverData($event)"
+        @set-mode="setMode($event)"
       />
       <thumbnail-viewer
         v-if="loadedImage && parentGeoViewerRef"
@@ -170,10 +226,12 @@ export default defineComponent({
         @selected="setSelection($event)"
       />
     </v-col>
-    <v-col style="max-width:300px">
+    <v-col style="max-width: 300px">
       <annotation-list
         :annotations="annotations"
         :selected-id="selectedId"
+        :mode="mode"
+        class="annotation-list"
         @select="selectedId = $event"
       />
       <annotation-editor
@@ -183,8 +241,18 @@ export default defineComponent({
         :annotation="selectedAnnotation"
         class="mt-4"
         @update:annotation="getAnnotationsList()"
-        @delete:annotation="getAnnotationsList()"
+        @delete:annotation="
+          getAnnotationsList();
+          selectedId = null;
+        "
       />
     </v-col>
   </v-row>
 </template>
+
+<style scoped>
+.annotation-list {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+</style>
