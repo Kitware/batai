@@ -118,7 +118,12 @@ const useGeoJS = () => {
     const { width: mapWidth } = geoViewer.value.camera().viewport;
 
     const bounds = !thumbnail.value
-      ? { left: 0, top: 0, right: mapWidth, bottom: originalBounds.bottom }
+      ? { 
+        left: -125, // Making sure the legend is on the screen
+        top: 0,
+        right: mapWidth,
+        bottom: originalBounds.bottom,
+      }
       : originalBounds;
     const zoomAndCenter = geoViewer.value.zoomAndCenterFromBounds(bounds, 0);
     geoViewer.value.zoom(zoomAndCenter.zoom);
@@ -255,11 +260,11 @@ function spectroToGeoJSon(
     type: "Polygon",
     coordinates: [
       [
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        [0, 0],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
       ],
     ],
   };

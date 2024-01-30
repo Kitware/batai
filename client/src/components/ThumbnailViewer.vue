@@ -152,6 +152,7 @@ export default defineComponent({
       :spectro-info="spectroInfo"
       :annotations="annotations"
       :selected-id="selectedId"
+      thumbnail
       @selected="$emit('selected',$event)"
     />
   </div>

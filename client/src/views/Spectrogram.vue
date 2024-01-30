@@ -30,6 +30,7 @@ export default defineComponent({
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const compressed = ref(false);
+    const gridEnabled = ref(false);
     const getAnnotationsList= async (annotationId?: number) => {
         const response = await getAnnotations(props.id);
         annotations.value = response.data;
@@ -68,6 +69,13 @@ export default defineComponent({
       parentGeoViewerRef.value = data;
 
     };
+
+    const timeRef = ref(0);
+    const freqRef = ref(0);
+    const setHoverData = ({time, freq}: {time: number, freq: number})  => {
+      timeRef.value = time;
+      freqRef.value = freq;
+    };
     watch(compressed, () => loadData());
     return { 
       compressed,
@@ -79,9 +87,13 @@ export default defineComponent({
       setSelection,
       getAnnotationsList,
       setParentGeoViewer,
+      setHoverData,
       speciesList,
       selectedAnnotation,
       parentGeoViewerRef,
+      gridEnabled,
+      timeRef,
+      freqRef,
     };
   },
 });
@@ -90,6 +102,50 @@ export default defineComponent({
 <template>
   <v-row>
     <v-col>
+      <v-toolbar>
+        <v-row>
+          <v-col>
+            <div>
+              <b>Time:</b> 
+              <span v-if="timeRef >= 0 ">{{ timeRef.toFixed(0) }}ms</span>
+            </div>
+            <div>
+              <b>Frequency:</b> 
+              <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
+            </div>
+          </v-col>
+          <v-spacer />
+          <v-tooltip bottom>
+            <template #activator="{ props:subProps }">
+              <v-icon
+                v-bind="subProps"
+                size="35"
+                class="mr-5 mt-5"
+
+                :color="gridEnabled ? 'blue' : ''"
+                @click="gridEnabled = !gridEnabled"
+              >
+                mdi-grid
+              </v-icon>
+            </template>
+            <span> Turn Legend Grid On/Off</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template #activator="{ props:subProps }">
+              <v-icon
+                v-bind="subProps"
+                size="35"
+                class="mr-5 mt-5"
+                :color="compressed ? 'blue' : ''"
+                @click="compressed = !compressed"
+              >
+                mdi-calendar-collapse-horizontal
+              </v-icon>
+            </template>
+            <span> Toggle Compressed View</span>
+          </v-tooltip>
+        </v-row>
+      </v-toolbar>
       <spectrogram-viewer
         v-if="loadedImage"
         :image="image"
@@ -97,9 +153,11 @@ export default defineComponent({
         :recording-id="id"
         :annotations="annotations"
         :selected-id="selectedId"
+        :grid="gridEnabled"
         @selected="setSelection($event)"
         @create:annotation="getAnnotationsList($event)"
         @geo-viewer-ref="setParentGeoViewer($event)"
+        @hover-data="setHoverData($event)"
       />
       <thumbnail-viewer
         v-if="loadedImage && parentGeoViewerRef"
@@ -113,12 +171,6 @@ export default defineComponent({
       />
     </v-col>
     <v-col style="max-width:300px">
-      <v-switch
-        v-model="compressed"
-        label="Compressed"
-        density="compact"
-        class="ma-0 pa-0"
-      />
       <annotation-list
         :annotations="annotations"
         :selected-id="selectedId"
