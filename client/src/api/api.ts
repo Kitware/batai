@@ -23,6 +23,9 @@ export interface Recording {
     recording_location?: null | [number, number],
     grts_cell_id?: null | number;
     grts_cell?: null | number;
+    public: boolean;
+    userMadeAnnotations: boolean;
+    userAnnotations: number;
 }
 
 export interface AcousticFiles {
@@ -88,7 +91,7 @@ export const axiosInstance = axios.create({
 });
 
 
-async function uploadRecordingFile(file: File, name: string, recorded_date: string, equipment: string, comments: string ) {
+async function uploadRecordingFile(file: File, name: string, recorded_date: string, equipment: string, comments: string, publicVal = false ) {
     const formData = new FormData();
     formData.append('audio_file', file);
     formData.append('name', name);
@@ -99,21 +102,39 @@ async function uploadRecordingFile(file: File, name: string, recorded_date: stri
     const recordingParams = {
       name,
       equipment,
-      comments
+      comments,
     };
     const payloadBlob = new Blob([JSON.stringify(recordingParams)], { type: 'application/json' });
     formData.append('payload', payloadBlob);
   await axiosInstance.post('/recording/',
     formData,
     { 
+        params: { publicVal }, 
         headers: {
             'Content-Type': 'multipart/form-data',   
         }
      });
   }
+
+  async function patchRecording(recordingId: number, name: string, recorded_date: string, equipment: string, comments: string, publicVal = false ) {
+    await axiosInstance.patch(`/recording/${recordingId}`, 
+        { 
+            name, 
+            recorded_date, 
+            equipment, 
+            comments, 
+            publicVal 
+        },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }
+    );
+}
   
-async function getRecordings() {
-    return axiosInstance.get<Recording[]>('/recording/');
+async function getRecordings(getPublic=false) {
+    return axiosInstance.get<Recording[]>(`/recording?public=${getPublic}`);
 }
 
 async function getSpectrogram(id: string) {
@@ -149,6 +170,7 @@ async function deleteAnnotation(recordingId: string, annotationId: number) {
 export {
  uploadRecordingFile,
  getRecordings,
+ patchRecording,
  getSpectrogram,
  getSpectrogramCompressed,
  getSpecies,
