@@ -57,6 +57,7 @@ export interface SpectrogramAnnotation {
     editing?: boolean;
     species?: Species[];
     comments?: string;
+    owner_email: string;
 }
 
 export interface UpdateSpectrogramAnnotation {
@@ -70,14 +71,23 @@ export interface UpdateSpectrogramAnnotation {
     comments?: string;
 }
 
+export interface UserInfo {
+    username: string;
+    email: string;
+    id: number;
+}
 export interface Spectrogram {
     'base64_spectrogram': string;
     url?: string;
     filename?: string;
     annotations?: SpectrogramAnnotation[];
     spectroInfo?: SpectroInfo;
+    currentUser?: string;
+    otherUsers?: UserInfo[];
 
 }
+
+export type OtherUserAnnotations = Record<string, SpectrogramAnnotation[]>;
 
 interface PaginatedNinjaResponse<T> {
     count: number,
@@ -167,12 +177,17 @@ async function deleteAnnotation(recordingId: string, annotationId: number) {
     return axiosInstance.delete(`/recording/${recordingId}/annotations/${annotationId}`);
 }
 
+async function getOtherUserAnnotations(recordingId: string) {
+    return axiosInstance.get<OtherUserAnnotations>(`/recording/${recordingId}/annotations/other_users`);
+}
+
 export {
  uploadRecordingFile,
  getRecordings,
  patchRecording,
  getSpectrogram,
  getSpectrogramCompressed,
+ getOtherUserAnnotations,
  getSpecies,
  getAnnotations,
  patchAnnotation,

@@ -1,7 +1,12 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
-import { patchAnnotation, putAnnotation, SpectrogramAnnotation } from "../api/api";
+import {
+  OtherUserAnnotations,
+  patchAnnotation,
+  putAnnotation,
+  SpectrogramAnnotation,
+} from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 import { GeoEvent } from "geojs";
 import geo from "geojs";
@@ -24,6 +29,10 @@ export default defineComponent({
       type: Array as PropType<SpectrogramAnnotation[]>,
       default: () => [],
     },
+    otherUserAnnotations: {
+      type: Object as PropType<OtherUserAnnotations>,
+      default: () => ({}),
+    },
     selectedId: {
       type: Number as PropType<number | null>,
       default: null,
@@ -33,12 +42,19 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ["update:annotation", "create:annotation", "selected", "geoViewerRef", "hoverData", 'set-mode',],
+  emits: [
+    "update:annotation",
+    "create:annotation",
+    "selected",
+    "geoViewerRef",
+    "hoverData",
+    "set-mode",
+  ],
   setup(props, { emit }) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized = ref(false);
-    const cursor = ref('');
+    const cursor = ref("");
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
     const setCursor = (newCursor: string) => {
       cursor.value = newCursor;
@@ -47,12 +63,12 @@ export default defineComponent({
     const cursorHandler = {
       handleMouseLeave() {
         if (imageCursorRef.value) {
-          imageCursorRef.value.style.display = 'none';
+          imageCursorRef.value.style.display = "none";
         }
       },
       handleMouseEnter() {
         if (imageCursorRef.value) {
-          imageCursorRef.value.style.display = 'block';
+          imageCursorRef.value.style.display = "block";
         }
       },
       handleMouseMove(evt: MouseEvent) {
@@ -68,16 +84,19 @@ export default defineComponent({
 
     const mouseMoveEvent = (e: GeoEvent) => {
       const { x, y } = e.geo;
-      if (!props.spectroInfo)  {
+      if (!props.spectroInfo) {
         return;
       }
       const freq =
-        props.spectroInfo.height - y >= 0 ?
-            
-            (((props.spectroInfo.height - y) * (props.spectroInfo.high_freq - props.spectroInfo.low_freq)) / props.spectroInfo.height) / 1000 + props.spectroInfo.low_freq / 1000 : -1;
+        props.spectroInfo.height - y >= 0
+          ? ((props.spectroInfo.height - y) *
+              (props.spectroInfo.high_freq - props.spectroInfo.low_freq)) /
+              props.spectroInfo.height /
+              1000 +
+            props.spectroInfo.low_freq / 1000
+          : -1;
 
       if (!props.spectroInfo.end_times && !props.spectroInfo.start_times) {
- 
         if (x >= 0 && props.spectroInfo.height - y >= 0) {
           const time =
             x *
@@ -86,31 +105,34 @@ export default defineComponent({
         } else {
           emit("hoverData", { time: -1, freq: -1 });
         }
-      } else if (props.spectroInfo && props.spectroInfo.start_times && props.spectroInfo.end_times) { // compressed view
+      } else if (
+        props.spectroInfo &&
+        props.spectroInfo.start_times &&
+        props.spectroInfo.end_times
+      ) {
+        // compressed view
         if (x >= 0 && props.spectroInfo.height - y >= 0) {
           const timeLength = props.spectroInfo.end_time - props.spectroInfo.start_time;
           const timeToPixels = props.spectroInfo.width / timeLength;
           // find X in the range
           let offsetAdditive = 0;
-          for (let i =0; i < props.spectroInfo.start_times.length; i += 1) {
+          for (let i = 0; i < props.spectroInfo.start_times.length; i += 1) {
             const start_time = props.spectroInfo.start_times[i];
             const end_time = props.spectroInfo.end_times[i];
             const startX = offsetAdditive;
-            const endX = offsetAdditive + ((end_time - start_time) * timeToPixels);
+            const endX = offsetAdditive + (end_time - start_time) * timeToPixels;
 
-            if (x > startX && x < endX ) {
+            if (x > startX && x < endX) {
               const timeOffset = x - offsetAdditive;
-              const time = start_time + (timeOffset / timeToPixels);
+              const time = start_time + timeOffset / timeToPixels;
               emit("hoverData", { time, freq });
               return;
             }
             offsetAdditive += (end_time - start_time) * timeToPixels;
-
           }
         } else {
           emit("hoverData", { time: -1, freq: -1 });
         }
-
       }
     };
     watch(containerRef, () => {
@@ -131,7 +153,6 @@ export default defineComponent({
       }
     };
 
-    
     const createAnnotation = async (annotation: SpectrogramAnnotation) => {
       // We call the patch on the selected annotation
       if (props.recordingId !== null) {
@@ -140,25 +161,26 @@ export default defineComponent({
       }
     };
     let skipNextSelected = false;
-    watch(() => props.selectedId, () => {
-      if (skipNextSelected) {
-        skipNextSelected = false;
-        return;
+    watch(
+      () => props.selectedId,
+      () => {
+        if (skipNextSelected) {
+          skipNextSelected = false;
+          return;
+        }
+        const found = props.annotations.find((item) => item.id === props.selectedId);
+        if (found && props.spectroInfo) {
+          const center = spectroToCenter(found, props.spectroInfo);
+          const x = center[0];
+          const y = center[1];
+          geoJS.getGeoViewer().value.center({ x, y });
+        }
       }
-      const found = props.annotations.find((item) => item.id === props.selectedId);
-      if (found && props.spectroInfo) {
-        
-        const center = spectroToCenter(found, props.spectroInfo);
-        const x = center[0];
-        const y = center[1];
-        geoJS.getGeoViewer().value.center({x, y});
-      }
-    });
-
+    );
 
     const clickSelected = (annotation: SpectrogramAnnotation) => {
       skipNextSelected = true;
-      emit('selected', annotation);
+      emit("selected", annotation);
     };
 
     return {
@@ -183,7 +205,7 @@ export default defineComponent({
       id="spectro"
       ref="containerRef"
       class="playback-container"
-      :style="{cursor : cursor }"
+      :style="{ cursor: cursor }"
       @mousemove="cursorHandler.handleMouseMove"
       @mouseleave="cursorHandler.handleMouseLeave"
       @mouseover="cursorHandler.handleMouseEnter"
@@ -193,6 +215,7 @@ export default defineComponent({
       :geo-viewer-ref="geoViewerRef"
       :spectro-info="spectroInfo"
       :annotations="annotations"
+      :other-user-annotations="otherUserAnnotations"
       :selected-id="selectedId"
       @selected="clickSelected($event)"
       @update:annotation="updateAnnotation($event)"
@@ -200,10 +223,7 @@ export default defineComponent({
       @set-cursor="setCursor($event)"
       @set-mode="$emit('set-mode', $event)"
     />
-    <div
-      ref="imageCursorRef"
-      class="imageCursor"
-    >
+    <div ref="imageCursorRef" class="imageCursor">
       <v-icon color="white">
         {{ cursor }}
       </v-icon>
@@ -255,5 +275,4 @@ export default defineComponent({
   left: 0;
   pointer-events: none;
 }
-
 </style>

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, nextTick, onMounted, PropType, Ref, ref, watch } from "vue";
-import { SpectrogramAnnotation } from "../../api/api";
+import { OtherUserAnnotations, SpectrogramAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
@@ -26,6 +26,10 @@ export default defineComponent({
       type: Array as PropType<SpectrogramAnnotation[]>,
       default: () => [],
     },
+    otherUserAnnotations: {
+      type: Object as PropType<OtherUserAnnotations>,
+      default: () => ({}),
+    },
     selectedId: {
       type: Number as PropType<number | null>,
       default: null,
@@ -35,9 +39,16 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ['selected', 'update:annotation', 'create:annotation', 'set-cursor', 'set-mode'],
+  emits: ["selected", "update:annotation", "create:annotation", "set-cursor", "set-mode"],
   setup(props, { emit }) {
-    const { annotationState, setAnnotationState, layerVisibility, } = useState();
+    const {
+      annotationState,
+      setAnnotationState,
+      layerVisibility,
+      selectedUsers,
+      colorScale,
+      currentUser,
+    } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
     const localAnnotations: Ref<SpectrogramAnnotation[]> = ref(cloneDeep(props.annotations));
@@ -50,17 +61,17 @@ export default defineComponent({
     let freqLayer: FreqLayer;
     let speciesLayer: SpeciesLayer;
     const displayError = ref(false);
-    const errorMsg = ref('');
+    const errorMsg = ref("");
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     const event = (type: string, data: any) => {
       // Will handle clicking, selecting and editing here
       if (type === "update:mode") {
-        emit('set-mode', data.mode);
+        emit("set-mode", data.mode);
         setAnnotationState(data.mode);
       }
       if (type === "update:cursor") {
-        emit('set-cursor', data.cursor);
+        emit("set-cursor", data.cursor);
       }
       if (type === "annotation-cleared") {
         editing.value = false;
@@ -123,15 +134,12 @@ export default defineComponent({
             );
             if (index !== -1 && props.spectroInfo) {
               // update bounds for the localAnnotation
-              const conversionResult =  geojsonToSpectro(
-                geoJSON,
-                props.spectroInfo
-              );
+              const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo);
               if (conversionResult.error) {
                 displayError.value = true;
                 errorMsg.value = conversionResult.error;
                 return;
-              } 
+              }
               const { low_freq, high_freq, start_time, end_time } = conversionResult;
               localAnnotations.value[index] = {
                 ...localAnnotations.value[index],
@@ -147,16 +155,13 @@ export default defineComponent({
           }
         } else if (creating) {
           if (geoJSON && props.spectroInfo) {
-            const conversionResult =  geojsonToSpectro(
-                geoJSON,
-                props.spectroInfo
-              );
+            const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo);
 
             if (conversionResult.error) {
-                displayError.value = true;
-                errorMsg.value = conversionResult.error;
-                return;
-              } 
+              displayError.value = true;
+              errorMsg.value = conversionResult.error;
+              return;
+            }
             const { low_freq, high_freq, start_time, end_time } = conversionResult;
             const newAnnotation: SpectrogramAnnotation = {
               low_freq,
@@ -169,38 +174,59 @@ export default defineComponent({
             };
             emit("create:annotation", newAnnotation);
             editAnnotationLayer.disable();
-            annotationState.value = '';
+            annotationState.value = "";
             editing.value = false;
           }
         }
       }
     };
+
+    const getDataForLayers = () => {
+      if (selectedUsers.value.length) {
+        // We add more annotations to the system
+        let additionalAnnotations: SpectrogramAnnotation[] = [];
+        for (let i = 0; i < selectedUsers.value.length; i += 1) {
+          const newAnnotations = props.otherUserAnnotations[selectedUsers.value[i]];
+          additionalAnnotations = additionalAnnotations.concat(newAnnotations);
+        }
+        additionalAnnotations = additionalAnnotations.concat(localAnnotations.value);
+        return { annotations: additionalAnnotations, colorScale };
+      } else {
+        return { annotations: localAnnotations.value };
+      }
+    };
     const triggerUpdate = () => {
       // Check for selected and editing annotations;
+      const { annotations } = getDataForLayers();
       if (rectAnnotationLayer) {
-        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value);
+        rectAnnotationLayer.formatData(
+          annotations,
+          selectedAnnotationId.value,
+          currentUser.value,
+          colorScale.value
+        );
         rectAnnotationLayer.redraw();
       }
       if (!props.thumbnail) {
-        if (layerVisibility.value.includes('grid')) {
+        if (layerVisibility.value.includes("grid")) {
           legendLayer.setGridEnabled(true);
         } else {
           legendLayer.setGridEnabled(false);
         }
         legendLayer.redraw();
-        if (layerVisibility.value.includes('time')) {
-          timeLayer.formatData(localAnnotations.value);
+        if (layerVisibility.value.includes("time")) {
+          timeLayer.formatData(annotations);
           timeLayer.redraw();
         } else {
           timeLayer.disable();
         }
-        if (layerVisibility.value.includes('freq')) {
-          freqLayer.formatData(localAnnotations.value);
+        if (layerVisibility.value.includes("freq")) {
+          freqLayer.formatData(annotations);
           freqLayer.redraw();
         } else {
           freqLayer.disable();
         }
-        if (layerVisibility.value.includes('species')) {
+        if (layerVisibility.value.includes("species")) {
           speciesLayer.formatData(localAnnotations.value);
           speciesLayer.redraw();
         } else {
@@ -213,21 +239,32 @@ export default defineComponent({
         }, 0);
       }
     };
-    watch(() => props.annotations, () => {
-      localAnnotations.value = props.annotations;
-      rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value);
-      rectAnnotationLayer.redraw();
-    });
+    watch(
+      () => props.annotations,
+      () => {
+        localAnnotations.value = props.annotations;
+        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value);
+        rectAnnotationLayer.redraw();
+      }
+    );
+    watch(selectedUsers, () => triggerUpdate());
     watch(
       () => props.selectedId,
       () => {
         selectedAnnotationId.value = props.selectedId;
-        if (editAnnotationLayer && editAnnotationLayer.getMode() === 'editing' && props.selectedId === null) {
+        if (
+          editAnnotationLayer &&
+          editAnnotationLayer.getMode() === "editing" &&
+          props.selectedId === null
+        ) {
           nextTick(() => {
-            if (editAnnotationLayer && editAnnotationLayer.getMode() === 'disabled' && props.selectedId === null) {
-              emit('set-mode', 'disabled');
+            if (
+              editAnnotationLayer &&
+              editAnnotationLayer.getMode() === "disabled" &&
+              props.selectedId === null
+            ) {
+              emit("set-mode", "disabled");
               editAnnotationLayer.featureLayer.clear();
-
             }
           });
           editAnnotationLayer.disable();
@@ -250,7 +287,6 @@ export default defineComponent({
           freqLayer.formatData(localAnnotations.value);
           speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
           speciesLayer.formatData(localAnnotations.value);
-
 
           legendLayer.redraw();
           timeLayer.disable();
@@ -281,28 +317,21 @@ export default defineComponent({
       localAnnotations,
       displayError,
       errorMsg,
+      selectedUsers,
     };
   },
 });
 </script>
 
 <template>
-  <v-dialog
-    v-model="displayError"
-    width="500"
-  >
+  <v-dialog v-model="displayError" width="500">
     <v-card>
       <v-card-title>Error</v-card-title>
       <v-card-text>{{ errorMsg }}</v-card-text>
       <v-card-actions>
         <v-row>
           <v-spacer />
-          <v-btn
-            variant="outlined"
-            @click="displayError=false;"
-          >
-            Dismiss
-          </v-btn>
+          <v-btn variant="outlined" @click="displayError = false"> Dismiss </v-btn>
           <v-spacer />
         </v-row>
       </v-card-actions>

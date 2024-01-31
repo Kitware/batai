@@ -44,7 +44,21 @@ class AnnotationSchema(Schema):
     high_freq: int
     species: list[SpeciesSchema]
     comments: str
-    id: int
+    id: int = None
+    owner_email: str = None
+
+    @classmethod
+    def from_orm(cls, obj, owner_email=None, **kwargs):
+        return cls(
+            start_time=obj.start_time,
+            end_time=obj.end_time,
+            low_freq=obj.low_freq,
+            high_freq=obj.high_freq,
+            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            comments=obj.comments,
+            id=obj.id,
+            owner_email=owner_email,  # Include owner_email in the schema
+        )
 
 
 class UpdateAnnotationsSchema(Schema):
@@ -169,12 +183,14 @@ def get_spectrogram(request: HttpRequest, id: int):
     ]
 
     spectro_data['otherUsers'] = other_users
+    spectro_data['currentUser'] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [
-        AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs
+        AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+        for annotation in annotations_qs
     ]
     spectro_data['annotations'] = annotations_data
     return spectro_data
@@ -222,12 +238,14 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
     ]
 
     spectro_data['otherUsers'] = other_users
+    spectro_data['currentUser'] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [
-        AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs
+        AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+        for annotation in annotations_qs
     ]
     spectro_data['annotations'] = annotations_data
     return spectro_data
@@ -245,7 +263,8 @@ def get_annotations(request: HttpRequest, id: int):
 
             # Serialize the annotations using AnnotationSchema
             annotations_data = [
-                AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs
+                AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+                for annotation in annotations_qs
             ]
 
             return annotations_data
@@ -258,8 +277,45 @@ def get_annotations(request: HttpRequest, id: int):
         return {'error': 'Recording not found'}
 
 
+@router.get('/{id}/annotations/other_users')
+def get_other_user_annotations(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+
+        # Check if the user owns the recording or if the recording is public
+        if recording.owner == request.user or recording.public:
+            # Query annotations associated with the recording that are owned by other users
+            annotations_qs = Annotations.objects.filter(recording=recording).exclude(
+                owner=request.user
+            )
+
+            # Create a dictionary to store annotations for each user
+            annotations_by_user = {}
+
+            # Serialize the annotations using AnnotationSchema
+            for annotation in annotations_qs:
+                user_email = annotation.owner.email
+
+                # If user_email is not already a key in the dictionary, initialize it with an empty list
+                annotations_by_user.setdefault(user_email, [])
+
+                # Append the annotation to the list for the corresponding user_email
+                annotations_by_user[user_email].append(
+                    AnnotationSchema.from_orm(annotation, owner_email=user_email).dict()
+                )
+
+            return annotations_by_user
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+
 @router.get('/{id}/annotations/user/{userId}')
-def get__other_user_annotations(request: HttpRequest, id: int, userId: int):
+def get_user_annotations(request: HttpRequest, id: int, userId: int):
     try:
         recording = Recording.objects.get(pk=id)
 

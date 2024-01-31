@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent, onMounted, onUnmounted, Ref, ref } from "vue";
+import { computed, defineComponent, onMounted, onUnmounted, Ref, ref, watch } from "vue";
 import {
   getSpecies,
   getAnnotations,
@@ -7,13 +7,14 @@ import {
   Species,
   SpectrogramAnnotation,
   getSpectrogramCompressed,
+  OtherUserAnnotations,
+  getOtherUserAnnotations,
 } from "../api/api";
 import SpectrogramViewer from "../components/SpectrogramViewer.vue";
 import { SpectroInfo } from "../components/geoJS/geoJSUtils";
 import AnnotationList from "../components/AnnotationList.vue";
 import AnnotationEditor from "../components/AnnotationEditor.vue";
 import ThumbnailViewer from "../components/ThumbnailViewer.vue";
-import { watch } from "vue";
 import useState from "../use/useState";
 export default defineComponent({
   name: "Spectrogram",
@@ -30,11 +31,20 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const { toggleLayerVisibility, layerVisibility } = useState();
+    const {
+      toggleLayerVisibility,
+      layerVisibility,
+      colorScale,
+      setSelectedUsers,
+      createColorScale,
+      currentUser,
+    } = useState();
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const annotations: Ref<SpectrogramAnnotation[] | undefined> = ref([]);
+    const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
     const selectedId: Ref<number | null> = ref(null);
+    const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const compressed = ref(false);
@@ -74,9 +84,18 @@ export default defineComponent({
       image.value.src = `data:image/png;base64,${response.data["base64_spectrogram"]}`;
       spectroInfo.value = response.data["spectroInfo"];
       annotations.value = response.data["annotations"]?.sort((a, b) => a.start_time - b.start_time);
+      if (response.data.currentUser) {
+        currentUser.value = response.data.currentUser;
+      }
       loadedImage.value = true;
       const speciesResponse = await getSpecies();
       speciesList.value = speciesResponse.data;
+      if (response.data.otherUsers && spectroInfo.value) {
+        // We have other users so we should grab the other user annotations
+        const otherResponse = await getOtherUserAnnotations(props.id);
+        otherUserAnnotations.value = otherResponse.data;
+        createColorScale(Object.keys(otherUserAnnotations.value));
+      }
     };
     const setSelection = (annotationId: number) => {
       selectedId.value = annotationId;
@@ -91,7 +110,7 @@ export default defineComponent({
       return null;
     });
     watch(gridEnabled, () => {
-      toggleLayerVisibility('grid');
+      toggleLayerVisibility("grid");
     });
     onMounted(() => loadData());
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -126,6 +145,18 @@ export default defineComponent({
     onUnmounted(() => {
       window.removeEventListener("keydown", keyboardEvent);
     });
+
+    const otherUsers = computed(() => Object.keys(otherUserAnnotations.value));
+
+    const deleteChip = (item: string) => {
+      selectedUsers.value.splice(selectedUsers.value.findIndex((data) => data === item));
+      setSelectedUsers(selectedUsers.value);
+    };
+
+    watch(selectedUsers, () => {
+      setSelectedUsers(selectedUsers.value);
+    });
+
     return {
       compressed,
       loadedImage,
@@ -147,6 +178,12 @@ export default defineComponent({
       timeRef,
       freqRef,
       mode,
+      // Other user selection
+      otherUserAnnotations,
+      otherUsers,
+      selectedUsers,
+      deleteChip,
+      colorScale,
     };
   },
 });
@@ -167,13 +204,32 @@ export default defineComponent({
               <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
             </div>
           </v-col>
-          <v-col
-            v-if="mode !== 'disabled'"
-            cols="1"
-            style="font-size: 20px"
-          >
+          <v-col v-if="mode !== 'disabled'" cols="1" style="font-size: 20px">
             <b>Mode:</b>
             <span> {{ mode }}</span>
+          </v-col>
+          <v-col v-if="otherUsers.length && colorScale" class="ma-0 pa-0 pt-5">
+            <v-select
+              v-model="selectedUsers"
+              :items="otherUsers"
+              density="compact"
+              label="Other Users"
+              multiple
+              clearable
+              variant="outlined"
+              closable-chips
+            >
+              <template #selection="{ item }">
+                <v-chip
+                  closable
+                  :color="colorScale(item.value)"
+                  text-color="gray"
+                  @click:close="deleteChip(item.value)"
+                >
+                  {{ item.value }}
+                </v-chip>
+              </template>
+            </v-select>
           </v-col>
           <v-spacer />
           <v-tooltip bottom>
@@ -254,6 +310,7 @@ export default defineComponent({
         :spectro-info="spectroInfo"
         :recording-id="id"
         :annotations="annotations"
+        :other-user-annotations="otherUserAnnotations"
         :selected-id="selectedId"
         :grid="gridEnabled"
         @selected="setSelection($event)"
@@ -269,6 +326,7 @@ export default defineComponent({
         :spectro-info="spectroInfo"
         :recording-id="id"
         :annotations="annotations"
+        :other-user-annotations="otherUserAnnotations"
         :selected-id="selectedId"
         :parent-geo-viewer-ref="parentGeoViewerRef"
         @selected="setSelection($event)"
