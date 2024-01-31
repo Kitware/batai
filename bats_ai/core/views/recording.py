@@ -166,23 +166,25 @@ def get_spectrogram(request: HttpRequest, id: int):
         },
     }
     # Get distinct other users who have made annotations on the recording
-    other_users_qs = (
-        Annotations.objects.filter(recording=recording)
-        .exclude(owner=request.user)
-        .values('owner__username', 'owner__email', 'owner__pk')
-        .distinct()
-    )
+    if recording.owner == request.user:
+        other_users_qs = (
+            Annotations.objects.filter(recording=recording)
+            .exclude(owner=request.user)
+            .values('owner__username', 'owner__email', 'owner__pk')
+            .distinct()
+        )
 
-    other_users = [
-        {
-            'username': user['owner__username'],
-            'email': user['owner__email'],
-            'id': user['owner__pk'],
-        }
-        for user in other_users_qs
-    ]
+        other_users = [
+            {
+                'username': user['owner__username'],
+                'email': user['owner__email'],
+                'id': user['owner__pk'],
+            }
+            for user in other_users_qs
+        ]
 
-    spectro_data['otherUsers'] = other_users
+        spectro_data['otherUsers'] = other_users
+
     spectro_data['currentUser'] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
@@ -221,23 +223,25 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
     }
 
     # Get distinct other users who have made annotations on the recording
-    other_users_qs = (
-        Annotations.objects.filter(recording=recording)
-        .exclude(owner=request.user)
-        .values('owner__username', 'owner__email', 'owner__pk')
-        .distinct()
-    )
+    if recording.owner == request.user:
+        other_users_qs = (
+            Annotations.objects.filter(recording=recording)
+            .exclude(owner=request.user)
+            .values('owner__username', 'owner__email', 'owner__pk')
+            .distinct()
+        )
 
-    other_users = [
-        {
-            'username': user['owner__username'],
-            'email': user['owner__email'],
-            'id': user['owner__pk'],
-        }
-        for user in other_users_qs
-    ]
+        other_users = [
+            {
+                'username': user['owner__username'],
+                'email': user['owner__email'],
+                'id': user['owner__pk'],
+            }
+            for user in other_users_qs
+        ]
 
-    spectro_data['otherUsers'] = other_users
+        spectro_data['otherUsers'] = other_users
+
     spectro_data['currentUser'] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)

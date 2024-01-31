@@ -133,7 +133,7 @@ export default defineComponent({
     <v-card-title>
       <v-row class="py-2">
         <div>
-          Recordings
+          My Recordings
         </div>
         <v-spacer />
         <v-btn 
