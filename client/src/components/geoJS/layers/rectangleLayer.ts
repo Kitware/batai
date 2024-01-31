@@ -142,7 +142,7 @@ export default class RectangleLayer {
         polygon,
         owned: annotation.owner_email === currentUser,
       };
-      if (colorScale && annotation.owner_email !== currentUser) {
+      if (colorScale && annotation.owner_email !== currentUser && annotation.owner_email) {
         newAnnotation.color = colorScale(annotation.owner_email);
       }
       arr.push(newAnnotation);

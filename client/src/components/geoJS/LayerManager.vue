@@ -243,7 +243,7 @@ export default defineComponent({
       () => props.annotations,
       () => {
         localAnnotations.value = props.annotations;
-        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value);
+        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
         rectAnnotationLayer.redraw();
       }
     );
@@ -277,7 +277,7 @@ export default defineComponent({
       if (props.spectroInfo) {
         rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
         editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
-        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value);
+        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
         rectAnnotationLayer.redraw();
         if (!props.thumbnail) {
           legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
@@ -324,14 +324,22 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-dialog v-model="displayError" width="500">
+  <v-dialog
+    v-model="displayError" 
+    width="500"
+  >
     <v-card>
       <v-card-title>Error</v-card-title>
       <v-card-text>{{ errorMsg }}</v-card-text>
       <v-card-actions>
         <v-row>
           <v-spacer />
-          <v-btn variant="outlined" @click="displayError = false"> Dismiss </v-btn>
+          <v-btn
+            variant="outlined"
+            @click="displayError = false"
+          >
+            Dismiss
+          </v-btn>
           <v-spacer />
         </v-row>
       </v-card-actions>

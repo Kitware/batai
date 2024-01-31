@@ -204,11 +204,18 @@ export default defineComponent({
               <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
             </div>
           </v-col>
-          <v-col v-if="mode !== 'disabled'" cols="1" style="font-size: 20px">
+          <v-col
+            v-if="mode !== 'disabled'"
+            cols="1"
+            style="font-size: 20px"
+          >
             <b>Mode:</b>
             <span> {{ mode }}</span>
           </v-col>
-          <v-col v-if="otherUsers.length && colorScale" class="ma-0 pa-0 pt-5">
+          <v-col
+            v-if="otherUsers.length && colorScale" 
+            class="ma-0 pa-0 pt-5"
+          >
             <v-select
               v-model="selectedUsers"
               :items="otherUsers"

@@ -223,7 +223,10 @@ export default defineComponent({
       @set-cursor="setCursor($event)"
       @set-mode="$emit('set-mode', $event)"
     />
-    <div ref="imageCursorRef" class="imageCursor">
+    <div
+      ref="imageCursorRef" 
+      class="imageCursor"
+    >
       <v-icon color="white">
         {{ cursor }}
       </v-icon>

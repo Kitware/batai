@@ -57,7 +57,7 @@ export interface SpectrogramAnnotation {
     editing?: boolean;
     species?: Species[];
     comments?: string;
-    owner_email: string;
+    owner_email?: string;
 }
 
 export interface UpdateSpectrogramAnnotation {
