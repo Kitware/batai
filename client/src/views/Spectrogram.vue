@@ -221,6 +221,7 @@ export default defineComponent({
                 density="compact"
                 label="Other Users"
                 multiple
+                single-line
                 clearable
                 variant="outlined"
                 closable-chips
@@ -228,11 +229,12 @@ export default defineComponent({
                 <template #selection="{ item }">
                   <v-chip
                     closable
+                    size="x-small"
                     :color="colorScale(item.value)"
                     text-color="gray"
                     @click:close="deleteChip(item.value)"
                   >
-                    {{ item.value }}
+                    {{ item.value.replace(/@.*/, '') }}
                   </v-chip>
                 </template>
               </v-select>
