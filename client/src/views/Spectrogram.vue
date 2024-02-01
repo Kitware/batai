@@ -38,6 +38,7 @@ export default defineComponent({
       setSelectedUsers,
       createColorScale,
       currentUser,
+      annotationState,
     } = useState();
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -49,7 +50,6 @@ export default defineComponent({
     const loadedImage = ref(false);
     const compressed = ref(false);
     const gridEnabled = ref(false);
-    const mode: Ref<"creation" | "editing" | "disabled"> = ref("disabled");
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
       annotations.value = response.data.sort((a, b) => a.start_time - b.start_time);
@@ -128,10 +128,6 @@ export default defineComponent({
     };
     watch(compressed, () => loadData());
 
-    const setMode = (newMode: "creation" | "editing" | "disabled") => {
-      mode.value = newMode;
-    };
-
     const keyboardEvent = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
         selectNextIndex(1);
@@ -158,6 +154,7 @@ export default defineComponent({
     });
 
     return {
+      annotationState,
       compressed,
       loadedImage,
       image,
@@ -168,7 +165,6 @@ export default defineComponent({
       getAnnotationsList,
       setParentGeoViewer,
       setHoverData,
-      setMode,
       toggleLayerVisibility,
       speciesList,
       selectedAnnotation,
@@ -177,7 +173,6 @@ export default defineComponent({
       layerVisibility,
       timeRef,
       freqRef,
-      mode,
       // Other user selection
       otherUserAnnotations,
       otherUsers,
@@ -193,123 +188,128 @@ export default defineComponent({
   <v-row>
     <v-col>
       <v-toolbar>
-        <v-row>
-          <v-col cols="2">
-            <div>
-              <b>Time:</b>
-              <span v-if="timeRef >= 0">{{ timeRef.toFixed(0) }}ms</span>
-            </div>
-            <div>
-              <b>Frequency:</b>
-              <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
-            </div>
-          </v-col>
-          <v-col
-            v-if="mode !== 'disabled'"
-            cols="1"
-            style="font-size: 20px"
-          >
-            <b>Mode:</b>
-            <span> {{ mode }}</span>
-          </v-col>
-          <v-col
-            v-if="otherUsers.length && colorScale" 
-            class="ma-0 pa-0 pt-5"
-          >
-            <v-select
-              v-model="selectedUsers"
-              :items="otherUsers"
-              density="compact"
-              label="Other Users"
-              multiple
-              clearable
-              variant="outlined"
-              closable-chips
+        <v-container>
+          <v-row align="center">
+            <v-col cols="2">
+              <div>
+                <b>Time:</b>
+                <span v-if="timeRef >= 0">{{ timeRef.toFixed(0) }}ms</span>
+              </div>
+              <div>
+                <b>Frequency:</b>
+                <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
+              </div>
+            </v-col>
+            <v-col
+              cols="1"
+              class="px-0"
+              style="font-size: 20px"
             >
-              <template #selection="{ item }">
-                <v-chip
-                  closable
-                  :color="colorScale(item.value)"
-                  text-color="gray"
-                  @click:close="deleteChip(item.value)"
+              <div v-if="annotationState !== '' && annotationState !== 'disabled'">
+                <b>Mode:</b>
+                <span> {{ annotationState }}</span>
+              </div>
+            </v-col>
+            <v-col
+              v-if="otherUsers.length && colorScale" 
+              cols="3"
+              class="ma-0 pa-0 pt-5"
+            >
+              <v-select
+                v-model="selectedUsers"
+                :items="otherUsers"
+                density="compact"
+                label="Other Users"
+                multiple
+                clearable
+                variant="outlined"
+                closable-chips
+              >
+                <template #selection="{ item }">
+                  <v-chip
+                    closable
+                    :color="colorScale(item.value)"
+                    text-color="gray"
+                    @click:close="deleteChip(item.value)"
+                  >
+                    {{ item.value }}
+                  </v-chip>
+                </template>
+              </v-select>
+            </v-col>
+            <v-spacer />
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="layerVisibility.includes('species') ? 'blue' : ''"
+                  @click="toggleLayerVisibility('species')"
                 >
-                  {{ item.value }}
-                </v-chip>
+                  mdi-bat
+                </v-icon>
               </template>
-            </v-select>
-          </v-col>
-          <v-spacer />
-          <v-tooltip bottom>
-            <template #activator="{ props: subProps }">
-              <v-icon
-                v-bind="subProps"
-                size="35"
-                class="mr-5 mt-5"
-                :color="layerVisibility.includes('species') ? 'blue' : ''"
-                @click="toggleLayerVisibility('species')"
-              >
-                mdi-bat
-              </v-icon>
-            </template>
-            <span> Turn Species Label On/Off</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <template #activator="{ props: subProps }">
-              <v-btn
-                v-bind="subProps"
-                size="35"
-                class="mr-5 mt-5"
-                :color="layerVisibility.includes('time') ? 'blue' : ''"
-                @click="toggleLayerVisibility('time')"
-              >
-                <h3>ms</h3>
-              </v-btn>
-            </template>
-            <span> Turn Time Label On/Off</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <template #activator="{ props: subProps }">
-              <v-btn
-                v-bind="subProps"
-                size="35"
-                class="mr-5 mt-5"
-                :color="layerVisibility.includes('freq') ? 'blue' : ''"
-                @click="toggleLayerVisibility('freq')"
-              >
-                <h3>KHz</h3>
-              </v-btn>
-            </template>
-            <span> Turn Time Label On/Off</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <template #activator="{ props: subProps }">
-              <v-icon
-                v-bind="subProps"
-                size="35"
-                class="mr-5 mt-5"
-                :color="gridEnabled ? 'blue' : ''"
-                @click="gridEnabled = !gridEnabled"
-              >
-                mdi-grid
-              </v-icon>
-            </template>
-            <span> Turn Legend Grid On/Off</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <template #activator="{ props: subProps }">
-              <v-icon
-                v-bind="subProps"
-                size="35"
-                class="mr-5 mt-5"
-                :color="compressed ? 'blue' : ''"
-                @click="compressed = !compressed"
-              >
-                mdi-calendar-collapse-horizontal
-              </v-icon>
-            </template>
-            <span> Toggle Compressed View</span>
-          </v-tooltip>
-        </v-row>
+              <span> Turn Species Label On/Off</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-btn
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="layerVisibility.includes('time') ? 'blue' : ''"
+                  @click="toggleLayerVisibility('time')"
+                >
+                  <h3>ms</h3>
+                </v-btn>
+              </template>
+              <span> Turn Time Label On/Off</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-btn
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="layerVisibility.includes('freq') ? 'blue' : ''"
+                  @click="toggleLayerVisibility('freq')"
+                >
+                  <h3>KHz</h3>
+                </v-btn>
+              </template>
+              <span> Turn Time Label On/Off</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="gridEnabled ? 'blue' : ''"
+                  @click="gridEnabled = !gridEnabled"
+                >
+                  mdi-grid
+                </v-icon>
+              </template>
+              <span> Turn Legend Grid On/Off</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="compressed ? 'blue' : ''"
+                  @click="compressed = !compressed"
+                >
+                  mdi-calendar-collapse-horizontal
+                </v-icon>
+              </template>
+              <span> Toggle Compressed View</span>
+            </v-tooltip>
+          </v-row>
+        </v-container>
       </v-toolbar>
       <spectrogram-viewer
         v-if="loadedImage"
@@ -325,7 +325,6 @@ export default defineComponent({
         @update:annotation="getAnnotationsList()"
         @geo-viewer-ref="setParentGeoViewer($event)"
         @hover-data="setHoverData($event)"
-        @set-mode="setMode($event)"
       />
       <thumbnail-viewer
         v-if="loadedImage && parentGeoViewerRef"
@@ -343,7 +342,6 @@ export default defineComponent({
       <annotation-list
         :annotations="annotations"
         :selected-id="selectedId"
-        :mode="mode"
         class="annotation-list"
         @select="selectedId = $event"
       />

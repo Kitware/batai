@@ -9,7 +9,7 @@ const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref(
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref('');
 
-type AnnotationState = "" | "editing" | "creating";
+type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
   const setAnnotationState = (state: AnnotationState) => {
     annotationState.value = state;

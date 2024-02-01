@@ -22,10 +22,6 @@ export default defineComponent({
         type: Number as PropType<number | null>,
         default: null,
     },
-    mode: {
-      type: String as PropType<'creation' | 'editing' | 'disabled'>,
-      required: true,
-    }
   },
   emits: ['select'],
   setup(props) {
@@ -58,7 +54,7 @@ export default defineComponent({
         Annotations
         <v-spacer />
         <v-btn
-          :disabled="mode === 'creation'"
+          :disabled="annotationState === 'creating'"
           @click="annotationState = 'creating'"
         >
           Add<v-icon>mdi-plus</v-icon>

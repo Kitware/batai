@@ -39,7 +39,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["selected", "update:annotation", "create:annotation", "set-cursor", "set-mode"],
+  emits: ["selected", "update:annotation", "create:annotation", "set-cursor"],
   setup(props, { emit }) {
     const {
       annotationState,
@@ -67,7 +67,6 @@ export default defineComponent({
     const event = (type: string, data: any) => {
       // Will handle clicking, selecting and editing here
       if (type === "update:mode") {
-        emit("set-mode", data.mode);
         setAnnotationState(data.mode);
       }
       if (type === "update:cursor") {
@@ -263,7 +262,7 @@ export default defineComponent({
               editAnnotationLayer.getMode() === "disabled" &&
               props.selectedId === null
             ) {
-              emit("set-mode", "disabled");
+              annotationState.value === 'disabled';
               editAnnotationLayer.featureLayer.clear();
             }
           });

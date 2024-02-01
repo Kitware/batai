@@ -48,7 +48,6 @@ export default defineComponent({
     "selected",
     "geoViewerRef",
     "hoverData",
-    "set-mode",
   ],
   setup(props, { emit }) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
@@ -221,7 +220,6 @@ export default defineComponent({
       @update:annotation="updateAnnotation($event)"
       @create:annotation="createAnnotation($event)"
       @set-cursor="setCursor($event)"
-      @set-mode="$emit('set-mode', $event)"
     />
     <div
       ref="imageCursorRef" 
