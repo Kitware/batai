@@ -87,10 +87,11 @@ export default defineComponent({
         <v-row
           v-for="item in annotation.species"
           :key="`${annotation.id}_${item.common_name}`"
+          class="ma-0 pa-0"
         >
-          <v-col>
+          <v-col class="ma-0 pa-0">
             <div class="species-name">
-              {{ item.common_name }}
+              {{ item.species_code || item.common_name }}
             </div>
             <div
               v-if="item.family"
@@ -123,10 +124,10 @@ export default defineComponent({
 }
 .species-name {
     font-weight: bold;
-    font-size: 0.7em;
+    font-size: 1em;
 }
 .species-hierarchy {
-    font-size: 0.5em;
+    font-size: 0.75em;
 }
 .selected {
     background-color: cyan;

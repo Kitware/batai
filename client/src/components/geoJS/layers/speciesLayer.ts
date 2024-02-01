@@ -74,7 +74,7 @@ export default class SpeciesLayer {
         for (let i =0; i< species.length; i += 1) {
           const specie = species[i];
           this.textData.push({
-            text: `${specie.common_name}`,
+            text: `${specie.species_code || specie.common_name}`,
             x: xmin + (xmax-xmin) /2.0,
             y: ymax ,
             offsetX:0,
