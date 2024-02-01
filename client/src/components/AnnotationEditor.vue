@@ -28,13 +28,13 @@ export default defineComponent({
   emits: ['update:annotation', 'delete:annotation'],
   setup(props, { emit }) {
     const speciesList = computed(() => {
-        return props.species.map((item) => (item.common_name));
+        return props.species.map((item) => (item.species_code || item.common_name)).sort();
     });
-    const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.common_name) || []);
+    const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
     watch(() => props.annotation, () => {
         if (props.annotation?.species) {
-            speciesEdit.value = props.annotation.species.map((item) => item.common_name);
+            speciesEdit.value = props.annotation.species.map((item) => item.species_code || item.common_name);
         }
         if (props.annotation?.comments) {
             comments.value = props.annotation.comments;
@@ -91,7 +91,7 @@ export default defineComponent({
       </v-row>
     </v-card-title>
     <v-row>
-      <v-select
+      <v-autocomplete
         v-model="speciesEdit"
         multiple
         closable-chips

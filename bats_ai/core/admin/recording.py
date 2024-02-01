@@ -17,6 +17,7 @@ class RecordingAdmin(admin.ModelAdmin):
         'spectrogram_status',
         'owner',
         'recorded_date',
+        'public',
         'equipment',
         'comments',
         'recording_location',

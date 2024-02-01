@@ -9,6 +9,8 @@ interface RectGeoJSData {
   selected: boolean;
   editing?: boolean;
   polygon: GeoJSON.Polygon;
+  color?: string;
+  owned: boolean; // if the annotation is user owned
 }
 
 export default class RectangleLayer {
@@ -60,11 +62,15 @@ export default class RectangleLayer {
          * */
         if (e.mouse.buttonsDown.left) {
           if (!e.data.editing || (e.data.editing && !e.data.selected)) {
-            this.event("annotation-clicked", { id: e.data.id, edit: false });
+            if (e.data.owned) {
+              this.event("annotation-clicked", { id: e.data.id, edit: false });
+            }
           }
         } else if (e.mouse.buttonsDown.right) {
           if (!e.data.editing || (e.data.editing && !e.data.selected)) {
-            this.event("annotation-right-clicked", { id: e.data.id, edit: true });
+            if (e.data.owned) {
+              this.event("annotation-right-clicked", { id: e.data.id, edit: true });
+            }
           }
         }
       });
@@ -111,26 +117,35 @@ export default class RectangleLayer {
     this.drawingOther = val;
   }
 
-  formatData(annotationData: SpectrogramAnnotation[], selectedIndex: number | null) {
+  formatData(
+    annotationData: SpectrogramAnnotation[],
+    selectedIndex: number | null,
+    currentUser: string,
+    colorScale?: d3.ScaleOrdinal<string, string, never>
+  ) {
     const arr: RectGeoJSData[] = [];
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
-        const polygon = spectroToGeoJSon(annotation, this.spectroInfo);
-        const [xmin, ymin] = polygon.coordinates[0][0];
-        const [xmax, ymax] = polygon.coordinates[0][2];
-        // For the compressed view we need to filter out default or NaN numbers
-        if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
-          return;
-        }
-        if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
-          return;
-        }  
-        const newAnnotation: RectGeoJSData = {
-          id: annotation.id,
-          selected: annotation.id === selectedIndex,
-          editing: annotation.editing,
-          polygon,
-        };
-        arr.push(newAnnotation);
+      const polygon = spectroToGeoJSon(annotation, this.spectroInfo);
+      const [xmin, ymin] = polygon.coordinates[0][0];
+      const [xmax, ymax] = polygon.coordinates[0][2];
+      // For the compressed view we need to filter out default or NaN numbers
+      if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+        return;
+      }
+      if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
+        return;
+      }
+      const newAnnotation: RectGeoJSData = {
+        id: annotation.id,
+        selected: annotation.id === selectedIndex,
+        editing: annotation.editing,
+        polygon,
+        owned: annotation.owner_email === currentUser,
+      };
+      if (colorScale && annotation.owner_email !== currentUser && annotation.owner_email) {
+        newAnnotation.color = colorScale(annotation.owner_email);
+      }
+      arr.push(newAnnotation);
     });
     this.formattedData = arr;
   }
@@ -165,6 +180,9 @@ export default class RectangleLayer {
       strokeColor: (_point, _index, data) => {
         if (data.selected) {
           return "cyan";
+        }
+        if (data.color) {
+          return data.color;
         }
         return "red";
       },
