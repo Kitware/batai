@@ -14,6 +14,7 @@ class Recording(TimeStampedModel, models.Model):
     recording_location = models.GeometryField(srid=4326, blank=True, null=True)
     grts_cell_id = models.IntegerField(blank=True, null=True)
     grts_cell = models.IntegerField(blank=True, null=True)
+    public = models.BooleanField(default=False)
 
     @property
     def has_spectrogram(self):

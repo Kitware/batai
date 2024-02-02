@@ -3,6 +3,7 @@ import { defineComponent, PropType } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import { SpectrogramAnnotation } from "../api/api";
 import useState from "../use/useState";
+import { watch } from "vue";
 
 export default defineComponent({
   name: "AnnotationList",
@@ -20,11 +21,24 @@ export default defineComponent({
     selectedId: {
         type: Number as PropType<number | null>,
         default: null,
-    }
+    },
   },
   emits: ['select'],
-  setup() {
+  setup(props) {
     const { annotationState, setAnnotationState } = useState();
+    const scrollToId = (id: number) => {
+    const el = document.getElementById(`annotation-${id}`);
+    if (el) {
+      el.scrollIntoView({block: 'end', behavior: 'smooth'});
+    }
+  };
+  watch(() => props.selectedId, () => {
+    if (props.selectedId !== null) {
+      scrollToId(props.selectedId);
+    }
+  });
+  
+
     return {
         annotationState,
         setAnnotationState,
@@ -48,33 +62,36 @@ export default defineComponent({
       </v-row>
     </v-card-title>
     <v-list>
+      <v-list-item>
+        <v-row dense>
+          <v-col><b>Time</b></v-col>
+          <v-col><b>Frequency</b></v-col>
+        </v-row>
+      </v-list-item>
       <v-list-item
         v-for="annotation in annotations"
+        :id="`annotation-${annotation.id}`"
         :key="annotation.id"
         :class="{selected: annotation.id===selectedId}"
-        class="d-flex flex-column align-start"
+        class="annotation-item"
         @click="$emit('select', annotation.id)"
       >
         <v-row>
-          <v-col
-            class="annotation-id"
-          >
-            {{ annotation.id }}
-          </v-col>
           <v-col class="annotation-time">
-            <span>{{ annotation.start_time }}ms to {{ annotation.end_time }}ms </span>
+            <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
           </v-col>
           <v-col class="annotation-freq">
-            <span>{{ annotation.low_freq }}hz to {{ annotation.high_freq }}hz </span>
+            <span>{{ (annotation.low_freq/1000).toFixed(1) }}-{{ (annotation.high_freq/1000).toFixed() }}Khz </span>
           </v-col>
         </v-row>
         <v-row
           v-for="item in annotation.species"
           :key="`${annotation.id}_${item.common_name}`"
+          class="ma-0 pa-0"
         >
-          <v-col>
+          <v-col class="ma-0 pa-0">
             <div class="species-name">
-              {{ item.common_name }}
+              {{ item.species_code || item.common_name }}
             </div>
             <div
               v-if="item.family"
@@ -97,17 +114,20 @@ export default defineComponent({
     text-decoration: underline;
 }
 .annotation-time {
-    font-size: 0.7em;
+    font-size: 1em;
 }
 .annotation-freq {
-    font-size: 0.7em;
+    font-size: 1em;
+}
+.annotation-item {
+  border: 1px solid gray;
 }
 .species-name {
     font-weight: bold;
-    font-size: 0.7em;
+    font-size: 1em;
 }
 .species-hierarchy {
-    font-size: 0.5em;
+    font-size: 0.75em;
 }
 .selected {
     background-color: cyan;

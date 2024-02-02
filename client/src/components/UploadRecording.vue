@@ -1,13 +1,27 @@
 <script lang="ts">
-import { defineComponent, ref, Ref } from 'vue';
+import { defineComponent, PropType, ref, Ref } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
-import { UploadLocation, uploadRecordingFile } from '../api/api';
+import { UploadLocation, uploadRecordingFile, patchRecording } from '../api/api';
 import { VDatePicker } from 'vuetify/labs/VDatePicker';
 
+export interface EditingRecording {
+  id: number,
+  name: string,
+  date: string,
+  equipment: string,
+  comments: string,
+  public: boolean;
+}
 export default defineComponent({
   components: {
     VDatePicker,
+  },
+  props: {
+    editing: {
+      type: Object as PropType<EditingRecording | null>,
+      default: () => null,
+    }
   },
   emits: ['done', 'cancel'],
   setup(props, { emit }) {
@@ -16,15 +30,16 @@ export default defineComponent({
     const successfulUpload = ref(false);
     const errorText = ref('');
     const progressState = ref('');
-    const recordedDate = ref(new Date().toISOString().split('T')[0]); // YYYY-MM-DD Time
+    const recordedDate = ref(props.editing ? props.editing.date : new Date().toISOString().split('T')[0]); // YYYY-MM-DD Time
     const uploadProgress = ref(0);
-    const name = ref('');
-    const equipment = ref('');
-    const comments = ref('');
+    const name = ref(props.editing ? props.editing.name : '');
+    const equipment = ref(props.editing ? props.editing.equipment : '');
+    const comments = ref(props.editing ? props.editing.comments : '');
     const validForm = ref(false);
     const latitude: Ref<number | undefined> = ref();
     const longitude: Ref<number | undefined> = ref();
     const gridCellId: Ref<number | undefined> = ref();
+    const publicVal = ref(props.editing ? props.editing.public : false);
     const readFile = (e: Event) => {
       const target = (e.target as HTMLInputElement);
       if (target?.files?.length) {
@@ -45,6 +60,7 @@ export default defineComponent({
       }
     }
 
+
     const { request: submit, loading: submitLoading } = useRequest(async () => {
       const file = fileModel.value;
       if (!file) {
@@ -63,9 +79,31 @@ export default defineComponent({
         }
         location['gridCellId'] = gridCellId.value;
       }
-      await uploadRecordingFile(file, name.value, recordedDate.value, equipment.value, comments.value, location);
+      await uploadRecordingFile(file, name.value, recordedDate.value, equipment.value, comments.value, publicVal.value, location);
       emit('done');
     });
+
+    const handleSubmit = async () => {
+      if (props.editing) {
+        let location: UploadLocation = null;
+        if (latitude.value && longitude.value) {
+          location = {
+            latitude: latitude.value,
+            longitude: longitude.value,
+          };
+        }
+        if (gridCellId.value !== null) {
+          if (location === null) {
+            location  = {};
+          }
+          location['gridCellId'] = gridCellId.value;
+        }
+        await patchRecording(props.editing.id, name.value, recordedDate.value, equipment.value, comments.value, publicVal.value, location);
+        emit('done');
+      } else {
+        submit();
+      }
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateTime = (time: any)  => {
@@ -88,9 +126,10 @@ export default defineComponent({
       latitude,
       longitude,
       gridCellId,
+      publicVal,
       selectFile,
       readFile,
-      submit,
+      handleSubmit,
       updateTime,
     };
   },
@@ -123,18 +162,18 @@ export default defineComponent({
     >
       <v-container>
         <v-card-title>
-          Upload Video
+          {{ editing ? 'Edit' : 'Upload' }} Recording
         </v-card-title>
         <v-card-text>
           <v-form v-model="validForm">
             <v-row
-              v-if="errorText === '' && progressState === '' && fileModel !== undefined"
+              v-if="errorText === '' && progressState === '' && fileModel !== undefined && !editing"
               class="mx-2"
             >
               Upload {{ fileModel.name }} ?
             </v-row>
             <v-row
-              v-else-if="fileModel === undefined"
+              v-else-if="fileModel === undefined && !editing"
               class="mx-2 my-2"
             >
               <v-btn
@@ -149,7 +188,7 @@ export default defineComponent({
               </v-btn>
             </v-row>
             <v-row
-              v-else-if="progressState !== ''"
+              v-else-if="progressState !== '' && !editing"
               class="mx-2"
             >
               <v-progress-linear
@@ -162,7 +201,7 @@ export default defineComponent({
               </v-progress-linear>
             </v-row>
             <v-row
-              v-else
+              v-else-if="!editing"
               class="mx-2"
             >
               <v-alert type="error">
@@ -174,6 +213,14 @@ export default defineComponent({
                 v-model="name"
                 label="name"
                 :rules="[ v => !!v || 'Requires a name']"
+              />
+            </v-row>
+            <v-row>
+              <v-checkbox
+                v-model="publicVal"
+                label="Public"
+                hint="Share Recording with other Users"
+                persistent-hint
               />
             </v-row>
             <v-row class="pb-4">
@@ -253,9 +300,9 @@ export default defineComponent({
             Cancel
           </v-btn>
           <v-btn
-            :disabled="!fileModel ||errorText !== '' || submitLoading || !validForm"
+            :disabled=" (!fileModel && !editing) || errorText !== '' || submitLoading || !validForm"
             color="primary"
-            @click="submit"
+            @click="handleSubmit"
           >
             <span v-if="!submitLoading">
               Submit

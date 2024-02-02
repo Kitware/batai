@@ -2,7 +2,7 @@
 <script lang="ts">
 import { defineComponent, nextTick, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo, useGeoJS } from './geoJS/geoJSUtils';
-import { SpectrogramAnnotation } from "../api/api";
+import { OtherUserAnnotations, SpectrogramAnnotation } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 import geo, { GeoEvent } from "geojs";
 
@@ -23,6 +23,10 @@ export default defineComponent({
     annotations: {
       type: Array as PropType<SpectrogramAnnotation[]>,
       default: () => [],
+    },
+    otherUserAnnotations: {
+      type: Object as PropType<OtherUserAnnotations>,
+      default: () => ({}),
     },
     selectedId: {
         type: Number as PropType<number | null>,
@@ -151,7 +155,9 @@ export default defineComponent({
       :geo-viewer-ref="geoViewerRef"
       :spectro-info="spectroInfo"
       :annotations="annotations"
+      :other-user-annotations="otherUserAnnotations"
       :selected-id="selectedId"
+      thumbnail
       @selected="$emit('selected',$event)"
     />
   </div>

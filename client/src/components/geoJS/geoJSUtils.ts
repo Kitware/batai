@@ -118,7 +118,12 @@ const useGeoJS = () => {
     const { width: mapWidth } = geoViewer.value.camera().viewport;
 
     const bounds = !thumbnail.value
-      ? { left: 0, top: 0, right: mapWidth, bottom: originalBounds.bottom }
+      ? {
+          left: -125, // Making sure the legend is on the screen
+          top: 0,
+          right: mapWidth,
+          bottom: originalBounds.bottom,
+        }
       : originalBounds;
     const zoomAndCenter = geoViewer.value.zoomAndCenterFromBounds(bounds, 0);
     geoViewer.value.zoom(zoomAndCenter.zoom);
@@ -255,14 +260,29 @@ function spectroToGeoJSon(
     type: "Polygon",
     coordinates: [
       [
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        [0, 0],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
       ],
     ],
   };
+}
+
+function findPolygonCenter(polygon: GeoJSON.Polygon): number[] {
+  const coordinates = polygon.coordinates[0]; // Extract the exterior ring coordinates
+
+  // Calculate the average of longitude and latitude separately
+  const avgLng = coordinates.reduce((sum, point) => sum + point[0], 0) / coordinates.length;
+  const avgLat = coordinates.reduce((sum, point) => sum + point[1], 0) / coordinates.length;
+
+  return [avgLng, avgLat];
+}
+
+function spectroToCenter(annotation: SpectrogramAnnotation, spectroInfo: SpectroInfo) {
+  const geoJSON = spectroToGeoJSon(annotation, spectroInfo);
+  return findPolygonCenter(geoJSON);
 }
 
 /* beginning at bottom left, rectangle is defined clockwise */
@@ -364,4 +384,4 @@ function reOrdergeoJSON(coords: GeoJSON.Position[]) {
   ];
 }
 
-export { spectroToGeoJSon, geojsonToSpectro, reOrdergeoJSON, useGeoJS };
+export { spectroToGeoJSon, geojsonToSpectro, reOrdergeoJSON, useGeoJS, spectroToCenter };
