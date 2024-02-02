@@ -4,7 +4,7 @@ import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
 import { UploadLocation, uploadRecordingFile, patchRecording } from '../api/api';
 import { VDatePicker } from 'vuetify/labs/VDatePicker';
-
+import MapLocation from './MapLocation.vue';
 export interface EditingRecording {
   id: number,
   name: string,
@@ -12,10 +12,12 @@ export interface EditingRecording {
   equipment: string,
   comments: string,
   public: boolean;
+  location?: { lat: number, lon: number },
 }
 export default defineComponent({
   components: {
     VDatePicker,
+    MapLocation,
   },
   props: {
     editing: {
@@ -36,8 +38,8 @@ export default defineComponent({
     const equipment = ref(props.editing ? props.editing.equipment : '');
     const comments = ref(props.editing ? props.editing.comments : '');
     const validForm = ref(false);
-    const latitude: Ref<number | undefined> = ref();
-    const longitude: Ref<number | undefined> = ref();
+    const latitude: Ref<number | undefined> = ref(props.editing?.location?.lat ? props.editing.location.lat : undefined);
+    const longitude: Ref<number | undefined> = ref(props.editing?.location?.lon ? props.editing.location.lon : undefined);
     const gridCellId: Ref<number | undefined> = ref();
     const publicVal = ref(props.editing ? props.editing.public : false);
     const readFile = (e: Event) => {
@@ -110,6 +112,11 @@ export default defineComponent({
     recordedDate.value = new Date(time as string).toISOString().split('T')[0];
   };
 
+  const setLocation = ({lat, lon}: {lat: number, lon: number}) => {
+    latitude.value = lat;
+    longitude.value = lon;
+  };
+
     return {
       errorText,
       fileModel,
@@ -131,6 +138,7 @@ export default defineComponent({
       readFile,
       handleSubmit,
       updateTime,
+      setLocation,
     };
   },
 });
@@ -250,24 +258,35 @@ export default defineComponent({
                 <v-expansion-panel>
                   <v-expansion-panel-title>Location</v-expansion-panel-title>
                   <v-expansion-panel-text>
-                    <v-row>
+                    <v-row class="mt-2">
                       <v-text-field
                         v-model="latitude"
                         type="number"
                         label="LAT:"
+                        class="mx-4"
                       />
                       <v-text-field
                         v-model="longitude"
                         type="number"
                         label="LON:"
+                        class="mx-4"
                       />
                     </v-row>
                     <v-row>
                       <v-text-field
                         v-model="gridCellId"
                         type="number"
-                        label="NABat Gird Cell"
+                        label="NABat Grid Cell"
                       />
+                    </v-row>
+                    <v-row>
+                      <v-spacer />
+                      <map-location
+                        :size="{width: 600, height: 400}"
+                        :location="{ x: latitude, y: longitude}"
+                        @location="setLocation($event)"
+                      />
+                      <v-spacer />
                     </v-row>
                   </v-expansion-panel-text>
                 </v-expansion-panel>

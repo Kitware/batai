@@ -20,7 +20,7 @@ export interface Recording {
     recorded_date: string;
     equipment?: string,
     comments?: string;
-    recording_location?: null | [number, number],
+    recording_location?: null | GeoJSON.Point,
     grts_cell_id?: null | number;
     grts_cell?: null | number;
     public: boolean;

@@ -5,7 +5,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0004_spectrogram'),
     ]
@@ -14,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='recording',
             name='recording_location',
-            field=django.contrib.gis.db.models.fields.GeometryField(blank=True, null=True, srid=4326),
+            field=django.contrib.gis.db.models.fields.GeometryField(
+                blank=True, null=True, srid=4326
+            ),
         ),
     ]

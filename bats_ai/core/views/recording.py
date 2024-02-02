@@ -120,6 +120,9 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
         recording.recorded_date = converted_date
     if recording_data.publicVal is not None and recording_data.publicVal != recording.public:
         recording.public = recording_data.publicVal
+    if recording_data.latitude and recording_data.longitude:
+        point = Point(recording_data.longitude, recording_data.latitude)
+        recording.recording_location = point
 
     recording.save()
 
