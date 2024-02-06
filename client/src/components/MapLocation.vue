@@ -23,7 +23,7 @@ export default defineComponent({
     },
     updateMap: {
       type: Number,
-      defualt: 0,
+      default: 0,
     },
   },
   emits: ['location'],

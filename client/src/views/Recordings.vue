@@ -195,7 +195,10 @@ export default defineComponent({
               />
             </v-card>
           </v-menu>
-          <v-icon v-else color="error">
+          <v-icon
+            v-else
+            color="error"
+          >
             mdi-close
           </v-icon>
         </template>
@@ -282,7 +285,10 @@ export default defineComponent({
               />
             </v-card>
           </v-menu>
-          <v-icon v-else color="error">
+          <v-icon
+            v-else
+            color="error"
+          >
             mdi-close
           </v-icon>
         </template>
