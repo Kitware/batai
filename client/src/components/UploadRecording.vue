@@ -117,6 +117,10 @@ export default defineComponent({
     longitude.value = lon;
   };
 
+  const updateMap = ref(0); // updates the map when lat/lon change by editing directly;
+
+  const triggerUpdateMap = () => updateMap.value += 1;
+
     return {
       errorText,
       fileModel,
@@ -134,11 +138,13 @@ export default defineComponent({
       longitude,
       gridCellId,
       publicVal,
+      updateMap,
       selectFile,
       readFile,
       handleSubmit,
       updateTime,
       setLocation,
+      triggerUpdateMap,
     };
   },
 });
@@ -264,12 +270,14 @@ export default defineComponent({
                         type="number"
                         label="LAT:"
                         class="mx-4"
+                        @change="triggerUpdateMap()"
                       />
                       <v-text-field
                         v-model="longitude"
                         type="number"
                         label="LON:"
                         class="mx-4"
+                        @change="triggerUpdateMap()"
                       />
                     </v-row>
                     <v-row>
@@ -284,6 +292,7 @@ export default defineComponent({
                       <map-location
                         :size="{width: 600, height: 400}"
                         :location="{ x: latitude, y: longitude}"
+                        :update-map="updateMap"
                         @location="setLocation($event)"
                       />
                       <v-spacer />

@@ -21,9 +21,14 @@ export default defineComponent({
       type: Object as PropType<{ x?: number; y?: number } | undefined>,
       default: () => undefined,
     },
+    updateMap: {
+      type: Number,
+      defualt: 0,
+    },
   },
   emits: ['location'],
   setup(props, { emit }) {
+    const usCenter = { x: -90.5855, y: 39.8333 };
     const mapRef: Ref<HTMLDivElement | null> = ref(null);
     const map: Ref<any> = ref();
     const mapLayer: Ref<any> = ref();
@@ -32,7 +37,6 @@ export default defineComponent({
     const markerLocation: Ref<{ x: number; y: number } | null> = ref(null);
     watch(mapRef, () => {
       if (mapRef.value) {
-        const usCenter = { x: -90.5855, y: 39.8333 };
         const centerPoint = props.location && props.location.x && props.location.y ? props.location : usCenter;
         const zoomLevel = props.location && props.location.x && props.location.y ? 6 : 3;
         map.value = geo.map({ node: mapRef.value, center: centerPoint, zoom: zoomLevel });
@@ -78,6 +82,31 @@ export default defineComponent({
           });
         }
       }
+    });
+    watch(() =>  props.updateMap, () => {
+      if (props.location?.x && props.location?.y && markerLocation.value) {
+            markerLocation.value = { x: props.location?.x, y: props.location.y };
+            markerFeature.value
+              .data([markerLocation.value])
+              .style({
+                symbol: geo.markerFeature.symbols.drop,
+                symbolValue: 1 / 3,
+                rotation: -Math.PI / 2,
+                radius: 30,
+                strokeWidth: 5,
+                strokeColor: "blue",
+                fillColor: "yellow",
+                rotateWithMap: false,
+              })
+              .draw();
+              const centerPoint = props.location && props.location.x && props.location.y ? props.location : usCenter;
+              const zoomLevel = props.location && props.location.x && props.location.y ? 6 : 3;
+              if (map.value) {
+                map.value.zoom(zoomLevel);
+                map.value.center(centerPoint);
+              }
+
+        }
     });
     return {
       mapRef,
