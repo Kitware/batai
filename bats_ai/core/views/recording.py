@@ -8,8 +8,9 @@ from ninja import File, Form, Schema
 from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import Annotations, Recording, Species
+from bats_ai.core.models import Annotations, Recording, Species, TemporalAnnotations
 from bats_ai.core.views.species import SpeciesSchema
+from bats_ai.core.views.temporal_annotations import TemporalAnnotationSchema
 
 logger = logging.getLogger(__name__)
 
@@ -445,6 +446,92 @@ def delete_annotation(request, recording_id: int, id: int):
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             annotation_instance = Annotations.objects.get(
+                pk=id, recording=recording, owner=request.user
+            )
+
+            # Delete the annotation
+            annotation_instance.delete()
+
+            return {'message': 'Annotation deleted successfully'}
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+    except Annotations.DoesNotExist:
+        return {'error': 'Annotation not found'}
+
+
+# TEMPORAL ANNOTATIONS
+
+
+@router.get('recording/{id}/temporal-annotations')
+def get_temporal_annotations(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+
+        # Check if the user owns the recording or if the recording is public
+        if recording.owner == request.user or recording.public:
+            # Query annotations associated with the recording that are owned by the current user
+            annotations_qs = TemporalAnnotations.objects.filter(
+                recording=recording, owner=request.user
+            )
+
+            # Serialize the annotations using AnnotationSchema
+            annotations_data = [
+                TemporalAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+                for annotation in annotations_qs
+            ]
+
+            return annotations_data
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+
+@router.put('recording/{id}/temporal-annotations')
+def put_temporal_annotation(
+    request,
+    id: int,
+    annotation: TemporalAnnotationSchema,
+):
+    try:
+        recording = Recording.objects.get(pk=id)
+        if recording.owner == request.user or recording.public:
+            # Create a new annotation
+            new_annotation = TemporalAnnotations.objects.create(
+                recording=recording,
+                owner=request.user,
+                start_time=annotation.start_time,
+                end_time=annotation.end_time,
+                type=annotation.type,
+                comments=annotation.comments,
+            )
+
+            return {'message': 'Annotation added successfully', 'id': new_annotation.pk}
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+
+@router.delete('/{recording_id}/temporal-annotations/{id}')
+def delete_temporal_annotation(request, recording_id: int, id: int):
+    try:
+        recording = Recording.objects.get(pk=recording_id)
+
+        # Check if the user owns the recording or if the recording is public
+        if recording.owner == request.user or recording.public:
+            annotation_instance = TemporalAnnotations.objects.get(
                 pk=id, recording=recording, owner=request.user
             )
 
