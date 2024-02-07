@@ -5,11 +5,13 @@ import {
   VDataTable,
 } from "vuetify/labs/VDataTable";
 import UploadRecording, { EditingRecording } from '../components/UploadRecording.vue';
+import MapLocation from '../components/MapLocation.vue';
 
 export default defineComponent({
     components: {
         VDataTable,
         UploadRecording,
+        MapLocation,
     },
   setup() {
     const itemsPerPage = ref(-1);
@@ -40,7 +42,10 @@ export default defineComponent({
             title:'Public',
             key:'public',
         },
-
+        {
+          title: 'Location',
+          key:'recording_location'
+        },
         {
             title:'Equipment',
             key:'equipment',
@@ -72,7 +77,10 @@ export default defineComponent({
             title:'Public',
             key:'public',
         },
-
+        {
+          title: 'Location',
+          key:'recording_location'
+        },
         {
             title:'Equipment',
             key:'equipment',
@@ -110,6 +118,10 @@ export default defineComponent({
         public: item.public,
         id: item.id,
       };
+      if (item.recording_location) {
+        const [ lat, lon ] = item.recording_location.coordinates;
+        editingRecording.value['location'] = {lat, lon};
+      }
       uploadDialog.value = true;
     };
 
@@ -165,6 +177,32 @@ export default defineComponent({
             {{ item.raw.name }}
           </router-link>
         </template>
+        <template #item.recording_location="{ item }">
+          <v-menu
+            v-if="item.raw.recording_location"
+            open-on-hover
+          >
+            <template #activator="{ props }">
+              <v-icon v-bind="props">
+                mdi-map
+              </v-icon>
+            </template>
+            <v-card>
+              <map-location
+                :editor="false"
+                :size="{width: 400, height: 400}"
+                :location="{ x: item.raw.recording_location.coordinates[0], y: item.raw.recording_location.coordinates[1]}"
+              />
+            </v-card>
+          </v-menu>
+          <v-icon
+            v-else
+            color="error"
+          >
+            mdi-close
+          </v-icon>
+        </template>
+
         <template #item.public="{ item }">
           <v-icon
             v-if="item.raw.public"
@@ -183,7 +221,7 @@ export default defineComponent({
     </v-card-text>
     <v-dialog
       v-model="uploadDialog"
-      width="400"
+      width="700"
     >
       <upload-recording
         :editing="editingRecording"
@@ -229,6 +267,32 @@ export default defineComponent({
             mdi-close
           </v-icon>
         </template>
+        <template #item.recording_location="{ item }">
+          <v-menu
+            v-if="item.raw.recording_location"
+            open-on-hover
+          >
+            <template #activator="{ props }">
+              <v-icon v-bind="props">
+                mdi-map
+              </v-icon>
+            </template>
+            <v-card>
+              <map-location
+                :editor="false"
+                :size="{width: 400, height: 400}"
+                :location="{ x: item.raw.recording_location.coordinates[0], y: item.raw.recording_location.coordinates[1]}"
+              />
+            </v-card>
+          </v-menu>
+          <v-icon
+            v-else
+            color="error"
+          >
+            mdi-close
+          </v-icon>
+        </template>
+
         <template #item.userMadeAnnotations="{ item }">
           <v-icon
             v-if="item.raw.userMadeAnnotations"

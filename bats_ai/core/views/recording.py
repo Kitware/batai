@@ -1,7 +1,9 @@
 from datetime import datetime
+import json
 import logging
 
 from django.contrib.auth.models import User
+from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
 from django.http import HttpRequest
 from ninja import File, Form, Schema
@@ -33,8 +35,11 @@ class RecordingSchema(Schema):
 class RecordingUploadSchema(Schema):
     name: str
     recorded_date: str
-    equipment: str = None
-    comments: str = None
+    equipment: str | None
+    comments: str | None
+    latitude: float = None
+    longitude: float = None
+    gridCellId: int = None
     publicVal: bool = None
 
 
@@ -80,17 +85,21 @@ def create_recording(
     publicVal: bool = False,
 ):
     converted_date = datetime.strptime(payload.recorded_date, '%Y-%m-%d')
+    point = None
+    if payload.latitude and payload.longitude:
+        point = Point(payload.longitude, payload.latitude)
     recording = Recording(
         name=payload.name,
         owner_id=request.user.pk,
         audio_file=audio_file,
         recorded_date=converted_date,
         equipment=payload.equipment,
+        grts_cell_id=payload.gridCellId,
+        recording_location=point,
         public=publicVal,
         comments=payload.comments,
     )
     recording.save()
-
     return {'message': 'Recording updated successfully', 'id': recording.pk}
 
 
@@ -112,6 +121,9 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
         recording.recorded_date = converted_date
     if recording_data.publicVal is not None and recording_data.publicVal != recording.public:
         recording.public = recording_data.publicVal
+    if recording_data.latitude and recording_data.longitude:
+        point = Point(recording_data.longitude, recording_data.latitude)
+        recording.recording_location = point
 
     recording.save()
 
@@ -126,10 +138,13 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
     else:
         recordings = Recording.objects.filter(owner=request.user).values()
 
+    # TODO with larger dataset it may be better to do this in a queryset instead of python
     for recording in recordings:
         user = User.objects.get(id=recording['owner_id'])
         recording['owner_username'] = user.username
         recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
+        if recording['recording_location']:
+            recording['recording_location'] = json.loads(recording['recording_location'].json)
         unique_users_with_annotations = (
             Annotations.objects.filter(recording_id=recording['id'])
             .values('owner')
@@ -142,7 +157,6 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
         ).exists()
         recording['userMadeAnnotations'] = user_has_annotations
 
-    # Return the serialized data
     return list(recordings)
 
 
