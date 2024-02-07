@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import geo, { GeoEvent } from "geojs";
-import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
-import { SpectrogramAnnotation } from "../../../api/api";
+import { SpectroInfo, spectroTemporalToGeoJSon } from "../geoJSUtils";
+import { SpectrogramTemporalAnnotation } from "../../../api/api";
 import { LayerStyle } from "./types";
 
 interface RectGeoJSData {
@@ -13,9 +13,10 @@ interface RectGeoJSData {
   owned: boolean; // if the annotation is user owned
 }
 
-export default class RectangleLayer {
+export default class TemporalLayer {
   formattedData: RectGeoJSData[];
 
+  drawingOther: boolean; //drawing another type of annotation at the same time?
 
   hoverOn: boolean; //to turn over annnotations on
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,6 +43,7 @@ export default class RectangleLayer {
     spectroInfo: SpectroInfo
   ) {
     this.geoViewerRef = geoViewerRef;
+    this.drawingOther = false;
     this.spectroInfo = spectroInfo;
     this.formattedData = [];
     this.hoverOn = false;
@@ -106,15 +108,16 @@ export default class RectangleLayer {
     }
   }
 
+ 
   formatData(
-    annotationData: SpectrogramAnnotation[],
+    annotationData: SpectrogramTemporalAnnotation[],
     selectedIndex: number | null,
     currentUser: string,
     colorScale?: d3.ScaleOrdinal<string, string, never>
   ) {
     const arr: RectGeoJSData[] = [];
-    annotationData.forEach((annotation: SpectrogramAnnotation) => {
-      const polygon = spectroToGeoJSon(annotation, this.spectroInfo);
+    annotationData.forEach((annotation: SpectrogramTemporalAnnotation) => {
+      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50);
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
@@ -160,11 +163,21 @@ export default class RectangleLayer {
         antialiasing: 0,
         stroke: true,
         uniformPolygon: true,
-        fill: false,
+        fill: true,
+        fillOpacity: 0.20,
       },
       // Style conversion to get array objects to work in geoJS
       position: (point) => {
         return { x: point[0], y: point[1] };
+      },
+      fillColor: (_point, _index, data) => {
+        if (data.selected) {
+          return "cyan";
+        }
+        if (data.color) {
+          return data.color;
+        }
+        return "hotpink";
       },
       strokeColor: (_point, _index, data) => {
         if (data.selected) {
@@ -173,7 +186,7 @@ export default class RectangleLayer {
         if (data.color) {
           return data.color;
         }
-        return "red";
+        return "hotpink";
       },
     };
   }

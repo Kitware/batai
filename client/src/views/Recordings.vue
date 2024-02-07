@@ -119,7 +119,7 @@ export default defineComponent({
         id: item.id,
       };
       if (item.recording_location) {
-        const [ lat, lon ] = item.recording_location.coordinates;
+        const [ lon, lat ] = item.recording_location.coordinates;
         editingRecording.value['location'] = {lat, lon};
       }
       uploadDialog.value = true;

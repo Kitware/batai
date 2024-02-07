@@ -60,6 +60,17 @@ export interface SpectrogramAnnotation {
     owner_email?: string;
 }
 
+export interface SpectrogramTemporalAnnotation {
+    start_time: number;
+    end_time: number;
+    id: number;
+    editing?: boolean;
+    type?: string;
+    comments?: string;
+    owner_email?: string;
+}
+
+
 export interface UpdateSpectrogramAnnotation {
     start_time?: number;
     end_time?: number;
@@ -81,6 +92,7 @@ export interface Spectrogram {
     url?: string;
     filename?: string;
     annotations?: SpectrogramAnnotation[];
+    temporal?: SpectrogramTemporalAnnotation[];
     spectroInfo?: SpectroInfo;
     currentUser?: string;
     otherUsers?: UserInfo[];

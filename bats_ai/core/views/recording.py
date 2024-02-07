@@ -203,13 +203,22 @@ def get_spectrogram(request: HttpRequest, id: int):
     spectro_data['currentUser'] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
+    temporal_annotations_qs = TemporalAnnotations.objects.filter(
+        recording=recording, owner=request.user
+    )
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [
         AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
         for annotation in annotations_qs
     ]
+    temporal_annotations_data = [
+        TemporalAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+        for annotation in temporal_annotations_qs
+    ]
+
     spectro_data['annotations'] = annotations_data
+    spectro_data['temporal'] = temporal_annotations_data
     return spectro_data
 
 

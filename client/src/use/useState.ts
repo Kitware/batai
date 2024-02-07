@@ -3,7 +3,7 @@ import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 
 const annotationState: Ref<AnnotationState> = ref("");
-type LayersVis = "time" | "freq" | "species" | "grid";
+type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal';
 const layerVisibility: Ref<LayersVis[]> = ref([]);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
 const selectedUsers: Ref<string[]> = ref([]);

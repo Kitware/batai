@@ -8,12 +8,22 @@ router = RouterPaginated()
 
 
 class TemporalAnnotationSchema(Schema):
-    recording: int  # Foreign Key to index
-    owner_username: str
     start_time: int
     end_time: int
     type: str
     comments: str
+    owner_email: str = None
+
+    @classmethod
+    def from_orm(cls, obj, owner_email=None, **kwargs):
+        return cls(
+            start_time=obj.start_time,
+            end_time=obj.end_time,
+            type=obj.type,
+            comments=obj.comments,
+            id=obj.id,
+            owner_email=owner_email,  # Include owner_email in the schema
+        )
 
 
 @router.get('/{id}')

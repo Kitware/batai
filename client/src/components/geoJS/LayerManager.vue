@@ -1,9 +1,10 @@
 <script lang="ts">
 import { defineComponent, nextTick, onMounted, PropType, Ref, ref, watch } from "vue";
-import { OtherUserAnnotations, SpectrogramAnnotation } from "../../api/api";
+import { OtherUserAnnotations, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
+import TemporalLayer from "./layers/temporalLayer";
 import LegendLayer from "./layers/legendLayer";
 import TimeLayer from "./layers/timeLayer";
 import FreqLayer from "./layers/freqLayer";
@@ -24,6 +25,10 @@ export default defineComponent({
     },
     annotations: {
       type: Array as PropType<SpectrogramAnnotation[]>,
+      default: () => [],
+    },
+    temporalAnnotations: {
+      type: Array as PropType<SpectrogramTemporalAnnotation[]>,
       default: () => [],
     },
     otherUserAnnotations: {
@@ -52,9 +57,11 @@ export default defineComponent({
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
     const localAnnotations: Ref<SpectrogramAnnotation[]> = ref(cloneDeep(props.annotations));
+    const localTemporalAnnotations: Ref<SpectrogramTemporalAnnotation[]> = ref(cloneDeep(props.temporalAnnotations));
     const editing = ref(false);
     const editingAnnotation: Ref<null | SpectrogramAnnotation> = ref(null);
     let rectAnnotationLayer: RectangleLayer;
+    let temporalAnnotationLayer: TemporalLayer;
     let editAnnotationLayer: EditAnnotationLayer;
     let legendLayer: LegendLayer;
     let timeLayer: TimeLayer;
@@ -62,6 +69,12 @@ export default defineComponent({
     let speciesLayer: SpeciesLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+    const temporalEvent = (type: string, data: any) => {
+      console.log(`${type}`);
+      console.log(data);
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     const event = (type: string, data: any) => {
@@ -189,14 +202,14 @@ export default defineComponent({
           additionalAnnotations = additionalAnnotations.concat(newAnnotations);
         }
         additionalAnnotations = additionalAnnotations.concat(localAnnotations.value);
-        return { annotations: additionalAnnotations, colorScale };
+        return { annotations: additionalAnnotations, temporalAnnotations: localTemporalAnnotations.value, colorScale };
       } else {
-        return { annotations: localAnnotations.value };
+        return { annotations: localAnnotations.value, temporalAnnotations: localTemporalAnnotations.value };
       }
     };
     const triggerUpdate = () => {
       // Check for selected and editing annotations;
-      const { annotations } = getDataForLayers();
+      const { annotations, temporalAnnotations } = getDataForLayers();
       if (rectAnnotationLayer) {
         rectAnnotationLayer.formatData(
           annotations,
@@ -205,6 +218,15 @@ export default defineComponent({
           colorScale.value
         );
         rectAnnotationLayer.redraw();
+      }
+      if (temporalAnnotationLayer && layerVisibility.value.includes('temporal')) {
+        temporalAnnotationLayer.formatData(
+          temporalAnnotations,
+          selectedAnnotationId.value,
+          currentUser.value,
+          colorScale.value
+        );
+        temporalAnnotationLayer.redraw();
       }
       if (!props.thumbnail) {
         if (layerVisibility.value.includes("grid")) {
@@ -274,10 +296,13 @@ export default defineComponent({
     );
     onMounted(() => {
       if (props.spectroInfo) {
-        rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
         editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
+        rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
         rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
         rectAnnotationLayer.redraw();
+        temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
+        temporalAnnotationLayer.formatData(localTemporalAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
+        temporalAnnotationLayer.redraw();
         if (!props.thumbnail) {
           legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
           timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);

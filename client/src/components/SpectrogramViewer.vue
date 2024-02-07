@@ -6,6 +6,7 @@ import {
   patchAnnotation,
   putAnnotation,
   SpectrogramAnnotation,
+  SpectrogramTemporalAnnotation,
 } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 import { GeoEvent } from "geojs";
@@ -27,6 +28,10 @@ export default defineComponent({
     },
     annotations: {
       type: Array as PropType<SpectrogramAnnotation[]>,
+      default: () => [],
+    },
+    temporalAnnotations: {
+      type: Array as PropType<SpectrogramTemporalAnnotation[]>,
       default: () => [],
     },
     otherUserAnnotations: {
@@ -214,6 +219,7 @@ export default defineComponent({
       :geo-viewer-ref="geoViewerRef"
       :spectro-info="spectroInfo"
       :annotations="annotations"
+      :temporal-annotations="temporalAnnotations"
       :other-user-annotations="otherUserAnnotations"
       :selected-id="selectedId"
       @selected="clickSelected($event)"

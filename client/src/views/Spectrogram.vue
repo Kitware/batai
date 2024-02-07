@@ -9,6 +9,7 @@ import {
   getSpectrogramCompressed,
   OtherUserAnnotations,
   getOtherUserAnnotations,
+  SpectrogramTemporalAnnotation,
 } from "../api/api";
 import SpectrogramViewer from "../components/SpectrogramViewer.vue";
 import { SpectroInfo } from "../components/geoJS/geoJSUtils";
@@ -43,6 +44,7 @@ export default defineComponent({
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const annotations: Ref<SpectrogramAnnotation[] | undefined> = ref([]);
+    const temporalAnnotations: Ref<SpectrogramTemporalAnnotation[] | undefined> = ref([]);
     const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
     const selectedId: Ref<number | null> = ref(null);
     const selectedUsers: Ref<string[]> = ref([]);
@@ -84,6 +86,7 @@ export default defineComponent({
       image.value.src = `data:image/png;base64,${response.data["base64_spectrogram"]}`;
       spectroInfo.value = response.data["spectroInfo"];
       annotations.value = response.data["annotations"]?.sort((a, b) => a.start_time - b.start_time);
+      temporalAnnotations.value = response.data["temporal"]?.sort((a, b) => a.start_time - b.start_time);
       if (response.data.currentUser) {
         currentUser.value = response.data.currentUser;
       }
@@ -175,6 +178,7 @@ export default defineComponent({
       freqRef,
       // Other user selection
       otherUserAnnotations,
+      temporalAnnotations,
       otherUsers,
       selectedUsers,
       deleteChip,
@@ -319,6 +323,7 @@ export default defineComponent({
         :spectro-info="spectroInfo"
         :recording-id="id"
         :annotations="annotations"
+        :temporal-annotations="temporalAnnotations"
         :other-user-annotations="otherUserAnnotations"
         :selected-id="selectedId"
         :grid="gridEnabled"
@@ -334,6 +339,7 @@ export default defineComponent({
         :spectro-info="spectroInfo"
         :recording-id="id"
         :annotations="annotations"
+        :temporal-annotations="temporalAnnotations"
         :other-user-annotations="otherUserAnnotations"
         :selected-id="selectedId"
         :parent-geo-viewer-ref="parentGeoViewerRef"

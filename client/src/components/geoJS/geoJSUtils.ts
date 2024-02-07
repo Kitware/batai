@@ -169,7 +169,7 @@ const useGeoJS = () => {
   };
 };
 
-import { SpectrogramAnnotation } from "../../api/api";
+import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
 
 export interface SpectroInfo {
   width: number;
@@ -180,6 +180,88 @@ export interface SpectroInfo {
   end_times?: number[];
   low_freq: number;
   high_freq: number;
+}
+
+function spectroTemporalToGeoJSon(
+  annotation: SpectrogramTemporalAnnotation,
+  spectroInfo: SpectroInfo,
+  ymin = 0,
+  ymax = 10
+): GeoJSON.Polygon {
+  //scale pixels to time and frequency ranges
+  if (spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
+    const widthScale = spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
+    const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
+    // Now we remap our annotation to pixel coordinates
+    const start_time = annotation.start_time * widthScale;
+    const end_time = annotation.end_time * widthScale;
+    return {
+      type: "Polygon",
+      coordinates: [
+        [
+          [start_time, ymin],
+          [start_time, ymax],
+          [end_time, ymax],
+          [end_time, ymin],
+          [start_time, ymin],
+        ],
+      ],
+    };
+  } else if (spectroInfo.start_times && spectroInfo.end_times) {
+    // Compressed Spectro has different conversion
+    // Find what section the annotation is in
+    const start = annotation.start_time;
+    const end = annotation.end_time;
+    const { start_times, end_times } = spectroInfo;
+    const lengths = start_times.length === end_times.length ? start_times.length : 0;
+    let foundIndex = -1;
+    for (let i = 0; i < lengths; i += 1) {
+      if (
+        start_times[i] < start &&
+        start < end_times[i] &&
+        end < end_times[i] &&
+        end > start_times[i]
+      ) {
+        foundIndex = i;
+        break;
+      }
+    }
+    // We need to build the length of times to pixel size for the time spaces before the annotation
+    const widthScale = spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
+    let pixelAdd = 0;
+    for (let i = 0; i < foundIndex; i += 1) {
+      pixelAdd += (end_times[i] - start_times[i]) * widthScale;
+    }
+    const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
+    // Now we remap our annotation to pixel coordinates
+    const start_time = pixelAdd + (annotation.start_time - start_times[foundIndex]) * widthScale;
+    const end_time = pixelAdd + (annotation.end_time - start_times[foundIndex]) * widthScale;
+
+    return {
+      type: "Polygon",
+      coordinates: [
+        [
+          [start_time, ymin],
+          [start_time, ymax],
+          [end_time, ymax],
+          [end_time, ymin],
+          [start_time, ymin],
+        ],
+      ],
+    };
+  }
+  return {
+    type: "Polygon",
+    coordinates: [
+      [
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+      ],
+    ],
+  };
 }
 
 function spectroToGeoJSon(
@@ -384,4 +466,11 @@ function reOrdergeoJSON(coords: GeoJSON.Position[]) {
   ];
 }
 
-export { spectroToGeoJSon, geojsonToSpectro, reOrdergeoJSON, useGeoJS, spectroToCenter };
+export {
+  spectroToGeoJSon,
+  geojsonToSpectro,
+  reOrdergeoJSON,
+  useGeoJS,
+  spectroToCenter,
+  spectroTemporalToGeoJSon,
+};
