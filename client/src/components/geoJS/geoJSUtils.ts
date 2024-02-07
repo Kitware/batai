@@ -191,7 +191,6 @@ function spectroTemporalToGeoJSon(
   //scale pixels to time and frequency ranges
   if (spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
     const widthScale = spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
-    const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
     const start_time = annotation.start_time * widthScale;
     const end_time = annotation.end_time * widthScale;
@@ -232,7 +231,6 @@ function spectroTemporalToGeoJSon(
     for (let i = 0; i < foundIndex; i += 1) {
       pixelAdd += (end_times[i] - start_times[i]) * widthScale;
     }
-    const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
     const start_time = pixelAdd + (annotation.start_time - start_times[foundIndex]) * widthScale;
     const end_time = pixelAdd + (annotation.end_time - start_times[foundIndex]) * widthScale;

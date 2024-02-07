@@ -72,8 +72,9 @@ export default defineComponent({
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     const temporalEvent = (type: string, data: any) => {
-      console.log(`${type}`);
-      console.log(data);
+      if (type === "annotation-clicked") {
+        // click temporal annotation
+      }
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any

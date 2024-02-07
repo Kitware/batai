@@ -1,6 +1,5 @@
 <script lang="ts">
-import { defineComponent, inject, computed, ref } from 'vue';
-import OAuthClient from '@girder/oauth-client';
+import { defineComponent} from 'vue';
 
 export default defineComponent({
   name: 'Login',
