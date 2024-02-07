@@ -20,7 +20,7 @@ export interface Recording {
     recorded_date: string;
     equipment?: string,
     comments?: string;
-    recording_location?: null | [number, number],
+    recording_location?: null | GeoJSON.Point,
     grts_cell_id?: null | number;
     grts_cell?: null | number;
     public: boolean;
@@ -94,20 +94,29 @@ interface PaginatedNinjaResponse<T> {
     items: T[],
 }
 
-
+export type UploadLocation =  null | { latitude?: number, longitude?: number, gridCellId?: number};
 
 export const axiosInstance = axios.create({
   baseURL: import.meta.env.VUE_APP_API_ROOT as string,
 });
 
 
-async function uploadRecordingFile(file: File, name: string, recorded_date: string, equipment: string, comments: string, publicVal = false ) {
+async function uploadRecordingFile(file: File, name: string, recorded_date: string, equipment: string, comments: string, publicVal = false, location: UploadLocation = null ) {
     const formData = new FormData();
     formData.append('audio_file', file);
     formData.append('name', name);
     formData.append('recorded_date', recorded_date);
     formData.append('equipment', equipment);
     formData.append('comments', comments);
+    if (location) {
+        if (location.latitude && location.longitude) {
+            formData.append('latitude', location.latitude.toString());
+            formData.append('longitude', location.longitude.toString());
+        }
+        if (location.gridCellId) {
+            formData.append('gridCellId', location.gridCellId.toString());
+        }
+    }
     
     const recordingParams = {
       name,
@@ -126,14 +135,21 @@ async function uploadRecordingFile(file: File, name: string, recorded_date: stri
      });
   }
 
-  async function patchRecording(recordingId: number, name: string, recorded_date: string, equipment: string, comments: string, publicVal = false ) {
+  async function patchRecording(recordingId: number, name: string, recorded_date: string, equipment: string, comments: string, publicVal = false, location: UploadLocation = null ) {
+    const latitude = location ? location.latitude : undefined;
+    const longitude = location ? location.longitude : undefined;
+    const gridCellId = location ? location.gridCellId : undefined;
+
     await axiosInstance.patch(`/recording/${recordingId}`, 
         { 
             name, 
             recorded_date, 
             equipment, 
             comments, 
-            publicVal 
+            publicVal, 
+            latitude,
+            longitude,
+            gridCellId
         },
         {
             headers: {

@@ -2,9 +2,9 @@
 import { defineComponent, PropType, ref, Ref } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
-import { patchRecording, uploadRecordingFile } from '../api/api';
+import { UploadLocation, uploadRecordingFile, patchRecording } from '../api/api';
 import { VDatePicker } from 'vuetify/labs/VDatePicker';
-
+import MapLocation from './MapLocation.vue';
 export interface EditingRecording {
   id: number,
   name: string,
@@ -12,10 +12,12 @@ export interface EditingRecording {
   equipment: string,
   comments: string,
   public: boolean;
+  location?: { lat: number, lon: number },
 }
 export default defineComponent({
   components: {
     VDatePicker,
+    MapLocation,
   },
   props: {
     editing: {
@@ -36,6 +38,9 @@ export default defineComponent({
     const equipment = ref(props.editing ? props.editing.equipment : '');
     const comments = ref(props.editing ? props.editing.comments : '');
     const validForm = ref(false);
+    const latitude: Ref<number | undefined> = ref(props.editing?.location?.lat ? props.editing.location.lat : undefined);
+    const longitude: Ref<number | undefined> = ref(props.editing?.location?.lon ? props.editing.location.lon : undefined);
+    const gridCellId: Ref<number | undefined> = ref();
     const publicVal = ref(props.editing ? props.editing.public : false);
     const readFile = (e: Event) => {
       const target = (e.target as HTMLInputElement);
@@ -63,13 +68,39 @@ export default defineComponent({
       if (!file) {
         throw new Error('Unreachable');
       }
-      await uploadRecordingFile(file, name.value, recordedDate.value, equipment.value, comments.value, publicVal.value);
+      let location: UploadLocation = null;
+      if (latitude.value && longitude.value) {
+        location = {
+          latitude: latitude.value,
+          longitude: longitude.value,
+        };
+      }
+      if (gridCellId.value !== null) {
+        if (location === null) {
+          location  = {};
+        }
+        location['gridCellId'] = gridCellId.value;
+      }
+      await uploadRecordingFile(file, name.value, recordedDate.value, equipment.value, comments.value, publicVal.value, location);
       emit('done');
     });
 
     const handleSubmit = async () => {
       if (props.editing) {
-        await patchRecording(props.editing.id, name.value, recordedDate.value, equipment.value, comments.value, publicVal.value);
+        let location: UploadLocation = null;
+        if (latitude.value && longitude.value) {
+          location = {
+            latitude: latitude.value,
+            longitude: longitude.value,
+          };
+        }
+        if (gridCellId.value !== null) {
+          if (location === null) {
+            location  = {};
+          }
+          location['gridCellId'] = gridCellId.value;
+        }
+        await patchRecording(props.editing.id, name.value, recordedDate.value, equipment.value, comments.value, publicVal.value, location);
         emit('done');
       } else {
         submit();
@@ -80,6 +111,15 @@ export default defineComponent({
     const updateTime = (time: any)  => {
     recordedDate.value = new Date(time as string).toISOString().split('T')[0];
   };
+
+  const setLocation = ({lat, lon}: {lat: number, lon: number}) => {
+    latitude.value = lat;
+    longitude.value = lon;
+  };
+
+  const updateMap = ref(0); // updates the map when lat/lon change by editing directly;
+
+  const triggerUpdateMap = () => updateMap.value += 1;
 
     return {
       errorText,
@@ -94,11 +134,17 @@ export default defineComponent({
       comments,
       recordedDate,
       validForm,
+      latitude,
+      longitude,
+      gridCellId,
       publicVal,
+      updateMap,
       selectFile,
       readFile,
       handleSubmit,
       updateTime,
+      setLocation,
+      triggerUpdateMap,
     };
   },
 });
@@ -126,7 +172,7 @@ export default defineComponent({
     >
     <v-card
       width="100%"
-      style="max-height:90vh; overflow-y: scroll"
+      style="max-height:90vh; overflow-y: scroll;"
     >
       <v-container>
         <v-card-title>
@@ -215,6 +261,44 @@ export default defineComponent({
             </v-row>
             <v-row>
               <v-expansion-panels>
+                <v-expansion-panel>
+                  <v-expansion-panel-title>Location</v-expansion-panel-title>
+                  <v-expansion-panel-text>
+                    <v-row class="mt-2">
+                      <v-text-field
+                        v-model="latitude"
+                        type="number"
+                        label="LAT:"
+                        class="mx-4"
+                        @change="triggerUpdateMap()"
+                      />
+                      <v-text-field
+                        v-model="longitude"
+                        type="number"
+                        label="LON:"
+                        class="mx-4"
+                        @change="triggerUpdateMap()"
+                      />
+                    </v-row>
+                    <v-row>
+                      <v-text-field
+                        v-model="gridCellId"
+                        type="number"
+                        label="NABat Grid Cell"
+                      />
+                    </v-row>
+                    <v-row>
+                      <v-spacer />
+                      <map-location
+                        :size="{width: 600, height: 400}"
+                        :location="{ x: latitude, y: longitude}"
+                        :update-map="updateMap"
+                        @location="setLocation($event)"
+                      />
+                      <v-spacer />
+                    </v-row>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
                 <v-expansion-panel>
                   <v-expansion-panel-title>Details</v-expansion-panel-title>
                   <v-expansion-panel-text>
