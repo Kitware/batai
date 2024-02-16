@@ -12,7 +12,10 @@ from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import Annotations, Recording, Species, TemporalAnnotations
 from bats_ai.core.views.species import SpeciesSchema
-from bats_ai.core.views.temporal_annotations import TemporalAnnotationSchema
+from bats_ai.core.views.temporal_annotations import (
+    TemporalAnnotationSchema,
+    UpdateTemporalAnnotationSchema,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -413,7 +416,7 @@ def patch_annotation(
     recording_id: int,
     id: int,
     annotation: UpdateAnnotationsSchema,
-    species_ids: list[int],
+    species_ids: list[int] | None,
 ):
     try:
         recording = Recording.objects.get(pk=recording_id)
@@ -438,16 +441,68 @@ def patch_annotation(
             annotation_instance.save()
 
             # Clear existing species associations
-            annotation_instance.species.clear()
+            if species_ids:
+                annotation_instance.species.clear()
+                # Add species to the annotation based on the provided species_ids
+                for species_id in species_ids:
+                    try:
+                        species_obj = Species.objects.get(pk=species_id)
+                        annotation_instance.species.add(species_obj)
+                    except Species.DoesNotExist:
+                        # Handle the case where the species with the given ID doesn't exist
+                        return {'error': f'Species with ID {species_id} not found'}
 
-            # Add species to the annotation based on the provided species_ids
-            for species_id in species_ids:
-                try:
-                    species_obj = Species.objects.get(pk=species_id)
-                    annotation_instance.species.add(species_obj)
-                except Species.DoesNotExist:
-                    # Handle the case where the species with the given ID doesn't exist
-                    return {'error': f'Species with ID {species_id} not found'}
+            return {'message': 'Annotation updated successfully', 'id': annotation_instance.pk}
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+    except Annotations.DoesNotExist:
+        return {'error': 'Annotation not found'}
+
+
+@router.patch('/{recording_id}/temporal-annotations/{id}')
+def patch_temporal_annotation(
+    request,
+    recording_id: int,
+    id: int,
+    annotation: UpdateTemporalAnnotationSchema,
+    species_ids: list[int] | None,
+):
+    try:
+        recording = Recording.objects.get(pk=recording_id)
+
+        # Check if the user owns the recording or if the recording is public
+        if recording.owner == request.user or recording.public:
+            annotation_instance = TemporalAnnotations.objects.get(
+                pk=id, recording=recording, owner=request.user
+            )
+
+            # Update annotation details
+            if annotation.start_time:
+                annotation_instance.start_time = annotation.start_time
+            if annotation.end_time:
+                annotation_instance.end_time = annotation.end_time
+            if annotation.comments:
+                annotation_instance.comments = annotation.comments
+            if annotation.type:
+                annotation_instance.type = annotation.type
+            annotation_instance.save()
+
+            # Clear existing species associations
+            if species_ids:
+                annotation_instance.species.clear()
+                # Add species to the annotation based on the provided species_ids
+                for species_id in species_ids:
+                    try:
+                        species_obj = Species.objects.get(pk=species_id)
+                        annotation_instance.species.add(species_obj)
+                    except Species.DoesNotExist:
+                        # Handle the case where the species with the given ID doesn't exist
+                        return {'error': f'Species with ID {species_id} not found'}
 
             return {'message': 'Annotation updated successfully', 'id': annotation_instance.pk}
         else:
@@ -490,7 +545,7 @@ def delete_annotation(request, recording_id: int, id: int):
 # TEMPORAL ANNOTATIONS
 
 
-@router.get('recording/{id}/temporal-annotations')
+@router.get('/{id}/temporal-annotations')
 def get_temporal_annotations(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
@@ -518,11 +573,12 @@ def get_temporal_annotations(request: HttpRequest, id: int):
         return {'error': 'Recording not found'}
 
 
-@router.put('recording/{id}/temporal-annotations')
+@router.put('/{id}/temporal-annotations')
 def put_temporal_annotation(
     request,
     id: int,
     annotation: TemporalAnnotationSchema,
+    species_ids: list[int] | None,
 ):
     try:
         recording = Recording.objects.get(pk=id)

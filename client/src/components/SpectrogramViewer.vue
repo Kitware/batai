@@ -2,15 +2,17 @@
 import { defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
 import {
-  OtherUserAnnotations,
   patchAnnotation,
+  patchTemporalAnnotation,
   putAnnotation,
+  putTemporalAnnotation,
   SpectrogramAnnotation,
   SpectrogramTemporalAnnotation,
 } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 import { GeoEvent } from "geojs";
 import geo from "geojs";
+import useState from "../use/useState";
 
 export default defineComponent({
   name: "SpectroViewer",
@@ -26,22 +28,6 @@ export default defineComponent({
       type: Object as PropType<SpectroInfo | undefined>,
       default: () => undefined,
     },
-    annotations: {
-      type: Array as PropType<SpectrogramAnnotation[]>,
-      default: () => [],
-    },
-    temporalAnnotations: {
-      type: Array as PropType<SpectrogramTemporalAnnotation[]>,
-      default: () => [],
-    },
-    otherUserAnnotations: {
-      type: Object as PropType<OtherUserAnnotations>,
-      default: () => ({}),
-    },
-    selectedId: {
-      type: Number as PropType<number | null>,
-      default: null,
-    },
     recordingId: {
       type: String as PropType<string | null>,
       required: true,
@@ -50,11 +36,11 @@ export default defineComponent({
   emits: [
     "update:annotation",
     "create:annotation",
-    "selected",
     "geoViewerRef",
     "hoverData",
   ],
   setup(props, { emit }) {
+    const { annotations, selectedId, selectedType, creationType } = useState();
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized = ref(false);
@@ -149,50 +135,57 @@ export default defineComponent({
       geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
     });
 
-    const updateAnnotation = async (annotation: SpectrogramAnnotation) => {
+    const updateAnnotation = async (annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation) => {
       // We call the patch on the selected annotation
-      if (props.recordingId !== null && props.selectedId !== null) {
-        await patchAnnotation(props.recordingId, props.selectedId, annotation);
+      if (props.recordingId !== null && selectedId.value !== null) {
+        if (selectedType.value === 'pulse') {
+          await patchAnnotation(props.recordingId, selectedId.value, annotation);
+        } else if (selectedType.value === 'sequence') {
+          await patchTemporalAnnotation(props.recordingId, selectedId.value, annotation);
+        }
         emit("update:annotation", annotation);
       }
     };
 
-    const createAnnotation = async (annotation: SpectrogramAnnotation) => {
+    const createAnnotation = async (annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation) => {
       // We call the patch on the selected annotation
       if (props.recordingId !== null) {
-        const response = await putAnnotation(props.recordingId, annotation);
-        emit("create:annotation", response.data.id);
+        if (creationType.value === 'pulse') {
+          const response = await putAnnotation(props.recordingId, annotation);
+          emit("create:annotation", response.data.id);
+        } else if (creationType.value === 'sequence') {
+          const response = await putTemporalAnnotation(props.recordingId, annotation);
+          emit("create:annotation", response.data.id);
+        }
       }
     };
     let skipNextSelected = false;
     watch(
-      () => props.selectedId,
+      selectedId,
       () => {
         if (skipNextSelected) {
           skipNextSelected = false;
           return;
         }
-        const found = props.annotations.find((item) => item.id === props.selectedId);
+        const found = annotations.value.find((item) => item.id === selectedId.value);
         if (found && props.spectroInfo) {
           const center = spectroToCenter(found, props.spectroInfo);
           const x = center[0];
           const y = center[1];
-          geoJS.getGeoViewer().value.center({ x, y });
+          const bounds = geoJS.getGeoViewer().value.bounds();
+          if (x < bounds.left || x > bounds.right) {
+            geoJS.getGeoViewer().value.center({ x, y });
+          }
         }
       }
     );
 
-    const clickSelected = (annotation: SpectrogramAnnotation) => {
-      skipNextSelected = true;
-      emit("selected", annotation);
-    };
 
     return {
       containerRef,
       geoViewerRef: geoJS.getGeoViewer(),
       initialized,
       cursor,
-      clickSelected,
       setCursor,
       updateAnnotation,
       createAnnotation,
@@ -218,11 +211,6 @@ export default defineComponent({
       v-if="initialized"
       :geo-viewer-ref="geoViewerRef"
       :spectro-info="spectroInfo"
-      :annotations="annotations"
-      :temporal-annotations="temporalAnnotations"
-      :other-user-annotations="otherUserAnnotations"
-      :selected-id="selectedId"
-      @selected="clickSelected($event)"
       @update:annotation="updateAnnotation($event)"
       @create:annotation="createAnnotation($event)"
       @set-cursor="setCursor($event)"

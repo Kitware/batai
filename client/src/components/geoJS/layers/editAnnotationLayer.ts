@@ -1,7 +1,7 @@
 /*eslint class-methods-use-this: "off"*/
 import geo, { GeoEvent } from "geojs";
-import { SpectroInfo, spectroToGeoJSon, reOrdergeoJSON } from "../geoJSUtils";
-import { SpectrogramAnnotation } from "../../../api/api";
+import { SpectroInfo, spectroToGeoJSon, reOrdergeoJSON, spectroTemporalToGeoJSon } from "../geoJSUtils";
+import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../../api/api";
 import { LayerStyle } from "./types";
 import { GeoJSON } from "geojson";
 
@@ -14,13 +14,6 @@ interface RectGeoJSData {
   polygon: GeoJSON.Polygon;
 }
 
-interface EditHandleStyle {
-  type: string;
-  x: number;
-  y: number;
-  index: number;
-  editHandle: boolean;
-}
 
 const typeMapper = new Map([
   ["LineString", "line"],
@@ -80,6 +73,8 @@ export default class EditAnnotationLayer {
   /* in-progress events only emitted for lines and polygons */
   shapeInProgress: GeoJSON.LineString | GeoJSON.Polygon | null;
 
+  mode: 'pulse' | 'sequence';
+
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
@@ -94,6 +89,7 @@ export default class EditAnnotationLayer {
       strokeWidth: 1.0,
       antialiasing: 0,
     };
+    this.mode = 'pulse';
     this.formattedData = [];
     this.spectroInfo = spectroInfo;
     this.skipNextExternalUpdate = false;
@@ -318,17 +314,18 @@ export default class EditAnnotationLayer {
   }
 
   /** overrides default function to disable and clear anotations before drawing again */
-  async changeData(frameData: SpectrogramAnnotation | null) {
+  async changeData(frameData: SpectrogramAnnotation | null | SpectrogramTemporalAnnotation, type: 'pulse' | 'sequence') {
+    this.mode = type;
     if (this.skipNextExternalUpdate === false) {
       // disable resets things before we load a new/different shape or mode
       this.disable();
       //TODO: Find a better way to track mouse up after placing a point or completing geometry
       //For line drawings and the actions of any recipes we want
       if (this.geoViewerRef.interactor().mouse().buttons.left) {
-        this.leftButtonCheckTimeout = window.setTimeout(() => this.changeData(frameData), 20);
+        this.leftButtonCheckTimeout = window.setTimeout(() => this.changeData(frameData, type), 20);
       } else {
         clearTimeout(this.leftButtonCheckTimeout);
-        this.formatData(frameData);
+        this.formatData(frameData, type);
       }
     } else {
       // prevent was called and it has prevented this update.
@@ -343,7 +340,7 @@ export default class EditAnnotationLayer {
    *
    * @param frameData a single FrameDataTrack Array that is the editing item
    */
-  formatData(annotationData: SpectrogramAnnotation | null) {
+  formatData(annotationData: SpectrogramAnnotation | null | SpectrogramTemporalAnnotation, type: 'pulse' | 'sequence') {
     this.selectedHandleIndex = -1;
     this.hoverHandleIndex = -1;
     this.event("update:selectedIndex", {
@@ -351,7 +348,8 @@ export default class EditAnnotationLayer {
       selectedKey: this.selectedKey,
     });
     if (annotationData) {
-      const geoJSONData = spectroToGeoJSon(annotationData, this.spectroInfo);
+
+      const geoJSONData = type === 'pulse' ? spectroToGeoJSon(annotationData as SpectrogramAnnotation, this.spectroInfo): spectroTemporalToGeoJSon(annotationData as SpectrogramTemporalAnnotation, this.spectroInfo, -10, -50);
       const geojsonFeature: GeoJSON.Feature = {
         type: "Feature",
         geometry: geoJSONData,
@@ -502,39 +500,42 @@ export default class EditAnnotationLayer {
    * Styling for the handles used to drag the annotation for ediing
    */
   editHandleStyle() {
-    if (this.type === "rectangle") {
+    if (this.type === "rectangle" && this.mode === 'pulse') {
       return {
         handles: {
           rotate: false,
         },
-      };
-    }
-    if (this.type === "Point") {
+      }; 
+    } else if (this.type === 'rectangle' && this.mode === 'sequence') {
       return {
-        handles: false,
-      };
-    }
-    if (this.type === "Polygon" || this.type === "LineString") {
-      return {
-        handles: {
-          rotate: false,
-          edge: this.type !== "LineString",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        strokeOpacity: (d: any) => {
+          if (d.type === 'edge' && [1,3].includes(d.index)) {
+            return 0.0;
+          }
+          return 1.0;
         },
-        fill: true,
-        radius: (handle: EditHandleStyle): number => {
-          if (handle.type === "edge") {
-            return 5;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        stroke: (d: any) => {
+          if (d.type === 'edge' && [1,3].includes(d.index)) {
+            return false;
+          }
+          return true;
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        radius: function (d: any) {
+          if (d.type === 'edge' && [1,3].includes(d.index)) {
+            return 0;
           }
           return 8;
-        },
-        fillOpacity: (_: EditHandleStyle, index: number) => {
-          if (index === this.selectedHandleIndex) {
-            return 1;
-          }
-          return 0.25;
-        },
-        strokeColor: "red",
-        fillColor: "red",
+        },      
+        handles: {
+          rotate:false,
+          vertex: false,
+          edge: true,
+          center:false,
+          resize:false
+        }
       };
     }
     return {

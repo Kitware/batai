@@ -5,11 +5,9 @@ import {
   getAnnotations,
   getSpectrogram,
   Species,
-  SpectrogramAnnotation,
   getSpectrogramCompressed,
-  OtherUserAnnotations,
   getOtherUserAnnotations,
-  SpectrogramTemporalAnnotation,
+  getTemporalAnnotations,
 } from "../api/api";
 import SpectrogramViewer from "../components/SpectrogramViewer.vue";
 import { SpectroInfo } from "../components/geoJS/geoJSUtils";
@@ -40,13 +38,14 @@ export default defineComponent({
       createColorScale,
       currentUser,
       annotationState,
+      annotations,
+      temporalAnnotations,
+      otherUserAnnotations,
+      selectedId,
+      selectedType,
     } = useState();
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
-    const annotations: Ref<SpectrogramAnnotation[] | undefined> = ref([]);
-    const temporalAnnotations: Ref<SpectrogramTemporalAnnotation[] | undefined> = ref([]);
-    const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
-    const selectedId: Ref<number | null> = ref(null);
     const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
@@ -55,6 +54,8 @@ export default defineComponent({
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
       annotations.value = response.data.sort((a, b) => a.start_time - b.start_time);
+      const tempResp = await getTemporalAnnotations(props.id);
+      temporalAnnotations.value = tempResp.data.sort((a, b) => a.start_time - b.start_time);
       if (annotationId !== undefined) {
         selectedId.value = annotationId;
       }
@@ -85,8 +86,8 @@ export default defineComponent({
         : await getSpectrogram(props.id);
       image.value.src = `data:image/png;base64,${response.data["base64_spectrogram"]}`;
       spectroInfo.value = response.data["spectroInfo"];
-      annotations.value = response.data["annotations"]?.sort((a, b) => a.start_time - b.start_time);
-      temporalAnnotations.value = response.data["temporal"]?.sort((a, b) => a.start_time - b.start_time);
+      annotations.value = response.data["annotations"]?.sort((a, b) => a.start_time - b.start_time) || [];
+      temporalAnnotations.value = response.data["temporal"]?.sort((a, b) => a.start_time - b.start_time) || [];
       if (response.data.currentUser) {
         currentUser.value = response.data.currentUser;
       }
@@ -104,10 +105,16 @@ export default defineComponent({
       selectedId.value = annotationId;
     };
     const selectedAnnotation = computed(() => {
-      if (selectedId.value !== null && annotations.value) {
+      if (selectedId.value !== null && selectedType.value === 'pulse' && annotations.value) {
         const found = annotations.value.findIndex((item) => item.id === selectedId.value);
         if (found !== -1) {
           return annotations.value[found];
+        }
+      }
+      if (selectedId.value !== null && selectedType.value === 'sequence' && temporalAnnotations.value) {
+        const found = temporalAnnotations.value.findIndex((item) => item.id === selectedId.value);
+        if (found !== -1) {
+          return temporalAnnotations.value[found];
         }
       }
       return null;
@@ -156,6 +163,11 @@ export default defineComponent({
       setSelectedUsers(selectedUsers.value);
     });
 
+    const processSelection = ({id, annotationType}: { id: number, annotationType: 'pulse' | 'sequence'}) => {
+      selectedId.value = id;
+      selectedType.value = annotationType;
+    };
+
     return {
       annotationState,
       compressed,
@@ -164,11 +176,13 @@ export default defineComponent({
       spectroInfo,
       annotations,
       selectedId,
+      selectedType,
       setSelection,
       getAnnotationsList,
       setParentGeoViewer,
       setHoverData,
       toggleLayerVisibility,
+      processSelection,
       speciesList,
       selectedAnnotation,
       parentGeoViewerRef,
@@ -322,10 +336,7 @@ export default defineComponent({
         :image="image"
         :spectro-info="spectroInfo"
         :recording-id="id"
-        :annotations="annotations"
-        :temporal-annotations="temporalAnnotations"
         :other-user-annotations="otherUserAnnotations"
-        :selected-id="selectedId"
         :grid="gridEnabled"
         @selected="setSelection($event)"
         @create:annotation="getAnnotationsList($event)"
@@ -338,10 +349,6 @@ export default defineComponent({
         :image="image"
         :spectro-info="spectroInfo"
         :recording-id="id"
-        :annotations="annotations"
-        :temporal-annotations="temporalAnnotations"
-        :other-user-annotations="otherUserAnnotations"
-        :selected-id="selectedId"
         :parent-geo-viewer-ref="parentGeoViewerRef"
         @selected="setSelection($event)"
       />
@@ -349,9 +356,9 @@ export default defineComponent({
     <v-col style="max-width: 300px">
       <annotation-list
         :annotations="annotations"
-        :selected-id="selectedId"
+        :temporal-annotations="temporalAnnotations"
         class="annotation-list"
-        @select="selectedId = $event"
+        @select="processSelection($event)"
       />
       <annotation-editor
         v-if="selectedAnnotation"

@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
-import { SpectrogramAnnotation } from "../../../api/api";
-import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
+import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../../api/api";
+import { SpectroInfo, spectroTemporalToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
 import { LayerStyle } from "./types";
 
 interface LineData {
@@ -69,7 +69,7 @@ export default class TimeLayer {
   }
 
 
-  formatData(annotationData: SpectrogramAnnotation[]) {
+  formatData(annotationData: SpectrogramAnnotation[], temporalData: SpectrogramTemporalAnnotation[] =[]) {
     this.textData = [];
     this.lineData = [];
     const lineDist = 12;
@@ -122,6 +122,56 @@ export default class TimeLayer {
         offsetY: 5,
       });
     });
+    temporalData.forEach((annotation: SpectrogramTemporalAnnotation) => {
+      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50);
+      const {start_time, end_time } = annotation;
+      const [xmin, ymin] = polygon.coordinates[0][0];
+      const [xmax, ymax] = polygon.coordinates[0][2];
+      // For the compressed view we need to filter out default or NaN numbers
+      if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+        return;
+      }
+      if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
+        return;
+      }
+      // We create two small lines for the beginning/end of annotation
+      this.lineData.push({
+        line: {
+          type: "LineString",
+          coordinates: [
+            [xmin, ymax],
+            [xmin, ymax - lineDist],
+          ],
+        },
+        thicker: true,
+      });
+      this.lineData.push({
+        line: {
+          type: "LineString",
+          coordinates: [
+            [xmax, ymax],
+            [xmax, ymax - lineDist],
+          ],
+        },
+        thicker: true,
+      });
+      // Now we need to create the text Labels
+      this.textData.push({
+        text: `${start_time}ms`,
+        x: xmin,
+        y: ymax - lineDist,
+        offsetX: 0,
+        offsetY: -5,
+      });
+      this.textData.push({
+        text: `${end_time}ms`,
+        x: xmax,
+        y: ymax - lineDist,
+        offsetX: 0,
+        offsetY: -5,
+      });
+    });
+
   }
 
   redraw() {

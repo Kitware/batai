@@ -3,15 +3,18 @@ from ninja import Schema
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import Annotations, Recording, TemporalAnnotations
+from bats_ai.core.views.species import SpeciesSchema
 
 router = RouterPaginated()
 
 
 class TemporalAnnotationSchema(Schema):
+    id: int
     start_time: int
     end_time: int
     type: str
     comments: str
+    species: list[SpeciesSchema] | None
     owner_email: str = None
 
     @classmethod
@@ -20,10 +23,18 @@ class TemporalAnnotationSchema(Schema):
             start_time=obj.start_time,
             end_time=obj.end_time,
             type=obj.type,
+            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             comments=obj.comments,
             id=obj.id,
             owner_email=owner_email,  # Include owner_email in the schema
         )
+
+
+class UpdateTemporalAnnotationSchema(Schema):
+    start_time: int = None
+    end_time: int = None
+    type: str | None = None
+    comments: str | None = None
 
 
 @router.get('/{id}')

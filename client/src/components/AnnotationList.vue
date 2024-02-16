@@ -1,9 +1,8 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
-import { SpectrogramAnnotation } from "../api/api";
 import useState from "../use/useState";
-import { watch } from "vue";
+import { watch, ref } from "vue";
 
 export default defineComponent({
   name: "AnnotationList",
@@ -14,34 +13,36 @@ export default defineComponent({
       type: Object as PropType<SpectroInfo | undefined>,
       default: () => undefined,
     },
-    annotations: {
-      type: Array as PropType<SpectrogramAnnotation[]>,
-      default: () => [],
-    },
-    selectedId: {
-        type: Number as PropType<number | null>,
-        default: null,
-    },
   },
   emits: ['select'],
-  setup(props) {
-    const { annotationState, setAnnotationState } = useState();
+  setup() {
+    const { creationType, annotationState, setAnnotationState, annotations, temporalAnnotations, selectedId, selectedType, setSelectedId } = useState();
+    const tab = ref('sequence');
     const scrollToId = (id: number) => {
     const el = document.getElementById(`annotation-${id}`);
     if (el) {
       el.scrollIntoView({block: 'end', behavior: 'smooth'});
     }
   };
-  watch(() => props.selectedId, () => {
-    if (props.selectedId !== null) {
-      scrollToId(props.selectedId);
+  watch(selectedId, () => {
+    if (selectedId.value !== null) {
+      scrollToId(selectedId.value);
     }
   });
-  
+  watch(selectedType, () => {
+    tab.value = selectedType.value;
+  });
 
     return {
         annotationState,
+        annotations,
+        creationType,
+        temporalAnnotations,
+        selectedId,
+        selectedType,
         setAnnotationState,
+        setSelectedId,
+        tab,
     };
   },
 });
@@ -50,61 +51,141 @@ export default defineComponent({
 <template>
   <v-card class="pa-0 ma-0">
     <v-card-title>
-      <v-row class="pa-2">
-        Annotations
-        <v-spacer />
-        <v-btn
-          :disabled="annotationState === 'creating'"
-          @click="annotationState = 'creating'"
-        >
-          Add<v-icon>mdi-plus</v-icon>
-        </v-btn>
-      </v-row>
+      <v-tabs v-model="tab">
+        <v-tab value="sequence">
+          Sequence
+        </v-tab>
+        <v-tab value="pulse">
+          Pulse
+        </v-tab>
+      </v-tabs>
     </v-card-title>
-    <v-list>
-      <v-list-item>
-        <v-row dense>
-          <v-col><b>Time</b></v-col>
-          <v-col><b>Frequency</b></v-col>
-        </v-row>
-      </v-list-item>
-      <v-list-item
-        v-for="annotation in annotations"
-        :id="`annotation-${annotation.id}`"
-        :key="annotation.id"
-        :class="{selected: annotation.id===selectedId}"
-        class="annotation-item"
-        @click="$emit('select', annotation.id)"
-      >
-        <v-row>
-          <v-col class="annotation-time">
-            <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
-          </v-col>
-          <v-col class="annotation-freq">
-            <span>{{ (annotation.low_freq/1000).toFixed(1) }}-{{ (annotation.high_freq/1000).toFixed() }}Khz </span>
-          </v-col>
-        </v-row>
-        <v-row
-          v-for="item in annotation.species"
-          :key="`${annotation.id}_${item.common_name}`"
-          class="ma-0 pa-0"
-        >
-          <v-col class="ma-0 pa-0">
-            <div class="species-name">
-              {{ item.species_code || item.common_name }}
-            </div>
-            <div
-              v-if="item.family"
-              class="species-hierarchy"
+    <v-card-text class="">
+      <v-window v-model="tab">
+        <v-window-item value="pulse">
+          <v-row class="pa-2">
+            <v-col>
+              Annotations
+            </v-col>
+            <v-spacer />
+            <v-col>
+              <v-btn
+                :disabled="annotationState === 'creating'"
+                @click="annotationState = 'creating'; creationType = 'pulse' "
+              >
+                Add<v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </v-col>
+          </v-row>
+
+          <v-list>
+            <v-list-item>
+              <v-row dense>
+                <v-col><b>Time</b></v-col>
+                <v-col><b>Frequency</b></v-col>
+              </v-row>
+            </v-list-item>
+            <v-list-item
+              v-for="annotation in annotations"
+              :id="`annotation-${annotation.id}`"
+              :key="annotation.id"
+              :class="{selected: annotation.id===selectedId}"
+              class="annotation-item"
+              @click="setSelectedId(annotation.id, 'pulse')"
             >
-              <span> {{ item.family }}</span>
-              <span v-if="item.genus">-></span>
-              <span v-if="item.genus">{{ item.genus }}</span>
-            </div>
-          </v-col>
-        </v-row>
-      </v-list-item>
-    </v-list>
+              <v-row>
+                <v-col class="annotation-time">
+                  <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
+                </v-col>
+                <v-col class="annotation-freq">
+                  <span>{{ (annotation.low_freq/1000).toFixed(1) }}-{{ (annotation.high_freq/1000).toFixed() }}Khz </span>
+                </v-col>
+              </v-row>
+              <v-row
+                v-for="item in annotation.species"
+                :key="`${annotation.id}_${item.common_name}`"
+                class="ma-0 pa-0"
+              >
+                <v-col class="ma-0 pa-0">
+                  <div class="species-name">
+                    {{ item.species_code || item.common_name }}
+                  </div>
+                  <div
+                    v-if="item.family"
+                    class="species-hierarchy"
+                  >
+                    <span> {{ item.family }}</span>
+                    <span v-if="item.genus">-></span>
+                    <span v-if="item.genus">{{ item.genus }}</span>
+                  </div>
+                </v-col>
+              </v-row>
+            </v-list-item>
+          </v-list>
+        </v-window-item>
+        <v-window-item value="sequence">
+          <v-row class="pa-2">
+            <v-col>
+              Annotations
+            </v-col>
+            <v-spacer />
+            <v-col>
+              <v-btn
+                :disabled="annotationState === 'creating'"
+                @click="annotationState = 'creating'; creationType = 'sequence' "
+              >
+                Add<v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </v-col>
+          </v-row>
+
+          <v-list>
+            <v-list-item>
+              <v-row dense>
+                <v-col><b>Time</b></v-col>
+                <v-col><b>Frequency</b></v-col>
+              </v-row>
+            </v-list-item>
+            <v-list-item
+              v-for="annotation in temporalAnnotations"
+              :id="`annotation-${annotation.id}`"
+              :key="annotation.id"
+              :class="{selected: annotation.id===selectedId}"
+              class="annotation-item"
+              @click="setSelectedId(annotation.id, 'sequence')"
+            >
+              <v-row>
+                <v-col class="annotation-time">
+                  <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
+                </v-col>
+                <v-col class="annotation-time">
+                  <b>Type:</b><span>{{ annotation.type }}</span>
+                </v-col>
+              </v-row>
+              <v-row
+                v-for="item in annotation.species"
+                :key="`${annotation.id}_${item.common_name}`"
+                class="ma-0 pa-0"
+              >
+                <v-col class="ma-0 pa-0">
+                  <div class="species-name">
+                    {{ item.species_code || item.common_name }}
+                  </div>
+                  <div
+                    v-if="item.family"
+                    class="species-hierarchy"
+                  >
+                    <span> {{ item.family }}</span>
+                    <span v-if="item.genus">-></span>
+                    <span v-if="item.genus">{{ item.genus }}</span>
+                  </div>
+                </v-col>
+              </v-row>
+            </v-list-item>
+          </v-list>
+        </v-window-item>
+      </v-window>
+    </v-card-text>
   </v-card>
 </template>
 
