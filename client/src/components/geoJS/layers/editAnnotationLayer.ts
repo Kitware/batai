@@ -504,6 +504,7 @@ export default class EditAnnotationLayer {
       return {
         handles: {
           rotate: false,
+          resize: false,
         },
       }; 
     } else if (this.type === 'rectangle' && this.mode === 'sequence') {

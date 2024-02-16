@@ -263,12 +263,17 @@ export default defineComponent({
       if (selectedUsers.value.length) {
         // We add more annotations to the system
         let additionalAnnotations: SpectrogramAnnotation[] = [];
+        let additionalTemporalAnnotations: SpectrogramTemporalAnnotation[] = [];
         for (let i = 0; i < selectedUsers.value.length; i += 1) {
-          const newAnnotations = otherUserAnnotations.value[selectedUsers.value[i]];
+          const newAnnotations = otherUserAnnotations.value[selectedUsers.value[i]]['annotations'];
           additionalAnnotations = additionalAnnotations.concat(newAnnotations);
+          const newTemporalAnnotations = otherUserAnnotations.value[selectedUsers.value[i]]['temporal'];
+          additionalTemporalAnnotations = additionalTemporalAnnotations.concat(newTemporalAnnotations);
+
         }
         additionalAnnotations = additionalAnnotations.concat(localAnnotations.value);
-        return { annotations: additionalAnnotations, temporalAnnotations: localTemporalAnnotations.value, colorScale };
+        additionalTemporalAnnotations = additionalTemporalAnnotations.concat(localTemporalAnnotations.value);
+        return { annotations: additionalAnnotations, temporalAnnotations: additionalTemporalAnnotations, colorScale };
       } else {
         return { annotations: localAnnotations.value, temporalAnnotations: localTemporalAnnotations.value };
       }
@@ -314,9 +319,9 @@ export default defineComponent({
           freqLayer.disable();
         }
         if (layerVisibility.value.includes("species")) {
-          speciesLayer.formatData(localAnnotations.value);
+          speciesLayer.formatData(annotations);
           speciesLayer.redraw();
-          speciesSequenceLayer.formatData(localTemporalAnnotations.value);
+          speciesSequenceLayer.formatData(temporalAnnotations);
           speciesSequenceLayer.redraw();
         } else {
           speciesLayer.disable();

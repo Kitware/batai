@@ -110,7 +110,7 @@ export interface Spectrogram {
 
 }
 
-export type OtherUserAnnotations = Record<string, SpectrogramAnnotation[]>;
+export type OtherUserAnnotations = Record<string, {annotations: SpectrogramAnnotation[], temporal: SpectrogramTemporalAnnotation[]}>;
 
 interface PaginatedNinjaResponse<T> {
     count: number,
