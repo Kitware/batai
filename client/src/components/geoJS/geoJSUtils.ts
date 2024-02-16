@@ -360,9 +360,16 @@ function findPolygonCenter(polygon: GeoJSON.Polygon): number[] {
   return [avgLng, avgLat];
 }
 
-function spectroToCenter(annotation: SpectrogramAnnotation, spectroInfo: SpectroInfo) {
-  const geoJSON = spectroToGeoJSon(annotation, spectroInfo);
-  return findPolygonCenter(geoJSON);
+function spectroToCenter(annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation, spectroInfo: SpectroInfo, type: 'sequence' | 'pulse') {
+  if (type === 'pulse') {
+    const geoJSON = spectroToGeoJSon(annotation as SpectrogramAnnotation, spectroInfo);
+    return findPolygonCenter(geoJSON);
+  }
+  if (type === 'sequence') {
+    const geoJSON = spectroTemporalToGeoJSon(annotation as SpectrogramTemporalAnnotation, spectroInfo);
+    return findPolygonCenter(geoJSON);
+  }
+  return [0,0];
 }
 
 /* beginning at bottom left, rectangle is defined clockwise */

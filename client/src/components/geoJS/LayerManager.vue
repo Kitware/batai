@@ -83,7 +83,10 @@ export default defineComponent({
         editingAnnotation.value = null;
         selectedId.value = selectedAnnotationId.value;
         //emit("selected", selectedAnnotationId.value);
-        setSelectedId(selectedAnnotationId.value, 'sequence');
+        if (data.id !== null) {
+          setSelectedId(selectedAnnotationId.value, 'sequence');
+        }
+        setSelectedId(selectedAnnotationId.value);
         triggerUpdate();
       }
       if (type === "annotation-right-clicked") {
@@ -101,7 +104,10 @@ export default defineComponent({
           editingAnnotation.value = null;
           localTemporalAnnotations.value[foundIndex].editing = undefined;
         }
-        setSelectedId(selectedAnnotationId.value, 'sequence');
+        if (data.id !== null) {
+          setSelectedId(selectedAnnotationId.value, 'sequence');
+        }
+        setSelectedId(selectedAnnotationId.value);
         //emit("selected", selectedAnnotationId.value);
         triggerUpdate();
       }
@@ -126,7 +132,10 @@ export default defineComponent({
         const copy: SpectrogramAnnotation[] = cloneDeep(localAnnotations.value);
         copy.forEach((item) => (item.editing = undefined));
         localAnnotations.value = copy;
-        setSelectedId(selectedAnnotationId.value, 'pulse');
+        if (data.id !== null) {
+          setSelectedId(selectedAnnotationId.value, 'pulse');
+        }
+        setSelectedId(selectedAnnotationId.value);
         //emit("selected", selectedAnnotationId.value);
       }
       if (type === "annotation-clicked") {
@@ -146,7 +155,10 @@ export default defineComponent({
         editingAnnotation.value = null;
         selectedId.value = selectedAnnotationId.value;
         //emit("selected", selectedAnnotationId.value);
-        setSelectedId(selectedAnnotationId.value, 'pulse');
+        if (data.id !== null) {
+          setSelectedId(selectedAnnotationId.value, 'pulse');
+        }
+        setSelectedId(selectedAnnotationId.value);
         triggerUpdate();
       }
       if (type === "annotation-hover") {

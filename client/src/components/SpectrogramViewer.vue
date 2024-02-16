@@ -40,7 +40,7 @@ export default defineComponent({
     "hoverData",
   ],
   setup(props, { emit }) {
-    const { annotations, selectedId, selectedType, creationType } = useState();
+    const { annotations, temporalAnnotations, selectedId, selectedType, creationType } = useState();
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized = ref(false);
@@ -166,10 +166,12 @@ export default defineComponent({
         if (skipNextSelected) {
           skipNextSelected = false;
           return;
+          
         }
-        const found = annotations.value.find((item) => item.id === selectedId.value);
+        const found = selectedType.value === 'pulse' ? annotations.value.find((item) => item.id === selectedId.value): temporalAnnotations.value.find((item) => item.id === selectedId.value);
         if (found && props.spectroInfo) {
-          const center = spectroToCenter(found, props.spectroInfo);
+
+          const center = spectroToCenter(found, props.spectroInfo, selectedType.value);
           const x = center[0];
           const y = center[1];
           const bounds = geoJS.getGeoViewer().value.bounds();

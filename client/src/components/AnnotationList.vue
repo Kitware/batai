@@ -79,12 +79,6 @@ export default defineComponent({
           </v-row>
 
           <v-list>
-            <v-list-item>
-              <v-row dense>
-                <v-col><b>Time</b></v-col>
-                <v-col><b>Frequency</b></v-col>
-              </v-row>
-            </v-list-item>
             <v-list-item
               v-for="annotation in annotations"
               :id="`annotation-${annotation.id}`"
@@ -140,12 +134,6 @@ export default defineComponent({
           </v-row>
 
           <v-list>
-            <v-list-item>
-              <v-row dense>
-                <v-col><b>Time</b></v-col>
-                <v-col><b>Frequency</b></v-col>
-              </v-row>
-            </v-list-item>
             <v-list-item
               v-for="annotation in temporalAnnotations"
               :id="`annotation-${annotation.id}`"

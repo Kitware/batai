@@ -9,6 +9,7 @@ interface TextData {
   y: number;
   offsetY?: number;
   offsetX?: number;
+  textType: 'species' | 'type';
 }
 
 export default class SpeciesSequenceLayer {
@@ -70,6 +71,7 @@ export default class SpeciesSequenceLayer {
       }
       let textOffset = 0;
       const species = annotation.species;
+      const type = annotation.type;
       if (species) {
         for (let i =0; i< species.length; i += 1) {
           const specie = species[i];
@@ -78,11 +80,21 @@ export default class SpeciesSequenceLayer {
             x: xmin + (xmax-xmin) /2.0,
             y: ymax ,
             offsetX:0,
-            offsetY: -0 + textOffset,
+            offsetY: -5 + textOffset,
+            textType: 'species',
           });
-          textOffset += 15;
-    
+          textOffset -= 15;        
         }
+      }
+      if (type) {
+        this.textData.push({
+          text: `${type}`,
+          x: xmin + (xmax-xmin) /2.0,
+          y: ymin ,
+          offsetX:0,
+          offsetY: 10,
+          textType: 'type'
+        });
       }
     });
   }
@@ -107,7 +119,10 @@ export default class SpeciesSequenceLayer {
         uniformPolygon: true,
         fill: false,
       },
-      color: () => {
+      color: (d) => {
+        if (d.textType === 'type') {
+          return 'yellow';
+        }
         return "white";
       },
       offset: (data) => ({

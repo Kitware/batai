@@ -44,9 +44,11 @@ export default function useState() {
 
   }
 
-  function setSelectedId(id: number | null, annotationType: 'pulse' | 'sequence' ='pulse' ) {
+  function setSelectedId(id: number | null, annotationType?: 'pulse' | 'sequence' ) {
     selectedId.value = id;
-    selectedType.value = annotationType;
+    if (annotationType) {
+      selectedType.value = annotationType;
+    }
   }
     return {
     annotationState,
