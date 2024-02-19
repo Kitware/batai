@@ -80,7 +80,7 @@ class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
 class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
     pass
 
-class KitwareConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
+class KitwareConfiguration(BatsAiMixin, ProductionBaseConfiguration):
     SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
 
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
@@ -98,6 +98,7 @@ class KitwareConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
     MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
+    ALLOWED_HOSTS = ['batai.kitware.com']
 
 
 class ProductionConfiguration(BatsAiMixin, ProductionBaseConfiguration):
