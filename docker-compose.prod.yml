@@ -4,7 +4,12 @@ services:
   # COMMENTED OUT UNTIL READY TO TEST
   traefik:
     restart: always
+    image: traefik:v2.4
+    container_name: traefik
     command: >
+      --providers.docker=true
+      --providers.docker.exposedByDefault=false
+      --entrypoints.web.address=:80
       --log.level=${LOG_LEVEL:-DEBUG}
       --providers.docker=true
       --providers.docker.exposedByDefault=false
@@ -25,6 +30,7 @@ services:
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https-mddl@docker"
       - "traefik.http.middlewares.redirect-to-https-mddl.redirectscheme.scheme=https"
     volumes:
+      - "${SOCK_PATH:-/var/run/docker.sock}:/var/run/docker.sock"
       - "./traefik/letsencrypt:/letsencrypt"
       - "./traefik/dynamic.yml:/var/traefik/dynamic.yml:ro"
     ports:
