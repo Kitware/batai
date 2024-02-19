@@ -13,11 +13,6 @@ from composed_configuration import (
 from composed_configuration._configuration import _BaseConfiguration
 from configurations import values
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost',
-]
-
 
 class BatsAiMixin(ConfigMixin):
     WSGI_APPLICATION = 'bats_ai.wsgi.application'
