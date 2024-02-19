@@ -1,4 +1,4 @@
-# Use official Node.js image as the base image
+# Use official Node.js image as the base image for building Vue.js app
 FROM node:16 as build-stage
 
 # Set working directory
@@ -16,14 +16,21 @@ COPY client .
 # Build the Vue.js application
 RUN npm run build
 
-# Production stage
+# Use NGINX as the final base image
 FROM nginx:alpine
 
-# Copy built app from build stage to nginx
+# Remove default NGINX website
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy built Vue.js app to NGINX HTML directory
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# Expose port 80 to the outer world
+RUN ls
+# Copy custom NGINX configuration
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Expose port 80
 EXPOSE 80
 
-# Command to run nginx
+# Start NGINX
 CMD ["nginx", "-g", "daemon off;"]
