@@ -25,8 +25,8 @@ services:
     labels:
       # Traefik HTTPS Redirect
       - "traefik.enable=true"
-      - "traefik.http.routers.girder-rtr.entrypoints=websecure"
-      - "traefik.http.routers.girder-rtr.rule=Host(`${HOSTNAME}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https-mddl@docker"
       - "traefik.http.middlewares.redirect-to-https-mddl.redirectscheme.scheme=https"
     volumes:
@@ -94,8 +94,7 @@ services:
       - "traefik.http.routers.client-rtr.entrypoints=websecure"
       - "traefik.http.routers.client-rtr.rule=Host(`batai.kitware.com`)"
       - "traefik.enable=true"
-      - "traefik.http.services.client-svc.loadbalancer.server.port=90"
-      - "traefik.http.routers.client-rtr.entrypoints=web"
+      - "traefik.http.services.client-svc.loadbalancer.server.port=80"
       - "traefik.http.routers.client-rtr.rule=HostRegexp(`{catchall:.*}`)"
   postgres:
     image: postgis/postgis:latest
