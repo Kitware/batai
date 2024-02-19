@@ -137,7 +137,7 @@ services:
       "flower"
     ]
     tty: false
-    env_file: ./dev/.env.docker-compose
+    env_file: ./dev/.env.prod.docker-compose
     volumes:
       - .:/opt/django-project
     networks:
