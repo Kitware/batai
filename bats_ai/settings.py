@@ -10,6 +10,7 @@ from composed_configuration import (
     ProductionBaseConfiguration,
     TestingBaseConfiguration,
 )
+from composed_configuration._configuration import _BaseConfiguration
 from configurations import values
 
 CORS_ALLOWED_ORIGINS = [
@@ -80,9 +81,10 @@ class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
 class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
     pass
 
-class KitwareConfiguration(BatsAiMixin, ProductionBaseConfiguration):
-    SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
 
+class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
+    SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
     MINIO_STORAGE_ENDPOINT = values.Value(
         'minio:9000',
