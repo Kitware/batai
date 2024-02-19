@@ -94,7 +94,7 @@ services:
       - "traefik.http.routers.client-rtr.entrypoints=websecure"
       - "traefik.http.routers.client-rtr.rule=Host(`batai.kitware.com`)"
       - "traefik.enable=true"
-      - "traefik.http.services.client-svc.loadbalancer.server.port=8080"
+      - "traefik.http.services.client-svc.loadbalancer.server.port=80"
       - "traefik.http.routers.client-rtr.entrypoints=web"
       - "traefik.http.routers.client-rtr.rule=HostRegexp(`{catchall:.*}`)"
   postgres:
