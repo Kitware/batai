@@ -66,6 +66,8 @@ services:
     # Docker Compose does not set the TTY width, which causes Celery errors
     tty: false
     env_file: ./dev/.env.prod.docker-compose
+    networks:
+      - django-nginx
     volumes:
       - .:/opt/django-project
     depends_on:
