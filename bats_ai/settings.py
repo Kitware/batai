@@ -102,7 +102,7 @@ class KitwareConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
 
 
 class ProductionConfiguration(BatsAiMixin, ProductionBaseConfiguration):
-
+    pass
 
 class HerokuProductionConfiguration(BatsAiMixin, HerokuProductionBaseConfiguration):
     pass
