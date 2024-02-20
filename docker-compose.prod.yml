@@ -21,7 +21,7 @@ services:
       --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
       --certificatesresolvers.myresolver.acme.httpchallenge=true
       --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
-      --certificatesresolvers.myresolver.acme.caserver=${ACME_CA_SERVER:-https://acme-staging-v02.api.letsencrypt.org/directory}
+      --certificatesresolvers.myresolver.acme.caserver=${ACME_CA_SERVER:-https://acme-v02.api.letsencrypt.org/directory}
     labels:
       # Traefik HTTPS Redirect
       - "traefik.enable=true"
