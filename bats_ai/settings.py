@@ -77,7 +77,7 @@ class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
     pass
 
 
-class KitwareConfiguration(BatsAiMixin, HttpsMixin, _BaseConfiguration):
+class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
     SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
