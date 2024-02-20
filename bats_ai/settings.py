@@ -95,11 +95,12 @@ class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
     MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
-    ALLOWED_HOSTS = ['batai.kitware.com']
+    ALLOWED_HOSTS = ['batdetectai.kitware.com']
 
 
 class ProductionConfiguration(BatsAiMixin, ProductionBaseConfiguration):
     pass
+
 
 class HerokuProductionConfiguration(BatsAiMixin, HerokuProductionBaseConfiguration):
     pass
