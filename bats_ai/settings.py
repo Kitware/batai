@@ -10,7 +10,7 @@ from composed_configuration import (
     ProductionBaseConfiguration,
     TestingBaseConfiguration,
 )
-from composed_configuration._configuration import _BaseConfiguration
+from composed_configuration._configuration import _BaseConfiguration, HttpsMixin
 from configurations import values
 
 
@@ -77,7 +77,7 @@ class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
     pass
 
 
-class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
+class KitwareConfiguration(BatsAiMixin, HttpsMixin, _BaseConfiguration):
     SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
