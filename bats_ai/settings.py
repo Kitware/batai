@@ -96,6 +96,7 @@ class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
     MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
     ALLOWED_HOSTS = ['batdetectai.kitware.com']
+    CSRF_TRUSTED_ORIGINS = ["https://batdetectai.kitware.com", "https://www.batdetectai.kitware.com"]
 
 
 class ProductionConfiguration(BatsAiMixin, ProductionBaseConfiguration):
