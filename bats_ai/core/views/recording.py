@@ -10,8 +10,12 @@ from ninja import File, Form, Schema
 from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import Annotations, Recording, Species
+from bats_ai.core.models import Annotations, Recording, Species, TemporalAnnotations
 from bats_ai.core.views.species import SpeciesSchema
+from bats_ai.core.views.temporal_annotations import (
+    TemporalAnnotationSchema,
+    UpdateTemporalAnnotationSchema,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -202,13 +206,22 @@ def get_spectrogram(request: HttpRequest, id: int):
     spectro_data['currentUser'] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
+    temporal_annotations_qs = TemporalAnnotations.objects.filter(
+        recording=recording, owner=request.user
+    )
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [
         AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
         for annotation in annotations_qs
     ]
+    temporal_annotations_data = [
+        TemporalAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+        for annotation in temporal_annotations_qs
+    ]
+
     spectro_data['annotations'] = annotations_data
+    spectro_data['temporal'] = temporal_annotations_data
     return spectro_data
 
 
@@ -306,6 +319,9 @@ def get_other_user_annotations(request: HttpRequest, id: int):
             annotations_qs = Annotations.objects.filter(recording=recording).exclude(
                 owner=request.user
             )
+            temporal_qs = TemporalAnnotations.objects.filter(recording=recording).exclude(
+                owner=request.user
+            )
 
             # Create a dictionary to store annotations for each user
             annotations_by_user = {}
@@ -315,11 +331,22 @@ def get_other_user_annotations(request: HttpRequest, id: int):
                 user_email = annotation.owner.email
 
                 # If user_email is not already a key in the dictionary, initialize it with an empty list
-                annotations_by_user.setdefault(user_email, [])
+                annotations_by_user.setdefault(user_email, {'annotations': [], 'temporal': []})
 
                 # Append the annotation to the list for the corresponding user_email
-                annotations_by_user[user_email].append(
+                annotations_by_user[user_email]['annotations'].append(
                     AnnotationSchema.from_orm(annotation, owner_email=user_email).dict()
+                )
+
+            for annotation in temporal_qs:
+                user_email = annotation.owner.email
+
+                # If user_email is not already a key in the dictionary, initialize it with an empty list
+                annotations_by_user.setdefault(user_email, {'annotations': [], 'temporal': []})
+
+                # Append the annotation to the list for the corresponding user_email
+                annotations_by_user[user_email]['temporal'].append(
+                    TemporalAnnotationSchema.from_orm(annotation, owner_email=user_email).dict()
                 )
 
             return annotations_by_user
@@ -403,7 +430,7 @@ def patch_annotation(
     recording_id: int,
     id: int,
     annotation: UpdateAnnotationsSchema,
-    species_ids: list[int],
+    species_ids: list[int] | None,
 ):
     try:
         recording = Recording.objects.get(pk=recording_id)
@@ -428,16 +455,68 @@ def patch_annotation(
             annotation_instance.save()
 
             # Clear existing species associations
-            annotation_instance.species.clear()
+            if species_ids:
+                annotation_instance.species.clear()
+                # Add species to the annotation based on the provided species_ids
+                for species_id in species_ids:
+                    try:
+                        species_obj = Species.objects.get(pk=species_id)
+                        annotation_instance.species.add(species_obj)
+                    except Species.DoesNotExist:
+                        # Handle the case where the species with the given ID doesn't exist
+                        return {'error': f'Species with ID {species_id} not found'}
 
-            # Add species to the annotation based on the provided species_ids
-            for species_id in species_ids:
-                try:
-                    species_obj = Species.objects.get(pk=species_id)
-                    annotation_instance.species.add(species_obj)
-                except Species.DoesNotExist:
-                    # Handle the case where the species with the given ID doesn't exist
-                    return {'error': f'Species with ID {species_id} not found'}
+            return {'message': 'Annotation updated successfully', 'id': annotation_instance.pk}
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+    except Annotations.DoesNotExist:
+        return {'error': 'Annotation not found'}
+
+
+@router.patch('/{recording_id}/temporal-annotations/{id}')
+def patch_temporal_annotation(
+    request,
+    recording_id: int,
+    id: int,
+    annotation: UpdateTemporalAnnotationSchema,
+    species_ids: list[int] | None,
+):
+    try:
+        recording = Recording.objects.get(pk=recording_id)
+
+        # Check if the user owns the recording or if the recording is public
+        if recording.owner == request.user or recording.public:
+            annotation_instance = TemporalAnnotations.objects.get(
+                pk=id, recording=recording, owner=request.user
+            )
+
+            # Update annotation details
+            if annotation.start_time:
+                annotation_instance.start_time = annotation.start_time
+            if annotation.end_time:
+                annotation_instance.end_time = annotation.end_time
+            if annotation.comments:
+                annotation_instance.comments = annotation.comments
+            if annotation.type:
+                annotation_instance.type = annotation.type
+            annotation_instance.save()
+
+            # Clear existing species associations
+            if species_ids:
+                annotation_instance.species.clear()
+                # Add species to the annotation based on the provided species_ids
+                for species_id in species_ids:
+                    try:
+                        species_obj = Species.objects.get(pk=species_id)
+                        annotation_instance.species.add(species_obj)
+                    except Species.DoesNotExist:
+                        # Handle the case where the species with the given ID doesn't exist
+                        return {'error': f'Species with ID {species_id} not found'}
 
             return {'message': 'Annotation updated successfully', 'id': annotation_instance.pk}
         else:
@@ -459,6 +538,93 @@ def delete_annotation(request, recording_id: int, id: int):
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             annotation_instance = Annotations.objects.get(
+                pk=id, recording=recording, owner=request.user
+            )
+
+            # Delete the annotation
+            annotation_instance.delete()
+
+            return {'message': 'Annotation deleted successfully'}
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+    except Annotations.DoesNotExist:
+        return {'error': 'Annotation not found'}
+
+
+# TEMPORAL ANNOTATIONS
+
+
+@router.get('/{id}/temporal-annotations')
+def get_temporal_annotations(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+
+        # Check if the user owns the recording or if the recording is public
+        if recording.owner == request.user or recording.public:
+            # Query annotations associated with the recording that are owned by the current user
+            annotations_qs = TemporalAnnotations.objects.filter(
+                recording=recording, owner=request.user
+            )
+
+            # Serialize the annotations using AnnotationSchema
+            annotations_data = [
+                TemporalAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+                for annotation in annotations_qs
+            ]
+
+            return annotations_data
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+
+@router.put('/{id}/temporal-annotations')
+def put_temporal_annotation(
+    request,
+    id: int,
+    annotation: TemporalAnnotationSchema,
+    species_ids: list[int] | None,
+):
+    try:
+        recording = Recording.objects.get(pk=id)
+        if recording.owner == request.user or recording.public:
+            # Create a new annotation
+            new_annotation = TemporalAnnotations.objects.create(
+                recording=recording,
+                owner=request.user,
+                start_time=annotation.start_time,
+                end_time=annotation.end_time,
+                type=annotation.type,
+                comments=annotation.comments,
+            )
+
+            return {'message': 'Annotation added successfully', 'id': new_annotation.pk}
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+
+@router.delete('/{recording_id}/temporal-annotations/{id}')
+def delete_temporal_annotation(request, recording_id: int, id: int):
+    try:
+        recording = Recording.objects.get(pk=recording_id)
+
+        # Check if the user owns the recording or if the recording is public
+        if recording.owner == request.user or recording.public:
+            annotation_instance = TemporalAnnotations.objects.get(
                 pk=id, recording=recording, owner=request.user
             )
 

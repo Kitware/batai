@@ -1,7 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script lang="ts">
 import { defineComponent, PropType, Ref, ref } from "vue";
-import useState from "../use/useState";
 import { watch } from "vue";
 import geo, { GeoEvent } from "geojs";
 
@@ -117,7 +116,10 @@ export default defineComponent({
 
 <template>
   <v-card class="pa-0 ma-0">
-    <div ref="mapRef" :style="`width:${size.width}px; height:${size.height}px`" />
+    <div
+      ref="mapRef"
+      :style="`width:${size.width}px; height:${size.height}px`"
+    />
   </v-card>
 </template>
 

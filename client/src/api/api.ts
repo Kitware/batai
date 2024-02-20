@@ -60,6 +60,18 @@ export interface SpectrogramAnnotation {
     owner_email?: string;
 }
 
+export interface SpectrogramTemporalAnnotation {
+    start_time: number;
+    end_time: number;
+    id: number;
+    editing?: boolean;
+    type?: string;
+    comments?: string;
+    species?: Species[];
+    owner_email?: string;
+}
+
+
 export interface UpdateSpectrogramAnnotation {
     start_time?: number;
     end_time?: number;
@@ -69,6 +81,16 @@ export interface UpdateSpectrogramAnnotation {
     editing?: boolean;
     species?: Species[];
     comments?: string;
+}
+
+export interface UpdateSpectrogramTemporalAnnotation {
+    start_time?: number;
+    end_time?: number;
+    id?: number;
+    editing?: boolean;
+    species?: Species[];
+    comments?: string;
+    type?: string;
 }
 
 export interface UserInfo {
@@ -81,13 +103,14 @@ export interface Spectrogram {
     url?: string;
     filename?: string;
     annotations?: SpectrogramAnnotation[];
+    temporal?: SpectrogramTemporalAnnotation[];
     spectroInfo?: SpectroInfo;
     currentUser?: string;
     otherUsers?: UserInfo[];
 
 }
 
-export type OtherUserAnnotations = Record<string, SpectrogramAnnotation[]>;
+export type OtherUserAnnotations = Record<string, {annotations: SpectrogramAnnotation[], temporal: SpectrogramTemporalAnnotation[]}>;
 
 interface PaginatedNinjaResponse<T> {
     count: number,
@@ -174,23 +197,38 @@ async function getSpectrogramCompressed(id: string) {
 
 async function getAnnotations(recordingId: string) {
     return axiosInstance.get<SpectrogramAnnotation[]>(`/recording/${recordingId}/annotations`);
+}
 
+async function getTemporalAnnotations(recordingId: string) {
+    return axiosInstance.get<SpectrogramTemporalAnnotation[]>(`/recording/${recordingId}/temporal-annotations`);
 }
 
 async function getSpecies() {
     return axiosInstance.get<Species[]>('/species/');
 }
 
-async function patchAnnotation(recordingId: string, annotationId: number, annotation: UpdateSpectrogramAnnotation, speciesList: number[] = []) {
+async function patchAnnotation(recordingId: string, annotationId: number, annotation: UpdateSpectrogramAnnotation, speciesList: number[] | null = null) {
     return axiosInstance.patch(`/recording/${recordingId}/annotations/${annotationId}`, { annotation, species_ids: speciesList});
+}
+
+async function patchTemporalAnnotation(recordingId: string, annotationId: number, annotation: UpdateSpectrogramTemporalAnnotation, speciesList: number[] | null = null) {
+    return axiosInstance.patch(`/recording/${recordingId}/temporal-annotations/${annotationId}`, { annotation, species_ids: speciesList});
 }
 
 async function putAnnotation(recordingId: string, annotation: UpdateSpectrogramAnnotation, speciesList: number[] = []) {
     return axiosInstance.put<{message: string, id: number}>(`/recording/${recordingId}/annotations`, { annotation, species_ids: speciesList});
 }
 
+async function putTemporalAnnotation(recordingId: string, annotation: UpdateSpectrogramTemporalAnnotation, speciesList: number[] | null = null) {
+    return axiosInstance.put<{message: string, id: number}>(`/recording/${recordingId}/temporal-annotations`, { annotation, species_ids: speciesList});
+}
+
 async function deleteAnnotation(recordingId: string, annotationId: number) {
     return axiosInstance.delete(`/recording/${recordingId}/annotations/${annotationId}`);
+}
+
+async function deleteTemporalAnnotation(recordingId: string, annotationId: number) {
+    return axiosInstance.delete(`/recording/${recordingId}/temporal-annotations/${annotationId}`);
 }
 
 async function getOtherUserAnnotations(recordingId: string) {
@@ -203,10 +241,14 @@ export {
  patchRecording,
  getSpectrogram,
  getSpectrogramCompressed,
+ getTemporalAnnotations,
  getOtherUserAnnotations,
  getSpecies,
  getAnnotations,
  patchAnnotation,
+ patchTemporalAnnotation,
  putAnnotation,
- deleteAnnotation
+ putTemporalAnnotation,
+ deleteAnnotation,
+ deleteTemporalAnnotation,
 };

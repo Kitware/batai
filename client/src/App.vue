@@ -1,18 +1,21 @@
 <script lang="ts">
 import { defineComponent, inject, computed, ref } from 'vue';
 import OAuthClient from '@girder/oauth-client';
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
   setup() {
     const oauthClient = inject<OAuthClient>('oauthClient');
+    const router = useRouter();
     if (oauthClient === undefined) {
       throw new Error('Must provide "oauthClient" into component.');
     }
 
     const loginText = computed(() => (oauthClient.isLoggedIn ? 'Logout' : 'Login'));
-    const logInOrOut = () => {
+    const logInOrOut = async () => {
       if (oauthClient.isLoggedIn) {
-        oauthClient.logout();
+        await oauthClient.logout();
+        router.push('Login');
       } else {
         oauthClient.redirectToLogin();
       }
@@ -27,6 +30,7 @@ export default defineComponent({
   <v-app id="app">
     <v-app-bar app>
       <v-tabs
+        v-if="oauthClient.isLoggedIn"
         fixed-tabs
         :model-value="activeTab"
       >

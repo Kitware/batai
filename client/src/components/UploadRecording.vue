@@ -291,7 +291,7 @@ export default defineComponent({
                       <v-spacer />
                       <map-location
                         :size="{width: 600, height: 400}"
-                        :location="{ x: latitude, y: longitude}"
+                        :location="{ x: longitude, y: latitude}"
                         :update-map="updateMap"
                         @location="setLocation($event)"
                       />
