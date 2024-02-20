@@ -61,35 +61,33 @@ services:
     labels:
       - "traefik.enable=true"
       
+      # Middleware for HTTPS redirection
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
       # Routing rule for /api
-      - "traefik.http.routers.django-api.entrypoints=websecure"
       - "traefik.http.routers.django-api.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/api`)"
       - "traefik.http.routers.django-api.service=django"
-      - "traefik.http.routers.django-api.middlewares=django-middleware"
+      - "traefik.http.routers.django-api.middlewares=redirect-to-https"
 
       # Routing rule for /admin
-      - "traefik.http.routers.django-admin.entrypoints=websecure"
       - "traefik.http.routers.django-admin.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/admin`)"
       - "traefik.http.routers.django-admin.service=django"
-      - "traefik.http.routers.django-admin.middlewares=django-middleware"
+      - "traefik.http.routers.django-admin.middlewares=redirect-to-https"
 
       # Routing rule for /accounts
-      - "traefik.http.routers.django-accounts.entrypoints=websecure"
       - "traefik.http.routers.django-accounts.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/accounts`)"
       - "traefik.http.routers.django-accounts.service=django"
-      - "traefik.http.routers.django-accounts.middlewares=django-middleware"
+      - "traefik.http.routers.django-accounts.middlewares=redirect-to-https"
 
       # Routing rule for /oauth
-      - "traefik.http.routers.django-oauth.entrypoints=websecure"
       - "traefik.http.routers.django-oauth.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/oauth`)"
       - "traefik.http.routers.django-oauth.service=django"
-      - "traefik.http.routers.django-oauth.middlewares=django-middleware"
+      - "traefik.http.routers.django-oauth.middlewares=redirect-to-https"
 
       # Routing rule for /static
-      - "traefik.http.routers.django-static.entrypoints=websecure"
       - "traefik.http.routers.django-static.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/static`)"
       - "traefik.http.routers.django-static.service=django"
-      - "traefik.http.routers.django-static.middlewares=django-middleware"
+      - "traefik.http.routers.django-static.middlewares=redirect-to-https"
   celery:
     build:
       context: .
@@ -118,8 +116,6 @@ services:
       dockerfile: ./dev/client.Dockerfile
     networks:
       - django-nginx
-    ports:
-      - 90:80
     depends_on:
       - django
     labels:
