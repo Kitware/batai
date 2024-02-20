@@ -26,7 +26,7 @@ services:
       # Traefik HTTPS Redirect
       - "traefik.enable=true"
       - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.rule=Host('batai.kitware.com')"
+      - "traefik.http.routers.http-catchall.rule=Host('batdetectai.kitware.com')"
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https-mddl@docker"
       - "traefik.http.middlewares.redirect-to-https-mddl.redirectscheme.scheme=https"
     volumes:
@@ -92,7 +92,7 @@ services:
       - django
     labels:
       - "traefik.http.routers.client-rtr.entrypoints=websecure"
-      - "traefik.http.routers.client-rtr.rule=Host(`batai.kitware.com`)"
+      - "traefik.http.routers.client-rtr.rule=Host(`batdetectai.kitware.com`)"
       - "traefik.enable=true"
       - "traefik.http.services.client-svc.loadbalancer.server.port=80"
   postgres:
