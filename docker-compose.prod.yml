@@ -11,7 +11,7 @@ services:
     command: >
       --providers.docker=true
       --providers.docker.exposedByDefault=false
-      --log.level=${LOG_LEVEL:-DEBUG}
+      --log.level=${LOG_LEVEL:-WARN}
       --providers.docker.exposedByDefault=false
       --providers.file.filename=/var/traefik/dynamic.yml
       --entrypoints.web.address=:80
