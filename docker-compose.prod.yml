@@ -62,26 +62,31 @@ services:
       - "traefik.enable=true"
       
       # Routing rule for /api
+      - "traefik.http.routers.django-api.entrypoints=websecure"
       - "traefik.http.routers.django-api.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/api`)"
       - "traefik.http.routers.django-api.service=django"
       - "traefik.http.routers.django-api.middlewares=django-middleware"
 
       # Routing rule for /admin
+      - "traefik.http.routers.django-admin.entrypoints=websecure"
       - "traefik.http.routers.django-admin.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/admin`)"
       - "traefik.http.routers.django-admin.service=django"
       - "traefik.http.routers.django-admin.middlewares=django-middleware"
 
       # Routing rule for /accounts
+      - "traefik.http.routers.django-accounts.entrypoints=websecure"
       - "traefik.http.routers.django-accounts.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/accounts`)"
       - "traefik.http.routers.django-accounts.service=django"
       - "traefik.http.routers.django-accounts.middlewares=django-middleware"
 
       # Routing rule for /oauth
+      - "traefik.http.routers.django-oauth.entrypoints=websecure"
       - "traefik.http.routers.django-oauth.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/oauth`)"
       - "traefik.http.routers.django-oauth.service=django"
       - "traefik.http.routers.django-oauth.middlewares=django-middleware"
 
       # Routing rule for /static
+      - "traefik.http.routers.django-static.entrypoints=websecure"
       - "traefik.http.routers.django-static.rule=Host(`batdetectai.kitware.com`) && PathPrefix(`/static`)"
       - "traefik.http.routers.django-static.service=django"
       - "traefik.http.routers.django-static.middlewares=django-middleware"
