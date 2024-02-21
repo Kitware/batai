@@ -5,6 +5,7 @@ import logging
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
+from django.db.models import Q
 from django.http import HttpRequest
 from ninja import File, Form, Schema
 from ninja.files import UploadedFile
@@ -166,7 +167,11 @@ def delete_recording(
 def get_recordings(request: HttpRequest, public: bool | None = None):
     # Filter recordings based on the owner's id or public=True
     if public is not None and public:
-        recordings = Recording.objects.filter(public=True).exclude(owner=request.user).values()
+        recordings = (
+            Recording.objects.filter(public=True)
+            .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
+            .values()
+        )
     else:
         recordings = Recording.objects.filter(owner=request.user).values()
 
