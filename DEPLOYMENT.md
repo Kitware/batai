@@ -27,11 +27,15 @@ for accessing the server.
 3. Run  `docker compose run --rm django ./manage.py makeclient \
                             --username your.super.user@email.address \
                             --uri https://batdetectai.kitware.com/`
-4. Run `docker compose run --rm django ./manage.py collectstatic`to collect the static files
-5. Run `docker compose -f docker-compose.prod.yml up` to start the server add `-d` for a silent version to run in the background
-6. Copy over the ./dev/.env.prod.docker-compose.template to `./dev/.env.prod.docker-compose.template` and change the default passwords
+4. Run `docker compose run --rm django ./manage.py collectstatic`
+   to collect the static files
+5. Run `docker compose -f docker-compose.prod.yml up` to start the server
+   add `-d` for a silent version to run in the background
+6. Copy over the ./dev/.env.prod.docker-compose.template
+   to `./dev/.env.prod.docker-compose.template` and change the default passwords
 7. Change the ID in the `./client/env.production` to a custom ID
-8. After creating the basic application log into the django admin `batdetectai.kitware.com/admin` and change the ApplicationId to the ID in the `./client.env.production`
+8. After creating the basic application log into the django admin `batdetectai.kitware.com/admin`
+   and change the ApplicationId to the ID in the `./client.env.production`
 9. Test logging in/out and uploading data to the server.
 
 ### system.d service

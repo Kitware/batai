@@ -80,7 +80,9 @@ class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
 
 class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
     SECRET_KEY = values.SecretValue()
-    baseHost = os.environ['SERVERHOSTNAME']
+    baseHost = 'batdetectai.kitware.com'
+    if 'SERVERHOSTNAME' in os.environ:
+        baseHost = os.environ['SERVERHOSTNAME']
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
     MINIO_STORAGE_ENDPOINT = values.Value(
