@@ -12,11 +12,11 @@ file on your system.
 A date and name are required for uploading new data.
 Optional data can be added including location/ equipment and comments about the file
 
-**Public** - using this checkbox will share the data with all other users within the system
+**Public** - using this checkbox will share the data with all other users
+within the system
 
 Once others have have made annotations on your own files that are public
 you can view them by clicking on the name
-
 
 ## Others Shared Data
 
@@ -38,7 +38,7 @@ At the top of the screen are the current frequence and time for the mouse cursor
 On the upper right side of the area are buttons for adding/removing information
 
 **Bat Icon** - turns on/off species annotations for any bounding boxes on the screen
-**MS Icon** - will toggle millisecond text annotations to all boxes 
+**MS Icon** - will toggle millisecond text annotations to all boxes
 **KHZ Icon** - will toggle frequency labels for each bounding box on the screen
 **Grid Icon** - toggles gride display across the spectrogram
 **Compressed Icon** - toggles on/off the compressed view for the spectrogram
@@ -55,7 +55,7 @@ and dragging them around.
 
 #### Full Spectrogram View
 
-Below the main view is a thumbnail of the full spectrogram.  This view shows 
+Below the main view is a thumbnail of the full spectrogram.  This view shows
 the entire spectrogram.
 The **yellow** bounding box is used to show the current location and zoom
 level for the **Main View**.
@@ -67,7 +67,8 @@ that area in the main view.
 On the right side of the screen is a list of the Sequence and Pulse annotations.
 These are tabbed views that can be switched between by clicking on the Tab Name.
 Annotations can be selected by clicking on them.
-When an annotation is selected it can be edited including the species comments and other information.
+When an annotation is selected it can be edited including the species
+comments and other information.
 
 **Sequence** - A Sequence annotation is typically used to group multiple pulses together
 This can be drawn by clicking on the 'Add+' button and drawing a box around the pulses.
