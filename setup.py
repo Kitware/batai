@@ -37,6 +37,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'celery',
+        'gunicorn',
         'django-ninja',
         'django>=4.1, <4.2',
         'django-allauth',
