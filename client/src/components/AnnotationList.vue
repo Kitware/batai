@@ -17,7 +17,7 @@ export default defineComponent({
   emits: ['select'],
   setup() {
     const { creationType, annotationState, setAnnotationState, annotations, temporalAnnotations, selectedId, selectedType, setSelectedId } = useState();
-    const tab = ref('sequence');
+    const tab = ref('pulse');
     const scrollToId = (id: number) => {
     const el = document.getElementById(`annotation-${id}`);
     if (el) {
@@ -25,6 +25,7 @@ export default defineComponent({
     }
   };
   watch(selectedId, () => {
+    tab.value = selectedType.value;
     if (selectedId.value !== null) {
       scrollToId(selectedId.value);
     }
@@ -32,6 +33,13 @@ export default defineComponent({
   watch(selectedType, () => {
     tab.value = selectedType.value;
   });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tabSwitch = (event: any) => {
+    // On tab switches we want to deselect the curret anntation
+    tab.value = event as 'sequence' | 'pulse';
+    selectedType.value = event as 'sequence' | 'pulse';
+    selectedId.value = null;
+  };
 
     return {
         annotationState,
@@ -42,6 +50,7 @@ export default defineComponent({
         selectedType,
         setAnnotationState,
         setSelectedId,
+        tabSwitch,
         tab,
     };
   },
@@ -51,12 +60,15 @@ export default defineComponent({
 <template>
   <v-card class="pa-0 ma-0">
     <v-card-title>
-      <v-tabs v-model="tab">
-        <v-tab value="sequence">
-          Sequence
-        </v-tab>
+      <v-tabs
+        v-model="tab"
+        @update:model-value="tabSwitch($event)"
+      >
         <v-tab value="pulse">
           Pulse
+        </v-tab>
+        <v-tab value="sequence">
+          Sequence
         </v-tab>
       </v-tabs>
     </v-card-title>

@@ -5,12 +5,14 @@ import logging
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
+from django.db.models import Q
 from django.http import HttpRequest
 from ninja import File, Form, Schema
 from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import Annotations, Recording, Species, Spectrogram, TemporalAnnotations
+from bats_ai.core.models import Annotations, Recording, Species, TemporalAnnotations
+from bats_ai.core.tasks import recording_compute_spectrogram
 from bats_ai.core.views.species import SpeciesSchema
 from bats_ai.core.views.temporal_annotations import (
     TemporalAnnotationSchema,
@@ -106,7 +108,7 @@ def create_recording(
     # Start generating recording as soon as created
     # this creates the spectrogram during the upload so it is available immediately afterwards
     # it will make the upload process longer but I think it's worth it.
-    Spectrogram.generate(recording)
+    recording_compute_spectrogram.delay(recording.pk)
     return {'message': 'Recording updated successfully', 'id': recording.pk}
 
 
@@ -137,11 +139,39 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
     return {'message': 'Recording updated successfully', 'id': recording.pk}
 
 
+@router.delete('/{id}')
+def delete_recording(
+    request,
+    id: int,
+):
+    try:
+        recording = Recording.objects.get(pk=id)
+
+        # Check if the user owns the recording or if the recording is public
+        if recording.owner == request.user or recording.public:
+            # Delete the annotation
+            recording.delete()
+            return {'message': 'Recording deleted successfully'}
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+    except Annotations.DoesNotExist:
+        return {'error': 'Annotation not found'}
+
+
 @router.get('/')
 def get_recordings(request: HttpRequest, public: bool | None = None):
     # Filter recordings based on the owner's id or public=True
     if public is not None and public:
-        recordings = Recording.objects.filter(public=True).exclude(owner=request.user).values()
+        recordings = (
+            Recording.objects.filter(public=True)
+            .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
+            .values()
+        )
     else:
         recordings = Recording.objects.filter(owner=request.user).values()
 
@@ -150,6 +180,7 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
         user = User.objects.get(id=recording['owner_id'])
         recording['owner_username'] = user.username
         recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
+        recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
         if recording['recording_location']:
             recording['recording_location'] = json.loads(recording['recording_location'].json)
         unique_users_with_annotations = (

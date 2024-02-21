@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, onMounted } from 'vue';
-import { getRecordings, Recording } from '../api/api';
+import { deleteRecording, getRecordings, Recording } from '../api/api';
 import {
   VDataTable,
 } from "vuetify/labs/VDataTable";
@@ -18,6 +18,7 @@ export default defineComponent({
     const recordingList: Ref<Recording[]> = ref([]);
     const sharedList: Ref<Recording[]> = ref([]);
     const editingRecording: Ref<EditingRecording | null> = ref(null);
+    let intervalRef: number | null = null;
 
     const uploadDialog = ref(false);
     const headers = ref([
@@ -97,6 +98,23 @@ export default defineComponent({
     const fetchRecordings = async () => {
         const recordings = await getRecordings();
         recordingList.value = recordings.data;
+        // If we have a spectrogram being generated we need to refresh on an interval
+        let missingSpectro = false;
+        for (let i =0; i< recordingList.value.length; i+=1) {
+          if (!recordingList.value[i].hasSpectrogram) {
+            missingSpectro = true;
+            break;
+          }
+        }
+        if (missingSpectro) {
+          if (intervalRef === null) {
+            intervalRef = setInterval(() => fetchRecordings(), 5000);
+          }
+        } else  {
+          if (intervalRef !== null) {
+            clearInterval(intervalRef);
+          }
+        }
         const shared = await getRecordings(true);
         sharedList.value = shared.data;
 
@@ -124,6 +142,10 @@ export default defineComponent({
       }
       uploadDialog.value = true;
     };
+    const delRecording = async (id: number) => {
+        await deleteRecording(id);
+        fetchRecordings();
+    };
 
     return {
         itemsPerPage,
@@ -134,6 +156,7 @@ export default defineComponent({
         uploadDialog,
         uploadDone,
         editRecording,
+        delRecording,
         editingRecording,
      };
   },
@@ -168,14 +191,33 @@ export default defineComponent({
           <v-icon @click="editRecording(item.raw)">
             mdi-pencil
           </v-icon>
+          <v-icon
+            color="error"
+            @click="delRecording(item.raw.id)"
+          >
+            mdi-delete
+          </v-icon>
         </template>
 
         <template #item.name="{ item }">
           <router-link
+            v-if="item.raw.hasSpectrogram"
             :to="`/recording/${item.raw.id.toString()}/spectrogram`"
           >
             {{ item.raw.name }}
           </router-link>
+          <div v-else>
+            {{ item.raw.name }} 
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <span v-bind="subProps">
+                  <v-icon color="warning">mdi-alert</v-icon>
+                  <v-icon>mdi-sync mdi-spin</v-icon>
+                </span>
+              </template>
+              <span>Waiting for spectrogram to be computed</span>
+            </v-tooltip>
+          </div>
         </template>
         <template #item.recording_location="{ item }">
           <v-menu
