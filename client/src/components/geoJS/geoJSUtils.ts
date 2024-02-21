@@ -186,7 +186,8 @@ function spectroTemporalToGeoJSon(
   annotation: SpectrogramTemporalAnnotation,
   spectroInfo: SpectroInfo,
   ymin = 0,
-  ymax = 10
+  ymax = 10,
+  yScale = 1,
 ): GeoJSON.Polygon {
   //scale pixels to time and frequency ranges
   if (spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
@@ -198,11 +199,11 @@ function spectroTemporalToGeoJSon(
       type: "Polygon",
       coordinates: [
         [
-          [start_time, ymin],
-          [start_time, ymax],
-          [end_time, ymax],
-          [end_time, ymin],
-          [start_time, ymin],
+          [start_time, ymin * yScale],
+          [start_time, ymax * yScale],
+          [end_time, ymax * yScale],
+          [end_time, ymin * yScale],
+          [start_time, ymin * yScale],
         ],
       ],
     };
@@ -239,11 +240,11 @@ function spectroTemporalToGeoJSon(
       type: "Polygon",
       coordinates: [
         [
-          [start_time, ymin],
-          [start_time, ymax],
-          [end_time, ymax],
-          [end_time, ymin],
-          [start_time, ymin],
+          [start_time, ymin * yScale],
+          [start_time, ymax * yScale],
+          [end_time, ymax * yScale],
+          [end_time, ymin * yScale],
+          [start_time, ymin * yScale],
         ],
       ],
     };
@@ -264,7 +265,8 @@ function spectroTemporalToGeoJSon(
 
 function spectroToGeoJSon(
   annotation: SpectrogramAnnotation,
-  spectroInfo: SpectroInfo
+  spectroInfo: SpectroInfo,
+  yScale = 1
 ): GeoJSON.Polygon {
   //scale pixels to time and frequency ranges
   if (spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
@@ -281,11 +283,11 @@ function spectroToGeoJSon(
       type: "Polygon",
       coordinates: [
         [
-          [start_time, low_freq],
-          [start_time, high_freq],
-          [end_time, high_freq],
-          [end_time, low_freq],
-          [start_time, low_freq],
+          [start_time, low_freq * yScale],
+          [start_time, high_freq * yScale],
+          [end_time, high_freq * yScale],
+          [end_time, low_freq * yScale],
+          [start_time, low_freq * yScale],
         ],
       ],
     };
@@ -327,11 +329,11 @@ function spectroToGeoJSon(
       type: "Polygon",
       coordinates: [
         [
-          [start_time, low_freq],
-          [start_time, high_freq],
-          [end_time, high_freq],
-          [end_time, low_freq],
-          [start_time, low_freq],
+          [start_time, low_freq * yScale],
+          [start_time, high_freq * yScale],
+          [end_time, high_freq * yScale],
+          [end_time, low_freq * yScale],
+          [start_time, low_freq * yScale],
         ],
       ],
     };

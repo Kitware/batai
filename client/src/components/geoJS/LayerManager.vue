@@ -28,6 +28,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    yScale: {
+      type: Number,
+      default: 1,
+    }
   },
   emits: ["selected", "update:annotation", "create:annotation", "set-cursor"],
   setup(props, { emit }) {
@@ -298,7 +302,8 @@ export default defineComponent({
           annotations,
           selectedType.value === 'pulse' ? selectedAnnotationId.value : null,
           currentUser.value,
-          colorScale.value
+          colorScale.value,
+          props.yScale,
         );
         rectAnnotationLayer.redraw();
       }
@@ -307,7 +312,8 @@ export default defineComponent({
           temporalAnnotations,
           selectedType.value === 'sequence' ? selectedAnnotationId.value : null,
           currentUser.value,
-          colorScale.value
+          colorScale.value,
+          props.yScale,
         );
         temporalAnnotationLayer.redraw();
       }
@@ -387,10 +393,10 @@ export default defineComponent({
       if (props.spectroInfo) {
         editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
         rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
-        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
+        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
         rectAnnotationLayer.redraw();
         temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
-        temporalAnnotationLayer.formatData(localTemporalAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
+        temporalAnnotationLayer.formatData(localTemporalAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
         temporalAnnotationLayer.redraw();
         if (!props.thumbnail) {
           legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
