@@ -26,6 +26,7 @@ export interface Recording {
     public: boolean;
     userMadeAnnotations: boolean;
     userAnnotations: number;
+    hasSpectrogram: boolean;
 }
 
 export interface AcousticFiles {
@@ -181,10 +182,20 @@ async function uploadRecordingFile(file: File, name: string, recorded_date: stri
         }
     );
 }
+
+interface DeletionResponse {
+    message?: string;
+    error?: string;
+}
   
 async function getRecordings(getPublic=false) {
-    return axiosInstance.get<Recording[]>(`/recording?public=${getPublic}`);
+    return axiosInstance.get<Recording[]>(`/recording/?public=${getPublic}`);
 }
+
+async function deleteRecording(id: number) {
+    return axiosInstance.delete<DeletionResponse>(`/recording/${id}`);
+}
+
 
 async function getSpectrogram(id: string) {
     return axiosInstance.get<Spectrogram>(`/recording/${id}/spectrogram`);
@@ -224,11 +235,11 @@ async function putTemporalAnnotation(recordingId: string, annotation: UpdateSpec
 }
 
 async function deleteAnnotation(recordingId: string, annotationId: number) {
-    return axiosInstance.delete(`/recording/${recordingId}/annotations/${annotationId}`);
+    return axiosInstance.delete<DeletionResponse>(`/recording/${recordingId}/annotations/${annotationId}`);
 }
 
 async function deleteTemporalAnnotation(recordingId: string, annotationId: number) {
-    return axiosInstance.delete(`/recording/${recordingId}/temporal-annotations/${annotationId}`);
+    return axiosInstance.delete<DeletionResponse>(`/recording/${recordingId}/temporal-annotations/${annotationId}`);
 }
 
 async function getOtherUserAnnotations(recordingId: string) {
@@ -239,6 +250,7 @@ export {
  uploadRecordingFile,
  getRecordings,
  patchRecording,
+ deleteRecording,
  getSpectrogram,
  getSpectrogramCompressed,
  getTemporalAnnotations,

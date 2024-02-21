@@ -67,8 +67,8 @@ that area in the main view.
 On the right side of the screen is a list of the Sequence and Pulse annotations.
 These are tabbed views that can be switched between by clicking on the Tab Name.
 Annotations can be selected by clicking on them.
-When an annotation is selected it can be edited including the species
-comments and other information.
+When an annotation is selected it can be edited including the
+species comments and other information.
 
 **Sequence** - A Sequence annotation is typically used to group multiple pulses together
 This can be drawn by clicking on the 'Add+' button and drawing a box around the pulses.
