@@ -76,6 +76,7 @@ After run `sudo systemctl enable batai.service`
 Then to start you can use `sudo systemctl start batai.service`
 Stopping: `sudo systemctl stop batai.service`
 
-# User Management
+### User Management
 
-There is no email server connected up so users need to be individually approved and their email verified by an admin
+There is no email server connected up so users need to be
+individually approved and their email verified by an admin
