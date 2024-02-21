@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from composed_configuration import (
@@ -10,7 +11,7 @@ from composed_configuration import (
     ProductionBaseConfiguration,
     TestingBaseConfiguration,
 )
-from composed_configuration._configuration import _BaseConfiguration, HttpsMixin
+from composed_configuration._configuration import _BaseConfiguration
 from configurations import values
 
 
@@ -78,7 +79,8 @@ class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
 
 
 class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
-    SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
+    SECRET_KEY = values.SecretValue()
+    baseHost = os.environ['SERVERHOSTNAME']
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
     MINIO_STORAGE_ENDPOINT = values.Value(
@@ -95,8 +97,9 @@ class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
     MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
-    ALLOWED_HOSTS = ['batdetectai.kitware.com']
-    CSRF_TRUSTED_ORIGINS = ["https://batdetectai.kitware.com", "https://www.batdetectai.kitware.com"]
+    ALLOWED_HOSTS = [baseHost]
+    CSRF_TRUSTED_ORIGINS = [f'https://{baseHost}', f'https://{baseHost}']
+    CORS_ORIGIN_WHITELIST = [f'https://{baseHost}', f'https://{baseHost}']
 
 
 class ProductionConfiguration(BatsAiMixin, ProductionBaseConfiguration):

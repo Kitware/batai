@@ -2,16 +2,22 @@
 
 ## Deployment with Docker (recommended quickstart)
 
-This was a bit rushed so the deployment utilizes a single docker file `docker-compose.prod.yml` in the root of the directory
+This was a bit rushed so the deployment utilizes a single
+docker file `docker-compose.prod.yml` in the root of the directory
 
 I wanted some simple instructions below to configure the deployment
 
-Be sure to use the proper hostname (batdetectai.kitware.com) in all locations that require it.
+Be sure to use the proper hostname (batdetectai.kitware.com) in
+all locations that require it.
 
 ## Docker Compose Differences
 
-I created a `client` service which has it's own Dockerfile and builds the vue client app.  The `client` service also uses a reverse proxy to route `/api`, `/admin` fields to the django server.
-The client will need to be built with a different Client ID for accessing the server.
+I created a `client` service which has it's own Dockerfile and
+builds the vue client app.
+The `client` service also uses a reverse proxy to route
+`/api`, `/admin` fields to the django server.
+The client will need to be built with a different Client ID
+for accessing the server.
 
 ### Initial Setup for Deployment
 
@@ -21,7 +27,7 @@ The client will need to be built with a different Client ID for accessing the se
 3. Run  `docker compose run --rm django ./manage.py makeclient \
                             --username your.super.user@email.address \
                             --uri https://batdetectai.kitware.com/`
-4. Run `docker compose run --rm django ./manage.py collectstatic` to collect the static files
+4. Run `docker compose run --rm django ./manage.py collectstatic`to collect the static files
 5. Run `docker compose -f docker-compose.prod.yml up` to start the server add `-d` for a silent version to run in the background
 6. Copy over the ./dev/.env.prod.docker-compose.template to `./dev/.env.prod.docker-compose.template` and change the default passwords
 7. Change the ID in the `./client/env.production` to a custom ID

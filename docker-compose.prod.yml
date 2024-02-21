@@ -6,6 +6,7 @@ services:
     restart: always
     image: traefik:v2.4
     container_name: traefik
+    env_file: ./dev/.env.prod.docker-compose
     networks:
       - django-nginx
     command: >
@@ -26,7 +27,7 @@ services:
       # Traefik HTTPS Redirect
       - "traefik.enable=true"
       - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.rule=Host(`batdetectai.kitware.com`)"
+      - "traefik.http.routers.http-catchall.rule=Host(`${SERVERHOSTNAME}``)"
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https-mddl@docker"
       - "traefik.http.middlewares.redirect-to-https-mddl.redirectscheme.scheme=https"
     volumes:
@@ -84,13 +85,14 @@ services:
     build:
       context: .
       dockerfile: ./dev/client.Dockerfile
+    env_file: ./dev/.env.prod.docker-compose
     networks:
       - django-nginx
     depends_on:
       - django
     labels:
       - "traefik.http.routers.client-rtr.entrypoints=websecure"
-      - "traefik.http.routers.client-rtr.rule=Host(`batdetectai.kitware.com`)"
+      - "traefik.http.routers.client-rtr.rule=Host(`${SERVERHOSTNAME}`)"
       - "traefik.enable=true"
       - "traefik.http.services.client-svc.loadbalancer.server.port=80"
   postgres:
