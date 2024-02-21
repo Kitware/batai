@@ -1,9 +1,26 @@
 <script lang="ts">
-import { defineComponent } from 'vue';
-
+import { defineComponent, onMounted, ref } from 'vue';
+import VueMarkdown from 'vue-markdown-render';
+import axios from 'axios';
 export default defineComponent({
+  components: {
+    VueMarkdown,
+  },
   setup() {
-    return { };
+    const source = ref('');
+    const     fetchMarkdownContent = () => {
+      const url = 'https://raw.githubusercontent.com/Kitware/batai/main/INSTRUCTIONS.md'; // Replace with your GitHub URL
+      axios.get(url)
+        .then(response => {
+          source.value = response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching markdown content:', error);
+        });
+    };
+    onMounted(() => fetchMarkdownContent());
+
+    return { source };
   },
 });
 </script>
@@ -13,8 +30,8 @@ export default defineComponent({
     <v-card-title>
       Bat-AI
     </v-card-title>
-    <v-card-text>
-      For right now please select "Files" to open a specific file in the spectrogram viewer or go to "Species" to view a list of species in the system.
+    <v-card-text class="ma-5">
+      <vue-markdown :source="source" />
     </v-card-text>
   </v-card>
 </template>

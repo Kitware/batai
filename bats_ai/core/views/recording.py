@@ -10,7 +10,7 @@ from ninja import File, Form, Schema
 from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import Annotations, Recording, Species, TemporalAnnotations
+from bats_ai.core.models import Annotations, Recording, Species, Spectrogram, TemporalAnnotations
 from bats_ai.core.views.species import SpeciesSchema
 from bats_ai.core.views.temporal_annotations import (
     TemporalAnnotationSchema,
@@ -103,6 +103,10 @@ def create_recording(
         comments=payload.comments,
     )
     recording.save()
+    # Start generating recording as soon as created
+    # this creates the spectrogram during the upload so it is available immediately afterwards
+    # it will make the upload process longer but I think it's worth it.
+    Spectrogram.generate(recording)
     return {'message': 'Recording updated successfully', 'id': recording.pk}
 
 
