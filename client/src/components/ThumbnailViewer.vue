@@ -47,6 +47,8 @@ export default defineComponent({
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized  = ref(false);
+    const clientHeight = ref(0);
+    const yScale = ref(1);
     const polyLayerCreated= ref(false);
     let downState: {
       state: any,
@@ -110,12 +112,13 @@ export default defineComponent({
             props.parentGeoViewerRef.value.zoom(props.parentGeoViewerRef.value.zoom() - 1);
         }
         const size = parent.size();
+        const { top } = parent.bounds();
         outlineFeature.style(outlineStyle);
         outlineFeature.data([[
-            parent.displayToGcs({x: 0, y: 0}),
-            parent.displayToGcs({x: size.width, y: 0}),
-            parent.displayToGcs({x: size.width, y: size.height}),
-            parent.displayToGcs({x: 0, y: size.height})
+            parent.displayToGcs({x: 0, y: top * yScale.value}),
+            parent.displayToGcs({x: size.width, y: top * yScale.value}),
+            parent.displayToGcs({x: size.width, y: (size.height * yScale.value) + (top * yScale.value)}),
+            parent.displayToGcs({x: 0, y: (size.height * yScale.value) + (top * yScale.value)})
         ]]).draw();
         };
         onParentPan();
@@ -126,10 +129,19 @@ export default defineComponent({
     watch(containerRef, () => {
       const { naturalWidth, naturalHeight } = props.image;
       if (containerRef.value) {
+        clientHeight.value = containerRef.value.clientHeight;
+      }
+      if (containerRef.value) {
       geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true);
-      geoJS.drawImage(props.image, naturalWidth, naturalHeight);
+      const coords = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:0});
+        const end = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:naturalHeight});
+        const diff = coords.y - end.y;
+        // How much space to we have to multiply the size of the image
+        yScale.value = (clientHeight.value *0.5) / diff;
+      geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
       initialized.value = true;
         nextTick(() => createPolyLayer());
+
       }
     });
 
@@ -138,6 +150,7 @@ export default defineComponent({
       containerRef,
       geoViewerRef: geoJS.getGeoViewer(),
       initialized,
+      yScale,
     };
   },
 });
@@ -157,6 +170,7 @@ export default defineComponent({
       :annotations="annotations"
       :other-user-annotations="otherUserAnnotations"
       :selected-id="selectedId"
+      :y-scale="yScale"
       thumbnail
       @selected="$emit('selected',$event)"
     />

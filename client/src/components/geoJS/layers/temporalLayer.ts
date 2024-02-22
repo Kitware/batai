@@ -113,11 +113,12 @@ export default class TemporalLayer {
     annotationData: SpectrogramTemporalAnnotation[],
     selectedIndex: number | null,
     currentUser: string,
-    colorScale?: d3.ScaleOrdinal<string, string, never>
+    colorScale?: d3.ScaleOrdinal<string, string, never>,
+    yScale = 1,
   ) {
     const arr: RectGeoJSData[] = [];
     annotationData.forEach((annotation: SpectrogramTemporalAnnotation) => {
-      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50);
+      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50,yScale);
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
