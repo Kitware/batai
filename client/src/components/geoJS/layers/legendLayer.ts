@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { SpectroInfo } from "../geoJSUtils";
 import { LayerStyle } from "./types";
-import geo, { GeoEvent } from "geojs";
+import geo from "geojs";
 
 interface LineData {
   line: GeoJSON.LineString;
@@ -87,23 +87,11 @@ export default class LegendLayer {
   }
 
   onPan() {
-    console.log(this.geoViewerRef.camera());
     const bounds = this.geoViewerRef.camera().bounds;
-    const viewport = this.geoViewerRef.camera().viewport;
-    const dimensions = this.textLayer.featureGcsToDisplay({
-      x: this.spectroInfo.width,
-      y: this.spectroInfo.height,
-    });
-    console.log(bounds);
-    console.log(viewport);
-    console.log(dimensions);
-    console.log(this.spectroInfo.height);
     const { left, bottom, top } = bounds;
-    const height = viewport.height;
-    console.log(`left: ${left}`);
-    const bottomOffset = -bottom < this.spectroInfo.height ? -bottom : 0;
-    const topOffset = top < 0 ? top : 0;
-    const leftOffset = left > 0 ? left : 0;
+    const bottomOffset = -bottom < this.spectroInfo.height + 20 ? -bottom : 0;
+    const topOffset = top < 20 ? top : 0;
+    const leftOffset = left > -20 ? left : 0;
     this.lineDataY = [];
     this.lineDataX = [];
     this.textDataX = [];
@@ -150,6 +138,7 @@ export default class LegendLayer {
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
     const baseYPos = yOffset === 0 ? this.spectroInfo.height : yOffset;
     const baseTopPos = topOffset === 0 ? 0 : -topOffset;
+    const topBuffer = topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -0.5;
 
     // For compressed we need to draw based on the start/endTimes instead of the standard
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
@@ -183,7 +172,7 @@ export default class LegendLayer {
               ],
               [
                 (end_time - start_time) * timeToPixels + pixelOffset,
-                baseYPos + length,
+                baseYPos + topBuffer,
               ],
             ],
           },
@@ -194,7 +183,7 @@ export default class LegendLayer {
             type: "LineString",
             coordinates: [
               [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos],
-              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos === 0 ? -length : length],
+              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos - topBuffer],
             ],
           },
           thicker: true,
@@ -224,7 +213,7 @@ export default class LegendLayer {
         this.textDataX.push({
           text: `${end_time}ms`,
           x: (end_time - start_time) * timeToPixels + pixelOffset,
-          y: baseTopPos === 0 ? -length : length,
+          y: baseTopPos,
           offsetX: 3,
           offsetY: baseTopPos === 0 ? -16 : 16,
         });
