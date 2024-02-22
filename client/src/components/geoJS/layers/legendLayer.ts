@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { SpectroInfo } from "../geoJSUtils";
 import { LayerStyle } from "./types";
+import geo from "geojs";
 
 interface LineData {
   line: GeoJSON.LineString;
@@ -17,12 +18,17 @@ interface TextData {
 }
 
 export default class LegendLayer {
-  lineData: LineData[];
+  lineDataX: LineData[];
+  lineDataY: LineData[];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lineLayer: any;
 
-  textData: TextData[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gridLayer: any;
+
+  textDataX: TextData[];
+  textDataY: TextData[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   textLayer: any;
 
@@ -52,9 +58,11 @@ export default class LegendLayer {
     spectroInfo: SpectroInfo
   ) {
     this.geoViewerRef = geoViewerRef;
-    this.lineData = [];
+    this.lineDataX = [];
+    this.lineDataY = [];
     this.spectroInfo = spectroInfo;
-    this.textData = [];
+    this.textDataX = [];
+    this.textDataY = [];
     this.axisBuffer = 5;
     this.event = event;
     this.gridEnabled = false;
@@ -68,47 +76,184 @@ export default class LegendLayer {
       .position((data: TextData) => ({ x: data.x, y: data.y }));
 
     this.lineLayer = layer.createFeature("line");
+    this.gridLayer = layer.createFeature("line");
 
     this.textStyle = this.createTextStyle();
     this.lineStyle = this.createLineStyle();
     this.gridLines = [];
     this.createLabels();
-
+    this.calcGridLines();
+    this.geoViewerRef.geoOn(geo.event.pan, () => this.onPan());
   }
 
-  drawXAxisLabels() {
+  onPan() {
+    const bounds = this.geoViewerRef.camera().bounds;
+    const { left, bottom, top } = bounds;
+    const bottomOffset = -bottom < this.spectroInfo.height + 20 ? -bottom : 0;
+    const topOffset = top < 20 ? top : 0;
+    const leftOffset = left > -20 ? left : 0;
+    this.lineDataY = [];
+    this.lineDataX = [];
+    this.textDataX = [];
+    this.textDataY = [];
+    this.drawYAxis(leftOffset);
+    this.drawXAxis(bottomOffset, topOffset);
+    this.redraw();
+  }
+
+  drawXAxisLabels(yOffset = 0) {
+    const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
+    const baseYPos = yOffset === 0 ? this.spectroInfo.height : yOffset;
+
     // Now we need tick marks for ms along the X-axis
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
     const timeToPixels = this.spectroInfo.width / time;
 
     // every 100 ms a small tick and every 1000 a big tick
     for (let i = 0; i < time; i += 10) {
-      const length = i % 1000 === 0 ? this.axisBuffer * 8 : this.axisBuffer * 4;
+      const length = i % 1000 === 0 ? yBuffer * 8 : yBuffer * 4;
       if (i % 50 === 0) {
-        this.lineData.push({
+        this.lineDataX.push({
           line: {
             type: "LineString",
             coordinates: [
-              [i * timeToPixels, this.spectroInfo.height + this.axisBuffer],
-              [i * timeToPixels, this.spectroInfo.height + length],
+              [i * timeToPixels, baseYPos + yBuffer],
+              [i * timeToPixels, baseYPos + length],
             ],
           },
           thicker: i % 1000 === 0,
         });
-        this.textData.push({
+        this.textDataX.push({
           text: `${i}ms`,
           x: i * timeToPixels,
-          y: this.spectroInfo.height + length,
+          y: baseYPos + length,
           offsetX: 3,
-          offsetY: 8,
+          offsetY: yOffset === 0 ? 8 : -8,
         });
       }
+    }
+  }
+
+  drawXAxisLabelsCompressed(yOffset = 0, topOffset = 0) {
+    const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
+    const baseYPos = yOffset === 0 ? this.spectroInfo.height : yOffset;
+    const baseTopPos = topOffset === 0 ? 0 : -topOffset;
+    const topBuffer = topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -0.5;
+
+    // For compressed we need to draw based on the start/endTimes instead of the standard
+    const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
+    const timeToPixels = this.spectroInfo.width / time;
+
+    const { start_times, end_times } = this.spectroInfo;
+    if (start_times && end_times) {
+      // We need a pixel time to map to the 0 position
+      let pixelOffset = 0;
+      for (let i = 0; i < start_times.length; i += 1) {
+        const length = yBuffer * 4;
+        const start_time = start_times[i];
+        const end_time = end_times[i];
+        this.lineDataX.push({
+          line: {
+            type: "LineString",
+            coordinates: [
+              [0 + pixelOffset, baseYPos + yBuffer],
+              [0 * timeToPixels + pixelOffset, baseYPos + length],
+            ],
+          },
+          thicker: true,
+        });
+        this.lineDataX.push({
+          line: {
+            type: "LineString",
+            coordinates: [
+              [
+                (end_time - start_time) * timeToPixels + pixelOffset,
+                baseYPos + yBuffer,
+              ],
+              [
+                (end_time - start_time) * timeToPixels + pixelOffset,
+                baseYPos + topBuffer,
+              ],
+            ],
+          },
+          thicker: true,
+        });
+        this.lineDataX.push({
+          line: {
+            type: "LineString",
+            coordinates: [
+              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos],
+              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos - topBuffer],
+            ],
+          },
+          thicker: true,
+        });
+        this.lineDataX.push({
+          line: {
+            type: "LineString",
+            coordinates: [
+              [
+                (end_time - start_time) * timeToPixels + pixelOffset,
+                baseYPos + yBuffer,
+              ],
+              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos],
+            ],
+          },
+          grid: true,
+        });
+
+        //Need to decide what text to add to the label
+        this.textDataX.push({
+          text: `${start_time}ms`,
+          x: 0 + pixelOffset,
+          y: baseYPos + length,
+          offsetX: 3,
+          offsetY: yOffset === 0 ? 16 : -16,
+        });
+        this.textDataX.push({
+          text: `${end_time}ms`,
+          x: (end_time - start_time) * timeToPixels + pixelOffset,
+          y: baseTopPos,
+          offsetX: 3,
+          offsetY: baseTopPos === 0 ? -16 : 16,
+        });
+        pixelOffset += (end_time - start_time) * timeToPixels;
+        // Need to add the current
+      }
+    }
+  }
+
+  calcGridLines() {
+    // Y-Axis grid lines:
+    const xBuffer = this.axisBuffer;
+    const hz = this.spectroInfo.high_freq - this.spectroInfo.low_freq;
+    const hzToPixels = this.spectroInfo.height / hz;
+    for (let i = 0; i < hz; i += 10000) {
+      this.gridLines.push({
+        line: {
+          type: "LineString",
+          coordinates: [
+            [0 - xBuffer - length, this.spectroInfo.height - i * hzToPixels],
+            [this.spectroInfo.width, this.spectroInfo.height - i * hzToPixels],
+          ],
+        },
+        grid: true,
+      });
+    }
+    const baseYPos = this.spectroInfo.height;
+
+    // Now we need tick marks for ms along the X-axis
+    const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
+    const timeToPixels = this.spectroInfo.width / time;
+
+    // every 100 ms a small tick and every 1000 a big tick
+    for (let i = 0; i < time; i += 10) {
       this.gridLines.push({
         line: {
           type: "LineString",
           coordinates: [
             [i * timeToPixels, 0],
-            [i * timeToPixels, this.spectroInfo.height + length],
+            [i * timeToPixels, baseYPos + length],
           ],
         },
         grid: true,
@@ -116,84 +261,43 @@ export default class LegendLayer {
     }
   }
 
-  drawXAxisLabelsCompressed() {
-    // For compressed we need to draw based on the start/endTimes instead of the standard
-    const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
-    const timeToPixels = this.spectroInfo.width / time;
+  drawYAxis(offset = 0) {
+    const xBuffer = offset === 0 ? this.axisBuffer : this.axisBuffer * -0.25;
+    const yAxis: GeoJSON.LineString = {
+      type: "LineString",
+      coordinates: [
+        [offset - xBuffer, 0],
+        [offset - xBuffer, this.spectroInfo.height + xBuffer],
+      ],
+    };
+    this.lineDataY.push({ line: yAxis });
 
-    const { start_times, end_times } = this.spectroInfo;
-    if (start_times && end_times) {
-        // We need a pixel time to map to the 0 position
-        let pixelOffset = 0;
-        for (let i =0; i< start_times.length; i+= 1) {
-            const length = this.axisBuffer * 4;
-            const start_time = start_times[i];
-            const end_time = end_times[i];
-            this.lineData.push({
-                line: {
-                  type: "LineString",
-                  coordinates: [
-                    [(0 + pixelOffset), this.spectroInfo.height + this.axisBuffer],
-                    [(0 * timeToPixels) + pixelOffset, this.spectroInfo.height + length],
-                  ],
-                },
-                thicker:true,
-              });
-              this.lineData.push({
-                line: {
-                  type: "LineString",
-                  coordinates: [
-                    [((end_time - start_time) * timeToPixels) + pixelOffset, this.spectroInfo.height + this.axisBuffer],
-                    [((end_time - start_time) * timeToPixels) + pixelOffset, this.spectroInfo.height + length],
-                  ],
-                },
-                thicker:true,
-              });
-              this.lineData.push({
-                line: {
-                  type: "LineString",
-                  coordinates: [
-                    [((end_time - start_time) * timeToPixels) + pixelOffset, 0],
-                    [((end_time - start_time) * timeToPixels) + pixelOffset, -length],
-                  ],
-                },
-                thicker:true,
-              });
-              this.lineData.push({
-                line: {
-                  type: "LineString",
-                  coordinates: [
-                    [((end_time - start_time) * timeToPixels) + pixelOffset, this.spectroInfo.height + this.axisBuffer],
-                    [((end_time - start_time) * timeToPixels) + pixelOffset, 0],
-                  ],
-                },
-                grid:true,
-              });
-
-            //Need to decide what text to add to the label
-              this.textData.push({
-                text: `${start_time}ms`,
-                x: (0 + pixelOffset),
-                y: this.spectroInfo.height + length,
-                offsetX: 3,
-                offsetY: 16,
-              });
-              this.textData.push({
-                text: `${end_time}ms`,
-                x: ((end_time - start_time ) * timeToPixels) + pixelOffset,
-                y: -length,
-                offsetX: 3,
-                offsetY: -16,
-              });
-              pixelOffset += (end_time - start_time) * timeToPixels;
-            // Need to add the current 
-        }
+    // Lets do the vertical Hz axis now
+    const hz = this.spectroInfo.high_freq - this.spectroInfo.low_freq;
+    const hzToPixels = this.spectroInfo.height / hz;
+    for (let i = 0; i < hz; i += 10000) {
+      const length = i % 10000 === 0 ? xBuffer * 8 : xBuffer * 4;
+      this.lineDataY.push({
+        line: {
+          type: "LineString",
+          coordinates: [
+            [offset - xBuffer, this.spectroInfo.height - i * hzToPixels],
+            [offset - xBuffer - length, this.spectroInfo.height - i * hzToPixels],
+          ],
+        },
+        thicker: i % 10000 === 0,
+      });
+      this.textDataY.push({
+        text: `${(i + this.spectroInfo.low_freq) / 1000}KHz`,
+        x: offset - xBuffer - length,
+        y: this.spectroInfo.height - i * hzToPixels,
+        offsetX: offset === 0 ? -25 : 25,
+        offsetY: 0,
+      });
     }
-
   }
 
-  createLabels() {
-    // Take spectro Info and create lines for X/Y axis
+  drawXAxis(bottomOffset = 0, topOffset = 0) {
     const xAxis: GeoJSON.LineString = {
       type: "LineString",
       coordinates: [
@@ -201,65 +305,50 @@ export default class LegendLayer {
         [this.spectroInfo.width, this.spectroInfo.height + this.axisBuffer],
       ],
     };
-    const yAxis: GeoJSON.LineString = {
+
+    this.lineDataX.push({ line: xAxis });
+    this.drawYAxis();
+
+    if (this.spectroInfo.start_times && this.spectroInfo.end_times) {
+      this.drawXAxisLabelsCompressed(bottomOffset, topOffset);
+    } else {
+      this.drawXAxisLabels(bottomOffset);
+    }
+  }
+  createLabels() {
+    // Take spectro Info and create lines for X/Y axis
+    this.textDataX = [];
+    this.lineDataX = [];
+    this.textDataY = [];
+    this.lineDataY = [];
+    const xAxis: GeoJSON.LineString = {
       type: "LineString",
       coordinates: [
-        [0 - this.axisBuffer, 0],
         [0 - this.axisBuffer, this.spectroInfo.height + this.axisBuffer],
+        [this.spectroInfo.width, this.spectroInfo.height + this.axisBuffer],
       ],
     };
-    this.lineData.push({ line: xAxis });
-    this.lineData.push({ line: yAxis });
 
-    // Lets do the vertical Hz axis now
-    const hz = this.spectroInfo.high_freq - this.spectroInfo.low_freq;
-    const hzToPixels = this.spectroInfo.height / hz;
-    for (let i = 0; i < hz; i += 10000) {
-      const length = i % 10000 === 0 ? this.axisBuffer * 8 : this.axisBuffer * 4;
-      this.lineData.push({
-        line: {
-          type: "LineString",
-          coordinates: [
-            [0 - this.axisBuffer, this.spectroInfo.height - i * hzToPixels],
-            [0 - this.axisBuffer - length, this.spectroInfo.height - i * hzToPixels],
-          ],
-        },
-        thicker: i % 10000 === 0,
-      });
-      this.textData.push({
-        text: `${(i + this.spectroInfo.low_freq) / 1000}KHz`,
-        x: 0 - this.axisBuffer - length,
-        y: this.spectroInfo.height - i * hzToPixels,
-        offsetX: -25,
-        offsetY: 0,
-      });
-      this.gridLines.push({
-        line: {
-          type: "LineString",
-          coordinates: [
-            [0 - this.axisBuffer - length, this.spectroInfo.height - i * hzToPixels],
-            [this.spectroInfo.width, this.spectroInfo.height - i * hzToPixels],
-          ],
-        },
-        grid: true,
-      });
-    }
+    this.lineDataX.push({ line: xAxis });
+    this.drawYAxis();
+
     if (this.spectroInfo.start_times && this.spectroInfo.end_times) {
-        this.drawXAxisLabelsCompressed();
+      this.drawXAxisLabelsCompressed();
     } else {
-        this.drawXAxisLabels();
+      this.drawXAxisLabels();
     }
   }
 
   redraw() {
     // add some styles
-    const lineData = this.gridEnabled ? this.lineData.concat(this.gridLines) : this.lineData;
+    const combinedLineData = this.lineDataX.concat(this.lineDataY);
     this.lineLayer
-      .data(lineData)
+      .data(combinedLineData)
       .line((d: LineData) => d.line.coordinates)
       .style(this.createLineStyle())
       .draw();
-    this.textLayer.data(this.textData).style(this.createTextStyle()).draw();
+    const combinedTextData = this.textDataX.concat(this.textDataY);
+    this.textLayer.data(combinedTextData).style(this.createTextStyle()).draw();
   }
 
   disable() {
@@ -269,7 +358,15 @@ export default class LegendLayer {
 
   setGridEnabled(val: boolean) {
     this.gridEnabled = val;
-    this.redraw();
+    if (this.gridEnabled) {
+      this.gridLayer
+        .data(this.gridLines)
+        .line((d: LineData) => d.line.coordinates)
+        .style(this.createLineStyle())
+        .draw();
+    } else {
+      this.gridLayer.data([]).draw();
+    }
   }
 
   createLineStyle(): LayerStyle<LineData> {
