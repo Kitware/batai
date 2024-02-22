@@ -3,10 +3,12 @@ import { defineComponent, PropType } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import useState from "../use/useState";
 import { watch, ref } from "vue";
+import RecordingList from "./RecordingList.vue";
 
 export default defineComponent({
   name: "AnnotationList",
   components: {
+    RecordingList,
   },
   props: {
     spectroInfo: {
@@ -36,9 +38,13 @@ export default defineComponent({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tabSwitch = (event: any) => {
     // On tab switches we want to deselect the curret anntation
-    tab.value = event as 'sequence' | 'pulse';
-    selectedType.value = event as 'sequence' | 'pulse';
-    selectedId.value = null;
+    if (['sequence', 'pulse'].includes(event)) {
+      tab.value = event as 'sequence' | 'pulse';
+      selectedType.value = event as 'sequence' | 'pulse';
+      selectedId.value = null;
+    } else {
+      tab.value = 'recordings';
+    }
   };
 
     return {
@@ -60,20 +66,38 @@ export default defineComponent({
 <template>
   <v-card class="pa-0 ma-0">
     <v-card-title>
-      <v-tabs
-        v-model="tab"
-        @update:model-value="tabSwitch($event)"
-      >
-        <v-tab value="pulse">
-          Pulse
-        </v-tab>
-        <v-tab value="sequence">
-          Sequence
-        </v-tab>
-      </v-tabs>
+      <v-row dense>
+        <v-tabs
+          v-model="tab"
+          class="ma-auto"
+          @update:model-value="tabSwitch($event)"
+        >
+          <v-tab
+            value="recordings"
+            size="x-small"
+          >
+            Recordings
+          </v-tab>
+          <v-tab
+            value="pulse"
+            size="x-small"
+          >
+            Pulse
+          </v-tab>
+          <v-tab
+            value="sequence"
+            size="x-small"
+          >
+            Sequence
+          </v-tab>
+        </v-tabs>
+      </v-row>
     </v-card-title>
     <v-card-text class="">
       <v-window v-model="tab">
+        <v-window-item value="recordings">
+          <recording-list />
+        </v-window-item>
         <v-window-item value="pulse">
           <v-row class="pa-2">
             <v-col>
