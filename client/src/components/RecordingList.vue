@@ -1,161 +1,28 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, onMounted } from 'vue';
-import { deleteRecording, getRecordings, Recording } from '../api/api';
-import {
-  VDataTable,
-} from "vuetify/labs/VDataTable";
+import { getRecordings, Recording } from '../api/api';
 import  { EditingRecording } from './UploadRecording.vue';
-import MapLocation from './MapLocation.vue';
 
 export default defineComponent({
     components: {
-        VDataTable,
-        MapLocation,
     },
   setup() {
-    const itemsPerPage = ref(-1);
     const recordingList: Ref<Recording[]> = ref([]);
     const sharedList: Ref<Recording[]> = ref([]);
     const editingRecording: Ref<EditingRecording | null> = ref(null);
-    let intervalRef: number | null = null;
 
-    const uploadDialog = ref(false);
-    const headers = ref([
-        {
-            title:'Edit',
-            key:'edit',
-        },
-
-        {
-            title:'Name',
-            key:'name',
-        },
-        {
-            title:'Owner',
-            key:'owner_username',
-        },
-        {
-            title:'Recorded Date',
-            key:'recorded_date',
-        },
-        {
-            title:'Public',
-            key:'public',
-        },
-        {
-          title: 'Location',
-          key:'recording_location'
-        },
-        {
-            title:'Equipment',
-            key:'equipment',
-        },
-        {
-            title:'Comments',
-            key:'comments',
-        },
-        {
-            title:'Users Annotated',
-            key:'userAnnotations',
-        },
-    ]);
-
-    const sharedHeaders = ref([
-        {
-            title:'Name',
-            key:'name',
-        },
-        {
-            title:'Owner',
-            key:'owner_username',
-        },
-        {
-            title:'Recorded Date',
-            key:'recorded_date',
-        },
-        {
-            title:'Public',
-            key:'public',
-        },
-        {
-          title: 'Location',
-          key:'recording_location'
-        },
-        {
-            title:'Equipment',
-            key:'equipment',
-        },
-        {
-            title:'Comments',
-            key:'comments',
-        },
-        {
-            title:'Annotated by Me',
-            key:'userMadeAnnotations',
-        },
-    ]);
     const fetchRecordings = async () => {
         const recordings = await getRecordings();
         recordingList.value = recordings.data;
-        // If we have a spectrogram being generated we need to refresh on an interval
-        let missingSpectro = false;
-        for (let i =0; i< recordingList.value.length; i+=1) {
-          if (!recordingList.value[i].hasSpectrogram) {
-            missingSpectro = true;
-            break;
-          }
-        }
-        if (missingSpectro) {
-          if (intervalRef === null) {
-            intervalRef = setInterval(() => fetchRecordings(), 5000);
-          }
-        } else  {
-          if (intervalRef !== null) {
-            clearInterval(intervalRef);
-          }
-        }
         const shared = await getRecordings(true);
         sharedList.value = shared.data;
 
     };
     onMounted(() => fetchRecordings());
 
-    const uploadDone = () => {
-        uploadDialog.value = false;
-        editingRecording.value = null;
-        fetchRecordings();
-    };
-
-    const editRecording = (item: Recording) => {
-      editingRecording.value = {
-        name: item.name,
-        equipment: item.equipment || '', 
-        comments: item.comments || '',
-        date: item.recorded_date,
-        public: item.public,
-        id: item.id,
-      };
-      if (item.recording_location) {
-        const [ lon, lat ] = item.recording_location.coordinates;
-        editingRecording.value['location'] = {lat, lon};
-      }
-      uploadDialog.value = true;
-    };
-    const delRecording = async (id: number) => {
-        await deleteRecording(id);
-        fetchRecordings();
-    };
-
     return {
-        itemsPerPage,
-        headers,
-        sharedHeaders,
         recordingList,
         sharedList,
-        uploadDialog,
-        uploadDone,
-        editRecording,
-        delRecording,
         editingRecording,
      };
   },
