@@ -178,6 +178,7 @@ export interface SpectroInfo {
   end_time: number;
   start_times?: number[];
   end_times?: number[];
+  widths?: number[], //widths of segements
   low_freq: number;
   high_freq: number;
 }

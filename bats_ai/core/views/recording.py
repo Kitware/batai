@@ -268,7 +268,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
         return {'error': 'Recording not found'}
 
     spectrogram = recording.spectrogram
-    compressed, starts, ends = spectrogram.compressed
+    compressed, starts, ends, widths = spectrogram.compressed
 
     spectro_data = {
         'base64_spectrogram': compressed,
@@ -281,6 +281,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
             'end_times': ends,
             'low_freq': spectrogram.frequency_min,
             'high_freq': spectrogram.frequency_max,
+            'widths': widths,
         },
     }
 
