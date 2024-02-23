@@ -341,6 +341,7 @@ export default defineComponent({
         :recording-id="id"
         :other-user-annotations="otherUserAnnotations"
         :grid="gridEnabled"
+        class="spectro-main"
         @selected="setSelection($event)"
         @create:annotation="getAnnotationsList($event)"
         @update:annotation="getAnnotationsList()"
@@ -383,5 +384,8 @@ export default defineComponent({
 .annotation-list {
   max-height: 60vh;
   overflow-y: auto;
+}
+.spectro-main {
+  height: calc(100vh - 20vh - 64px - 72px);
 }
 </style>

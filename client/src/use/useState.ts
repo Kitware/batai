@@ -18,6 +18,7 @@ const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
 const sharedList: Ref<Recording[]> = ref([]);
 const recordingList: Ref<Recording[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
+const blackBackground = ref(true);
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -83,5 +84,6 @@ export default function useState() {
     sharedList,
     recordingList,
     nextShared,
+    blackBackground,
   };
 }
