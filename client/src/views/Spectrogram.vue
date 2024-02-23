@@ -122,6 +122,9 @@ export default defineComponent({
     watch(gridEnabled, () => {
       toggleLayerVisibility("grid");
     });
+    watch(() => props.id, () => {
+      loadData();
+    });
     onMounted(() => loadData());
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
@@ -353,7 +356,7 @@ export default defineComponent({
         @selected="setSelection($event)"
       />
     </v-col>
-    <v-col style="max-width: 300px">
+    <v-col style="max-width: 400px">
       <annotation-list
         :annotations="annotations"
         :temporal-annotations="temporalAnnotations"

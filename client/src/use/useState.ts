@@ -1,7 +1,7 @@
-import { ref, Ref } from "vue";
+import { ref, Ref, watch } from "vue";
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
-import { OtherUserAnnotations, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import { OtherUserAnnotations, Recording, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
 
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<'pulse' | 'sequence'> = ref("pulse");
@@ -15,6 +15,9 @@ const selectedType: Ref<'pulse' | 'sequence'> = ref('pulse');
 const annotations : Ref<SpectrogramAnnotation[]> = ref([]);
 const temporalAnnotations: Ref<SpectrogramTemporalAnnotation[]> = ref([]);
 const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
+const sharedList: Ref<Recording[]> = ref([]);
+const recordingList: Ref<Recording[]> = ref([]);
+const nextShared: Ref<Recording | false> = ref(false);
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -50,6 +53,15 @@ export default function useState() {
       selectedType.value = annotationType;
     }
   }
+  watch(sharedList, () => {
+    const filtered = sharedList.value.filter((item) => !item.userMadeAnnotations);
+    if (filtered.length > 0) {
+     nextShared.value = filtered[0];
+    } else {
+      nextShared.value = false;
+    }
+  });
+  
     return {
     annotationState,
     creationType,
@@ -68,5 +80,8 @@ export default function useState() {
     otherUserAnnotations,
     selectedId,
     selectedType,
+    sharedList,
+    recordingList,
+    nextShared,
   };
 }
