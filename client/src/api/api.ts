@@ -18,6 +18,7 @@ export interface Recording {
     owner_id: number;
     owner_username: string;
     recorded_date: string;
+    recorded_time: string;
     equipment?: string,
     comments?: string;
     recording_location?: null | GeoJSON.Point,
@@ -125,11 +126,12 @@ export const axiosInstance = axios.create({
 });
 
 
-async function uploadRecordingFile(file: File, name: string, recorded_date: string, equipment: string, comments: string, publicVal = false, location: UploadLocation = null ) {
+async function uploadRecordingFile(file: File, name: string, recorded_date: string, recorded_time: string, equipment: string, comments: string, publicVal = false, location: UploadLocation = null ) {
     const formData = new FormData();
     formData.append('audio_file', file);
     formData.append('name', name);
     formData.append('recorded_date', recorded_date);
+    formData.append('recorded_time', recorded_time);
     formData.append('equipment', equipment);
     formData.append('comments', comments);
     if (location) {
@@ -159,7 +161,7 @@ async function uploadRecordingFile(file: File, name: string, recorded_date: stri
      });
   }
 
-  async function patchRecording(recordingId: number, name: string, recorded_date: string, equipment: string, comments: string, publicVal = false, location: UploadLocation = null ) {
+  async function patchRecording(recordingId: number, name: string, recorded_date: string, recorded_time: string, equipment: string, comments: string, publicVal = false, location: UploadLocation = null ) {
     const latitude = location ? location.latitude : undefined;
     const longitude = location ? location.longitude : undefined;
     const gridCellId = location ? location.gridCellId : undefined;
@@ -168,6 +170,7 @@ async function uploadRecordingFile(file: File, name: string, recorded_date: stri
         { 
             name, 
             recorded_date, 
+            recorded_time, 
             equipment, 
             comments, 
             publicVal, 
@@ -185,6 +188,11 @@ async function uploadRecordingFile(file: File, name: string, recorded_date: stri
 
 interface DeletionResponse {
     message?: string;
+    error?: string;
+}
+interface GRTSCellCenter {
+    latitude?: number;
+    longitude?: number;
     error?: string;
 }
   
@@ -246,6 +254,18 @@ async function getOtherUserAnnotations(recordingId: string) {
     return axiosInstance.get<OtherUserAnnotations>(`/recording/${recordingId}/annotations/other_users`);
 }
 
+async function getCellLocation(cellId: number, quadrant?: 'SW' | 'NE' | 'NW' | 'SE') {
+    return axiosInstance.get<GRTSCellCenter>(`/grts/${cellId}`, { params: { quadrant }});
+}
+
+interface CellIDReponse {
+    grid_cell_id?: number;
+    error?: string,
+}
+async function getCellfromLocation(latitude: number, longitude: number) {
+    return axiosInstance.get<CellIDReponse>(`/grts/grid_cell_id`, {params: {latitude, longitude}});
+}
+
 export {
  uploadRecordingFile,
  getRecordings,
@@ -263,4 +283,6 @@ export {
  putTemporalAnnotation,
  deleteAnnotation,
  deleteTemporalAnnotation,
+ getCellLocation,
+ getCellfromLocation,
 };

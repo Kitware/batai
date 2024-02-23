@@ -40,9 +40,18 @@ export default defineComponent({
             key:'recorded_date',
         },
         {
+            title:'Recorded Time',
+            key:'recorded_time',
+        },
+        {
             title:'Public',
             key:'public',
         },
+        {
+            title:'GRTS CellId',
+            key:'grts_cell_id',
+        },
+
         {
           title: 'Location',
           key:'recording_location'
@@ -75,8 +84,16 @@ export default defineComponent({
             key:'recorded_date',
         },
         {
+            title:'Recorded Time',
+            key:'recorded_time',
+        },
+        {
             title:'Public',
             key:'public',
+        },
+        {
+            title:'GRTS CellId',
+            key:'grts_cell_id',
         },
         {
           title: 'Location',
@@ -133,6 +150,7 @@ export default defineComponent({
         equipment: item.equipment || '', 
         comments: item.comments || '',
         date: item.recorded_date,
+        time: item.recorded_time,
         public: item.public,
         id: item.id,
       };
@@ -227,7 +245,7 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-icon v-bind="props">
                 mdi-map
-              </v-icon>sharedList
+              </v-icon>
             </template>
             <v-card>
               <map-location
