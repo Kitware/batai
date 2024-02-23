@@ -40,7 +40,7 @@ export default defineComponent({
     "hoverData",
   ],
   setup(props, { emit }) {
-    const { annotations, temporalAnnotations, selectedId, selectedType, creationType } = useState();
+    const { annotations, temporalAnnotations, selectedId, selectedType, creationType, blackBackground } = useState();
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized = ref(false);
@@ -193,13 +193,17 @@ export default defineComponent({
       createAnnotation,
       cursorHandler,
       imageCursorRef,
+      blackBackground,
     };
   },
 });
 </script>
 
 <template>
-  <div class="video-annotator">
+  <div
+    class="video-annotator"
+    :class="{'black-background': blackBackground, 'white-background': !blackBackground}"
+  >
     <div
       id="spectro"
       ref="containerRef"
@@ -236,8 +240,6 @@ export default defineComponent({
   top: 0;
   bottom: 0;
   z-index: 0;
-  height: 60vh;
-  background-color: black;
 
   display: flex;
   flex-direction: column;
@@ -247,6 +249,7 @@ export default defineComponent({
       outline: none;
     }
   }
+
 
   .playback-container {
     flex: 1;
@@ -263,6 +266,14 @@ export default defineComponent({
   .geojs-map.annotation-input {
     cursor: inherit;
   }
+}
+
+.black-background {
+    background-color: black;
+  }
+
+.white-background {
+  background-color:  white;
 }
 .imageCursor {
   z-index: 9999; //So it will be above the annotator layers
