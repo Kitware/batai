@@ -143,15 +143,21 @@ export default class LegendLayer {
     // For compressed we need to draw based on the start/endTimes instead of the standard
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
     const timeToPixels = this.spectroInfo.width / time;
+    console.log(`width: ${this.spectroInfo.width} time: ${time}`);
+    console.log(`timeToPixels: ${timeToPixels}`);
 
-    const { start_times, end_times } = this.spectroInfo;
-    if (start_times && end_times) {
+    const { start_times, end_times, widths } = this.spectroInfo;
+    if (start_times && end_times && widths) {
       // We need a pixel time to map to the 0 position
       let pixelOffset = 0;
       for (let i = 0; i < start_times.length; i += 1) {
+        console.log(pixelOffset);
         const length = yBuffer * 4;
         const start_time = start_times[i];
         const end_time = end_times[i];
+        const width = widths[i]
+        console.log(`endtime: ${end_time} starttime: ${start_time} diff: ${end_time-start_time}`);
+        console.log((end_time - start_time) * timeToPixels + pixelOffset);
         this.lineDataX.push({
           line: {
             type: "LineString",
@@ -167,11 +173,11 @@ export default class LegendLayer {
             type: "LineString",
             coordinates: [
               [
-                (end_time - start_time) * timeToPixels + pixelOffset,
+                width + pixelOffset,
                 baseYPos + yBuffer,
               ],
               [
-                (end_time - start_time) * timeToPixels + pixelOffset,
+                width + pixelOffset,
                 baseYPos + topBuffer,
               ],
             ],
@@ -182,8 +188,8 @@ export default class LegendLayer {
           line: {
             type: "LineString",
             coordinates: [
-              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos],
-              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos - topBuffer],
+              [width + pixelOffset, baseTopPos],
+              [width + pixelOffset, baseTopPos - topBuffer],
             ],
           },
           thicker: true,
@@ -193,10 +199,10 @@ export default class LegendLayer {
             type: "LineString",
             coordinates: [
               [
-                (end_time - start_time) * timeToPixels + pixelOffset,
+                width + pixelOffset,
                 baseYPos + yBuffer,
               ],
-              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos],
+              [width + pixelOffset, baseTopPos],
             ],
           },
           grid: true,
@@ -212,12 +218,12 @@ export default class LegendLayer {
         });
         this.textDataX.push({
           text: `${end_time}ms`,
-          x: (end_time - start_time) * timeToPixels + pixelOffset,
+          x: width + pixelOffset,
           y: baseTopPos,
           offsetX: 3,
           offsetY: baseTopPos === 0 ? -16 : 16,
         });
-        pixelOffset += (end_time - start_time) * timeToPixels;
+        pixelOffset += width;
         // Need to add the current
       }
     }
