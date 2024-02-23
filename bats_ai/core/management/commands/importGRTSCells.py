@@ -1,7 +1,9 @@
 import csv
-from django.core.management.base import BaseCommand
-from bats_ai.core.models import GRTSCells
+
 from django.core.exceptions import ValidationError
+from django.core.management.base import BaseCommand
+
+from bats_ai.core.models import GRTSCells
 
 
 class Command(BaseCommand):
@@ -16,7 +18,7 @@ class Command(BaseCommand):
         # Get all field names of the GRTSCells model
         model_fields = [field.name for field in GRTSCells._meta.get_fields()]
 
-        with open(csv_file, 'r') as file:
+        with open(csv_file) as file:
             reader = csv.DictReader(file)
             total_rows = sum(1 for _ in reader)  # Get total number of rows in the CSV
             file.seek(0)  # Reset file pointer to start
@@ -30,7 +32,7 @@ class Command(BaseCommand):
                 for key, value in filtered_row.items():
                     if value == '':
                         filtered_row[key] = None
-                        
+
                 # Convert boolean fields from string to boolean values
                 for boolean_field in ['priority_frame', 'priority_state', 'clipped']:
                     if filtered_row.get(boolean_field):
@@ -39,16 +41,18 @@ class Command(BaseCommand):
                         elif filtered_row[boolean_field].lower() == 'false':
                             filtered_row[boolean_field] = False
                         else:
-                            raise ValidationError(f'Invalid boolean value for field {boolean_field}: {filtered_row[boolean_field]}')
+                            raise ValidationError(
+                                f'Invalid boolean value for field {boolean_field}: {filtered_row[boolean_field]}'
+                            )
 
                 # Check if a record with all the data already exists
                 if GRTSCells.objects.filter(**filtered_row).exists():
-                    #self.stdout.write(f'Skipping row because it already exists: {filtered_row}')
+                    # self.stdout.write(f'Skipping row because it already exists: {filtered_row}')
                     counter += 1
                     self.stdout.write(f'Processed {counter} of {total_rows} rows')
                     continue
 
-                try: 
+                try:
                     GRTSCells.objects.create(**filtered_row)
                     counter += 1
                     self.stdout.write(f'Processed {counter} of {total_rows} rows')

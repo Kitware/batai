@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0007_temporalannotations'),
     ]
@@ -17,7 +16,12 @@ class Migration(migrations.Migration):
                 ('id', models.IntegerField(primary_key=True, serialize=False)),
                 ('grts_cell_id', models.IntegerField()),
                 ('sample_frame_id', models.IntegerField(blank=True, null=True)),
-                ('grts_geom', django.contrib.gis.db.models.fields.GeometryField(blank=True, null=True, srid=4326)),
+                (
+                    'grts_geom',
+                    django.contrib.gis.db.models.fields.GeometryField(
+                        blank=True, null=True, srid=4326
+                    ),
+                ),
                 ('water_p', models.FloatField(blank=True, null=True)),
                 ('outside_p', models.FloatField(blank=True, null=True)),
                 ('location_1_type', models.CharField(blank=True, max_length=255, null=True)),

@@ -1,17 +1,17 @@
-from django.http import JsonResponse
-from bats_ai.core.models import GRTSCells
-from django.http import HttpRequest
-from ninja.pagination import RouterPaginated
-from django.contrib.gis.geos import Polygon
-
-from django.contrib.gis.geos import Point
-from django.contrib.gis.measure import D
+from django.contrib.gis.geos import Point, Polygon
+from django.http import HttpRequest, JsonResponse
 from ninja import Query
+from ninja.pagination import RouterPaginated
+
+from bats_ai.core.models import GRTSCells
 
 router = RouterPaginated()
 
+
 @router.get('/grid_cell_id')
-def get_grid_cell_id(request: HttpRequest, latitude: float = Query(...), longitude: float = Query(...)):
+def get_grid_cell_id(
+    request: HttpRequest, latitude: float = Query(...), longitude: float = Query(...)  # noqa: B008
+):
     try:
         # Create a point object from the provided latitude and longitude
         point = Point(longitude, latitude, srid=4326)
@@ -23,7 +23,9 @@ def get_grid_cell_id(request: HttpRequest, latitude: float = Query(...), longitu
             # Return the grid cell ID
             return JsonResponse({'grid_cell_id': cell.grts_cell_id})
         else:
-            return JsonResponse({'error': 'No grid cell found for the provided latitude and longitude'}, status=200)
+            return JsonResponse(
+                {'error': 'No grid cell found for the provided latitude and longitude'}, status=200
+            )
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=200)
 
@@ -32,19 +34,18 @@ def get_grid_cell_id(request: HttpRequest, latitude: float = Query(...), longitu
 def get_cell_center(request: HttpRequest, id: int, quadrant: str = None):
     try:
         cells = GRTSCells.objects.filter(grts_cell_id=id)
-        
+
         # Define a custom order for sample_frame_id
         custom_order = GRTSCells.sort_order()  # Define your custom order here
-        
+
         # Define a custom key function to sort cells based on the custom order
         def custom_sort_key(cell):
             return custom_order.index(cell.sample_frame_id)
-        
+
         # Sort the cells queryset based on the custom order
         sorted_cells = sorted(cells, key=custom_sort_key)
         cell = sorted_cells[0]
         geom_4326 = cell.geom_4326
-
 
         # Get the centroid of the entire cell polygon
         center = geom_4326.centroid
@@ -80,4 +81,3 @@ def get_cell_center(request: HttpRequest, id: int, quadrant: str = None):
         return JsonResponse({'latitude': center_latitude, 'longitude': center_longitude})
     except GRTSCells.DoesNotExist:
         return JsonResponse({'error': f'Cell with cellId={id} does not exist'}, status=200)
-

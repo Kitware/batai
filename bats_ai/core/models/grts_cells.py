@@ -14,6 +14,7 @@ sample_frame_map = {
     26: 'Offshore Mexico',
 }
 
+
 class GRTSCells(models.Model):
     id = models.IntegerField(primary_key=True)
     grts_cell_id = models.IntegerField()
@@ -47,6 +48,4 @@ class GRTSCells(models.Model):
 
     @staticmethod
     def sort_order():
-        return [
-            14, 20, 15, 24, 21, 19, 12, 22, 23, 25, 26
-        ]
+        return [14, 20, 15, 24, 21, 19, 12, 22, 23, 25, 26]
