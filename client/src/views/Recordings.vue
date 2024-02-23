@@ -6,6 +6,7 @@ import {
 } from "vuetify/labs/VDataTable";
 import UploadRecording, { EditingRecording } from '../components/UploadRecording.vue';
 import MapLocation from '../components/MapLocation.vue';
+import useState from '../use/useState';
 
 export default defineComponent({
     components: {
@@ -15,8 +16,7 @@ export default defineComponent({
     },
   setup() {
     const itemsPerPage = ref(-1);
-    const recordingList: Ref<Recording[]> = ref([]);
-    const sharedList: Ref<Recording[]> = ref([]);
+    const { sharedList, recordingList } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
     let intervalRef: number | null = null;
 
@@ -227,7 +227,7 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-icon v-bind="props">
                 mdi-map
-              </v-icon>
+              </v-icon>sharedList
             </template>
             <v-card>
               <map-location

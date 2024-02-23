@@ -1,14 +1,15 @@
 <script lang="ts">
-import { defineComponent, ref, Ref, onMounted } from 'vue';
-import { getRecordings, Recording } from '../api/api';
+import { defineComponent, ref, Ref, onMounted, computed } from 'vue';
+import { getRecordings } from '../api/api';
+import useState from '../use/useState';
 import  { EditingRecording } from './UploadRecording.vue';
 
 export default defineComponent({
     components: {
     },
   setup() {
-    const recordingList: Ref<Recording[]> = ref([]);
-    const sharedList: Ref<Recording[]> = ref([]);
+
+    const { sharedList, recordingList } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
 
     const fetchRecordings = async () => {
@@ -20,17 +21,29 @@ export default defineComponent({
     };
     onMounted(() => fetchRecordings());
 
+    const openPanel = ref(1);
+    const filtered = ref(true);
+    const modifiedList = computed(() => {
+        if (filtered.value) {
+            return sharedList.value.filter((item) => !item.userMadeAnnotations);
+        }
+        return sharedList.value;
+    });
+
     return {
         recordingList,
         sharedList,
+        modifiedList,
+        filtered,
         editingRecording,
+        openPanel,
      };
   },
 });
 </script>
 
 <template>
-  <v-expansion-panels>
+  <v-expansion-panels v-model="openPanel">
     <v-expansion-panel>
       <v-expansion-panel-title>My Recordings</v-expansion-panel-title>
       <v-expansion-panel-text>
@@ -87,6 +100,11 @@ export default defineComponent({
     <v-expansion-panel>
       <v-expansion-panel-title>Public</v-expansion-panel-title>
       <v-expansion-panel-text class="ma-0 pa-0">
+        <v-switch
+          v-model="filtered"
+          label="Filter Annotated"
+          dense
+        />
         <div>
           <v-row
             dense
@@ -100,7 +118,7 @@ export default defineComponent({
           </v-row>
         </div>
         <div
-          v-for="item in sharedList"
+          v-for="item in modifiedList"
           :key="`public_${item.id}`"
         >
           <v-row
