@@ -97,11 +97,12 @@ export default class LegendLayer {
     this.textDataX = [];
     this.textDataY = [];
     this.drawYAxis(leftOffset);
-    this.drawXAxis(bottomOffset, topOffset);
+    this.drawXAxis(bottomOffset, topOffset, leftOffset);
     this.redraw();
   }
 
-  drawXAxisLabels(yOffset = 0) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  drawXAxisLabels(yOffset = 0, _xOffset = 0, leftOffset = 0) {
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
     const baseYPos = yOffset === 0 ? this.spectroInfo.height : yOffset;
 
@@ -112,6 +113,10 @@ export default class LegendLayer {
     // every 100 ms a small tick and every 1000 a big tick
     for (let i = 0; i < time; i += 10) {
       const length = i % 1000 === 0 ? yBuffer * 8 : yBuffer * 4;
+      const withinYAxis = (i * timeToPixels) < (leftOffset +  50)  && leftOffset  !== 0 && yOffset !== 0;
+      if (withinYAxis) {
+        continue;
+      }
       if (i % 50 === 0) {
         this.lineDataX.push({
           line: {
@@ -134,7 +139,7 @@ export default class LegendLayer {
     }
   }
 
-  drawXAxisLabelsCompressed(yOffset = 0, topOffset = 0) {
+  drawXAxisLabelsCompressed(yOffset = 0, topOffset = 0, leftOffset = 0) {
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
     const baseYPos = yOffset === 0 ? this.spectroInfo.height : yOffset;
     const baseTopPos = topOffset === 0 ? 0 : -topOffset;
@@ -142,67 +147,77 @@ export default class LegendLayer {
 
     // For compressed we need to draw based on the start/endTimes instead of the standard
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
-    const timeToPixels = this.spectroInfo.width / time;
 
-    const { start_times, end_times } = this.spectroInfo;
-    if (start_times && end_times) {
+    const { start_times, end_times, widths } = this.spectroInfo;
+    if (start_times && end_times && widths) {
       // We need a pixel time to map to the 0 position
       let pixelOffset = 0;
       for (let i = 0; i < start_times.length; i += 1) {
         const length = yBuffer * 4;
         const start_time = start_times[i];
         const end_time = end_times[i];
+        const width = widths[i];
+        const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  50)  && leftOffset !== 0 && yOffset !== 0;
+        const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  50)  && leftOffset !== 0 && topOffset !== 0;
+     
+
+        if (!bottomWithinYAxisStart) {
         this.lineDataX.push({
           line: {
             type: "LineString",
             coordinates: [
-              [0 + pixelOffset, baseYPos + yBuffer],
-              [0 * timeToPixels + pixelOffset, baseYPos + length],
+              [pixelOffset, baseYPos + yBuffer],
+              [ pixelOffset, baseYPos + length],
             ],
           },
           thicker: true,
         });
+      }
+      if (!topWithinYAxisEnd) {
         this.lineDataX.push({
           line: {
             type: "LineString",
             coordinates: [
               [
-                (end_time - start_time) * timeToPixels + pixelOffset,
+                width + pixelOffset,
                 baseYPos + yBuffer,
               ],
               [
-                (end_time - start_time) * timeToPixels + pixelOffset,
+                width + pixelOffset,
                 baseYPos + topBuffer,
               ],
             ],
           },
           thicker: true,
         });
+      
         this.lineDataX.push({
           line: {
             type: "LineString",
             coordinates: [
-              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos],
-              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos - topBuffer],
+              [width + pixelOffset, baseTopPos],
+              [width + pixelOffset, baseTopPos - topBuffer],
             ],
           },
           thicker: true,
         });
+      }
         this.lineDataX.push({
           line: {
             type: "LineString",
             coordinates: [
               [
-                (end_time - start_time) * timeToPixels + pixelOffset,
+                width + pixelOffset,
                 baseYPos + yBuffer,
               ],
-              [(end_time - start_time) * timeToPixels + pixelOffset, baseTopPos],
+              [width + pixelOffset, baseTopPos],
             ],
           },
           grid: true,
         });
 
         //Need to decide what text to add to the label
+        if (!bottomWithinYAxisStart) {
         this.textDataX.push({
           text: `${start_time}ms`,
           x: 0 + pixelOffset,
@@ -210,14 +225,18 @@ export default class LegendLayer {
           offsetX: 3,
           offsetY: yOffset === 0 ? 16 : -16,
         });
+      }
+      if (!topWithinYAxisEnd) {
+
         this.textDataX.push({
           text: `${end_time}ms`,
-          x: (end_time - start_time) * timeToPixels + pixelOffset,
+          x: width + pixelOffset,
           y: baseTopPos,
           offsetX: 3,
           offsetY: baseTopPos === 0 ? -16 : 16,
         });
-        pixelOffset += (end_time - start_time) * timeToPixels;
+      }
+        pixelOffset += width;
         // Need to add the current
       }
     }
@@ -297,7 +316,7 @@ export default class LegendLayer {
     }
   }
 
-  drawXAxis(bottomOffset = 0, topOffset = 0) {
+  drawXAxis(bottomOffset = 0, topOffset = 0, lefOffset = 0) {
     const xAxis: GeoJSON.LineString = {
       type: "LineString",
       coordinates: [
@@ -310,9 +329,9 @@ export default class LegendLayer {
     this.drawYAxis();
 
     if (this.spectroInfo.start_times && this.spectroInfo.end_times) {
-      this.drawXAxisLabelsCompressed(bottomOffset, topOffset);
+      this.drawXAxisLabelsCompressed(bottomOffset, topOffset, lefOffset);
     } else {
-      this.drawXAxisLabels(bottomOffset);
+      this.drawXAxisLabels(bottomOffset, topOffset, lefOffset);
     }
   }
   createLabels() {
