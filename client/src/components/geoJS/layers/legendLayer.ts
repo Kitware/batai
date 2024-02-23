@@ -143,21 +143,16 @@ export default class LegendLayer {
     // For compressed we need to draw based on the start/endTimes instead of the standard
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
     const timeToPixels = this.spectroInfo.width / time;
-    console.log(`width: ${this.spectroInfo.width} time: ${time}`);
-    console.log(`timeToPixels: ${timeToPixels}`);
 
     const { start_times, end_times, widths } = this.spectroInfo;
     if (start_times && end_times && widths) {
       // We need a pixel time to map to the 0 position
       let pixelOffset = 0;
       for (let i = 0; i < start_times.length; i += 1) {
-        console.log(pixelOffset);
         const length = yBuffer * 4;
         const start_time = start_times[i];
         const end_time = end_times[i];
-        const width = widths[i]
-        console.log(`endtime: ${end_time} starttime: ${start_time} diff: ${end_time-start_time}`);
-        console.log((end_time - start_time) * timeToPixels + pixelOffset);
+        const width = widths[i];
         this.lineDataX.push({
           line: {
             type: "LineString",
