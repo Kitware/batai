@@ -83,7 +83,7 @@ export default defineComponent({
       }
     });
     watch(() =>  props.updateMap, () => {
-      if (props.location?.x && props.location?.y && markerLocation.value) {
+      if (props.location?.x && props.location?.y) {
             markerLocation.value = { x: props.location?.x, y: props.location.y };
             markerFeature.value
               .data([markerLocation.value])

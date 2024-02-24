@@ -9,6 +9,7 @@ class Recording(TimeStampedModel, models.Model):
     audio_file = models.FileField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     recorded_date = models.DateField(blank=True, null=True)
+    recorded_time = models.TimeField(blank=True, null=True)
     equipment = models.TextField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
     recording_location = models.GeometryField(srid=4326, blank=True, null=True)

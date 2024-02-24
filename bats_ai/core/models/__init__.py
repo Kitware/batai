@@ -1,4 +1,5 @@
 from .annotations import Annotations
+from .grts_cells import GRTSCells
 from .image import Image
 from .recording import Recording
 from .recording_annotation_status import RecordingAnnotationStatus
@@ -14,4 +15,5 @@ __all__ = [
     'Species',
     'Spectrogram',
     'TemporalAnnotations',
+    'GRTSCells',
 ]

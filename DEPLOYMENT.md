@@ -41,6 +41,15 @@ for accessing the server.
    and change the ApplicationId to the ID in the `./client.env.production`
 10. Test logging in/out and uploading data to the server.
 
+### GRTS Cell Id suppoer
+
+Make sure that there is the grts.csv in the /opt/batai/dev/grtsCells folder
+
+Then run `docker compose run --rm django ./manage.py importGRTSCells /app/csv/grts.csv`
+
+It may take a few minutes to upload because it is loading
+around 500k rows into the DB.
+
 ### system.d service
 
 Service that will automatically start and launch the server
@@ -60,7 +69,7 @@ User=bryon
 Group=docker
 TimeoutStartSec=300
 RestartSec=20
-WorkingDirectory=/home/bryon/batai
+WorkingDirectory=/opt/batai
 # Shutdown container (if running) when unit is started
 ExecStartPre=docker compose down
 # Start container when unit is started

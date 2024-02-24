@@ -2,18 +2,27 @@
 import { defineComponent, PropType, ref, Ref } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
-import { UploadLocation, uploadRecordingFile, patchRecording } from '../api/api';
+import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation } from '../api/api';
 import { VDatePicker } from 'vuetify/labs/VDatePicker';
 import MapLocation from './MapLocation.vue';
 export interface EditingRecording {
   id: number,
   name: string,
   date: string,
+  time: string,
   equipment: string,
   comments: string,
   public: boolean;
   location?: { lat: number, lon: number },
 }
+function getCurrentTime() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return hours + minutes + seconds;
+}
+
 export default defineComponent({
   components: {
     VDatePicker,
@@ -33,6 +42,7 @@ export default defineComponent({
     const errorText = ref('');
     const progressState = ref('');
     const recordedDate = ref(props.editing ? props.editing.date : new Date().toISOString().split('T')[0]); // YYYY-MM-DD Time
+    const recordedTime = ref(props.editing ? props.editing.time : getCurrentTime()); // HHMMSS
     const uploadProgress = ref(0);
     const name = ref(props.editing ? props.editing.name : '');
     const equipment = ref(props.editing ? props.editing.equipment : '');
@@ -42,13 +52,44 @@ export default defineComponent({
     const longitude: Ref<number | undefined> = ref(props.editing?.location?.lon ? props.editing.location.lon : undefined);
     const gridCellId: Ref<number | undefined> = ref();
     const publicVal = ref(props.editing ? props.editing.public : false);
-    const readFile = (e: Event) => {
+    const autoFill = async (filename: string) => {
+      const parts = filename.split("_");
+
+      // Extracting individual components
+      const cellId = parts[0];
+      const quadrant = parts[1];
+      const date = parts[2];
+      const timestamp = parts[3];
+      if (cellId) {
+        gridCellId.value = parseInt(cellId, 10);
+        let updatedQuadrant;
+        if (['SW', 'NE', 'NW', 'SE'].includes(quadrant)) {
+          updatedQuadrant = quadrant as 'SW' | 'NE' | 'NW' | 'SE' | undefined;
+        }
+        const { latitude: lat , longitude: lon } = (await getCellLocation(gridCellId.value, updatedQuadrant)).data;
+        if (lat && lon) {
+          latitude.value = lat;
+          longitude.value = lon;
+        }
+        // Next we get the latitude longitude for this sell Id and quadarnt
+      }
+      if (date && date.length === 8) {
+        // We convert it to the YYYY-MM-DD time;
+        recordedDate.value = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6,8)}`;
+      }
+      if (timestamp) {
+        recordedTime.value = timestamp;
+      }
+    };
+    const readFile = async (e: Event) => {
       const target = (e.target as HTMLInputElement);
       if (target?.files?.length) {
         const file = target.files.item(0);
         if (!file) {
           return;
         }
+        name.value = file.name.replace(/\.[^/.]+$/, "");
+        await autoFill(name.value);
         if (!RecordingMimeTypes.includes(file.type)) {
           errorText.value = `Selected file is not one of the following types: ${RecordingMimeTypes.join(' ')}`;
           return;
@@ -81,7 +122,7 @@ export default defineComponent({
         }
         location['gridCellId'] = gridCellId.value;
       }
-      await uploadRecordingFile(file, name.value, recordedDate.value, equipment.value, comments.value, publicVal.value, location);
+      await uploadRecordingFile(file, name.value, recordedDate.value, recordedTime.value, equipment.value, comments.value, publicVal.value, location);
       emit('done');
     });
 
@@ -100,7 +141,7 @@ export default defineComponent({
           }
           location['gridCellId'] = gridCellId.value;
         }
-        await patchRecording(props.editing.id, name.value, recordedDate.value, equipment.value, comments.value, publicVal.value, location);
+        await patchRecording(props.editing.id, name.value, recordedDate.value, recordedTime.value, equipment.value, comments.value, publicVal.value, location);
         emit('done');
       } else {
         submit();
@@ -112,9 +153,27 @@ export default defineComponent({
     recordedDate.value = new Date(time as string).toISOString().split('T')[0];
   };
 
-  const setLocation = ({lat, lon}: {lat: number, lon: number}) => {
+  const setLocation = async ({lat, lon}: {lat: number, lon: number}) => {
     latitude.value = lat;
     longitude.value = lon;
+    const result  = await getCellfromLocation(lat, lon);
+    if (result.data.grid_cell_id) {
+      gridCellId.value = result.data.grid_cell_id;
+    } else if (result.data.error) {
+      gridCellId.value = undefined;
+    }
+  };
+
+  const gridCellChanged = async () => {
+    if (gridCellId.value) {
+      const result = await getCellLocation(gridCellId.value);
+      if (result.data.latitude && result.data.longitude) {
+        latitude.value = result.data.latitude;
+        longitude.value = result.data.longitude;
+        triggerUpdateMap();
+        
+      }
+    }
   };
 
   const updateMap = ref(0); // updates the map when lat/lon change by editing directly;
@@ -139,12 +198,14 @@ export default defineComponent({
       gridCellId,
       publicVal,
       updateMap,
+      recordedTime,
       selectFile,
       readFile,
       handleSubmit,
       updateTime,
       setLocation,
       triggerUpdateMap,
+      gridCellChanged,
     };
   },
 });
@@ -258,6 +319,13 @@ export default defineComponent({
                   @update:model-value="updateTime($event)"
                 />
               </v-menu>
+              <v-spacer />
+              <v-text-field
+                v-model="recordedTime"
+                label="Time"
+                hint="HHMMSS"
+                persistent-hint
+              />
             </v-row>
             <v-row>
               <v-expansion-panels>
@@ -285,6 +353,7 @@ export default defineComponent({
                         v-model="gridCellId"
                         type="number"
                         label="NABat Grid Cell"
+                        @change="gridCellChanged()"
                       />
                     </v-row>
                     <v-row>

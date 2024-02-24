@@ -40,6 +40,7 @@ class RecordingSchema(Schema):
 class RecordingUploadSchema(Schema):
     name: str
     recorded_date: str
+    recorded_time: str
     equipment: str | None
     comments: str | None
     latitude: float = None
@@ -90,6 +91,7 @@ def create_recording(
     publicVal: bool = False,
 ):
     converted_date = datetime.strptime(payload.recorded_date, '%Y-%m-%d')
+    converted_time = datetime.strptime(payload.recorded_time, '%H%M%S')
     point = None
     if payload.latitude and payload.longitude:
         point = Point(payload.longitude, payload.latitude)
@@ -98,6 +100,7 @@ def create_recording(
         owner_id=request.user.pk,
         audio_file=audio_file,
         recorded_date=converted_date,
+        recorded_time=converted_time,
         equipment=payload.equipment,
         grts_cell_id=payload.gridCellId,
         recording_location=point,
@@ -128,6 +131,9 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
     if recording_data.recorded_date:
         converted_date = datetime.strptime(recording_data.recorded_date, '%Y-%m-%d')
         recording.recorded_date = converted_date
+    if recording_data.recorded_time:
+        converted_time = datetime.strptime(recording_data.recorded_time, '%H%M%S')
+        recording.recorded_time = converted_time
     if recording_data.publicVal is not None and recording_data.publicVal != recording.public:
         recording.public = recording_data.publicVal
     if recording_data.latitude and recording_data.longitude:
