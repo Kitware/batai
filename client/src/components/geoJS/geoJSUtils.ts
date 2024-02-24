@@ -39,7 +39,7 @@ const useGeoJS = () => {
     interactorOpts.keyboard.focusHighlight = false;
     interactorOpts.keyboard.actions = {};
     interactorOpts.click.cancelOnMove = 5;
-
+    console.log(interactorOpts);
     interactorOpts.actions = [
       interactorOpts.actions[0],
       // The action below is needed to have GeoJS use the proper handler

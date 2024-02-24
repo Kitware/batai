@@ -13,6 +13,7 @@ import LayerManager from "./geoJS/LayerManager.vue";
 import { GeoEvent } from "geojs";
 import geo from "geojs";
 import useState from "../use/useState";
+import * as glMatrix from 'gl-matrix';
 
 export default defineComponent({
   name: "SpectroViewer",
@@ -182,6 +183,33 @@ export default defineComponent({
       }
     );
 
+    const wheelEvent = (event: WheelEvent) => {
+  const geoViewerRef = geoJS.getGeoViewer();
+
+  if (geoViewerRef.value) {
+    const camera = geoViewerRef.value.camera();
+    const view = camera.view;
+
+    console.log(view);
+    let baseZoomX = view[0];
+    let baseZoomY = view[5];
+    // view[5] = view[5] * 1.1
+    if (event.ctrlKey) {
+      // Zoom along the X-axis
+      baseZoomX += event.deltaY * 0.000001;
+    } else if (event.shiftKey) {
+      // Zoom along the Y-axis
+      baseZoomY += event.deltaY * 0.000001;
+    }
+    view[0] = baseZoomX;
+    view[5] = baseZoomY;
+    camera.view = view;
+    geoViewerRef.value.draw();
+
+  }
+};
+
+
 
     return {
       containerRef,
@@ -194,6 +222,7 @@ export default defineComponent({
       cursorHandler,
       imageCursorRef,
       blackBackground,
+      wheelEvent,
     };
   },
 });
@@ -203,6 +232,7 @@ export default defineComponent({
   <div
     class="video-annotator"
     :class="{'black-background': blackBackground, 'white-background': !blackBackground}"
+    @wheel="wheelEvent($event)"
   >
     <div
       id="spectro"
