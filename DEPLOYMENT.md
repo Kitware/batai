@@ -47,7 +47,8 @@ Make sure that there is the grts.csv in the /opt/batai/dev/grtsCells folder
 
 Then run `docker compose run --rm django ./manage.py importGRTSCells /app/csv/grts.csv`
 
-It may take a few minutes to upload because it is loading around 500k rows into the DB.
+It may take a few minutes to upload because it is loading
+around 500k rows into the DB.
 
 ### system.d service
 
