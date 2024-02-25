@@ -70,6 +70,9 @@ export default class EditAnnotationLayer {
 
   leftButtonCheckTimeout: number; //Fallthough mouse down when ending lineStrings
 
+  scaledWidth: number;
+  scaledHeight: number;
+
   /* in-progress events only emitted for lines and polygons */
   shapeInProgress: GeoJSON.LineString | GeoJSON.Polygon | null;
 
@@ -100,6 +103,8 @@ export default class EditAnnotationLayer {
     this.shapeInProgress = null;
     this.disableModeSync = false;
     this.leftButtonCheckTimeout = -1;
+    this.scaledWidth = 0;
+    this.scaledHeight = 0;
 
     //Only initialize once, prevents recreating Layer each edit
     this.initialize();
@@ -159,6 +164,11 @@ export default class EditAnnotationLayer {
     return () => {
       this.skipNextExternalUpdate = true;
     };
+  }
+
+  setScaledDimensions(newWidth: number, newHeight: number) {
+    this.scaledWidth = newWidth;
+    this.scaledHeight = newHeight;
   }
 
   /**
@@ -349,7 +359,7 @@ export default class EditAnnotationLayer {
     });
     if (annotationData) {
 
-      const geoJSONData = type === 'pulse' ? spectroToGeoJSon(annotationData as SpectrogramAnnotation, this.spectroInfo): spectroTemporalToGeoJSon(annotationData as SpectrogramTemporalAnnotation, this.spectroInfo, -10, -50);
+      const geoJSONData = type === 'pulse' ? spectroToGeoJSon(annotationData as SpectrogramAnnotation, this.spectroInfo, 1, this.scaledWidth, this.scaledHeight): spectroTemporalToGeoJSon(annotationData as SpectrogramTemporalAnnotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight);
       const geojsonFeature: GeoJSON.Feature = {
         type: "Feature",
         geometry: geoJSONData,

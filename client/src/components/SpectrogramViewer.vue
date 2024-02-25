@@ -46,6 +46,8 @@ export default defineComponent({
     const geoJS = useGeoJS();
     const initialized = ref(false);
     const cursor = ref("");
+    const scaledWidth = ref(0);
+    const scaledHeight = ref(0);
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
     const setCursor = (newCursor: string) => {
       cursor.value = newCursor;
@@ -78,20 +80,23 @@ export default defineComponent({
       if (!props.spectroInfo) {
         return;
       }
+      const adjustedWidth = scaledWidth.value > props.spectroInfo.width ? scaledWidth.value : props.spectroInfo.width;
+      const adjustedHeight = scaledHeight.value > props.spectroInfo.height ? scaledHeight.value : props.spectroInfo.height;
+
       const freq =
-        props.spectroInfo.height - y >= 0
-          ? ((props.spectroInfo.height - y) *
-              (props.spectroInfo.high_freq - props.spectroInfo.low_freq)) /
-              props.spectroInfo.height /
-              1000 +
-            props.spectroInfo.low_freq / 1000
+        adjustedHeight - y >= 0
+          ? ((adjustedHeight - y) *
+            (props.spectroInfo.high_freq - props.spectroInfo.low_freq)) /
+          adjustedHeight /
+          1000 +
+          props.spectroInfo.low_freq / 1000
           : -1;
 
       if (!props.spectroInfo.end_times && !props.spectroInfo.start_times) {
-        if (x >= 0 && props.spectroInfo.height - y >= 0) {
+        if (x >= 0 && adjustedHeight - y >= 0) {
           const time =
             x *
-            ((props.spectroInfo.end_time - props.spectroInfo.start_time) / props.spectroInfo.width);
+            ((props.spectroInfo.end_time - props.spectroInfo.start_time) / adjustedWidth);
           emit("hoverData", { time, freq });
         } else {
           emit("hoverData", { time: -1, freq: -1 });
@@ -102,9 +107,9 @@ export default defineComponent({
         props.spectroInfo.end_times
       ) {
         // compressed view
-        if (x >= 0 && props.spectroInfo.height - y >= 0) {
+        if (x >= 0 && adjustedHeight - y >= 0) {
           const timeLength = props.spectroInfo.end_time - props.spectroInfo.start_time;
-          const timeToPixels = props.spectroInfo.width / timeLength;
+          const timeToPixels = adjustedWidth / timeLength;
           // find X in the range
           let offsetAdditive = 0;
           for (let i = 0; i < props.spectroInfo.start_times.length; i += 1) {
@@ -128,6 +133,8 @@ export default defineComponent({
     };
     watch(containerRef, () => {
       const { naturalWidth, naturalHeight } = props.image;
+      scaledWidth.value = naturalWidth;
+      scaledHeight.value = naturalHeight;
       if (containerRef.value)
         geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight);
       geoJS.drawImage(props.image, naturalWidth, naturalHeight);
@@ -167,9 +174,9 @@ export default defineComponent({
         if (skipNextSelected) {
           skipNextSelected = false;
           return;
-          
+
         }
-        const found = selectedType.value === 'pulse' ? annotations.value.find((item) => item.id === selectedId.value): temporalAnnotations.value.find((item) => item.id === selectedId.value);
+        const found = selectedType.value === 'pulse' ? annotations.value.find((item) => item.id === selectedId.value) : temporalAnnotations.value.find((item) => item.id === selectedId.value);
         if (found && props.spectroInfo) {
 
           const center = spectroToCenter(found, props.spectroInfo, selectedType.value);
@@ -184,30 +191,23 @@ export default defineComponent({
     );
 
     const wheelEvent = (event: WheelEvent) => {
-  const geoViewerRef = geoJS.getGeoViewer();
+      const geoViewerRef = geoJS.getGeoViewer();
+      const { naturalWidth, naturalHeight } = props.image;
 
-  if (geoViewerRef.value) {
-    const camera = geoViewerRef.value.camera();
-    const view = camera.view;
-
-    console.log(view);
-    let baseZoomX = view[0];
-    let baseZoomY = view[5];
-    // view[5] = view[5] * 1.1
-    if (event.ctrlKey) {
-      // Zoom along the X-axis
-      baseZoomX += event.deltaY * 0.000001;
-    } else if (event.shiftKey) {
-      // Zoom along the Y-axis
-      baseZoomY += event.deltaY * 0.000001;
-    }
-    view[0] = baseZoomX;
-    view[5] = baseZoomY;
-    camera.view = view;
-    geoViewerRef.value.draw();
-
-  }
-};
+      if (event.ctrlKey) {
+        scaledWidth.value = scaledWidth.value + event.deltaY * 4;
+        if (scaledWidth.value < naturalWidth) {
+          scaledWidth.value = naturalWidth;
+        }
+        geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+      } else if (event.shiftKey) {
+        scaledHeight.value = scaledHeight.value + event.deltaY * 1;
+        if (scaledHeight.value < naturalHeight) {
+          scaledHeight.value = naturalHeight;
+        }
+        geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+      }
+    };
 
 
 
@@ -223,38 +223,23 @@ export default defineComponent({
       imageCursorRef,
       blackBackground,
       wheelEvent,
+      scaledWidth,
+      scaledHeight,
     };
   },
 });
 </script>
 
 <template>
-  <div
-    class="video-annotator"
-    :class="{'black-background': blackBackground, 'white-background': !blackBackground}"
-    @wheel="wheelEvent($event)"
-  >
-    <div
-      id="spectro"
-      ref="containerRef"
-      class="playback-container"
-      :style="{ cursor: cursor }"
-      @mousemove="cursorHandler.handleMouseMove"
-      @mouseleave="cursorHandler.handleMouseLeave"
-      @mouseover="cursorHandler.handleMouseEnter"
-    />
-    <layer-manager
-      v-if="initialized"
-      :geo-viewer-ref="geoViewerRef"
-      :spectro-info="spectroInfo"
-      @update:annotation="updateAnnotation($event)"
-      @create:annotation="createAnnotation($event)"
-      @set-cursor="setCursor($event)"
-    />
-    <div
-      ref="imageCursorRef" 
-      class="imageCursor"
-    >
+  <div class="video-annotator" :class="{ 'black-background': blackBackground, 'white-background': !blackBackground }"
+    @wheel="wheelEvent($event)">
+    <div id="spectro" ref="containerRef" class="playback-container" :style="{ cursor: cursor }"
+      @mousemove="cursorHandler.handleMouseMove" @mouseleave="cursorHandler.handleMouseLeave"
+      @mouseover="cursorHandler.handleMouseEnter" />
+    <layer-manager v-if="initialized" :geo-viewer-ref="geoViewerRef" :spectro-info="spectroInfo"
+      :scaled-width="scaledWidth" :scaled-height="scaledHeight" @update:annotation="updateAnnotation($event)"
+      @create:annotation="createAnnotation($event)" @set-cursor="setCursor($event)" />
+    <div ref="imageCursorRef" class="imageCursor">
       <v-icon color="white">
         {{ cursor }}
       </v-icon>
@@ -273,8 +258,10 @@ export default defineComponent({
 
   display: flex;
   flex-direction: column;
+
   .geojs-map {
     margin: 2px;
+
     &.geojs-map:focus {
       outline: none;
     }
@@ -284,6 +271,7 @@ export default defineComponent({
   .playback-container {
     flex: 1;
   }
+
   .loadingSpinnerContainer {
     z-index: 20;
     margin: 0;
@@ -293,18 +281,20 @@ export default defineComponent({
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
   }
+
   .geojs-map.annotation-input {
     cursor: inherit;
   }
 }
 
 .black-background {
-    background-color: black;
-  }
+  background-color: black;
+}
 
 .white-background {
-  background-color:  white;
+  background-color: white;
 }
+
 .imageCursor {
   z-index: 9999; //So it will be above the annotator layers
   position: fixed;

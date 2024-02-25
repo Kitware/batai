@@ -34,6 +34,9 @@ export default class TemporalLayer {
 
   style: LayerStyle<RectGeoJSData>;
 
+  scaledWidth: number;
+  scaledHeight: number;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,6 +52,8 @@ export default class TemporalLayer {
     this.hoverOn = false;
     this.selectedIndex = [];
     this.event = event;
+    this.scaledWidth = 0;
+    this.scaledHeight = 0;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["polygon"],
@@ -92,6 +97,11 @@ export default class TemporalLayer {
     this.event("annotation-hover", { id: found, pos: e.mouse.geo });
   }
 
+  setScaledDimensions(newWidth: number, newHeight: number) {
+    this.scaledWidth = newWidth;
+    this.scaledHeight = newHeight;
+  }
+
   setHoverAnnotations(val: boolean) {
     if (!this.hoverOn && val) {
       this.featureLayer.geoOn(geo.event.feature.mouseover, (e: GeoEvent) =>
@@ -118,7 +128,7 @@ export default class TemporalLayer {
   ) {
     const arr: RectGeoJSData[] = [];
     annotationData.forEach((annotation: SpectrogramTemporalAnnotation) => {
-      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50,yScale);
+      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, yScale, this.scaledWidth, this.scaledHeight);
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers

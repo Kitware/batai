@@ -33,6 +33,9 @@ export default class RectangleLayer {
 
   style: LayerStyle<RectGeoJSData>;
 
+  scaledWidth: number;
+  scaledHeight: number;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,6 +49,8 @@ export default class RectangleLayer {
     this.formattedData = [];
     this.hoverOn = false;
     this.selectedIndex = [];
+    this.scaledWidth = 0;
+    this.scaledHeight = 0;
     this.event = event;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
@@ -106,6 +111,11 @@ export default class RectangleLayer {
     }
   }
 
+  setScaledDimensions(newWidth: number, newHeight: number) {
+    this.scaledWidth = newWidth;
+    this.scaledHeight = newHeight;    
+  }
+
   formatData(
     annotationData: SpectrogramAnnotation[],
     selectedIndex: number | null,
@@ -115,7 +125,7 @@ export default class RectangleLayer {
   ) {
     const arr: RectGeoJSData[] = [];
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
-      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, yScale);
+      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, yScale, this.scaledWidth, this.scaledHeight);
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers

@@ -39,6 +39,9 @@ export default class TimeLayer {
   textStyle: LayerStyle<TextData>;
   lineStyle: LayerStyle<LineData>;
 
+  scaledWidth: number;
+  scaledHeight: number;
+
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -52,6 +55,8 @@ export default class TimeLayer {
     this.lineData = [];
     this.spectroInfo = spectroInfo;
     this.textData = [];
+    this.scaledWidth = 0;
+    this.scaledHeight = 0;
     this.event = event;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
@@ -68,13 +73,18 @@ export default class TimeLayer {
     this.lineStyle = this.createLineStyle();
   }
 
+  setScaledDimensions(newWidth: number, newHeight: number) {
+    this.scaledWidth = newWidth;
+    this.scaledHeight = newHeight;
+  }
+
 
   formatData(annotationData: SpectrogramAnnotation[], temporalData: SpectrogramTemporalAnnotation[] =[]) {
     this.textData = [];
     this.lineData = [];
     const lineDist = 12;
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
-      const polygon = spectroToGeoJSon(annotation, this.spectroInfo);
+      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, 1, this.scaledWidth, this.scaledHeight);
       const {start_time, end_time } = annotation;
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
@@ -123,7 +133,7 @@ export default class TimeLayer {
       });
     });
     temporalData.forEach((annotation: SpectrogramTemporalAnnotation) => {
-      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50);
+      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight);
       const {start_time, end_time } = annotation;
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];

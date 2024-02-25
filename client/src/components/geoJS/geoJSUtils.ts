@@ -39,7 +39,6 @@ const useGeoJS = () => {
     interactorOpts.keyboard.focusHighlight = false;
     interactorOpts.keyboard.actions = {};
     interactorOpts.click.cancelOnMove = 5;
-    console.log(interactorOpts);
     interactorOpts.actions = [
       interactorOpts.actions[0],
       // The action below is needed to have GeoJS use the proper handler
@@ -100,7 +99,7 @@ const useGeoJS = () => {
     quadFeature = quadFeatureLayer.createFeature("quad");
   };
 
-  const drawImage = (image: HTMLImageElement, width = image.width, height = image.height) => {
+  const drawImage = (image: HTMLImageElement, width = image.width, height = image.height, resetCam=true) => {
     if (quadFeature) {
       quadFeature
         .data([
@@ -112,7 +111,22 @@ const useGeoJS = () => {
         ])
         .draw();
     }
-    resetMapDimensions(width, height);
+    if (resetCam) {
+    resetMapDimensions(width, height, 0.3,resetCam);
+    } else {
+      const params = geo.util.pixelCoordinateParams(container.value, width, height, width, height);
+      const margin  = 0.3;
+      const { right, bottom } = params.map.maxBounds;
+      originalBounds = params.map.maxBounds;
+      geoViewer.value.maxBounds({
+        left: 0 - right * margin,
+        top: 0 - bottom * margin,
+        right: right * (1 + margin),
+        bottom: bottom * (1 + margin),
+      });
+  
+    }
+    
   };
   const resetZoom = () => {
     const { width: mapWidth } = geoViewer.value.camera().viewport;
@@ -130,7 +144,7 @@ const useGeoJS = () => {
     geoViewer.value.center(zoomAndCenter.center);
   };
 
-  const resetMapDimensions = (width: number, height: number, margin = 0.3) => {
+  const resetMapDimensions = (width: number, height: number, margin = 0.3, resetCam = false) => {
     // Want the height to be the main view and whe width to be  relative to the width of the geo.amp
     geoViewer.value.bounds({
       left: 0,
@@ -156,8 +170,9 @@ const useGeoJS = () => {
     geoViewer.value.clampBoundsX(true);
     geoViewer.value.clampBoundsY(true);
     geoViewer.value.clampZoom(true);
-
-    resetZoom();
+    if (resetCam) {
+      resetZoom();
+    }
   };
 
   return {
@@ -189,10 +204,14 @@ function spectroTemporalToGeoJSon(
   ymin = 0,
   ymax = 10,
   yScale = 1,
+  scaledWidth = 0,
+  scaledHeight = 0,
 ): GeoJSON.Polygon {
+  const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
+  const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
   //scale pixels to time and frequency ranges
   if (spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
-    const widthScale = spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
+    const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     // Now we remap our annotation to pixel coordinates
     const start_time = annotation.start_time * widthScale;
     const end_time = annotation.end_time * widthScale;
@@ -228,7 +247,7 @@ function spectroTemporalToGeoJSon(
       }
     }
     // We need to build the length of times to pixel size for the time spaces before the annotation
-    const widthScale = spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
+    const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     let pixelAdd = 0;
     for (let i = 0; i < foundIndex; i += 1) {
       pixelAdd += (end_times[i] - start_times[i]) * widthScale;
@@ -267,17 +286,22 @@ function spectroTemporalToGeoJSon(
 function spectroToGeoJSon(
   annotation: SpectrogramAnnotation,
   spectroInfo: SpectroInfo,
-  yScale = 1
+  yScale = 1,
+  scaledWidth = 0,
+  scaledHeight = 0
 ): GeoJSON.Polygon {
   //scale pixels to time and frequency ranges
+  const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
+  const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
+
   if (spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
-    const widthScale = spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
-    const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
+    const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
+    const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
     const low_freq =
-      spectroInfo.height - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
+      adjustedHeight - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
     const high_freq =
-      spectroInfo.height - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
+      adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
     const start_time = annotation.start_time * widthScale;
     const end_time = annotation.end_time * widthScale;
     return {
@@ -312,17 +336,17 @@ function spectroToGeoJSon(
       }
     }
     // We need to build the length of times to pixel size for the time spaces before the annotation
-    const widthScale = spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
+    const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     let pixelAdd = 0;
     for (let i = 0; i < foundIndex; i += 1) {
       pixelAdd += (end_times[i] - start_times[i]) * widthScale;
     }
-    const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
+    const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
     const low_freq =
-      spectroInfo.height - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
+      adjustedHeight - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
     const high_freq =
-      spectroInfo.height - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
+      adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
     const start_time = pixelAdd + (annotation.start_time - start_times[foundIndex]) * widthScale;
     const end_time = pixelAdd + (annotation.end_time - start_times[foundIndex]) * widthScale;
 
@@ -378,12 +402,17 @@ function spectroToCenter(annotation: SpectrogramAnnotation | SpectrogramTemporal
 /* beginning at bottom left, rectangle is defined clockwise */
 function geojsonToSpectro(
   geojson: GeoJSON.Feature<GeoJSON.Polygon>,
-  spectroInfo: SpectroInfo
+  spectroInfo: SpectroInfo,
+  scaledWidth = 0,
+  scaledHeight = 0,
 ): { error?: string; start_time: number; end_time: number; low_freq: number; high_freq: number } {
+  const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
+  const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
+
   const coords = geojson.geometry.coordinates[0];
   if (spectroInfo.start_times === undefined && spectroInfo.end_times === undefined) {
-    const widthScale = spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
-    const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
+    const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
+    const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     const start_time = Math.round(coords[1][0] / widthScale);
     const end_time = Math.round(coords[3][0] / widthScale);
     const high_freq = Math.round(spectroInfo.high_freq - coords[1][1] / heightScale);

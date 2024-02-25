@@ -28,6 +28,8 @@ export default class SpeciesLayer {
 
   textStyle: LayerStyle<TextData>;
 
+  scaledWidth: number;
+  scaledHeight: number;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -41,6 +43,8 @@ export default class SpeciesLayer {
     this.spectroInfo = spectroInfo;
     this.textData = [];
     this.event = event;
+    this.scaledWidth = 0;
+    this.scaledHeight = 0;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["text"],
@@ -54,11 +58,16 @@ export default class SpeciesLayer {
     this.textStyle = this.createTextStyle();
   }
 
+  setScaledDimensions(newWidth: number, newHeight: number) {
+    this.scaledWidth = newWidth;
+    this.scaledHeight = newHeight;
+  }
+
 
   formatData(annotationData: SpectrogramAnnotation[]) {
     this.textData = [];
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
-      const polygon = spectroToGeoJSon(annotation, this.spectroInfo);
+      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, 1, this.scaledWidth, this.scaledHeight);
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
