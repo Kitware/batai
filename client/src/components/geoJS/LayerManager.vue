@@ -33,11 +33,11 @@ export default defineComponent({
       default: 1,
     },
     scaledWidth: {
-      types: Number,
+      type: Number,
       default: -1,
     },
     scaledHeight: {
-      types: Number,
+      type: Number,
       default: -1,
     }
   },
@@ -516,14 +516,20 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-dialog v-model="displayError" width="500">
+  <v-dialog
+    v-model="displayError"
+    width="500"
+  >
     <v-card>
       <v-card-title>Error</v-card-title>
       <v-card-text>{{ errorMsg }}</v-card-text>
       <v-card-actions>
         <v-row>
           <v-spacer />
-          <v-btn variant="outlined" @click="displayError = false">
+          <v-btn
+            variant="outlined"
+            @click="displayError = false"
+          >
             Dismiss
           </v-btn>
           <v-spacer />

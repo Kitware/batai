@@ -13,7 +13,6 @@ import LayerManager from "./geoJS/LayerManager.vue";
 import { GeoEvent } from "geojs";
 import geo from "geojs";
 import useState from "../use/useState";
-import * as glMatrix from 'gl-matrix';
 
 export default defineComponent({
   name: "SpectroViewer",
@@ -41,7 +40,7 @@ export default defineComponent({
     "hoverData",
   ],
   setup(props, { emit }) {
-    const { annotations, temporalAnnotations, selectedId, selectedType, creationType, blackBackground } = useState();
+    const { annotations, temporalAnnotations, selectedId, selectedType, creationType, blackBackground, scaledVals } = useState();
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized = ref(false);
@@ -191,22 +190,24 @@ export default defineComponent({
     );
 
     const wheelEvent = (event: WheelEvent) => {
-      const geoViewerRef = geoJS.getGeoViewer();
       const { naturalWidth, naturalHeight } = props.image;
 
       if (event.ctrlKey) {
-        scaledWidth.value = scaledWidth.value + event.deltaY * 4;
+        scaledWidth.value = scaledWidth.value + event.deltaY * -4;
         if (scaledWidth.value < naturalWidth) {
           scaledWidth.value = naturalWidth;
         }
         geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
       } else if (event.shiftKey) {
-        scaledHeight.value = scaledHeight.value + event.deltaY * 1;
+        scaledHeight.value = scaledHeight.value + event.deltaY * -0.25;
         if (scaledHeight.value < naturalHeight) {
           scaledHeight.value = naturalHeight;
         }
         geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
       }
+      const xScale = props.spectroInfo?.compressedWidth ? scaledWidth.value / props.spectroInfo.compressedWidth: scaledWidth.value / (props.spectroInfo?.width || 1) ;
+      const yScale = scaledHeight.value / (props.spectroInfo?.height || 1) ;
+      scaledVals.value = {x: xScale, y: yScale};
     };
 
 
@@ -231,15 +232,34 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="video-annotator" :class="{ 'black-background': blackBackground, 'white-background': !blackBackground }"
-    @wheel="wheelEvent($event)">
-    <div id="spectro" ref="containerRef" class="playback-container" :style="{ cursor: cursor }"
-      @mousemove="cursorHandler.handleMouseMove" @mouseleave="cursorHandler.handleMouseLeave"
-      @mouseover="cursorHandler.handleMouseEnter" />
-    <layer-manager v-if="initialized" :geo-viewer-ref="geoViewerRef" :spectro-info="spectroInfo"
-      :scaled-width="scaledWidth" :scaled-height="scaledHeight" @update:annotation="updateAnnotation($event)"
-      @create:annotation="createAnnotation($event)" @set-cursor="setCursor($event)" />
-    <div ref="imageCursorRef" class="imageCursor">
+  <div
+    class="video-annotator"
+    :class="{ 'black-background': blackBackground, 'white-background': !blackBackground }"
+    @wheel="wheelEvent($event)"
+  >
+    <div
+      id="spectro"
+      ref="containerRef"
+      class="playback-container"
+      :style="{ cursor: cursor }"
+      @mousemove="cursorHandler.handleMouseMove"
+      @mouseleave="cursorHandler.handleMouseLeave"
+      @mouseover="cursorHandler.handleMouseEnter"
+    />
+    <layer-manager
+      v-if="initialized"
+      :geo-viewer-ref="geoViewerRef"
+      :spectro-info="spectroInfo"
+      :scaled-width="scaledWidth"
+      :scaled-height="scaledHeight"
+      @update:annotation="updateAnnotation($event)"
+      @create:annotation="createAnnotation($event)"
+      @set-cursor="setCursor($event)"
+    />
+    <div
+      ref="imageCursorRef"
+      class="imageCursor"
+    >
       <v-icon color="white">
         {{ cursor }}
       </v-icon>

@@ -166,7 +166,7 @@ export default class LegendLayer {
   }
 
   drawXAxisLabelsCompressed(yOffset = 0, topOffset = 0, leftOffset = 0,) {
-    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
+    // const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
     const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
 
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
@@ -174,7 +174,10 @@ export default class LegendLayer {
     const baseTopPos = topOffset === 0 ? 0 : -topOffset;
     const topBuffer = topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -0.5;
 
-    const { start_times, end_times, widths } = this.spectroInfo;
+    const { start_times, end_times, widths, compressedWidth } = this.spectroInfo;
+    if (!compressedWidth) {
+      throw Error('No compressed width');
+    }
     if (start_times && end_times && widths) {
       // We need a pixel time to map to the 0 position
       let pixelOffset = 0;
@@ -182,7 +185,7 @@ export default class LegendLayer {
         const length = yBuffer * 4;
         const start_time = start_times[i];
         const end_time = end_times[i];
-        const width = widths[i];
+        const width = this.scaledWidth > compressedWidth ? (this.scaledWidth / compressedWidth) * widths[i] : widths[i];
         const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  50)  && leftOffset !== 0 && yOffset !== 0;
         const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  50)  && leftOffset !== 0 && topOffset !== 0;
      

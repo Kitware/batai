@@ -43,6 +43,7 @@ export default defineComponent({
       otherUserAnnotations,
       selectedId,
       selectedType,
+      scaledVals,
     } = useState();
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -200,6 +201,7 @@ export default defineComponent({
       selectedUsers,
       deleteChip,
       colorScale,
+      scaledVals,
     };
   },
 });
@@ -221,6 +223,20 @@ export default defineComponent({
                 <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
               </div>
             </v-col>
+            <v-col
+              v-if="scaledVals.x > 1 || scaledVals.y > 1"
+              cols="2"
+            >
+              <div>
+                <b>xScale:</b>
+                <span v-if="timeRef >= 0">{{ scaledVals.x.toFixed(2) }}x</span>
+              </div>
+              <div>
+                <b>ySAcale:</b>
+                <span v-if="freqRef >= 0">{{ scaledVals.y.toFixed(2) }}x</span>
+              </div>
+            </v-col>
+
             <v-col
               cols="1"
               class="px-0"
