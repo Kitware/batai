@@ -435,16 +435,17 @@ function geojsonToSpectro(
     };
   } else if (spectroInfo.start_times && spectroInfo.end_times) {
     // first need to map the X positions to times based on the start/endtimes
-    const start = coords[1][0];
-    const end = coords[3][0];
-    const { start_times, end_times } = spectroInfo;
-    const timeToPixels = spectroInfo.width / (spectroInfo.end_time - spectroInfo.start_time);
+    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ?  scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
+    const start = coords[1][0] / compressedScale;
+    const end = coords[3][0] / compressedScale;
+    const { start_times, widths } = spectroInfo;
+    const timeToPixels = (adjustedWidth) / (spectroInfo.end_time - spectroInfo.start_time);
     let additivePixels = 0;
     let start_time = -1;
     let end_time = -1;
     for (let i = 0; i < start_times.length; i += 1) {
       // convert the start/end time to a pixel
-      const nextPixels = (end_times[i] - start_times[i]) * timeToPixels;
+      const nextPixels = (widths && widths[i] || 0);
       if (start > additivePixels && end < additivePixels + nextPixels) {
         // Found the location for time markers
         // We need to remap pixels back to milliseconds
@@ -458,7 +459,7 @@ function geojsonToSpectro(
       }
       additivePixels += nextPixels;
     }
-    const heightScale = spectroInfo.height / (spectroInfo.high_freq - spectroInfo.low_freq);
+    const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     const high_freq = Math.round(spectroInfo.high_freq - coords[1][1] / heightScale);
     const low_freq = Math.round(spectroInfo.high_freq - coords[3][1] / heightScale);
     if (start_time === -1 || end_time === -1) {
