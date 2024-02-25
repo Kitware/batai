@@ -274,7 +274,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
         return {'error': 'Recording not found'}
 
     spectrogram = recording.spectrogram
-    compressed, starts, ends, widths = spectrogram.compressed
+    compressed, starts, ends, widths, total_width = spectrogram.compressed
 
     spectro_data = {
         'base64_spectrogram': compressed,
@@ -287,6 +287,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
             'end_times': ends,
             'low_freq': spectrogram.frequency_min,
             'high_freq': spectrogram.frequency_max,
+            'compressedWidth': total_width,
             'widths': widths,
         },
     }
@@ -314,13 +315,22 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
     spectro_data['currentUser'] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
+    temporal_annotations_qs = TemporalAnnotations.objects.filter(
+        recording=recording, owner=request.user
+    )
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = [
         AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
         for annotation in annotations_qs
     ]
+    temporal_annotations_data = [
+        TemporalAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+        for annotation in temporal_annotations_qs
+    ]
+
     spectro_data['annotations'] = annotations_data
+    spectro_data['temporal'] = temporal_annotations_data
     return spectro_data
 
 

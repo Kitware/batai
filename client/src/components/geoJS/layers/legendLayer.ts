@@ -49,6 +49,10 @@ export default class LegendLayer {
 
   gridEnabled: boolean;
 
+  scaledWidth: number;
+
+  scaledHeight: number;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,6 +68,8 @@ export default class LegendLayer {
     this.textDataX = [];
     this.textDataY = [];
     this.axisBuffer = 5;
+    this.scaledHeight = -1;
+    this.scaledWidth  = -1;
     this.event = event;
     this.gridEnabled = false;
     //Only initialize once, prevents recreating Layer each edit
@@ -101,14 +107,34 @@ export default class LegendLayer {
     this.redraw();
   }
 
+  setScaledDimensions( width: number, height: number) {
+    this.scaledWidth = width;
+    this.scaledHeight = height;
+    this.createLabels();
+    this.calcGridLines();
+    if (this.gridEnabled) {
+      this.gridLayer
+        .data(this.gridLines)
+        .line((d: LineData) => d.line.coordinates)
+        .style(this.createLineStyle())
+        .draw();
+    } else {
+      this.gridLayer.data([]).draw();
+    }
+    this.redraw();
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   drawXAxisLabels(yOffset = 0, _xOffset = 0, leftOffset = 0) {
+    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
+    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
-    const baseYPos = yOffset === 0 ? this.spectroInfo.height : yOffset;
+    const baseYPos = yOffset === 0 ? adjustedHeight : yOffset;
 
     // Now we need tick marks for ms along the X-axis
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
-    const timeToPixels = this.spectroInfo.width / time;
+    const timeToPixels = adjustedWidth / time;
 
     // every 100 ms a small tick and every 1000 a big tick
     for (let i = 0; i < time; i += 10) {
@@ -139,16 +165,19 @@ export default class LegendLayer {
     }
   }
 
-  drawXAxisLabelsCompressed(yOffset = 0, topOffset = 0, leftOffset = 0) {
+  drawXAxisLabelsCompressed(yOffset = 0, topOffset = 0, leftOffset = 0,) {
+    // const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
+    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
-    const baseYPos = yOffset === 0 ? this.spectroInfo.height : yOffset;
+    const baseYPos = yOffset === 0 ? adjustedHeight : yOffset;
     const baseTopPos = topOffset === 0 ? 0 : -topOffset;
     const topBuffer = topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -0.5;
 
-    // For compressed we need to draw based on the start/endTimes instead of the standard
-    const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
-
-    const { start_times, end_times, widths } = this.spectroInfo;
+    const { start_times, end_times, widths, compressedWidth } = this.spectroInfo;
+    if (!compressedWidth) {
+      throw Error('No compressed width');
+    }
     if (start_times && end_times && widths) {
       // We need a pixel time to map to the 0 position
       let pixelOffset = 0;
@@ -156,7 +185,7 @@ export default class LegendLayer {
         const length = yBuffer * 4;
         const start_time = start_times[i];
         const end_time = end_times[i];
-        const width = widths[i];
+        const width = this.scaledWidth > compressedWidth ? (this.scaledWidth / compressedWidth) * widths[i] : widths[i];
         const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  50)  && leftOffset !== 0 && yOffset !== 0;
         const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  50)  && leftOffset !== 0 && topOffset !== 0;
      
@@ -244,26 +273,29 @@ export default class LegendLayer {
 
   calcGridLines() {
     // Y-Axis grid lines:
+    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
+    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
     const xBuffer = this.axisBuffer;
     const hz = this.spectroInfo.high_freq - this.spectroInfo.low_freq;
-    const hzToPixels = this.spectroInfo.height / hz;
+    const hzToPixels = adjustedHeight / hz;
+    this.gridLines = [];
     for (let i = 0; i < hz; i += 10000) {
       this.gridLines.push({
         line: {
           type: "LineString",
           coordinates: [
-            [0 - xBuffer - length, this.spectroInfo.height - i * hzToPixels],
-            [this.spectroInfo.width, this.spectroInfo.height - i * hzToPixels],
+            [0 - xBuffer - length, adjustedHeight - i * hzToPixels],
+            [adjustedWidth, adjustedHeight - i * hzToPixels],
           ],
         },
         grid: true,
       });
     }
-    const baseYPos = this.spectroInfo.height;
+    const baseYPos = adjustedHeight;
 
     // Now we need tick marks for ms along the X-axis
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
-    const timeToPixels = this.spectroInfo.width / time;
+    const timeToPixels = adjustedWidth / time;
 
     // every 100 ms a small tick and every 1000 a big tick
     for (let i = 0; i < time; i += 10) {
@@ -281,27 +313,29 @@ export default class LegendLayer {
   }
 
   drawYAxis(offset = 0) {
+    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
+    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
     const xBuffer = offset === 0 ? this.axisBuffer : this.axisBuffer * -0.25;
     const yAxis: GeoJSON.LineString = {
       type: "LineString",
       coordinates: [
         [offset - xBuffer, 0],
-        [offset - xBuffer, this.spectroInfo.height + xBuffer],
+        [offset - xBuffer, adjustedWidth + xBuffer],
       ],
     };
     this.lineDataY.push({ line: yAxis });
 
     // Lets do the vertical Hz axis now
     const hz = this.spectroInfo.high_freq - this.spectroInfo.low_freq;
-    const hzToPixels = this.spectroInfo.height / hz;
+    const hzToPixels = adjustedHeight / hz;
     for (let i = 0; i < hz; i += 10000) {
       const length = i % 10000 === 0 ? xBuffer * 8 : xBuffer * 4;
       this.lineDataY.push({
         line: {
           type: "LineString",
           coordinates: [
-            [offset - xBuffer, this.spectroInfo.height - i * hzToPixels],
-            [offset - xBuffer - length, this.spectroInfo.height - i * hzToPixels],
+            [offset - xBuffer, adjustedHeight - i * hzToPixels],
+            [offset - xBuffer - length, adjustedHeight - i * hzToPixels],
           ],
         },
         thicker: i % 10000 === 0,
@@ -309,7 +343,7 @@ export default class LegendLayer {
       this.textDataY.push({
         text: `${(i + this.spectroInfo.low_freq) / 1000}KHz`,
         x: offset - xBuffer - length,
-        y: this.spectroInfo.height - i * hzToPixels,
+        y: adjustedHeight - i * hzToPixels,
         offsetX: offset === 0 ? -25 : 25,
         offsetY: 0,
       });
@@ -317,16 +351,19 @@ export default class LegendLayer {
   }
 
   drawXAxis(bottomOffset = 0, topOffset = 0, lefOffset = 0) {
+    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
+    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+
     const xAxis: GeoJSON.LineString = {
       type: "LineString",
       coordinates: [
-        [0 - this.axisBuffer, this.spectroInfo.height + this.axisBuffer],
-        [this.spectroInfo.width, this.spectroInfo.height + this.axisBuffer],
+        [0 - this.axisBuffer, adjustedHeight + this.axisBuffer],
+        [adjustedWidth, adjustedHeight + this.axisBuffer],
       ],
     };
 
     this.lineDataX.push({ line: xAxis });
-    this.drawYAxis();
+    this.drawYAxis(0);
 
     if (this.spectroInfo.start_times && this.spectroInfo.end_times) {
       this.drawXAxisLabelsCompressed(bottomOffset, topOffset, lefOffset);
@@ -335,6 +372,9 @@ export default class LegendLayer {
     }
   }
   createLabels() {
+    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
+    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+
     // Take spectro Info and create lines for X/Y axis
     this.textDataX = [];
     this.lineDataX = [];
@@ -343,8 +383,8 @@ export default class LegendLayer {
     const xAxis: GeoJSON.LineString = {
       type: "LineString",
       coordinates: [
-        [0 - this.axisBuffer, this.spectroInfo.height + this.axisBuffer],
-        [this.spectroInfo.width, this.spectroInfo.height + this.axisBuffer],
+        [0 - this.axisBuffer, adjustedHeight + this.axisBuffer],
+        [adjustedWidth, adjustedHeight + this.axisBuffer],
       ],
     };
 

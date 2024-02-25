@@ -39,6 +39,9 @@ export default class FreqLayer {
   textStyle: LayerStyle<TextData>;
   lineStyle: LayerStyle<LineData>;
 
+  scaledWidth: number;
+  scaledHeight: number;
+
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -52,6 +55,8 @@ export default class FreqLayer {
     this.lineData = [];
     this.spectroInfo = spectroInfo;
     this.textData = [];
+    this.scaledWidth = 0;
+    this.scaledHeight = 0;
     this.event = event;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
@@ -68,13 +73,17 @@ export default class FreqLayer {
     this.lineStyle = this.createLineStyle();
   }
 
+  setScaledDimensions(newWidth: number, newHeight: number) {
+    this.scaledWidth = newWidth;
+    this.scaledHeight = newHeight;
+  }
 
   formatData(annotationData: SpectrogramAnnotation[]) {
     this.textData = [];
     this.lineData = [];
     const lineDist = 16;
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
-      const polygon = spectroToGeoJSon(annotation, this.spectroInfo);
+      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, 1, this.scaledWidth, this.scaledHeight);
       const {low_freq, high_freq } = annotation;
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];

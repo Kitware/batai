@@ -239,6 +239,7 @@ class Spectrogram(TimeStampedModel, models.Model):
             stops_ = []
             domain = img.shape[1]
             widths = []
+            total_width = 0
             for start, stop in ranges:
                 segment = img[:, start:stop]
                 segments.append(segment)
@@ -246,6 +247,7 @@ class Spectrogram(TimeStampedModel, models.Model):
                 starts_.append(int(round(self.duration * (start / domain))))
                 stops_.append(int(round(self.duration * (stop / domain))))
                 widths.append(stop - start)
+                total_width += stop - start
 
                 # buffer = np.zeros((len(img), 20, 3), dtype=img.dtype)
                 # segments.append(buffer)
@@ -273,7 +275,7 @@ class Spectrogram(TimeStampedModel, models.Model):
         buf.seek(0)
         img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
 
-        return img_base64, starts_, stops_, widths
+        return img_base64, starts_, stops_, widths, total_width
 
     @property
     def image_np(self):

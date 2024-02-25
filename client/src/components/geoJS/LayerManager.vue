@@ -31,6 +31,14 @@ export default defineComponent({
     yScale: {
       type: Number,
       default: 1,
+    },
+    scaledWidth: {
+      type: Number,
+      default: -1,
+    },
+    scaledHeight: {
+      type: Number,
+      default: -1,
     }
   },
   emits: ["selected", "update:annotation", "create:annotation", "set-cursor"],
@@ -198,7 +206,7 @@ export default defineComponent({
             ) : localTemporalAnnotations.value.findIndex((item) => item.id === selectedAnnotationId.value);
             if (index !== -1 && props.spectroInfo && selectedType.value === 'pulse') {
               // update bounds for the localAnnotation
-              const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo);
+              const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
               if (conversionResult.error) {
                 displayError.value = true;
                 errorMsg.value = conversionResult.error;
@@ -216,7 +224,7 @@ export default defineComponent({
             }
             if (index !== -1 && props.spectroInfo && selectedType.value === 'sequence') {
               // update bounds for the localAnnotation
-              const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo);
+              const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
               if (conversionResult.error) {
                 displayError.value = true;
                 errorMsg.value = conversionResult.error;
@@ -236,7 +244,7 @@ export default defineComponent({
           }
         } else if (creating) {
           if (geoJSON && props.spectroInfo) {
-            const conversionResult =  geojsonToSpectro(geoJSON, props.spectroInfo);
+            const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo);
 
             if (conversionResult.error) {
               displayError.value = true;
@@ -255,8 +263,8 @@ export default defineComponent({
                 id: 0,
               };
               emit("create:annotation", newAnnotation);
-          } else if (creationType.value === 'sequence') {
-            const newAnnotation: SpectrogramTemporalAnnotation = {
+            } else if (creationType.value === 'sequence') {
+              const newAnnotation: SpectrogramTemporalAnnotation = {
                 start_time,
                 end_time,
                 species: [],
@@ -266,7 +274,7 @@ export default defineComponent({
               };
               emit("create:annotation", newAnnotation);
 
-          }
+            }
             editAnnotationLayer.disable();
             annotationState.value = "";
             editing.value = false;
@@ -359,7 +367,7 @@ export default defineComponent({
         triggerUpdate();
       }
     );
-    watch (temporalAnnotations, () => {
+    watch(temporalAnnotations, () => {
       localTemporalAnnotations.value = temporalAnnotations.value;
       triggerUpdate();
     });
@@ -427,6 +435,63 @@ export default defineComponent({
         triggerUpdate();
       }
     });
+    watch([() => props.scaledWidth, () => props.scaledHeight], () => {
+      const { annotations, temporalAnnotations } = getDataForLayers();
+      legendLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      rectAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      rectAnnotationLayer.formatData(
+        annotations,
+        selectedType.value === 'pulse' ? selectedAnnotationId.value : null,
+        currentUser.value,
+        colorScale.value,
+        props.yScale,
+      );
+      rectAnnotationLayer.redraw();
+      editAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      if (editing.value && editingAnnotation.value) {
+        setTimeout(() => {
+          editAnnotationLayer.changeData(editingAnnotation.value, selectedType.value);
+        }, 0);
+      }
+      timeLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      freqLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      speciesSequenceLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      temporalAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      if (layerVisibility.value.includes("time")) {
+        timeLayer.formatData(annotations, temporalAnnotations);
+        timeLayer.redraw();
+      } else {
+        timeLayer.disable();
+      }
+      if (layerVisibility.value.includes("freq")) {
+        freqLayer.formatData(annotations);
+        freqLayer.redraw();
+      } else {
+        freqLayer.disable();
+      }
+      if (layerVisibility.value.includes("species")) {
+        speciesLayer.formatData(annotations);
+        speciesLayer.redraw();
+        speciesSequenceLayer.formatData(temporalAnnotations);
+        speciesSequenceLayer.redraw();
+      } else {
+        speciesLayer.disable();
+        speciesSequenceLayer.disable();
+      }
+      if (temporalAnnotationLayer && layerVisibility.value.includes('temporal')) {
+        temporalAnnotationLayer.formatData(
+          temporalAnnotations,
+          selectedType.value === 'sequence' ? selectedAnnotationId.value : null,
+          currentUser.value,
+          colorScale.value,
+          props.yScale,
+        );
+        temporalAnnotationLayer.redraw();
+      }
+
+
+    });
     watch(
       () => annotationState.value,
       () => {
@@ -452,7 +517,7 @@ export default defineComponent({
 
 <template>
   <v-dialog
-    v-model="displayError" 
+    v-model="displayError"
     width="500"
   >
     <v-card>
@@ -473,4 +538,3 @@ export default defineComponent({
     </v-card>
   </v-dialog>
 </template>
-./layers/timeLalyer
