@@ -4,8 +4,10 @@ import OAuthClient from "@girder/oauth-client";
 import { useRoute, useRouter } from "vue-router";
 import useState from "./use/useState";
 import { getRecordings } from "./api/api";
+import HelpSystem from "./components/HelpSystem.vue";
 
 export default defineComponent({
+  components: { HelpSystem },
   setup() {
     const oauthClient = inject<OAuthClient>("oauthClient");
     const router = useRouter();
@@ -110,6 +112,7 @@ export default defineComponent({
           </div>
         </span>
       </v-tooltip>
+      <help-system />
       <v-btn @click="logInOrOut">
         {{ loginText }}
       </v-btn>

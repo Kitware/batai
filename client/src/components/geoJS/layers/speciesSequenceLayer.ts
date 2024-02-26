@@ -95,7 +95,7 @@ export default class SpeciesSequenceLayer {
             x: xmin + (xmax-xmin) /2.0,
             y: ymax ,
             offsetX:0,
-            offsetY: -5 + textOffset,
+            offsetY: -30 + textOffset,
             textType: 'species',
           });
           textOffset -= 15;        

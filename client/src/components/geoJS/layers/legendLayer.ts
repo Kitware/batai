@@ -326,6 +326,7 @@ export default class LegendLayer {
   }
 
   drawYAxis(offset = 0) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
     const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
     const xBuffer = offset === 0 ? this.axisBuffer : this.axisBuffer * -0.25;
@@ -333,7 +334,7 @@ export default class LegendLayer {
       type: "LineString",
       coordinates: [
         [offset - xBuffer, 0],
-        [offset - xBuffer, adjustedWidth + xBuffer],
+        [offset - xBuffer, adjustedHeight + xBuffer],
       ],
     };
     this.lineDataY.push({ line: yAxis });
