@@ -110,6 +110,12 @@ export default class EditAnnotationLayer {
     this.initialize();
   }
 
+  destroy() {
+    if (this.featureLayer) {
+      this.geoViewerRef.deleteLayer(this.featureLayer);
+    }
+  }
+
   /**
    * Initialization of the layer should only be done once for edit layers
    * Handlers for edit_action and state which will emit data when necessary

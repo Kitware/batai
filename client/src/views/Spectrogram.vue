@@ -81,7 +81,6 @@ export default defineComponent({
     };
 
     const loadData = async () => {
-      loadedImage.value = false;
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);

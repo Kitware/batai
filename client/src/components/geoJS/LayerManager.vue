@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, nextTick, onMounted, PropType, Ref, ref, watch } from "vue";
+import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
 import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
@@ -397,24 +397,82 @@ export default defineComponent({
         triggerUpdate();
       }
     );
-    onMounted(() => {
+    onUnmounted(() => {
+      if (editAnnotationLayer) {
+        editAnnotationLayer.destroy();
+      }
+      if (rectAnnotationLayer) {
+        rectAnnotationLayer.destroy();
+      }
+      if (temporalAnnotationLayer) {
+        temporalAnnotationLayer.destroy();
+      }
+      if (timeLayer) {
+        timeLayer.destroy();
+      }
+      if (freqLayer) {
+        freqLayer.destroy();
+      }
+      if (speciesLayer) {
+        speciesLayer.destroy();
+      }
+      if (speciesSequenceLayer) {
+        speciesSequenceLayer.destroy();
+      }
+    });
+    const initLayers = () => {
       if (props.spectroInfo) {
+        if (!editAnnotationLayer) {
         editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
+        } else {
+          editAnnotationLayer.spectroInfo = props.spectroInfo;
+        }
+        if (!rectAnnotationLayer) {
         rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
+        } else {
+          rectAnnotationLayer.spectroInfo = props.spectroInfo;
+        }
+        if (!temporalAnnotationLayer) {
+        temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
+        } {
+          temporalAnnotationLayer.spectroInfo = props.spectroInfo;
+        }
         rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
         rectAnnotationLayer.redraw();
-        temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
         temporalAnnotationLayer.formatData(localTemporalAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
         temporalAnnotationLayer.redraw();
         if (!props.thumbnail) {
+          if (!legendLayer) {
           legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
+          } else {
+            legendLayer.spectroInfo = props.spectroInfo;
+            legendLayer.createLabels();
+            legendLayer.calcGridLines();
+          }
+          if (!timeLayer) {
           timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
-          timeLayer.formatData(localAnnotations.value, temporalAnnotations.value);
+          } else {
+            timeLayer.spectroInfo = props.spectroInfo;
+          }
+          if (!freqLayer) {
           freqLayer = new FreqLayer(props.geoViewerRef, event, props.spectroInfo);
-          freqLayer.formatData(localAnnotations.value);
-          speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
-          speciesLayer.formatData(localAnnotations.value);
+          } else {
+            freqLayer.spectroInfo = props.spectroInfo;
+          }
+          if (!speciesSequenceLayer) {
           speciesSequenceLayer = new SpeciesSequenceLayer(props.geoViewerRef, event, props.spectroInfo);
+          } else {
+            speciesSequenceLayer.spectroInfo = props.spectroInfo;
+          }
+          if (!speciesLayer) {
+          speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
+          } else {
+            speciesLayer.spectroInfo = props.spectroInfo;
+          }
+
+          timeLayer.formatData(localAnnotations.value, temporalAnnotations.value);
+          freqLayer.formatData(localAnnotations.value);
+          speciesLayer.formatData(localAnnotations.value);
           speciesSequenceLayer.formatData(localTemporalAnnotations.value);
 
           legendLayer.redraw();
@@ -429,7 +487,11 @@ export default defineComponent({
           freqLayer.disable();
         }
       }
-    });
+      triggerUpdate();
+    };
+    onMounted(() => initLayers());
+
+    watch(() => props.spectroInfo, () => initLayers());
     watch(layerVisibility, () => {
       if (!props.thumbnail && legendLayer) {
         triggerUpdate();

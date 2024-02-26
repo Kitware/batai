@@ -87,9 +87,10 @@ export default class LegendLayer {
     this.textStyle = this.createTextStyle();
     this.lineStyle = this.createLineStyle();
     this.gridLines = [];
+    this.geoViewerRef.geoOn(geo.event.pan, () => this.onPan());
     this.createLabels();
     this.calcGridLines();
-    this.geoViewerRef.geoOn(geo.event.pan, () => this.onPan());
+
   }
 
   onPan() {
@@ -164,6 +165,18 @@ export default class LegendLayer {
       }
     }
   }
+  destroy() {
+    if (this.textLayer) {
+      this.geoViewerRef.deleteLayer(this.textLayer);
+    }
+    if (this.lineLayer) {
+      this.geoViewerRef.deleteLayer(this.lineLayer);
+    }
+    if (this.gridLayer) {
+      this.geoViewerRef.deleteLayer(this.gridLayer);
+    }
+  }
+
 
   drawXAxisLabelsCompressed(yOffset = 0, topOffset = 0, leftOffset = 0,) {
     // const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
@@ -313,6 +326,7 @@ export default class LegendLayer {
   }
 
   drawYAxis(offset = 0) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
     const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
     const xBuffer = offset === 0 ? this.axisBuffer : this.axisBuffer * -0.25;
@@ -320,7 +334,7 @@ export default class LegendLayer {
       type: "LineString",
       coordinates: [
         [offset - xBuffer, 0],
-        [offset - xBuffer, adjustedWidth + xBuffer],
+        [offset - xBuffer, adjustedHeight + xBuffer],
       ],
     };
     this.lineDataY.push({ line: yAxis });

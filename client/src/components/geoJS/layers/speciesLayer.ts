@@ -63,6 +63,13 @@ export default class SpeciesLayer {
     this.scaledHeight = newHeight;
   }
 
+  destroy() {
+    if (this.textLayer) {
+      this.geoViewerRef.deleteLayer(this.textLayer);
+    }    
+  }
+
+
 
   formatData(annotationData: SpectrogramAnnotation[]) {
     this.textData = [];

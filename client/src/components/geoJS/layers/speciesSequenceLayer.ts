@@ -65,6 +65,12 @@ export default class SpeciesSequenceLayer {
     this.scaledHeight = newHeight;
   }
 
+  destroy() {
+    if (this.textLayer) {
+      this.geoViewerRef.deleteLayer(this.textLayer);
+    }    
+  }
+
   formatData(annotationData: SpectrogramTemporalAnnotation[]) {
     this.textData = [];
     annotationData.forEach((annotation: SpectrogramTemporalAnnotation) => {
@@ -89,7 +95,7 @@ export default class SpeciesSequenceLayer {
             x: xmin + (xmax-xmin) /2.0,
             y: ymax ,
             offsetX:0,
-            offsetY: -5 + textOffset,
+            offsetY: -30 + textOffset,
             textType: 'species',
           });
           textOffset -= 15;        
