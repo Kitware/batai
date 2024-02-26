@@ -50,7 +50,7 @@ export default defineComponent({
     const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
-    const compressed = ref(false);
+    const compressed = ref(true);
     const gridEnabled = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
@@ -81,7 +81,6 @@ export default defineComponent({
     };
 
     const loadData = async () => {
-      loadedImage.value = false;
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);

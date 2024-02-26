@@ -116,6 +116,12 @@ export default class RectangleLayer {
     this.scaledHeight = newHeight;    
   }
 
+  destroy() {
+    if (this.featureLayer) {
+      this.geoViewerRef.deleteLayer(this.featureLayer);
+    }
+  }
+
   formatData(
     annotationData: SpectrogramAnnotation[],
     selectedIndex: number | null,

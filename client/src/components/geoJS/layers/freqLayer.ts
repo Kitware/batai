@@ -78,6 +78,15 @@ export default class FreqLayer {
     this.scaledHeight = newHeight;
   }
 
+  destroy() {
+    if (this.textLayer) {
+      this.geoViewerRef.deleteLayer(this.textLayer);
+    }
+    if (this.lineLayer) {
+      this.geoViewerRef.deleteLayer(this.lineLayer);
+    }
+  }
+
   formatData(annotationData: SpectrogramAnnotation[]) {
     this.textData = [];
     this.lineData = [];

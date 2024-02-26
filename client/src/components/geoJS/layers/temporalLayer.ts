@@ -118,6 +118,12 @@ export default class TemporalLayer {
     }
   }
 
+  destroy() {
+    if (this.featureLayer) {
+      this.geoViewerRef.deleteLayer(this.featureLayer);
+    }
+  }
+
  
   formatData(
     annotationData: SpectrogramTemporalAnnotation[],

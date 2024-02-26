@@ -130,16 +130,33 @@ export default defineComponent({
         }
       }
     };
-    watch(containerRef, () => {
+    watch([containerRef], () => {
       const { naturalWidth, naturalHeight } = props.image;
       scaledWidth.value = naturalWidth;
       scaledHeight.value = naturalHeight;
-      if (containerRef.value)
+      if (containerRef.value) {
+      if (!geoJS.getGeoViewer().value) {
         geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight);
+        geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
+      }
+    }
       geoJS.drawImage(props.image, naturalWidth, naturalHeight);
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
-      geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
+    });
+
+    watch(() => props.spectroInfo, () => {
+      const { naturalWidth, naturalHeight } = props.image;
+      scaledWidth.value = naturalWidth;
+      scaledHeight.value = naturalHeight;
+      geoJS.resetMapDimensions(naturalWidth, naturalHeight);
+      geoJS.getGeoViewer().value.bounds({
+      left: 0,
+      top: 0,
+      bottom: naturalHeight,
+      right: naturalWidth,
+      });
+      geoJS.drawImage(props.image, naturalWidth, naturalHeight);
     });
 
     const updateAnnotation = async (annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation) => {
