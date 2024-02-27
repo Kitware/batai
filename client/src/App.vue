@@ -123,3 +123,9 @@ export default defineComponent({
     </v-main>
   </v-app>
 </template>
+
+<style >
+html {
+  overflow-y:hidden;
+}
+</style>
