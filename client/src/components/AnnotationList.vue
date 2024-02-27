@@ -66,7 +66,7 @@ export default defineComponent({
 <template>
   <v-card
     class="pa-0 ma-0"
-    :class="{'annotation-list': ['pulse','sequence'].includes(tab)}"
+    :class="{'annotation-list': ['pulse','sequence'].includes(tab),'recording-list': !['pulse','sequence'].includes(tab)}"
   >
     <v-card-title>
       <v-row dense>
@@ -242,6 +242,10 @@ export default defineComponent({
 }
 .annotation-list {
   max-height: 60vh;
+  overflow-y: auto;
+}
+.recording-list {
+  max-height: 85vh;
   overflow-y: auto;
 }
 
