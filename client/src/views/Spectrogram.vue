@@ -396,6 +396,6 @@ export default defineComponent({
 
 <style scoped>
 .spectro-main {
-  height: calc(100vh - 20vh - 64px - 72px);
+  height: calc(100vh - 21vh - 64px - 72px);
 }
 </style>
