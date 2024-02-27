@@ -51,7 +51,7 @@ export default defineComponent({
           v-for="item in recordingList"
           :key="`public_${item.id}`"
         >
-          <v-card class="pa-2">
+          <v-card class="pa-2 my-2">
             <v-row dense>
               <v-col class="text-left">
                 <b>Name:</b><router-link
@@ -99,7 +99,7 @@ export default defineComponent({
           v-for="item in modifiedList"
           :key="`public_${item.id}`"
         >
-          <v-card class="pa-2">
+          <v-card class="pa-2 my-2">
             <v-row dense>
               <v-col class="text-left">
                 <b class="pr-1">Name:</b>
