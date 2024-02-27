@@ -47,53 +47,43 @@ export default defineComponent({
     <v-expansion-panel>
       <v-expansion-panel-title>My Recordings</v-expansion-panel-title>
       <v-expansion-panel-text>
-        <div>
-          <v-row
-            dense
-            class="text-center"
-          >
-            <v-col class="text-left">
-              <b>Name</b>
-            </v-col>
-            <v-col><b>Public</b></v-col>
-            <v-col><b>Annotations</b></v-col>
-          </v-row>
-        </div>
         <div
           v-for="item in recordingList"
           :key="`public_${item.id}`"
         >
-          <v-row
-            dense
-            class="text-center"
-          >
-            <v-col class="text-left">
-              <router-link
-                :to="`/recording/${item.id.toString()}/spectrogram`"
-              >
-                {{ item.name }}
-              </router-link>
-            </v-col>
-            <v-col>
-              <v-icon
-                v-if="item.public"
-                color="success"
-              >
-                mdi-check
-              </v-icon>
-              <v-icon
-                v-else
-                color="error"
-              >
-                mdi-close
-              </v-icon>
-            </v-col>
-            <v-col>
-              <div>
-                {{ item.userAnnotations }}
-              </div>
-            </v-col>
-          </v-row>
+          <v-card class="pa-2">
+            <v-row dense>
+              <v-col class="text-left">
+                <b>Name:</b><router-link
+                  :to="`/recording/${item.id.toString()}/spectrogram`"
+                >
+                  {{ item.name }}
+                </router-link>
+              </v-col>
+            </v-row>
+            <v-row dense>
+              <v-col>
+                <b>Public:</b>
+                <v-icon
+                  v-if="item.public"
+                  color="success"
+                >
+                  mdi-check
+                </v-icon>
+                <v-icon
+                  v-else
+                  color="error"
+                >
+                  mdi-close
+                </v-icon>
+              </v-col>
+              <v-col>
+                <div>
+                  <b class="pr-1">Annotations:</b>{{ item.userAnnotations }}
+                </div>
+              </v-col>
+            </v-row>
+          </v-card>
         </div>
       </v-expansion-panel-text>
     </v-expansion-panel>
@@ -105,55 +95,48 @@ export default defineComponent({
           label="Filter Annotated"
           dense
         />
-        <div>
-          <v-row
-            dense
-            class="text-center"
-          >
-            <v-col class="text-left">
-              <b>Name</b>
-            </v-col>
-            <v-col><b>Owner</b></v-col>
-            <v-col><b>Annotated</b></v-col>
-          </v-row>
-        </div>
         <div
           v-for="item in modifiedList"
           :key="`public_${item.id}`"
         >
-          <v-row
-            dense
-            class="text-center"
-          >
-            <v-col class="text-left">
-              <router-link
-                :to="`/recording/${item.id.toString()}/spectrogram`"
-              >
-                {{ item.name }}
-              </router-link>
-            </v-col>
-            <v-col>
-              <div style="font-size:0.75em">
-                {{ item.owner_username }}
-              </div>
-            </v-col>
-            <v-col>
-              <div>
-                <v-icon
-                  v-if="item.userMadeAnnotations"
-                  color="success"
+          <v-card class="pa-2">
+            <v-row dense>
+              <v-col class="text-left">
+                <b class="pr-1">Name:</b>
+                <router-link
+                  :to="`/recording/${item.id.toString()}/spectrogram`"
                 >
-                  mdi-check
-                </v-icon>
-                <v-icon
-                  v-else
-                  color="error"
-                >
-                  mdi-close
-                </v-icon>
-              </div>
-            </v-col>
-          </v-row>
+                  {{ item.name }}
+                </router-link>
+              </v-col>
+            </v-row>
+            <v-row dense>
+              <v-col>
+                <div style="font-size:0.75em">
+                  <b>Owner:</b> {{ item.owner_username }}
+                </div>
+              </v-col>
+            </v-row>
+            <v-row dense>
+              <v-col>
+                <div>
+                  <b>Annotated:</b>
+                  <v-icon
+                    v-if="item.userMadeAnnotations"
+                    color="success"
+                  >
+                    mdi-check
+                  </v-icon>
+                  <v-icon
+                    v-else
+                    color="error"
+                  >
+                    mdi-close
+                  </v-icon>
+                </div>
+              </v-col>
+            </v-row>
+          </v-card>
         </div>
       </v-expansion-panel-text>
     </v-expansion-panel>

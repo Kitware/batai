@@ -376,7 +376,6 @@ export default defineComponent({
       <annotation-list
         :annotations="annotations"
         :temporal-annotations="temporalAnnotations"
-        class="annotation-list"
         @select="processSelection($event)"
       />
       <annotation-editor
@@ -396,10 +395,6 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.annotation-list {
-  max-height: 60vh;
-  overflow-y: auto;
-}
 .spectro-main {
   height: calc(100vh - 20vh - 64px - 72px);
 }
