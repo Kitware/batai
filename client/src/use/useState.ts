@@ -5,8 +5,8 @@ import { OtherUserAnnotations, Recording, SpectrogramAnnotation, SpectrogramTemp
 
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<'pulse' | 'sequence'> = ref("pulse");
-type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal';
-const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'time', 'freq']);
+type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal' | 'duration';
+const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'duration', 'freq']);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref('');
@@ -35,6 +35,14 @@ export default function useState() {
     } else {
       // If the value is present, remove it
       clone.splice(index, 1);
+    }
+    if (value === 'time' && clone.includes('duration')) {
+      const durationInd = layerVisibility.value.indexOf('duration');
+      clone.splice(durationInd, 1);
+    }
+    if (value === 'duration' && clone.includes('time')) {
+      const timeInd = layerVisibility.value.indexOf('time');
+      clone.splice(timeInd, 1);
     }
     layerVisibility.value = clone;
   }

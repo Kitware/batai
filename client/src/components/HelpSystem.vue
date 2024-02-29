@@ -130,10 +130,24 @@ export default defineComponent({
                       color=""
                       variant="flat"
                     >
+                      <v-icon>mdi-arrow-left-right</v-icon>
                       <h3>ms</h3>
                     </v-btn>
                   </v-col>
-                  <v-col>Toggle millisecond/timing labels</v-col>
+                  <v-col>Toggle millisecond/timing endpoint labels</v-col>
+                </v-row>
+                <v-row>
+                  <v-col>
+                    <v-btn
+                      size="35"
+                      color=""
+                      variant="flat"
+                    >
+                      <v-icon>mdi-arrow-expand-horizontal</v-icon>
+                      <h3>ms</h3>
+                    </v-btn>
+                  </v-col>
+                  <v-col>Toggle millisecond/timing duration labels</v-col>
                 </v-row>
                 <v-row>
                   <v-col>

@@ -42,6 +42,7 @@ export default class TimeLayer {
   scaledWidth: number;
   scaledHeight: number;
 
+  displayDuration: boolean;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -68,7 +69,7 @@ export default class TimeLayer {
       .position((data: TextData) => ({ x: data.x, y: data.y }));
 
     this.lineLayer = layer.createFeature("line");
-
+    this.displayDuration = true;
     this.textStyle = this.createTextStyle();
     this.lineStyle = this.createLineStyle();
   }
@@ -87,8 +88,7 @@ export default class TimeLayer {
     }
   }
 
-
-  formatData(annotationData: SpectrogramAnnotation[], temporalData: SpectrogramTemporalAnnotation[] =[]) {
+  createRange(annotationData: SpectrogramAnnotation[], temporalData: SpectrogramTemporalAnnotation[] =[]) {
     this.textData = [];
     this.lineData = [];
     const lineDist = 12;
@@ -191,6 +191,66 @@ export default class TimeLayer {
       });
     });
 
+  }
+
+  createDuration(annotationData: SpectrogramAnnotation[], temporalData: SpectrogramTemporalAnnotation[] =[]) {
+    this.textData = [];
+    this.lineData = [];
+    const lineDist = 12;
+    annotationData.forEach((annotation: SpectrogramAnnotation) => {
+      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, 1, this.scaledWidth, this.scaledHeight);
+      const {start_time, end_time } = annotation;
+      const [xmin, ymin] = polygon.coordinates[0][0];
+      const [xmax, ymax] = polygon.coordinates[0][2];
+      // For the compressed view we need to filter out default or NaN numbers
+      if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+        return;
+      }
+      if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
+        return;
+      }
+      const xpos = (xmin + xmax) / 2.0;
+      const ypos = (ymax + ymin) /2.0;
+      // Now we need to create the text Labels
+      this.textData.push({
+        text: `${end_time - start_time}ms`,
+        x: xpos,
+        y: ypos + lineDist,
+        offsetX: 0,
+        offsetY: 0,
+      });
+    });
+    temporalData.forEach((annotation: SpectrogramTemporalAnnotation) => {
+      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight);
+      const {start_time, end_time } = annotation;
+      const [xmin, ymin] = polygon.coordinates[0][0];
+      const [xmax, ymax] = polygon.coordinates[0][2];
+      // For the compressed view we need to filter out default or NaN numbers
+      if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+        return;
+      }
+      if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
+        return;
+      }
+      const xpos = (xmin + xmax) / 2.0;
+      // Now we need to create the text Labels
+      this.textData.push({
+        text: `${end_time-start_time}ms`,
+        x: xpos,
+        y: (ymax - ymin) / 2.0,
+        offsetX: 0,
+        offsetY: -5,
+      });
+    });
+
+  }
+
+  formatData(annotationData: SpectrogramAnnotation[], temporalData: SpectrogramTemporalAnnotation[] =[]) {
+    if (!this.displayDuration) {
+      this.createRange(annotationData, temporalData);
+    } else {
+      this.createDuration(annotationData, temporalData);
+    }
   }
 
   redraw() {

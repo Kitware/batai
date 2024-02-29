@@ -203,7 +203,7 @@ export default defineComponent({
         :headers="headers"
         :items="recordingList"
         density="compact"
-        class="elevation-1"
+        class="elevation-1 my-recordings"
       >
         <template #item.edit="{ item }">
           <v-icon @click="editRecording(item.raw)">
@@ -277,6 +277,7 @@ export default defineComponent({
             mdi-close
           </v-icon>
         </template>
+        <template #bottom />
       </v-data-table>
     </v-card-text>
     <v-dialog
@@ -304,7 +305,7 @@ export default defineComponent({
         :headers="sharedHeaders"
         :items="sharedList"
         density="compact"
-        class="elevation-1"
+        class="elevation-1 shared-recordings"
       >
         <template #item.name="{ item }">
           <router-link
@@ -367,7 +368,20 @@ export default defineComponent({
             mdi-close
           </v-icon>
         </template>
+        <template #bottom />
       </v-data-table>
     </v-card-text>
   </v-card>
 </template>
+
+<style scoped>
+.my-recordings {
+  height: 40vh;
+  max-height: 40vh;
+  overflow-y:scroll;
+}
+.shared-recordings {
+  height: 40vh;
+  max-height: 40vh;
+}
+</style>

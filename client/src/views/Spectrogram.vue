@@ -299,10 +299,26 @@ export default defineComponent({
                   :color="layerVisibility.includes('time') ? 'blue' : ''"
                   @click="toggleLayerVisibility('time')"
                 >
-                  <h3>ms</h3>
+                  <v-icon>mdi-arrow-left-right</v-icon>
+                  <h4>ms</h4>
                 </v-btn>
               </template>
-              <span> Turn Time Label On/Off</span>
+              <span> Turn Time Endpoint Labels On/Off</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-btn
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="layerVisibility.includes('duration') ? 'blue' : ''"
+                  @click="toggleLayerVisibility('duration')"
+                >
+                  <v-icon>mdi-arrow-expand-horizontal</v-icon>
+                  <h4>ms</h4>
+                </v-btn>
+              </template>
+              <span> Turn Time Duration Labels On/Off</span>
             </v-tooltip>
             <v-tooltip bottom>
               <template #activator="{ props: subProps }">
