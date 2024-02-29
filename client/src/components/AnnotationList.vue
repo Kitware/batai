@@ -129,6 +129,7 @@ export default defineComponent({
               <v-row>
                 <v-col class="annotation-time">
                   <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
+                  <span class="pl-2"><b>({{ annotation.end_time - annotation.start_time }}ms)</b></span>
                 </v-col>
                 <v-col class="annotation-freq">
                   <span>{{ (annotation.low_freq/1000).toFixed(1) }}-{{ (annotation.high_freq/1000).toFixed() }}Khz </span>
@@ -184,6 +185,7 @@ export default defineComponent({
               <v-row>
                 <v-col class="annotation-time">
                   <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
+                  <span class="pl-2"><b>({{ annotation.end_time - annotation.start_time }}ms)</b></span>
                 </v-col>
                 <v-col class="annotation-time">
                   <b>Type:</b><span>{{ annotation.type }}</span>

@@ -34,9 +34,11 @@ export default defineComponent({
     });
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
-    const type: Ref<string> = ref('');
+    const type: Ref<string[]> = ref([]);
+    const callTypes = ref(['Search', 'Approach', 'Terminal', 'Social']);
+
     if (selectedType.value === 'sequence') {
-      type.value = (props.annotation as SpectrogramTemporalAnnotation).type || '';
+      type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [''];
     }
     watch(() => props.annotation, () => {
         if (props.annotation?.species) {
@@ -46,7 +48,7 @@ export default defineComponent({
             comments.value = props.annotation.comments;
         }
         if (selectedType.value === 'pulse' && (props.annotation as SpectrogramTemporalAnnotation).type) {
-            type.value = (props.annotation as SpectrogramTemporalAnnotation).type || '';
+            type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [];
         }
     });
     const updateAnnotation = async () => {
@@ -62,7 +64,8 @@ export default defineComponent({
             if (selectedType.value === 'pulse') {
               await patchAnnotation(props.recordingId, props.annotation?.id, { ...props.annotation, comments: comments.value }, speciesIds );
             } else if (selectedType.value === 'sequence') {
-              await patchTemporalAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: type.value,}, speciesIds);
+              const updateType = type.value.join('+');
+              await patchTemporalAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: updateType,}, speciesIds);
             }
             // Signal to redownload the updated annotation values if possible
             emit('update:annotation');
@@ -82,6 +85,7 @@ export default defineComponent({
         
     };
     return {
+        callTypes,
         speciesList,
         speciesEdit,
         comments,
@@ -122,10 +126,14 @@ export default defineComponent({
       />
     </v-row>
     <v-row v-if="selectedType === 'sequence'">
-      <v-text-field
+      <v-autocomplete
         v-model="type"
+        multiple
+        closable-chips
+        chips
+        :items="callTypes"
         label="Type"
-        @change="updateAnnotation()"
+        @update:model-value="updateAnnotation()"
       />
     </v-row>
 

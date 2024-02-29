@@ -244,7 +244,7 @@ export default defineComponent({
           }
         } else if (creating) {
           if (geoJSON && props.spectroInfo) {
-            const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo);
+            const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
 
             if (conversionResult.error) {
               displayError.value = true;
@@ -332,7 +332,12 @@ export default defineComponent({
           legendLayer.setGridEnabled(false);
         }
         legendLayer.redraw();
-        if (layerVisibility.value.includes("time")) {
+        if (layerVisibility.value.includes("time") || layerVisibility.value.includes('duration')) {
+          if (layerVisibility.value.includes("time")) {
+            timeLayer.displayDuration = false;
+          } else {
+            timeLayer.displayDuration = true;
+          }
           timeLayer.formatData(annotations, temporalAnnotations);
           timeLayer.redraw();
         } else {

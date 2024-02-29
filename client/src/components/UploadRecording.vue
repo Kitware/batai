@@ -42,7 +42,7 @@ export default defineComponent({
     const errorText = ref('');
     const progressState = ref('');
     const recordedDate = ref(props.editing ? props.editing.date : new Date().toISOString().split('T')[0]); // YYYY-MM-DD Time
-    const recordedTime = ref(props.editing ? props.editing.time : getCurrentTime()); // HHMMSS
+    const recordedTime = ref(props.editing ? props.editing.time.replaceAll(':','') : getCurrentTime()); // HHMMSS
     const uploadProgress = ref(0);
     const name = ref(props.editing ? props.editing.name : '');
     const equipment = ref(props.editing ? props.editing.equipment : '');
@@ -53,18 +53,31 @@ export default defineComponent({
     const gridCellId: Ref<number | undefined> = ref();
     const publicVal = ref(props.editing ? props.editing.public : false);
     const autoFill = async (filename: string) => {
-      const parts = filename.split("_");
+
+      const regexPattern = /^(\d+)_(.+)_(\d{8})_(\d{6})(?:_(.*))?$/;
+
+      // Match the file name against the regular expression
+      const match = filename.match(regexPattern);
+
+      // If there's no match, return null
+      if (!match) {
+          return null;
+      }
+
+      // Extract the matched groups
+      const cellId = match[1];
+      const labelName = match[2];
+      const date = match[3];
+      const timestamp = match[4];
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const extraData = match[5] || null; // Additional data after the required parts
 
       // Extracting individual components
-      const cellId = parts[0];
-      const quadrant = parts[1];
-      const date = parts[2];
-      const timestamp = parts[3];
       if (cellId) {
         gridCellId.value = parseInt(cellId, 10);
         let updatedQuadrant;
-        if (['SW', 'NE', 'NW', 'SE'].includes(quadrant)) {
-          updatedQuadrant = quadrant as 'SW' | 'NE' | 'NW' | 'SE' | undefined;
+        if (['SW', 'NE', 'NW', 'SE'].includes(labelName)) {
+          updatedQuadrant = labelName as 'SW' | 'NE' | 'NW' | 'SE' | undefined;
         }
         const { latitude: lat , longitude: lon } = (await getCellLocation(gridCellId.value, updatedQuadrant)).data;
         if (lat && lon) {
