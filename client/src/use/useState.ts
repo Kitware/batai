@@ -6,7 +6,7 @@ import { OtherUserAnnotations, Recording, SpectrogramAnnotation, SpectrogramTemp
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<'pulse' | 'sequence'> = ref("pulse");
 type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal' | 'duration';
-const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'time', 'freq']);
+const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'duration', 'freq']);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref('');
