@@ -383,5 +383,6 @@ export default defineComponent({
 .shared-recordings {
   height: 40vh;
   max-height: 40vh;
+  overflow-y:scroll;
 }
 </style>
