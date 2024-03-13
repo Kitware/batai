@@ -549,7 +549,7 @@ export default defineComponent({
       if (temporalAnnotationLayer && layerVisibility.value.includes('temporal')) {
         temporalAnnotationLayer.formatData(
           temporalAnnotations,
-          selectedType.value === 'sequence' ? selectedAnnotationId.value : null,
+          selectedAnnotationId.value,
           currentUser.value,
           colorScale.value,
           props.yScale,
