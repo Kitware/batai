@@ -365,7 +365,9 @@ export default class EditAnnotationLayer {
     });
     if (annotationData) {
 
-      const geoJSONData = type === 'pulse' ? spectroToGeoJSon(annotationData as SpectrogramAnnotation, this.spectroInfo, 1, this.scaledWidth, this.scaledHeight): spectroTemporalToGeoJSon(annotationData as SpectrogramTemporalAnnotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight);
+      const compressedView =  !!(this.spectroInfo.start_times && this.spectroInfo.end_times && type ==='sequence');
+      const offsetY = compressedView ? -20 : 0;  
+      const geoJSONData = type === 'pulse' ? spectroToGeoJSon(annotationData as SpectrogramAnnotation, this.spectroInfo, 1, this.scaledWidth, this.scaledHeight): spectroTemporalToGeoJSon(annotationData as SpectrogramTemporalAnnotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight, offsetY);
       const geojsonFeature: GeoJSON.Feature = {
         type: "Feature",
         geometry: geoJSONData,
