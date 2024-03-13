@@ -199,6 +199,9 @@ interface GRTSCellCenter {
 async function getRecordings(getPublic=false) {
     return axiosInstance.get<Recording[]>(`/recording/?public=${getPublic}`);
 }
+async function getRecording(id: string) {
+    return axiosInstance.get<Recording>(`/recording/${id}/`);
+}
 
 async function deleteRecording(id: number) {
     return axiosInstance.delete<DeletionResponse>(`/recording/${id}`);
@@ -269,6 +272,7 @@ async function getCellfromLocation(latitude: number, longitude: number) {
 export {
  uploadRecordingFile,
  getRecordings,
+ getRecording,
  patchRecording,
  deleteRecording,
  getSpectrogram,
