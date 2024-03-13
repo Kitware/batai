@@ -15,6 +15,7 @@ import AnnotationList from "../components/AnnotationList.vue";
 import AnnotationEditor from "../components/AnnotationEditor.vue";
 import ThumbnailViewer from "../components/ThumbnailViewer.vue";
 import useState from "../use/useState";
+import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
 export default defineComponent({
   name: "Spectrogram",
   components: {
@@ -22,6 +23,7 @@ export default defineComponent({
     AnnotationList,
     AnnotationEditor,
     ThumbnailViewer,
+    RecordingInfoDialog,
   },
   props: {
     id: {
@@ -52,6 +54,7 @@ export default defineComponent({
     const loadedImage = ref(false);
     const compressed = ref(false);
     const gridEnabled = ref(false);
+    const recordingInfo = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
       annotations.value = response.data.sort((a, b) => a.start_time - b.start_time);
@@ -201,6 +204,7 @@ export default defineComponent({
       deleteChip,
       colorScale,
       scaledVals,
+      recordingInfo,
     };
   },
 });
@@ -208,10 +212,37 @@ export default defineComponent({
 
 <template>
   <v-row>
+    <v-dialog
+      v-model="recordingInfo"
+      width="600"
+    >
+      <recording-info-dialog
+        :id="id"
+        @close="recordingInfo = false"
+      />
+    </v-dialog>
     <v-col>
       <v-toolbar>
         <v-container>
           <v-row align="center">
+            <v-tooltip
+       
+              bottom
+            >
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="40"
+                  @click="recordingInfo = true"
+                >
+                  mdi-information-outline
+                </v-icon>
+              </template>
+              <span>
+                Recording Information
+              </span>
+            </v-tooltip>
+ 
             <v-col cols="2">
               <div>
                 <b>Time:</b>

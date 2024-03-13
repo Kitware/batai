@@ -204,6 +204,39 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
     return list(recordings)
 
 
+@router.get('/{id}/')
+def get_recording(request: HttpRequest, id: int):
+    # Filter recordings based on the owner's id or public=True
+    try:
+        recordings = Recording.objects.filter(pk=id).values()
+        if len(recordings) > 0:
+            recording = recordings[0]
+
+            user = User.objects.get(id=recording['owner_id'])
+            recording['owner_username'] = user.username
+            recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
+            recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
+            if recording['recording_location']:
+                recording['recording_location'] = json.loads(recording['recording_location'].json)
+            unique_users_with_annotations = (
+                Annotations.objects.filter(recording_id=recording['id'])
+                .values('owner')
+                .distinct()
+                .count()
+            )
+            recording['userAnnotations'] = unique_users_with_annotations
+            user_has_annotations = Annotations.objects.filter(
+                recording_id=recording['id'], owner=request.user
+            ).exists()
+            recording['userMadeAnnotations'] = user_has_annotations
+
+            return recording
+        else:
+            return {'error': 'Recording not found'}
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+
 @router.get('/{id}/spectrogram')
 def get_spectrogram(request: HttpRequest, id: int):
     try:
