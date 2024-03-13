@@ -133,8 +133,10 @@ export default class TemporalLayer {
     yScale = 1,
   ) {
     const arr: RectGeoJSData[] = [];
+    const compressedView =  !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
+    const offsetY = compressedView ? -20 : 0;
     annotationData.forEach((annotation: SpectrogramTemporalAnnotation) => {
-      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, yScale, this.scaledWidth, this.scaledHeight);
+      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, yScale, this.scaledWidth, this.scaledHeight, offsetY);
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
