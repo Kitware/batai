@@ -73,6 +73,8 @@ export default class SpeciesSequenceLayer {
 
   formatData(annotationData: SpectrogramTemporalAnnotation[]) {
     this.textData = [];
+    const compressedView =  !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
+    const offsetY = compressedView ? -100 : 0;  
     annotationData.forEach((annotation: SpectrogramTemporalAnnotation) => {
       const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight);
       const [xmin, ymin] = polygon.coordinates[0][0];
@@ -93,7 +95,7 @@ export default class SpeciesSequenceLayer {
           this.textData.push({
             text: `${specie.species_code || specie.common_name}`,
             x: xmin + (xmax-xmin) /2.0,
-            y: ymax ,
+            y: ymax,
             offsetX:0,
             offsetY: -30 + textOffset,
             textType: 'species',
@@ -107,7 +109,7 @@ export default class SpeciesSequenceLayer {
           x: xmin + (xmax-xmin) /2.0,
           y: ymin ,
           offsetX:0,
-          offsetY: 10,
+          offsetY: 10 + offsetY,
           textType: 'type'
         });
       }
