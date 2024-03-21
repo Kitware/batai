@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted, PropType, ref, Ref, watch } from 'vue';
+import { defineComponent, onMounted, ref, Ref, watch } from 'vue';
 import { getRecording, Recording } from '../api/api';
 import MapLocation from './MapLocation.vue';
 
@@ -68,7 +68,10 @@ export default defineComponent({
     <v-card-actions>
       <v-row>
         <v-spacer />
-        <v-btn @click="$emit('close')" variant="outlined">
+        <v-btn
+          variant="outlined"
+          @click="$emit('close')"
+        >
           OK
         </v-btn>
         <v-spacer />

@@ -7,12 +7,13 @@ import {
 import UploadRecording, { EditingRecording } from '../components/UploadRecording.vue';
 import MapLocation from '../components/MapLocation.vue';
 import useState from '../use/useState';
-
+import BatchUploadRecording from '../components/BatchUploadRecording.vue';
 export default defineComponent({
     components: {
         VDataTable,
         UploadRecording,
         MapLocation,
+        BatchUploadRecording,
     },
   setup() {
     const itemsPerPage = ref(-1);
@@ -21,6 +22,7 @@ export default defineComponent({
     let intervalRef: number | null = null;
 
     const uploadDialog = ref(false);
+    const batchUploadDialog = ref(false);
     const headers = ref([
         {
             title:'Edit',
@@ -172,6 +174,7 @@ export default defineComponent({
         recordingList,
         sharedList,
         uploadDialog,
+        batchUploadDialog,
         uploadDone,
         editRecording,
         delRecording,
@@ -189,12 +192,26 @@ export default defineComponent({
           My Recordings
         </div>
         <v-spacer />
-        <v-btn 
-          color="primary"
-          @click="uploadDialog=true"
-        >
-          Upload <v-icon> mdi-plus</v-icon>
-        </v-btn>
+        <v-menu>
+          <template #activator="{ props }">
+            <v-btn
+              color="primary"
+              v-bind="props"
+            >
+              Upload <v-icon>mdi-chevron-down</v-icon>
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item @click="uploadDialog=true">
+              <v-list-item-title>Upload Recording</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="batchUploadDialog=true">
+              <v-list-item-title>
+                Batch Upload
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </v-row>
     </v-card-title>
     <v-card-text>
@@ -288,6 +305,15 @@ export default defineComponent({
         :editing="editingRecording"
         @done="uploadDone()"
         @cancel="uploadDialog = false; editingRecording = null"
+      />
+    </v-dialog>
+    <v-dialog
+      v-model="batchUploadDialog"
+      width="700"
+    >
+      <batch-upload-recording
+        @done="uploadDone()"
+        @cancel="batchUploadDialog = false; editingRecording = null"
       />
     </v-dialog>
   </v-card>
