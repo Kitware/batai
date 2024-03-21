@@ -4,6 +4,7 @@ import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
 import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation } from '../api/api';
 import MapLocation from './MapLocation.vue';
+import { useDate } from 'vuetify/lib/framework.mjs';
 export interface EditingRecording {
   id: number,
   name: string,
@@ -34,6 +35,7 @@ export default defineComponent({
   },
   emits: ['done', 'cancel'],
   setup(props, { emit }) {
+    const dateAdapter = useDate();
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref();
     const successfulUpload = ref(false);
@@ -217,6 +219,7 @@ export default defineComponent({
       setLocation,
       triggerUpdateMap,
       gridCellChanged,
+      dateAdapter,
     };
   },
 });
@@ -325,7 +328,7 @@ export default defineComponent({
                   </v-btn>
                 </template>
                 <v-date-picker
-                  :model-value="[recordedDate]"
+                  :model-value="dateAdapter.parseISO(recordedDate)"
                   hide-actions
                   @update:model-value="updateTime($event)"
                 />
