@@ -200,6 +200,12 @@ export default defineComponent({
       }
     );
 
+    watch([() => props.editing.comments, () => props.editing.equipment, () => props.editing.public], () => {
+        publicVal.value = props.editing.public;
+        equipment.value = props.editing.equipment;
+        comments.value = props.editing.comments;
+    });
+
     return {
       errorText,
       fileModel,

@@ -192,18 +192,26 @@ export default defineComponent({
           My Recordings
         </div>
         <v-spacer />
-        <v-btn 
-          color="primary"
-          @click="uploadDialog=true"
-        >
-          Upload <v-icon> mdi-plus</v-icon>
-        </v-btn>
-        <v-btn 
-          color="primary"
-          @click="batchUploadDialog=true"
-        >
-          Batch <v-icon> mdi-plus</v-icon>
-        </v-btn>
+        <v-menu>
+          <template #activator="{ props }">
+            <v-btn
+              color="primary"
+              v-bind="props"
+            >
+              Upload <v-icon>mdi-chevron-down</v-icon>
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item @click="uploadDialog=true">
+              <v-list-item-title>Upload Recording</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="batchUploadDialog=true">
+              <v-list-item-title>
+                Batch Upload
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </v-row>
     </v-card-title>
     <v-card-text>

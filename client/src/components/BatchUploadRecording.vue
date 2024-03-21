@@ -1,9 +1,10 @@
 <script lang="ts">
-import { defineComponent, ref, Ref } from 'vue';
+import { defineComponent, ref, Ref, watch } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
 import { UploadLocation, uploadRecordingFile, getCellLocation } from '../api/api';
 import BatchRecordingElement from './BatchRecordingElement.vue';
+import { cloneDeep } from 'lodash';
 export interface BatchRecording {
   name: string;
   file: File;
@@ -28,8 +29,6 @@ export default defineComponent({
   components: {
     BatchRecordingElement,
   },
-  props: {
-  },
   emits: ['done', 'cancel'],
   setup(props, { emit }) {
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
@@ -39,6 +38,10 @@ export default defineComponent({
     const uploadProgress = ref(0);
     const errorText = ref('');
     const progressState = ref('');
+
+    const globalPublic = ref(false);
+    const globalEquipment = ref('');
+    const globalComments = ref('');
 
     const autoFill = async (filename: string) => {
 
@@ -126,9 +129,9 @@ export default defineComponent({
 
 
     const { request: submit, loading: submitLoading } = useRequest(async () => {
-
-      for (let i = 0; i < recordings.value.length; i += 1) {
-        const fileElement = recordings.value[i];
+      const recordingCopies = cloneDeep(recordings.value);
+      for (let i = 0; i < recordingCopies.length; i += 1) {
+        const fileElement = recordingCopies[i];
         const file = fileElement.file;
         if (!file) {
           throw new Error('Unreachable');
@@ -144,6 +147,7 @@ export default defineComponent({
           location['gridCellId'] = fileElement.gridCellId;
         }
         await uploadRecordingFile(file, fileElement.name, fileElement.date, fileElement.time, fileElement.equipment, fileElement.comments, fileElement.public, location);
+        recordings.value.splice(i, 1);
         emit('done');
       }
     });
@@ -159,6 +163,22 @@ export default defineComponent({
       }
     };
 
+    watch([globalPublic, globalComments, globalEquipment], () =>{
+    
+      const newResults: BatchRecording[] = [];
+        recordings.value.forEach((item) => {
+          item.public = globalPublic.value;
+          if (globalComments.value) {
+            item.comments = globalComments.value;
+          }
+          if (globalEquipment.value) {
+            item.equipment = globalEquipment.value;
+          }
+          newResults.push(item);
+        });
+      recordings.value = newResults;
+    });
+
     return {
       errorText,
       fileModel,
@@ -173,6 +193,9 @@ export default defineComponent({
       submit,
       updateRecording,
       removeRecording,
+      globalPublic,
+      globalEquipment,
+      globalComments,
     };
   },
 });
@@ -220,7 +243,34 @@ export default defineComponent({
               Choose Audio Files
             </v-btn>
           </v-row>
-          <v-expansion-panels>
+          <v-expansion-panels v-else>
+            <v-expansion-panel>
+              <v-expansion-panel-title key="global_settings">
+                Global Settings
+              </v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <v-row>
+                  <v-checkbox
+                    v-model="globalPublic"
+                    label="Public"
+                    hint="Share Recording with other Users"
+                    persistent-hint
+                  />
+                </v-row>
+                <v-row>
+                  <v-text-field
+                    v-model="globalEquipment"
+                    label="equipment"
+                  />
+                </v-row>
+                <v-row>
+                  <v-text-field
+                    v-model="globalComments"
+                    label="comments"
+                  />
+                </v-row>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
             <v-expansion-panel
               v-for="(recording, index) in recordings"
               :key="`batch_${recording.name}`"
@@ -239,7 +289,7 @@ export default defineComponent({
         <v-card-actions>
           <v-spacer />
           <v-btn
-            @click="$emit('cancel', true)"
+            @click="$emit('cancel')"
           >
             Cancel
           </v-btn>
