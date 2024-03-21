@@ -3,7 +3,6 @@ import { defineComponent, PropType, ref, Ref } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
 import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation } from '../api/api';
-import { VDatePicker } from 'vuetify/labs/VDatePicker';
 import MapLocation from './MapLocation.vue';
 export interface EditingRecording {
   id: number,
@@ -25,7 +24,6 @@ function getCurrentTime() {
 
 export default defineComponent({
   components: {
-    VDatePicker,
     MapLocation,
   },
   props: {

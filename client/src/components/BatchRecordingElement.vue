@@ -2,7 +2,6 @@
 import { defineComponent, PropType, ref, Ref, watch } from "vue";
 import { RecordingMimeTypes } from "../constants";
 import { getCellLocation, getCellfromLocation } from "../api/api";
-import { VDatePicker } from "vuetify/labs/VDatePicker";
 import MapLocation from "./MapLocation.vue";
 export interface BatchRecording {
   name: string;
@@ -25,7 +24,6 @@ function getCurrentTime() {
 
 export default defineComponent({
   components: {
-    VDatePicker,
     MapLocation,
   },
   props: {
