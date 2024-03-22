@@ -3,10 +3,11 @@ import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import { deleteAnnotation, deleteTemporalAnnotation, patchAnnotation, patchTemporalAnnotation, Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
 import useState from "../use/useState";
-
+import SpeciesInfo from "./SpeciesInfo.vue";
 export default defineComponent({
   name: "AnnotationEditor",
   components: {
+    SpeciesInfo,
   },
   props: {
     spectroInfo: {
@@ -32,6 +33,7 @@ export default defineComponent({
     const speciesList = computed(() => {
         return props.species.map((item) => (item.species_code || item.common_name)).sort();
     });
+
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
     const type: Ref<string[]> = ref([]);
@@ -114,6 +116,13 @@ export default defineComponent({
         </v-btn>
       </v-row>
     </v-card-title>
+    <v-row>
+      <SpeciesInfo
+        :species-list="species"
+        :selected-species="speciesEdit"
+        class="my-2"
+      />
+    </v-row>
     <v-row>
       <v-autocomplete
         v-model="speciesEdit"
