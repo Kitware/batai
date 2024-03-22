@@ -311,7 +311,7 @@ export default defineComponent({
                 </v-btn>
               </template>
               <v-date-picker
-              :model-value="dateAdapter.parseISO(recordedDate)"
+                :model-value="dateAdapter.parseISO(recordedDate)"
                 hide-actions
                 @update:model-value="updateTime($event)"
               />
