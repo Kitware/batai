@@ -1,16 +1,12 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, onMounted } from 'vue';
 import { deleteRecording, getRecordings, Recording } from '../api/api';
-import {
-  VDataTable,
-} from "vuetify/labs/VDataTable";
 import UploadRecording, { EditingRecording } from '../components/UploadRecording.vue';
 import MapLocation from '../components/MapLocation.vue';
 import useState from '../use/useState';
 import BatchUploadRecording from '../components/BatchUploadRecording.vue';
 export default defineComponent({
     components: {
-        VDataTable,
         UploadRecording,
         MapLocation,
         BatchUploadRecording,
@@ -223,12 +219,12 @@ export default defineComponent({
         class="elevation-1 my-recordings"
       >
         <template #item.edit="{ item }">
-          <v-icon @click="editRecording(item.raw)">
+          <v-icon @click="editRecording(item)">
             mdi-pencil
           </v-icon>
           <v-icon
             color="error"
-            @click="delRecording(item.raw.id)"
+            @click="delRecording(item.id)"
           >
             mdi-delete
           </v-icon>
@@ -236,13 +232,13 @@ export default defineComponent({
 
         <template #item.name="{ item }">
           <router-link
-            v-if="item.raw.hasSpectrogram"
-            :to="`/recording/${item.raw.id.toString()}/spectrogram`"
+            v-if="item.hasSpectrogram"
+            :to="`/recording/${item.id.toString()}/spectrogram`"
           >
-            {{ item.raw.name }}
+            {{ item.name }}
           </router-link>
           <div v-else>
-            {{ item.raw.name }} 
+            {{ item.name }} 
             <v-tooltip bottom>
               <template #activator="{ props: subProps }">
                 <span v-bind="subProps">
@@ -256,8 +252,9 @@ export default defineComponent({
         </template>
         <template #item.recording_location="{ item }">
           <v-menu
-            v-if="item.raw.recording_location"
+            v-if="item.recording_location"
             open-on-hover
+            :close-on-content-click="false"
           >
             <template #activator="{ props }">
               <v-icon v-bind="props">
@@ -268,7 +265,7 @@ export default defineComponent({
               <map-location
                 :editor="false"
                 :size="{width: 400, height: 400}"
-                :location="{ x: item.raw.recording_location.coordinates[0], y: item.raw.recording_location.coordinates[1]}"
+                :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
               />
             </v-card>
           </v-menu>
@@ -282,7 +279,7 @@ export default defineComponent({
 
         <template #item.public="{ item }">
           <v-icon
-            v-if="item.raw.public"
+            v-if="item.public"
             color="success"
           >
             mdi-check
@@ -335,14 +332,14 @@ export default defineComponent({
       >
         <template #item.name="{ item }">
           <router-link
-            :to="`/recording/${item.raw.id.toString()}/spectrogram`"
+            :to="`/recording/${item.id.toString()}/spectrogram`"
           >
-            {{ item.raw.name }}
+            {{ item.name }}
           </router-link>
         </template>
         <template #item.public="{ item }">
           <v-icon
-            v-if="item.raw.public"
+            v-if="item.public"
             color="success"
           >
             mdi-check
@@ -356,8 +353,9 @@ export default defineComponent({
         </template>
         <template #item.recording_location="{ item }">
           <v-menu
-            v-if="item.raw.recording_location"
+            v-if="item.recording_location"
             open-on-hover
+            :close-on-content-click="false"
           >
             <template #activator="{ props }">
               <v-icon v-bind="props">
@@ -368,7 +366,7 @@ export default defineComponent({
               <map-location
                 :editor="false"
                 :size="{width: 400, height: 400}"
-                :location="{ x: item.raw.recording_location.coordinates[0], y: item.raw.recording_location.coordinates[1]}"
+                :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
               />
             </v-card>
           </v-menu>
@@ -382,7 +380,7 @@ export default defineComponent({
 
         <template #item.userMadeAnnotations="{ item }">
           <v-icon
-            v-if="item.raw.userMadeAnnotations"
+            v-if="item.userMadeAnnotations"
             color="success"
           >
             mdi-check

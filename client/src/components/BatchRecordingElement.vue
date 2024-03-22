@@ -2,8 +2,8 @@
 import { defineComponent, PropType, ref, Ref, watch } from "vue";
 import { RecordingMimeTypes } from "../constants";
 import { getCellLocation, getCellfromLocation } from "../api/api";
-import { VDatePicker } from "vuetify/labs/VDatePicker";
 import MapLocation from "./MapLocation.vue";
+import { useDate } from "vuetify/lib/framework.mjs";
 export interface BatchRecording {
   name: string;
   file: File;
@@ -25,7 +25,6 @@ function getCurrentTime() {
 
 export default defineComponent({
   components: {
-    VDatePicker,
     MapLocation,
   },
   props: {
@@ -36,6 +35,7 @@ export default defineComponent({
   },
   emits: ["done", "cancel", "update", "delete"],
   setup(props, { emit }) {
+    const dateAdapter = useDate();
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref(props.editing.file);
     const successfulUpload = ref(false);
@@ -230,6 +230,7 @@ export default defineComponent({
       setLocation,
       triggerUpdateMap,
       gridCellChanged,
+      dateAdapter,
     };
   },
 });
@@ -310,7 +311,7 @@ export default defineComponent({
                 </v-btn>
               </template>
               <v-date-picker
-                :model-value="[recordedDate]"
+              :model-value="dateAdapter.parseISO(recordedDate)"
                 hide-actions
                 @update:model-value="updateTime($event)"
               />

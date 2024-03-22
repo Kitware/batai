@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script lang="ts">
-import { defineComponent, PropType, Ref, ref } from "vue";
+import { defineComponent, PropType, Ref, ref, onMounted } from "vue";
 import { watch } from "vue";
 import geo, { GeoEvent } from "geojs";
 
@@ -34,6 +34,9 @@ export default defineComponent({
     const markerLayer: Ref<any> = ref();
     const markerFeature: Ref<any> = ref();
     const markerLocation: Ref<{ x: number; y: number } | null> = ref(null);
+    const uiLayer: Ref<any> = ref();
+    const mounted = ref(false);
+    onMounted((() => mounted.value = true));
     watch(mapRef, () => {
       if (mapRef.value) {
         const centerPoint = props.location && props.location.x && props.location.y ? props.location : usCenter;
@@ -41,7 +44,10 @@ export default defineComponent({
         map.value = geo.map({ node: mapRef.value, center: centerPoint, zoom: zoomLevel });
         mapLayer.value = map.value.createLayer("osm");
         markerLayer.value = map.value.createLayer("feature", { features: ["marker"] });
+        uiLayer.value = map.value.createLayer("ui");
         markerFeature.value = markerLayer.value.createFeature("marker");
+        uiLayer.value.createWidget('slider');
+
         if (props.location?.x && props.location?.y) {
             markerLocation.value = { x: props.location?.x, y: props.location.y };
             markerFeature.value
