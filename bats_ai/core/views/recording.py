@@ -56,7 +56,8 @@ class AnnotationSchema(Schema):
     high_freq: int
     species: list[SpeciesSchema]
     comments: str
-    id: int = None
+    type: str | None = None
+    id: int | None = None
     owner_email: str = None
 
     @classmethod
@@ -69,6 +70,7 @@ class AnnotationSchema(Schema):
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             comments=obj.comments,
             id=obj.id,
+            type=obj.type,
             owner_email=owner_email,  # Include owner_email in the schema
         )
 
@@ -80,6 +82,7 @@ class UpdateAnnotationsSchema(Schema):
     high_freq: int | None
     species: list[SpeciesSchema] | None
     comments: str | None
+    type: str | None
     id: int | None
 
 
@@ -488,6 +491,7 @@ def put_annotation(
                 low_freq=annotation.low_freq,
                 high_freq=annotation.high_freq,
                 comments=annotation.comments,
+                type=annotation.type,
             )
 
             # Add species to the annotation based on the provided species_ids
@@ -535,6 +539,10 @@ def patch_annotation(
                 annotation_instance.low_freq = annotation.low_freq
             if annotation.high_freq:
                 annotation_instance.high_freq = annotation.high_freq
+            if annotation.type:
+                annotation_instance.type = annotation.type
+            else:
+                annotation_instance.type = None
             if annotation.comments:
                 annotation_instance.comments = annotation.comments
             annotation_instance.save()
@@ -589,6 +597,8 @@ def patch_temporal_annotation(
                 annotation_instance.comments = annotation.comments
             if annotation.type:
                 annotation_instance.type = annotation.type
+            else:
+                annotation_instance.type = None
             annotation_instance.save()
 
             # Clear existing species associations
