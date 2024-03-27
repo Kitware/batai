@@ -2,3 +2,8 @@
 /**/*.shp
 /**/*.shx
 /**/*.csv
+models/datasets/
+models/spectrograms/
+models/ignore/
+models/*.jpg
+models/*.pkl

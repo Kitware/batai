@@ -11,7 +11,7 @@ from ninja import File, Form, Schema
 from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import Annotations, Recording, Species, TemporalAnnotations
+from bats_ai.core.models import Annotations, Recording, Species, TemporalAnnotations, colormap
 from bats_ai.core.tasks import recording_compute_spectrogram
 from bats_ai.core.views.species import SpeciesSchema
 from bats_ai.core.views.temporal_annotations import (
@@ -211,7 +211,8 @@ def get_spectrogram(request: HttpRequest, id: int):
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    spectrogram = recording.spectrogram
+    with colormap('light'):
+        spectrogram = recording.spectrogram
 
     spectro_data = {
         'base64_spectrogram': spectrogram.base64,
@@ -273,22 +274,27 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    spectrogram = recording.spectrogram
-    compressed, starts, ends, widths, total_width = spectrogram.compressed
+    with colormap():
+        label, score, confs = recording.spectrogram.predict()
+        print(label, score, confs)
+
+    with colormap('light'):
+        spectrogram = recording.spectrogram
+        _, compressed_base64, metadata = spectrogram.compressed
 
     spectro_data = {
-        'base64_spectrogram': compressed,
+        'base64_spectrogram': compressed_base64,
         'spectroInfo': {
             'width': spectrogram.width,
             'start_time': 0,
             'end_time': spectrogram.duration,
             'height': spectrogram.height,
-            'start_times': starts,
-            'end_times': ends,
             'low_freq': spectrogram.frequency_min,
             'high_freq': spectrogram.frequency_max,
-            'compressedWidth': total_width,
-            'widths': widths,
+            'start_times': metadata['starts'],
+            'end_times': metadata['stops'],
+            'widths': metadata['widths'],
+            'compressedWidth': metadata['length'],
         },
     }
 
