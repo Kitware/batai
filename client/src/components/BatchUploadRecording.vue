@@ -147,9 +147,9 @@ export default defineComponent({
           location['gridCellId'] = fileElement.gridCellId;
         }
         await uploadRecordingFile(file, fileElement.name, fileElement.date, fileElement.time, fileElement.equipment, fileElement.comments, fileElement.public, location);
-        recordings.value.splice(i, 1);
-        emit('done');
+        recordings.value.splice(0, 1);
       }
+      emit('done');
     });
 
     const updateRecording = (index: number, data: BatchRecording) => {
