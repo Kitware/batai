@@ -380,7 +380,7 @@ function spectroToGeoJSon(
     const high_freq =
       adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
     const start_time = (pixelAddStart * compressedScale) + (annotation.start_time - start_times[foundStartIndex]) * widthScale;
-    const end_time = (pixelAddEnd  * compressedScale) + (annotation.end_time - start_times[pixelAddEnd]) * widthScale;
+    const end_time = (pixelAddEnd  * compressedScale) + (annotation.end_time - start_times[foundEndIndex]) * widthScale;
 
     return {
       type: "Polygon",
