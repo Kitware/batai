@@ -138,6 +138,7 @@ export default defineComponent({
 
     const uploadDone = () => {
         uploadDialog.value = false;
+        batchUploadDialog.value = false;
         editingRecording.value = null;
         fetchRecordings();
     };
