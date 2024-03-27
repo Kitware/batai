@@ -12,8 +12,9 @@ import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
+import tqdm
 
-from bats_ai.core.models import Recording
+from bats_ai.core.models import Annotations, Recording
 
 FREQ_MIN = 5e3
 FREQ_MAX = 120e3
@@ -29,9 +30,13 @@ class Spectrogram(TimeStampedModel, models.Model):
     duration = models.IntegerField()  # milliseconds
     frequency_min = models.IntegerField()  # hz
     frequency_max = models.IntegerField()  # hz
+    colormap = models.CharField(max_length=20, blank=False, null=True)
 
     @classmethod
-    def generate(cls, recording):
+    def generate(cls, recording, colormap=None, dpi=600):
+        """
+        Ref: https://matplotlib.org/stable/users/explain/colors/colormaps.html
+        """
         wav_file = recording.audio_file
         try:
             if isinstance(wav_file, FieldFile):
@@ -45,13 +50,17 @@ class Spectrogram(TimeStampedModel, models.Model):
             print(e)
             return None
 
+        import IPython
+
+        IPython.embed()
+
         # Function to take a signal and return a spectrogram.
         size = int(0.001 * sr)  # 1.0ms resolution
-        size = 2 ** math.ceil(math.log(size, 2))
+        size = 2 ** (math.ceil(math.log(size, 2)) + 0)
         hop_length = int(size / 4)
 
         # Short-time Fourier Transform
-        window = librosa.stft(sig, n_fft=size, window='hamming')
+        window = librosa.stft(sig, n_fft=size, hop_length=hop_length, window='hamming')
 
         # Calculating and processing data for the spectrogram.
         window = np.abs(window) ** 2
@@ -79,14 +88,13 @@ class Spectrogram(TimeStampedModel, models.Model):
         freq_high = int(FREQ_MAX + FREQ_PAD)
         vmin = window.min()
         vmax = window.max()
-        dpi = 300
 
-        chunksize = int(5e3)
+        chunksize = int(2e3)
         arange = np.arange(chunksize, window.shape[1], chunksize)
         chunks = np.array_split(window, arange, axis=1)
 
         imgs = []
-        for chunk in chunks:
+        for chunk in tqdm.tqdm(chunks):
             h, w = chunk.shape
             alpha = 3
             figsize = (int(math.ceil(w / h)) * alpha + 1, alpha)
@@ -94,17 +102,22 @@ class Spectrogram(TimeStampedModel, models.Model):
             ax = plt.axes()
             plt.margins(0)
 
+            kwargs = {
+                'sr': sr,
+                'n_fft': size,
+                'hop_length': hop_length,
+                'x_axis': 's',
+                'y_axis': 'fft',
+                'ax': ax,
+                'vmin': vmin,
+                'vmax': vmax,
+            }
+
             # Plot
-            librosa.display.specshow(
-                chunk,
-                sr=sr,
-                hop_length=hop_length,
-                x_axis='s',
-                y_axis='linear',
-                ax=ax,
-                vmin=vmin,
-                vmax=vmax,
-            )
+            if colormap is None:
+                librosa.display.specshow(chunk, **kwargs)
+            else:
+                librosa.display.specshow(chunk, cmap=colormap, **kwargs)
 
             ax.set_ylim(freq_low, freq_high)
             ax.axis('off')
@@ -132,12 +145,44 @@ class Spectrogram(TimeStampedModel, models.Model):
         w, h = img.size
         # ratio = dpi / h
         # w_ = int(round(w * ratio))
-        w_ = int(4.0 * duration * 1e3)
-        h_ = int(dpi)
+        w_ = int(4.0 * duration * 1e3) * 2
+        h_ = int(dpi) * 2
         img = img.resize((w_, h_), resample=Image.Resampling.LANCZOS)
         w, h = img.size
 
-        # img.save('temp.jpg')
+        img.save(f'temp.{colormap}.png')
+
+        img_filtered = cv2.imread(f'temp.{colormap}.jpg', cv2.IMREAD_GRAYSCALE)
+        img_filtered = img_filtered.astype(np.float32)
+        assert img_filtered.min() == 0
+        assert img_filtered.max() == 255
+        img_filtered = img_filtered.astype(np.float32)
+        img_filtered /= 0.9
+        img_filtered[img_filtered < 0] = 0
+        img_filtered[img_filtered > 255] = 255
+        img_filtered = 255.0 - img_filtered
+
+        kernel = np.ones((3, 3), np.uint8)
+        # img_filtered = cv2.morphologyEx(img_filtered, cv2.MORPH_OPEN, kernel)
+        img_filtered = cv2.erode(img_filtered, kernel, iterations=1)
+
+        img_filtered = np.sqrt(img_filtered / 255.0) * 255.0
+
+        img_filtered = np.around(img_filtered).astype(np.uint8)
+        # img_filtered = cv2.resize(img_filtered, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
+        # img_filtered = cv2.medianBlur(img_filtered, 3)
+        # img_filtered = cv2.resize(img_filtered, None, fx=4.0, fy=4.0, interpolation=cv2.INTER_LINEAR)
+
+        mask = img_filtered < 255 * 0.1
+        img_filtered = cv2.applyColorMap(img_filtered, cv2.COLORMAP_TURBO)
+        img_filtered[mask] = [0, 0, 0]
+
+        cv2.imwrite('temp.png', img_filtered)
+
+        # img_filtered = img.resize((w_, h_), resample=Image.Resampling.LANCZOS)
+        # img_filtered = img_filtered.filter(ImageFilter.MedianFilter(size=3))
+        # img_filtered = img_filtered.resize((w, h), resample=Image.Resampling.BILINEAR)
+        # img_filtered.save(f'temp.{colormap}.median.jpg')
 
         buf = io.BytesIO()
         img.save(buf, format='JPEG', quality=80)
@@ -154,6 +199,7 @@ class Spectrogram(TimeStampedModel, models.Model):
             duration=math.ceil(duration * 1e3),
             frequency_min=freq_low,
             frequency_max=freq_high,
+            colormap=colormap,
         )
         spectrogram.save()
 
@@ -161,10 +207,16 @@ class Spectrogram(TimeStampedModel, models.Model):
     def compressed(self):
         img = self.image_np
 
+        annotations = Annotations.objects.filter(recording=self.recording)
+
         threshold = 0.5
         while True:
             canvas = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             canvas = canvas.astype(np.float32)
+
+            is_light = np.median(canvas) > 128.0
+            if is_light:
+                canvas = 255.0 - canvas
 
             amplitude = canvas.max(axis=0)
             amplitude -= amplitude.min()
@@ -179,10 +231,20 @@ class Spectrogram(TimeStampedModel, models.Model):
             canvas *= amplitude
             canvas = np.around(canvas).astype(np.uint8)
 
+            width = canvas.shape[1]
+            for annotation in annotations:
+                start = annotation.start_time / self.duration
+                stop = annotation.end_time / self.duration
+
+                start = int(np.around(start * width))
+                stop = int(np.around(stop * width))
+                canvas[:, start : stop + 1] = 255.0
+
             mask = canvas.max(axis=0)
             mask = scipy.signal.medfilt(mask, 3)
             mask[0] = 0
             mask[-1] = 0
+
             starts = []
             stops = []
             for index in range(1, len(mask) - 1):
@@ -268,14 +330,20 @@ class Spectrogram(TimeStampedModel, models.Model):
 
         canvas = Image.fromarray(canvas, 'RGB')
 
-        # canvas.save('temp.jpg')
+        canvas.save('temp.compressed.jpg')
 
         buf = io.BytesIO()
         canvas.save(buf, format='JPEG', quality=80)
         buf.seek(0)
         img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
 
-        return img_base64, starts_, stops_, widths, total_width
+        metadata = {
+            'starts': starts_,
+            'stops': stops_,
+            'widths': widths,
+            'length': total_width,
+        }
+        return canvas, img_base64, metadata
 
     @property
     def image_np(self):
@@ -296,3 +364,78 @@ class Spectrogram(TimeStampedModel, models.Model):
         img_base64 = base64.b64encode(img).decode('utf-8')
 
         return img_base64
+
+    def predict(self):
+        import json
+        import os
+
+        import onnx
+        import onnxruntime as ort
+        import tqdm
+
+        img, _, _ = self.compressed
+
+        relative = ('..',) * 4
+        asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
+
+        onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')
+        assert os.path.exists(onnx_filename)
+
+        session = ort.InferenceSession(
+            onnx_filename,
+            providers=[
+                (
+                    'CUDAExecutionProvider',
+                    {
+                        'cudnn_conv_use_max_workspace': '1',
+                        'device_id': 0,
+                        'cudnn_conv_algo_search': 'HEURISTIC',
+                    },
+                ),
+                'CPUExecutionProvider',
+            ],
+        )
+
+        img = np.array(img)
+
+        h, w, c = img.shape
+        ratio_y = 224 / h
+        ratio_x = ratio_y * 0.5
+        raw = cv2.resize(img, None, fx=ratio_x, fy=ratio_y, interpolation=cv2.INTER_LANCZOS4)
+
+        h, w, c = raw.shape
+        if w <= h:
+            canvas = np.zeros((h, h + 1, 3), dtype=raw.dtype)
+            canvas[:, :w, :] = raw
+            raw = canvas
+            h, w, c = raw.shape
+
+        inputs_ = []
+        for index in range(0, w - h, 100):
+            inputs_.append(raw[:, index : index + h, :])
+        inputs_.append(raw[:, -h:, :])
+        inputs_ = np.array(inputs_)
+
+        chunksize = 1
+        chunks = np.array_split(inputs_, np.arange(chunksize, len(inputs_), chunksize))
+        outputs = []
+        for chunk in tqdm.tqdm(chunks, desc='Inference'):
+            outputs_ = session.run(
+                None,
+                {'input': chunk},
+            )
+            outputs.append(outputs_[0])
+        outputs = np.vstack(outputs)
+        outputs = outputs.mean(axis=0)
+
+        model = onnx.load(onnx_filename)
+        mapping = json.loads(model.metadata_props[0].value)
+        labels = [mapping['forward'][str(index)] for index in range(len(mapping['forward']))]
+
+        prediction = np.argmax(outputs)
+        label = labels[prediction]
+        score = outputs[prediction]
+
+        confs = dict(zip(labels, outputs))
+
+        return label, score, confs

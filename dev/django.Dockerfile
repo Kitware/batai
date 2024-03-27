@@ -11,8 +11,10 @@ RUN set -ex \
  && apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         gcc \
+        g++ \
         libc6-dev \
         libgdal32 \
+        libgdal-dev \
         libpq-dev \
         libsndfile1-dev \
  && apt-get clean \

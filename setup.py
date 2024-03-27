@@ -56,8 +56,16 @@ setup(
         'librosa',
         'matplotlib',
         'numpy',
+        'onnx',
+        'onnxruntime',
+        # 'onnxruntime-gpu',
         'opencv-python-headless',
         'guano',
+        'tqdm',
+        'django-large-image',
+        'large-image[rasterio,pil]>=1.22',
+        'rio-cogeo',
+        'mercantile',
     ],
     extras_require={
         'dev': [
