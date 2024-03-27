@@ -39,9 +39,8 @@ export default defineComponent({
     const type: Ref<string[]> = ref([]);
     const callTypes = ref(['Search', 'Approach', 'Terminal', 'Social']);
 
-    if (selectedType.value === 'sequence') {
-      type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [''];
-    }
+      type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [];
+
     watch(() => props.annotation, () => {
         if (props.annotation?.species) {
             speciesEdit.value = props.annotation.species.map((item) => item.species_code || item.common_name);
@@ -63,11 +62,11 @@ export default defineComponent({
                     speciesIds.push(found.id);
                 }
             });
+            const updateType = type.value.join('+');
             if (selectedType.value === 'pulse') {
-              await patchAnnotation(props.recordingId, props.annotation?.id, { ...props.annotation, comments: comments.value }, speciesIds );
+              await patchAnnotation(props.recordingId, props.annotation?.id, { ...props.annotation, comments: comments.value, type: updateType }, speciesIds );
             } else if (selectedType.value === 'sequence') {
-              const updateType = type.value.join('+');
-              await patchTemporalAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: updateType,}, speciesIds);
+              await patchTemporalAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: updateType }, speciesIds);
             }
             // Signal to redownload the updated annotation values if possible
             emit('update:annotation');
@@ -134,7 +133,7 @@ export default defineComponent({
         @update:model-value="updateAnnotation()"
       />
     </v-row>
-    <v-row v-if="selectedType === 'sequence'">
+    <v-row>
       <v-autocomplete
         v-model="type"
         multiple
