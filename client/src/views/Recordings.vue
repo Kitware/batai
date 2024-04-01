@@ -1,18 +1,15 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, onMounted } from 'vue';
 import { deleteRecording, getRecordings, Recording } from '../api/api';
-import {
-  VDataTable,
-} from "vuetify/labs/VDataTable";
 import UploadRecording, { EditingRecording } from '../components/UploadRecording.vue';
 import MapLocation from '../components/MapLocation.vue';
 import useState from '../use/useState';
-
+import BatchUploadRecording from '../components/BatchUploadRecording.vue';
 export default defineComponent({
     components: {
-        VDataTable,
         UploadRecording,
         MapLocation,
+        BatchUploadRecording,
     },
   setup() {
     const itemsPerPage = ref(-1);
@@ -21,6 +18,7 @@ export default defineComponent({
     let intervalRef: number | null = null;
 
     const uploadDialog = ref(false);
+    const batchUploadDialog = ref(false);
     const headers = ref([
         {
             title:'Edit',
@@ -140,6 +138,7 @@ export default defineComponent({
 
     const uploadDone = () => {
         uploadDialog.value = false;
+        batchUploadDialog.value = false;
         editingRecording.value = null;
         fetchRecordings();
     };
@@ -172,6 +171,7 @@ export default defineComponent({
         recordingList,
         sharedList,
         uploadDialog,
+        batchUploadDialog,
         uploadDone,
         editRecording,
         delRecording,
@@ -189,12 +189,26 @@ export default defineComponent({
           My Recordings
         </div>
         <v-spacer />
-        <v-btn 
-          color="primary"
-          @click="uploadDialog=true"
-        >
-          Upload <v-icon> mdi-plus</v-icon>
-        </v-btn>
+        <v-menu>
+          <template #activator="{ props }">
+            <v-btn
+              color="primary"
+              v-bind="props"
+            >
+              Upload <v-icon>mdi-chevron-down</v-icon>
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item @click="uploadDialog=true">
+              <v-list-item-title>Upload Recording</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="batchUploadDialog=true">
+              <v-list-item-title>
+                Batch Upload
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </v-row>
     </v-card-title>
     <v-card-text>
@@ -206,12 +220,12 @@ export default defineComponent({
         class="elevation-1 my-recordings"
       >
         <template #item.edit="{ item }">
-          <v-icon @click="editRecording(item.raw)">
+          <v-icon @click="editRecording(item)">
             mdi-pencil
           </v-icon>
           <v-icon
             color="error"
-            @click="delRecording(item.raw.id)"
+            @click="delRecording(item.id)"
           >
             mdi-delete
           </v-icon>
@@ -219,13 +233,13 @@ export default defineComponent({
 
         <template #item.name="{ item }">
           <router-link
-            v-if="item.raw.hasSpectrogram"
-            :to="`/recording/${item.raw.id.toString()}/spectrogram`"
+            v-if="item.hasSpectrogram"
+            :to="`/recording/${item.id.toString()}/spectrogram`"
           >
-            {{ item.raw.name }}
+            {{ item.name }}
           </router-link>
           <div v-else>
-            {{ item.raw.name }} 
+            {{ item.name }} 
             <v-tooltip bottom>
               <template #activator="{ props: subProps }">
                 <span v-bind="subProps">
@@ -239,8 +253,9 @@ export default defineComponent({
         </template>
         <template #item.recording_location="{ item }">
           <v-menu
-            v-if="item.raw.recording_location"
+            v-if="item.recording_location"
             open-on-hover
+            :close-on-content-click="false"
           >
             <template #activator="{ props }">
               <v-icon v-bind="props">
@@ -251,7 +266,7 @@ export default defineComponent({
               <map-location
                 :editor="false"
                 :size="{width: 400, height: 400}"
-                :location="{ x: item.raw.recording_location.coordinates[0], y: item.raw.recording_location.coordinates[1]}"
+                :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
               />
             </v-card>
           </v-menu>
@@ -265,7 +280,7 @@ export default defineComponent({
 
         <template #item.public="{ item }">
           <v-icon
-            v-if="item.raw.public"
+            v-if="item.public"
             color="success"
           >
             mdi-check
@@ -290,6 +305,15 @@ export default defineComponent({
         @cancel="uploadDialog = false; editingRecording = null"
       />
     </v-dialog>
+    <v-dialog
+      v-model="batchUploadDialog"
+      width="700"
+    >
+      <batch-upload-recording
+        @done="uploadDone()"
+        @cancel="batchUploadDialog = false; editingRecording = null"
+      />
+    </v-dialog>
   </v-card>
   <v-card>
     <v-card-title>
@@ -309,14 +333,14 @@ export default defineComponent({
       >
         <template #item.name="{ item }">
           <router-link
-            :to="`/recording/${item.raw.id.toString()}/spectrogram`"
+            :to="`/recording/${item.id.toString()}/spectrogram`"
           >
-            {{ item.raw.name }}
+            {{ item.name }}
           </router-link>
         </template>
         <template #item.public="{ item }">
           <v-icon
-            v-if="item.raw.public"
+            v-if="item.public"
             color="success"
           >
             mdi-check
@@ -330,8 +354,9 @@ export default defineComponent({
         </template>
         <template #item.recording_location="{ item }">
           <v-menu
-            v-if="item.raw.recording_location"
+            v-if="item.recording_location"
             open-on-hover
+            :close-on-content-click="false"
           >
             <template #activator="{ props }">
               <v-icon v-bind="props">
@@ -342,7 +367,7 @@ export default defineComponent({
               <map-location
                 :editor="false"
                 :size="{width: 400, height: 400}"
-                :location="{ x: item.raw.recording_location.coordinates[0], y: item.raw.recording_location.coordinates[1]}"
+                :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
               />
             </v-card>
           </v-menu>
@@ -356,7 +381,7 @@ export default defineComponent({
 
         <template #item.userMadeAnnotations="{ item }">
           <v-icon
-            v-if="item.raw.userMadeAnnotations"
+            v-if="item.userMadeAnnotations"
             color="success"
           >
             mdi-check

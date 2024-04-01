@@ -56,7 +56,8 @@ class AnnotationSchema(Schema):
     high_freq: int
     species: list[SpeciesSchema]
     comments: str
-    id: int = None
+    type: str | None = None
+    id: int | None = None
     owner_email: str = None
 
     @classmethod
@@ -69,6 +70,7 @@ class AnnotationSchema(Schema):
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             comments=obj.comments,
             id=obj.id,
+            type=obj.type,
             owner_email=owner_email,  # Include owner_email in the schema
         )
 
@@ -80,6 +82,7 @@ class UpdateAnnotationsSchema(Schema):
     high_freq: int | None
     species: list[SpeciesSchema] | None
     comments: str | None
+    type: str | None
     id: int | None
 
 
@@ -202,6 +205,39 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
         recording['userMadeAnnotations'] = user_has_annotations
 
     return list(recordings)
+
+
+@router.get('/{id}/')
+def get_recording(request: HttpRequest, id: int):
+    # Filter recordings based on the owner's id or public=True
+    try:
+        recordings = Recording.objects.filter(pk=id).values()
+        if len(recordings) > 0:
+            recording = recordings[0]
+
+            user = User.objects.get(id=recording['owner_id'])
+            recording['owner_username'] = user.username
+            recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
+            recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
+            if recording['recording_location']:
+                recording['recording_location'] = json.loads(recording['recording_location'].json)
+            unique_users_with_annotations = (
+                Annotations.objects.filter(recording_id=recording['id'])
+                .values('owner')
+                .distinct()
+                .count()
+            )
+            recording['userAnnotations'] = unique_users_with_annotations
+            user_has_annotations = Annotations.objects.filter(
+                recording_id=recording['id'], owner=request.user
+            ).exists()
+            recording['userMadeAnnotations'] = user_has_annotations
+
+            return recording
+        else:
+            return {'error': 'Recording not found'}
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
 
 
 @router.get('/{id}/spectrogram')
@@ -461,6 +497,7 @@ def put_annotation(
                 low_freq=annotation.low_freq,
                 high_freq=annotation.high_freq,
                 comments=annotation.comments,
+                type=annotation.type,
             )
 
             # Add species to the annotation based on the provided species_ids
@@ -508,6 +545,10 @@ def patch_annotation(
                 annotation_instance.low_freq = annotation.low_freq
             if annotation.high_freq:
                 annotation_instance.high_freq = annotation.high_freq
+            if annotation.type:
+                annotation_instance.type = annotation.type
+            else:
+                annotation_instance.type = None
             if annotation.comments:
                 annotation_instance.comments = annotation.comments
             annotation_instance.save()
@@ -562,6 +603,8 @@ def patch_temporal_annotation(
                 annotation_instance.comments = annotation.comments
             if annotation.type:
                 annotation_instance.type = annotation.type
+            else:
+                annotation_instance.type = None
             annotation_instance.save()
 
             # Clear existing species associations

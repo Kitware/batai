@@ -141,6 +141,8 @@ export default class TimeLayer {
         offsetY: 5,
       });
     });
+    const compressedView =  !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
+    const offsetY = compressedView ? -20 : 0;  
     temporalData.forEach((annotation: SpectrogramTemporalAnnotation) => {
       const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight);
       const {start_time, end_time } = annotation;
@@ -158,8 +160,8 @@ export default class TimeLayer {
         line: {
           type: "LineString",
           coordinates: [
-            [xmin, ymax],
-            [xmin, ymax - lineDist],
+            [xmin, ymax + offsetY],
+            [xmin, ymax - lineDist + offsetY],
           ],
         },
         thicker: true,
@@ -168,8 +170,8 @@ export default class TimeLayer {
         line: {
           type: "LineString",
           coordinates: [
-            [xmax, ymax],
-            [xmax, ymax - lineDist],
+            [xmax, ymax + offsetY],
+            [xmax, ymax - lineDist + offsetY],
           ],
         },
         thicker: true,
@@ -178,16 +180,16 @@ export default class TimeLayer {
       this.textData.push({
         text: `${start_time}ms`,
         x: xmin,
-        y: ymax - lineDist,
+        y: ymax - lineDist + offsetY,
         offsetX: 0,
-        offsetY: -5,
+        offsetY: -5 + offsetY,
       });
       this.textData.push({
         text: `${end_time}ms`,
         x: xmax,
-        y: ymax - lineDist,
+        y: ymax - lineDist + offsetY,
         offsetX: 0,
-        offsetY: -5,
+        offsetY: -5 + offsetY,
       });
     });
 
@@ -220,6 +222,8 @@ export default class TimeLayer {
         offsetY: 0,
       });
     });
+    const compressedView =  !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
+    const offsetY = compressedView ? -20 : 0;  
     temporalData.forEach((annotation: SpectrogramTemporalAnnotation) => {
       const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight);
       const {start_time, end_time } = annotation;
@@ -239,7 +243,7 @@ export default class TimeLayer {
         x: xpos,
         y: (ymax - ymin) / 2.0,
         offsetX: 0,
-        offsetY: -5,
+        offsetY: -5 + offsetY,
       });
     });
 

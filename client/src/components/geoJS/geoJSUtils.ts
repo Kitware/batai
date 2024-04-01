@@ -208,6 +208,7 @@ function spectroTemporalToGeoJSon(
   scaledWidth = 0,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _scaledHeight = 0, // may be useful in the future
+  offsetY = 0, // used to push temporal annotations higher when viewing in compressed view
 ): GeoJSON.Polygon {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   // const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
@@ -236,41 +237,52 @@ function spectroTemporalToGeoJSon(
     const end = annotation.end_time;
     const { start_times, end_times, widths } = spectroInfo;
     const lengths = start_times.length === end_times.length ? start_times.length : 0;
-    let foundIndex = -1;
+    let foundStartIndex = -1;
+    let foundEndIndex = -1;
     for (let i = 0; i < lengths; i += 1) {
       if (
+        foundStartIndex === -1 &&
         start_times[i] < start &&
-        start < end_times[i] &&
-        end < end_times[i] &&
-        end > start_times[i]
+        start < end_times[i]
       ) {
-        foundIndex = i;
-        break;
+        foundStartIndex = i;
       }
+      if (
+      foundEndIndex === -1 &&
+      start_times[i] < end &&
+      end < end_times[i]
+    ) {
+      foundEndIndex = i;
     }
+  }
     // We need to build the length of times to pixel size for the time spaces before the annotation
     const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ?  scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
     const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time) * compressedScale;
-    let pixelAdd = 0;
-    for (let i = 0; i < foundIndex; i += 1) {
+    let pixelAddStart = 0;
+    let pixelAddEnd = 0;
+    for (let i = 0; i < Math.max(foundStartIndex, foundEndIndex); i += 1) {
       const addWidth = widths && widths[i];
-      if (addWidth) {
-        pixelAdd += addWidth;
+      if (addWidth && i < foundStartIndex) {
+        pixelAddStart += addWidth;
+      }
+      if (addWidth && i < foundEndIndex) {
+        pixelAddEnd += addWidth;
       }
     }
     // Now we remap our annotation to pixel coordinates
-    const start_time = (pixelAdd * compressedScale) + (annotation.start_time - start_times[foundIndex]) * widthScale;
-    const end_time = (pixelAdd * compressedScale) + (annotation.end_time - start_times[foundIndex]) * widthScale;
+
+    const start_time = (pixelAddStart * compressedScale) + (annotation.start_time - start_times[foundStartIndex]) * widthScale;
+    const end_time = (pixelAddEnd * compressedScale) + (annotation.end_time - start_times[foundEndIndex]) * widthScale;
 
     return {
       type: "Polygon",
       coordinates: [
         [
-          [start_time, ymin * yScale],
-          [start_time, ymax * yScale],
-          [end_time, ymax * yScale],
-          [end_time, ymin * yScale],
-          [start_time, ymin * yScale],
+          [start_time, (ymin * yScale) + offsetY],
+          [start_time, (ymax * yScale) + offsetY],
+          [end_time, (ymax * yScale) + offsetY],
+          [end_time, (ymin * yScale) + offsetY],
+          [start_time, (ymin * yScale) + offsetY],
         ],
       ],
     };
@@ -329,26 +341,36 @@ function spectroToGeoJSon(
     const end = annotation.end_time;
     const { start_times, end_times, widths } = spectroInfo;
     const lengths = start_times.length === end_times.length ? start_times.length : 0;
-    let foundIndex = -1;
+    let foundStartIndex = -1;
+    let foundEndIndex = -1;
     for (let i = 0; i < lengths; i += 1) {
       if (
+        foundStartIndex === -1 &&
         start_times[i] < start &&
-        start < end_times[i] &&
-        end < end_times[i] &&
-        end > start_times[i]
+        start < end_times[i]
       ) {
-        foundIndex = i;
-        break;
+        foundStartIndex = i;
+      }
+      if (
+        foundEndIndex === -1 &&
+        start_times[i] < end &&
+        end < end_times[i]
+      ) {
+        foundEndIndex = i;
       }
     }
     // We need to build the length of times to pixel size for the time spaces before the annotation
     const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ?  scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
     const widthScale =(adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) * compressedScale;
-    let pixelAdd = 0;
-    for (let i = 0; i < foundIndex; i += 1) {
+    let pixelAddStart = 0;
+    let pixelAddEnd = 0;
+    for (let i = 0; i < Math.max(foundStartIndex, foundEndIndex); i += 1) {
       const addWidth = widths && widths[i];
-      if (addWidth) {
-        pixelAdd += addWidth;
+      if (addWidth && i < foundStartIndex) {
+        pixelAddStart += addWidth;
+      }
+      if (addWidth && i < foundEndIndex) {
+        pixelAddEnd += addWidth;
       }
     }
     const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
@@ -357,8 +379,8 @@ function spectroToGeoJSon(
       adjustedHeight - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
     const high_freq =
       adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
-    const start_time = (pixelAdd * compressedScale) + (annotation.start_time - start_times[foundIndex]) * widthScale;
-    const end_time = (pixelAdd  * compressedScale) + (annotation.end_time - start_times[foundIndex]) * widthScale;
+    const start_time = (pixelAddStart * compressedScale) + (annotation.start_time - start_times[foundStartIndex]) * widthScale;
+    const end_time = (pixelAddEnd  * compressedScale) + (annotation.end_time - start_times[foundEndIndex]) * widthScale;
 
     return {
       type: "Polygon",
@@ -446,16 +468,18 @@ function geojsonToSpectro(
     for (let i = 0; i < start_times.length; i += 1) {
       // convert the start/end time to a pixel
       const nextPixels = (widths && widths[i] || 0);
-      if (start > additivePixels && end < additivePixels + nextPixels) {
+      if (start_time === -1 && start > additivePixels && start < additivePixels + nextPixels) {
         // Found the location for time markers
         // We need to remap pixels back to milliseconds
         const lowPixels = start - additivePixels;
-        const highPixels = end - additivePixels;
         const lowTime = start_times[i] + lowPixels / timeToPixels;
-        const highTime = start_times[i] + highPixels / timeToPixels;
         start_time = Math.round(lowTime);
+      }
+      if (end_time === -1 && start_time !== -1 && end > additivePixels && end < additivePixels + nextPixels) {
+        const highPixels = end - additivePixels;
+        const highTime = start_times[i] + highPixels / timeToPixels;
         end_time = Math.round(highTime);
-        break;
+
       }
       additivePixels += nextPixels;
     }

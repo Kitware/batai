@@ -3,10 +3,11 @@ import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import { deleteAnnotation, deleteTemporalAnnotation, patchAnnotation, patchTemporalAnnotation, Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
 import useState from "../use/useState";
-
+import SpeciesInfo from "./SpeciesInfo.vue";
 export default defineComponent({
   name: "AnnotationEditor",
   components: {
+    SpeciesInfo,
   },
   props: {
     spectroInfo: {
@@ -32,14 +33,14 @@ export default defineComponent({
     const speciesList = computed(() => {
         return props.species.map((item) => (item.species_code || item.common_name)).sort();
     });
+
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
     const type: Ref<string[]> = ref([]);
     const callTypes = ref(['Search', 'Approach', 'Terminal', 'Social']);
 
-    if (selectedType.value === 'sequence') {
-      type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [''];
-    }
+      type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [];
+
     watch(() => props.annotation, () => {
         if (props.annotation?.species) {
             speciesEdit.value = props.annotation.species.map((item) => item.species_code || item.common_name);
@@ -61,11 +62,11 @@ export default defineComponent({
                     speciesIds.push(found.id);
                 }
             });
+            const updateType = type.value.join('+');
             if (selectedType.value === 'pulse') {
-              await patchAnnotation(props.recordingId, props.annotation?.id, { ...props.annotation, comments: comments.value }, speciesIds );
+              await patchAnnotation(props.recordingId, props.annotation?.id, { ...props.annotation, comments: comments.value, type: updateType }, speciesIds );
             } else if (selectedType.value === 'sequence') {
-              const updateType = type.value.join('+');
-              await patchTemporalAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: updateType,}, speciesIds);
+              await patchTemporalAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: updateType }, speciesIds);
             }
             // Signal to redownload the updated annotation values if possible
             emit('update:annotation');
@@ -115,6 +116,13 @@ export default defineComponent({
       </v-row>
     </v-card-title>
     <v-row>
+      <SpeciesInfo
+        :species-list="species"
+        :selected-species="speciesEdit"
+        class="my-2"
+      />
+    </v-row>
+    <v-row>
       <v-autocomplete
         v-model="speciesEdit"
         multiple
@@ -125,7 +133,7 @@ export default defineComponent({
         @update:model-value="updateAnnotation()"
       />
     </v-row>
-    <v-row v-if="selectedType === 'sequence'">
+    <v-row>
       <v-autocomplete
         v-model="type"
         multiple
