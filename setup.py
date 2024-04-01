@@ -63,7 +63,8 @@ setup(
         'tqdm',
         'django-large-image',
         'large-image[rasterio,pil]>=1.22',
-        'rio-cogeo' 'mercantile',
+        'rio-cogeo',
+        'mercantile',
     ],
     extras_require={
         'dev': [
