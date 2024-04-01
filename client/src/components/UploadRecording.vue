@@ -42,7 +42,7 @@ export default defineComponent({
     const errorText = ref('');
     const progressState = ref('');
     const recordedDate = ref(props.editing ? props.editing.date : new Date().toISOString().split('T')[0]); // YYYY-MM-DD Time
-    const recordedTime = ref(props.editing ? props.editing.time.replaceAll(':','') : getCurrentTime()); // HHMMSS
+    const recordedTime = ref(props.editing && props.editing.time ? props.editing.time.replace(/:/g, "") : getCurrentTime()); // HHMMSS
     const uploadProgress = ref(0);
     const name = ref(props.editing ? props.editing.name : '');
     const equipment = ref(props.editing ? props.editing.equipment : '');
