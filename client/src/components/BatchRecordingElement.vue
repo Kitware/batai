@@ -47,7 +47,7 @@ export default defineComponent({
         : new Date().toISOString().split("T")[0]
     ); // YYYY-MM-DD Time
     const recordedTime = ref(
-      props.editing ? props.editing.time.replaceAll(":", "") : getCurrentTime()
+      props.editing && props.editing.time ? props.editing.time.replace(/:/g, "") : getCurrentTime()
     ); // HHMMSS
     const uploadProgress = ref(0);
     const name = ref(props.editing ? props.editing.name : "");
