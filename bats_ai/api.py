@@ -3,7 +3,7 @@ import logging
 from ninja import NinjaAPI
 from oauth2_provider.models import AccessToken
 
-from bats_ai.core.views import GRTSCellsRouter, RecordingRouter, SpeciesRouter, GuanoMetadataRouter
+from bats_ai.core.views import GRTSCellsRouter, GuanoMetadataRouter, RecordingRouter, SpeciesRouter
 
 logger = logging.getLogger(__name__)
 

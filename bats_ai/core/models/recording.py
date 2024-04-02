@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django_extensions.db.models import TimeStampedModel
 
+from .species import Species
+
 
 # TimeStampedModel also provides "created" and "modified" fields
 class Recording(TimeStampedModel, models.Model):
@@ -16,6 +18,12 @@ class Recording(TimeStampedModel, models.Model):
     grts_cell_id = models.IntegerField(blank=True, null=True)
     grts_cell = models.IntegerField(blank=True, null=True)
     public = models.BooleanField(default=False)
+    software = models.TextField(blank=True, null=True)
+    detector = models.TextField(blank=True, null=True)
+    computed_species = models.ManyToManyField(Species)  # species from a computed sense
+    official_species = models.ManyToManyField(
+        Species
+    )  # species that are detemrined by the owner or from annotations as official species list
 
     @property
     def has_spectrogram(self):
