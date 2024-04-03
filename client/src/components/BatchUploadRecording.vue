@@ -2,20 +2,11 @@
 import { defineComponent, ref, Ref, watch } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '../use/useRequest';
-import { UploadLocation, uploadRecordingFile, getCellLocation } from '../api/api';
-import BatchRecordingElement from './BatchRecordingElement.vue';
+import { UploadLocation, uploadRecordingFile, getCellLocation, RecordingFileParameters, getGuanoMetadata } from '../api/api';
+import BatchRecordingElement, { BatchRecording } from './BatchRecordingElement.vue';
 import { cloneDeep } from 'lodash';
-export interface BatchRecording {
-  name: string;
-  file: File;
-  date: string;
-  time: string;
-  equipment: string;
-  comments: string;
-  public: boolean;
-  location?: { lat: number, lon: number },
-  gridCellId?: number
-}
+import { extractDateTimeComponents } from '../use/useUtils';
+
 
 interface AutoFillResult {
   name?: string;
@@ -146,7 +137,16 @@ export default defineComponent({
           }
           location['gridCellId'] = fileElement.gridCellId;
         }
-        await uploadRecordingFile(file, fileElement.name, fileElement.date, fileElement.time, fileElement.equipment, fileElement.comments, fileElement.public, location);
+        const fileUploadParams: RecordingFileParameters = {
+          name: fileElement.name,
+          recorded_date: fileElement.date,
+          recorded_time: fileElement.time,
+          equipment: fileElement.equipment,
+          comments: fileElement.comments,
+          publicVal: fileElement.public,
+          location,
+        };
+        await uploadRecordingFile(file, fileUploadParams);
         recordings.value.splice(0, 1);
       }
       emit('done');
@@ -163,8 +163,51 @@ export default defineComponent({
       }
     };
 
+    const getBatchMetadata = async () => {
+      const updatedRecordings: BatchRecording[] = [];
+      for (let i = 0; i < recordings.value.length; i += 1) {
+        const recording  = recordings.value[i];
+        const results = await getGuanoMetadata(recording.file);
+        if (results.nabat_site_name) {
+          recording.siteName = results.nabat_site_name;
+        }
+        if (results.nabat_software_type) {
+          recording.software = results.nabat_software_type;
+        }
+        if (results.nabat_detector_type) {
+          recording.detector = results.nabat_detector_type;
+        }
+        if (results.nabat_species_list) {
+          recording.speciesList = results.nabat_species_list.join(',');
+        }
+        if (results.nabat_unusual_occurrences) {
+          recording.unusualOccurrences = results.nabat_unusual_occurrences;
+        }
+        // Finally we get the latitude/longitude or gridCell Id if it's available.
+        const startTime = results.nabat_activation_start_time;
+        const NaBatgridCellId = results.nabat_grid_cell_grts_id;
+        const NABatlatitude = results.nabat_latitude;
+        const NABatlongitude = results.nabat_longitude;
+        if (startTime) {
+          const {date, time} = extractDateTimeComponents(startTime);
+          recording.date = date;
+          recording.time = time;
+        }
+        if (NaBatgridCellId) {
+          recording.gridCellId= parseInt(NaBatgridCellId);
+        }
+        if (NABatlatitude && NABatlongitude) {
+          recording.location = {
+            lat: NABatlatitude,
+            lon: NABatlongitude
+          };
+        }
+        updatedRecordings.push(recording);
+      }
+      recordings.value = updatedRecordings;
+    };
+
     watch([globalPublic, globalComments, globalEquipment], () =>{
-    
       const newResults: BatchRecording[] = [];
         recordings.value.forEach((item) => {
           item.public = globalPublic.value;
@@ -193,6 +236,7 @@ export default defineComponent({
       submit,
       updateRecording,
       removeRecording,
+      getBatchMetadata,
       globalPublic,
       globalEquipment,
       globalComments,
@@ -249,6 +293,12 @@ export default defineComponent({
                 Global Settings
               </v-expansion-panel-title>
               <v-expansion-panel-text>
+                <v-row>
+                  <v-btn @click="getBatchMetadata()" color="secondary">
+                    Get Guano Metadata
+                  </v-btn>
+                </v-row>
+
                 <v-row>
                   <v-checkbox
                     v-model="globalPublic"

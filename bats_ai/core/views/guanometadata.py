@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 
 from django.http import HttpRequest, JsonResponse
 from guano import GuanoFile
@@ -7,20 +8,21 @@ from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
 router = RouterPaginated()
+logger = logging.getLogger(__name__)
 
 
 class GuanoMetadataSchema(Schema):
-    nabat_grid_cell_grts_id: str
-    nabat_latitude: float
-    nabat_longitude: float
-    nabat_site_name: str
-    nabat_activation_start_time: datetime
-    nabat_activation_end_time: datetime
-    nabat_software_type: str
-    nabat_species_list: list[str]
-    nabat_comments: str
-    nabat_detector_type: str
-    nabat_unusual_occurrences: str
+    nabat_grid_cell_grts_id: str | None = None
+    nabat_latitude: float | None = None
+    nabat_longitude: float | None = None
+    nabat_site_name: str | None = None
+    nabat_activation_start_time: datetime | None = None
+    nabat_activation_end_time: datetime | None = None
+    nabat_software_type: str | None = None
+    nabat_species_list: list[str] | None = None
+    nabat_comments: str | None = None
+    nabat_detector_type: str | None = None
+    nabat_unusual_occurrences: str | None = None
 
 
 router = RouterPaginated()
@@ -37,28 +39,28 @@ def default_data(
 
         # Extract required NABat fields
         nabat_fields = {
-            'nabat_grid_cell_grts_id': gfile.get('NABat|Grid Cell GRTS ID', ''),
-            'nabat_latitude': float(gfile.get('NABat|Latitude', 0)),
-            'nabat_longitude': float(gfile.get('NABat|Longitude', 0)),
-            'nabat_site_name': gfile.get('NABat|Site Name', ''),
+            'nabat_grid_cell_grts_id': gfile.get('NABat|Grid Cell GRTS ID', None),
+            'nabat_latitude': (gfile.get('NABat|Latitude', None)),
+            'nabat_longitude': (gfile.get('NABat|Longitude', None)),
+            'nabat_site_name': gfile.get('NABat|Site Name', None),
         }
 
         # Extract additional fields with conditionals
         additional_fields = {
             'nabat_activation_start_time': datetime.strptime(
-                gfile.get('NABat|Activation start time', ''), '%Y%m%dT%H%M%S'
+                gfile.get('NABat|Activation start time', None), '%Y%m%dT%H%M%S'
             )
             if 'NABat|Activation start time' in gfile
             else None,
             'nabat_activation_end_time': datetime.strptime(
-                gfile.get('NABat|Activation end time', ''), '%Y%m%dT%H%M%S'
+                gfile.get('NABat|Activation end time', None), '%Y%m%dT%H%M%S'
             )
             if 'NABat|Activation end time' in gfile
             else None,
-            'nabat_software_type': gfile.get('NABat|Software type', ''),
+            'nabat_software_type': gfile.get('NABat|Software type', None),
             'nabat_species_list': gfile.get('NABat|Species List', '').split(','),
-            'nabat_comments': gfile.get('NABat|Comments', ''),
-            'nabat_detector_type': gfile.get('NABat|Detector type', ''),
+            'nabat_comments': gfile.get('NABat|Comments', None),
+            'nabat_detector_type': gfile.get('NABat|Detector type', None),
             'nabat_unusual_occurrences': gfile.get('NABat|Unusual occurrences', ''),
         }
 

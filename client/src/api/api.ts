@@ -127,55 +127,70 @@ export const axiosInstance = axios.create({
   baseURL: import.meta.env.VUE_APP_API_ROOT as string,
 });
 
+export interface RecordingFileParameters {
+    name: string;
+    recorded_date: string;
+    recorded_time: string;
+    equipment: string;
+    comments: string;
+    location?: UploadLocation;
+    publicVal: boolean;
+    site_name?: string;
+    software?: string;
+    detector?: string;
+    species_list?: string;
+    unusual_occurrences?: string;
 
-async function uploadRecordingFile(file: File, name: string, recorded_date: string, recorded_time: string, equipment: string, comments: string, publicVal = false, location: UploadLocation = null ) {
+}
+
+async function uploadRecordingFile(file: File, params: RecordingFileParameters ) {
     const formData = new FormData();
     formData.append('audio_file', file);
-    formData.append('name', name);
-    formData.append('recorded_date', recorded_date);
-    formData.append('recorded_time', recorded_time);
-    formData.append('equipment', equipment);
-    formData.append('comments', comments);
-    if (location) {
-        if (location.latitude && location.longitude) {
-            formData.append('latitude', location.latitude.toString());
-            formData.append('longitude', location.longitude.toString());
+    formData.append('name', params.name);
+    formData.append('recorded_date', params.recorded_date);
+    formData.append('recorded_time', params.recorded_time);
+    formData.append('equipment', params.equipment);
+    formData.append('comments', params.comments);
+    if (params.location) {
+        if (params.location.latitude && params.location.longitude) {
+            formData.append('latitude', params.location.latitude.toString());
+            formData.append('longitude', params.location.longitude.toString());
         }
-        if (location.gridCellId) {
-            formData.append('gridCellId', location.gridCellId.toString());
+        if (params.location.gridCellId) {
+            formData.append('gridCellId', params.location.gridCellId.toString());
         }
     }
     
     const recordingParams = {
-      name,
-      equipment,
-      comments,
+      name: params.name,
+      equipment: params.equipment,
+      comments: params.comments,
     };
     const payloadBlob = new Blob([JSON.stringify(recordingParams)], { type: 'application/json' });
     formData.append('payload', payloadBlob);
   await axiosInstance.post('/recording/',
     formData,
     { 
-        params: { publicVal }, 
+        params: { publicVal: !!params.publicVal }, 
         headers: {
             'Content-Type': 'multipart/form-data',   
         }
      });
   }
 
-  async function patchRecording(recordingId: number, name: string, recorded_date: string, recorded_time: string, equipment: string, comments: string, publicVal = false, location: UploadLocation = null ) {
-    const latitude = location ? location.latitude : undefined;
-    const longitude = location ? location.longitude : undefined;
-    const gridCellId = location ? location.gridCellId : undefined;
+  async function patchRecording(recordingId: number, params: RecordingFileParameters) {
+    const latitude = params.location ? params.location.latitude : undefined;
+    const longitude = params.location ? params.location.longitude : undefined;
+    const gridCellId = params.location ? params.location.gridCellId : undefined;
 
     await axiosInstance.patch(`/recording/${recordingId}`, 
         { 
-            name, 
-            recorded_date, 
-            recorded_time, 
-            equipment, 
-            comments, 
-            publicVal, 
+            name: params.name, 
+            recorded_date: params.recorded_date, 
+            recorded_time: params.recorded_time, 
+            equipment: params.equipment, 
+            comments: params.comments, 
+            publicVal: !!params.publicVal, 
             latitude,
             longitude,
             gridCellId
@@ -271,6 +286,33 @@ async function getCellfromLocation(latitude: number, longitude: number) {
     return axiosInstance.get<CellIDReponse>(`/grts/grid_cell_id`, {params: {latitude, longitude}});
 }
 
+interface GuanoMetadata {
+    nabat_grid_cell_grts_id?: string
+    nabat_latitude?: number
+    nabat_longitude?: number
+    nabat_site_name?: string
+    nabat_activation_start_time?: string
+    nabat_activation_end_time?: string
+    nabat_software_type?: string
+    nabat_species_list?: string[]
+    nabat_comments?: string
+    nabat_detector_type?: string
+    nabat_unusual_occurrences?: string
+
+}
+
+async function getGuanoMetadata(file: File): Promise<GuanoMetadata> {
+    const formData = new FormData();
+    formData.append('audio_file', file);
+    const results = await axiosInstance.post<GuanoMetadata>('/guano/',formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',   
+        }
+    });
+    return results.data;
+
+}
+
 export {
  uploadRecordingFile,
  getRecordings,
@@ -291,4 +333,5 @@ export {
  deleteTemporalAnnotation,
  getCellLocation,
  getCellfromLocation,
+ getGuanoMetadata,
 };

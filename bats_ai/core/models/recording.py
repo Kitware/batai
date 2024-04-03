@@ -20,10 +20,15 @@ class Recording(TimeStampedModel, models.Model):
     public = models.BooleanField(default=False)
     software = models.TextField(blank=True, null=True)
     detector = models.TextField(blank=True, null=True)
-    computed_species = models.ManyToManyField(Species)  # species from a computed sense
+    species_list = models.TextField(blank=True, null=True)
+    site_name = models.TextField(blank=True, null=True)
+    computed_species = models.ManyToManyField(
+        Species, related_name='recording_computed_species'
+    )  # species from a computed sense
     official_species = models.ManyToManyField(
-        Species
+        Species, related_name='recording_official_species'
     )  # species that are detemrined by the owner or from annotations as official species list
+    unusual_occurrences = models.TextField(blank=True, null=True)
 
     @property
     def has_spectrogram(self):
