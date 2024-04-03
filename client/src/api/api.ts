@@ -28,6 +28,11 @@ export interface Recording {
     userMadeAnnotations: boolean;
     userAnnotations: number;
     hasSpectrogram: boolean;
+    site_name?: string;
+    software?: string;
+    detector?: string;
+    species_list?: string;
+    unusual_occurrences?: string;
 }
 
 export interface AcousticFiles {
@@ -161,10 +166,30 @@ async function uploadRecordingFile(file: File, params: RecordingFileParameters )
         }
     }
     
+    if (params.software) {
+        formData.append('software', params.software);
+    }
+    if (params.detector) {
+        formData.append('detector', params.detector);
+    }
+    if (params.site_name) {
+        formData.append('site_name', params.site_name);
+    }
+    if (params.species_list) {
+        formData.append('species_list', params.species_list);
+    }
+    if (params.unusual_occurrences) {
+        formData.append('unusual_occurrences', params.unusual_occurrences);
+    }
     const recordingParams = {
       name: params.name,
       equipment: params.equipment,
       comments: params.comments,
+      site_name: params.site_name,
+      software: params.software,
+      detector: params.detector,
+      species_list: params.species_list,
+      unusual_occurrences: params.unusual_occurrences
     };
     const payloadBlob = new Blob([JSON.stringify(recordingParams)], { type: 'application/json' });
     formData.append('payload', payloadBlob);
@@ -193,7 +218,12 @@ async function uploadRecordingFile(file: File, params: RecordingFileParameters )
             publicVal: !!params.publicVal, 
             latitude,
             longitude,
-            gridCellId
+            gridCellId,
+            site_name: params.site_name,
+            software: params.software,
+            detector: params.detector,
+            species_list: params.species_list,
+            unusual_occurrences: params.unusual_occurrences,
         },
         {
             headers: {
