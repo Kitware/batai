@@ -301,7 +301,10 @@ export default defineComponent({
               </v-expansion-panel-title>
               <v-expansion-panel-text>
                 <v-row>
-                  <v-btn @click="getBatchMetadata()" color="secondary">
+                  <v-btn
+                    color="secondary"
+                    @click="getBatchMetadata()"
+                  >
                     Get Guano Metadata
                   </v-btn>
                 </v-row>

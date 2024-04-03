@@ -1,6 +1,6 @@
 <script lang="ts">
-import { defineComponent, onMounted, PropType, ref, Ref, watch } from 'vue';
-import { getRecording, Recording } from '../api/api';
+import { defineComponent, PropType } from 'vue';
+import { Recording } from '../api/api';
 import MapLocation from './MapLocation.vue';
 
 
@@ -19,7 +19,7 @@ export default defineComponent({
     }
   },
   emits: ['close'],
-  setup(props) {
+  setup() {
     return {
 
     };
@@ -61,7 +61,10 @@ export default defineComponent({
         <v-spacer />
       </v-row>
       
-      <div v-if="recordingInfo.site_name" class="mt-5">
+      <div
+        v-if="recordingInfo.site_name"
+        class="mt-5"
+      >
         <v-row><h3>Guano Metadata</h3></v-row>
         <v-row v-if="recordingInfo.site_name">
           <div><b>Site Name:</b><span>{{ recordingInfo.site_name }}</span></div>

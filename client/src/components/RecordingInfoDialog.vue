@@ -1,13 +1,11 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref, Ref, watch } from 'vue';
 import { getRecording, Recording } from '../api/api';
-import MapLocation from './MapLocation.vue';
 import RecordingInfoDisplay from './RecordingInfoDisplay.vue';
 
 
 export default defineComponent({
   components: {
-    MapLocation,
     RecordingInfoDisplay
   },
   props: {
