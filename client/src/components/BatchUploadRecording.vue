@@ -105,6 +105,7 @@ export default defineComponent({
                 equipment: '',
                 comments: '',
                 public: false,
+
               };
               recordings.value.push(newRecording);
             }
@@ -145,6 +146,12 @@ export default defineComponent({
           comments: fileElement.comments,
           publicVal: fileElement.public,
           location,
+          site_name: fileElement.siteName,
+          software: fileElement.software,
+          detector: fileElement.detector,
+          species_list: fileElement.speciesList,
+          unusual_occurrences: fileElement.unusualOccurrences,
+
         };
         await uploadRecordingFile(file, fileUploadParams);
         recordings.value.splice(0, 1);
@@ -207,7 +214,7 @@ export default defineComponent({
       recordings.value = updatedRecordings;
     };
 
-    watch([globalPublic, globalComments, globalEquipment], () =>{
+    watch([globalPublic, globalComments, globalEquipment], () => {
       const newResults: BatchRecording[] = [];
         recordings.value.forEach((item) => {
           item.public = globalPublic.value;
