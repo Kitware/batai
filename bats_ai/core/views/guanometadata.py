@@ -47,13 +47,13 @@ def default_data(
 
         # Extract additional fields with conditionals
         additional_fields = {
-            'nabat_activation_start_time': datetime.strptime(
-                gfile.get('NABat|Activation start time', None), '%Y%m%dT%H%M%S'
+            'nabat_activation_start_time': parse_datetime(
+                gfile.get('NABat|Activation start time', None)
             )
             if 'NABat|Activation start time' in gfile
             else None,
-            'nabat_activation_end_time': datetime.strptime(
-                gfile.get('NABat|Activation end time', None), '%Y%m%dT%H%M%S'
+            'nabat_activation_end_time': parse_datetime(
+                gfile.get('NABat|Activation end time', None)
             )
             if 'NABat|Activation end time' in gfile
             else None,
@@ -71,3 +71,18 @@ def default_data(
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+def parse_datetime(datetime_str):
+    if datetime_str:
+        try:
+            # Try parsing using the custom format
+            return datetime.strptime(datetime_str, '%Y%m%dT%H%M%S')
+        except ValueError:
+            try:
+                # Try parsing using ISO format
+                return datetime.fromisoformat(datetime_str)
+            except ValueError:
+                # If both formats fail, return None or handle the error accordingly
+                return None
+    return None
