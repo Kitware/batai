@@ -5,7 +5,7 @@ import useRequest from '../use/useRequest';
 import { UploadLocation, uploadRecordingFile, getCellLocation, RecordingFileParameters, getGuanoMetadata } from '../api/api';
 import BatchRecordingElement, { BatchRecording } from './BatchRecordingElement.vue';
 import { cloneDeep } from 'lodash';
-import { extractDateTimeComponents } from '../use/useUtils';
+import { extractDateTimeComponents, getCurrentTime } from '../use/useUtils';
 
 
 interface AutoFillResult {
@@ -108,6 +108,17 @@ export default defineComponent({
 
               };
               recordings.value.push(newRecording);
+            } else {
+              recordings.value.push({
+                file,
+                name: file.name,
+                date: new Date().toISOString().split('T')[0],
+                time: getCurrentTime(),
+                equipment: '',
+                comments: '',
+                public: false,
+              });
+
             }
           }
         }
