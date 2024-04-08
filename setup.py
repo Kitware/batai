@@ -65,6 +65,7 @@ setup(
         'large-image[rasterio,pil]>=1.22',
         'rio-cogeo',
         'mercantile',
+        'guano',
     ],
     extras_require={
         'dev': [

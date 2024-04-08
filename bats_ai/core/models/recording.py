@@ -3,6 +3,7 @@ import logging
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django_extensions.db.models import TimeStampedModel
+from .species import Species
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,17 @@ class Recording(TimeStampedModel, models.Model):
     grts_cell_id = models.IntegerField(blank=True, null=True)
     grts_cell = models.IntegerField(blank=True, null=True)
     public = models.BooleanField(default=False)
+    software = models.TextField(blank=True, null=True)
+    detector = models.TextField(blank=True, null=True)
+    species_list = models.TextField(blank=True, null=True)
+    site_name = models.TextField(blank=True, null=True)
+    computed_species = models.ManyToManyField(
+        Species, related_name='recording_computed_species'
+    )  # species from a computed sense
+    official_species = models.ManyToManyField(
+        Species, related_name='recording_official_species'
+    )  # species that are detemrined by the owner or from annotations as official species list
+    unusual_occurrences = models.TextField(blank=True, null=True)
 
     @property
     def has_spectrogram(self):

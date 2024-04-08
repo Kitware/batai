@@ -21,6 +21,10 @@ class BatsAiMixin(ConfigMixin):
 
     BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
+    FILE_UPLOAD_HANDLERS = [
+        'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+    ]
+
     @staticmethod
     def mutate_configuration(configuration: ComposedConfiguration) -> None:
         # Install local apps first, to ensure any overridden resources are found first

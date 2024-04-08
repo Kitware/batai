@@ -47,6 +47,11 @@ class RecordingUploadSchema(Schema):
     longitude: float = None
     gridCellId: int = None
     publicVal: bool = None
+    site_name: str = None
+    software: str = None
+    detector: str = None
+    species_list: str = None
+    unusual_occurrences: str = None
 
 
 class AnnotationSchema(Schema):
@@ -109,7 +114,13 @@ def create_recording(
         recording_location=point,
         public=publicVal,
         comments=payload.comments,
+        detector=payload.detector,
+        software=payload.software,
+        site_name=payload.site_name,
+        species_list=payload.species_list,
+        unusual_occurrences=payload.unusual_occurrences,
     )
+
     recording.save()
     # Start generating recording as soon as created
     # this creates the spectrogram during the upload so it is available immediately afterwards
@@ -142,6 +153,16 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
     if recording_data.latitude and recording_data.longitude:
         point = Point(recording_data.longitude, recording_data.latitude)
         recording.recording_location = point
+    if recording_data.detector:
+        recording.detector = recording_data.detector
+    if recording_data.software:
+        recording.software = recording_data.software
+    if recording_data.site_name:
+        recording.site_name = recording_data.site_name
+    if recording_data.species_list:
+        recording.species_list = recording_data.species_list
+    if recording_data.unusual_occurrences:
+        recording.unusual_occurrences = recording_data.unusual_occurrences
 
     recording.save()
 
