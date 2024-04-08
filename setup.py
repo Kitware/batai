@@ -57,6 +57,7 @@ setup(
         'matplotlib',
         'numpy',
         'opencv-python-headless',
+        'guano',
     ],
     extras_require={
         'dev': [

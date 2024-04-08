@@ -5,11 +5,13 @@ import UploadRecording, { EditingRecording } from '../components/UploadRecording
 import MapLocation from '../components/MapLocation.vue';
 import useState from '../use/useState';
 import BatchUploadRecording from '../components/BatchUploadRecording.vue';
+import RecordingInfoDisplay from '../components/RecordingInfoDisplay.vue';
 export default defineComponent({
     components: {
         UploadRecording,
         MapLocation,
         BatchUploadRecording,
+        RecordingInfoDisplay
     },
   setup() {
     const itemsPerPage = ref(-1);
@@ -55,12 +57,8 @@ export default defineComponent({
           key:'recording_location'
         },
         {
-            title:'Equipment',
-            key:'equipment',
-        },
-        {
-            title:'Comments',
-            key:'comments',
+          title: 'Details',
+          key:'comments'
         },
         {
             title:'Users Annotated',
@@ -95,16 +93,13 @@ export default defineComponent({
         },
         {
           title: 'Location',
-          key:'recording_location'
+          key:'details'
         },
         {
-            title:'Equipment',
-            key:'equipment',
+          title: 'Details',
+          key:'comments'
         },
-        {
-            title:'Comments',
-            key:'comments',
-        },
+
         {
             title:'Annotated by Me',
             key:'userMadeAnnotations',
@@ -278,6 +273,24 @@ export default defineComponent({
           </v-icon>
         </template>
 
+        <template #item.comments="{ item }">
+          <v-menu
+            v-if="item.comments !== undefined"
+            open-on-click
+            :close-on-content-click="false"
+          >
+            <template #activator="{ props }">
+              <v-icon v-bind="props">
+                mdi-information-outline
+              </v-icon>
+            </template>
+            <recording-info-display
+              :recording-info="item"
+              disable-button
+            />
+          </v-menu>
+        </template>
+
         <template #item.public="{ item }">
           <v-icon
             v-if="item.public"
@@ -377,6 +390,24 @@ export default defineComponent({
           >
             mdi-close
           </v-icon>
+        </template>
+
+        <template #item.comments="{ item }">
+          <v-menu
+            v-if="item.comments !== undefined"
+            open-on-click
+            :close-on-content-click="false"
+          >
+            <template #activator="{ props }">
+              <v-icon v-bind="props">
+                mdi-information-outline
+              </v-icon>
+            </template>
+            <recording-info-display
+              :recording-info="item"
+              disable-button
+            />
+          </v-menu>
         </template>
 
         <template #item.userMadeAnnotations="{ item }">

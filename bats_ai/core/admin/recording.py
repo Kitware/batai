@@ -24,6 +24,13 @@ class RecordingAdmin(admin.ModelAdmin):
         'recording_location',
         'grts_cell_id',
         'grts_cell',
+        'site_name',
+        'detector',
+        'software',
+        'species_list',
+        'unusual_occurrences',
+        'get_computed_species',
+        'get_official_species',
     ]
     list_select_related = True
     # list_select_related = ['owner']
@@ -33,6 +40,12 @@ class RecordingAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ['owner']
     readonly_fields = ['created', 'modified']
+
+    def get_official_species(self, instance):
+        return [species.species_code_6 for species in instance.official_species.all()]
+
+    def get_computed_species(self, instance):
+        return [species.species_code_6 for species in instance.computed_species.all()]
 
     @admin.display(
         description='Spectrogram',

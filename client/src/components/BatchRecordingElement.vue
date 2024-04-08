@@ -1,9 +1,10 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, Ref, watch } from "vue";
 import { RecordingMimeTypes } from "../constants";
-import { getCellLocation, getCellfromLocation } from "../api/api";
+import { getCellLocation, getCellfromLocation, getGuanoMetadata } from "../api/api";
 import MapLocation from "./MapLocation.vue";
 import { useDate } from "vuetify/lib/framework.mjs";
+import { getCurrentTime, extractDateTimeComponents } from '../use/useUtils';
 export interface BatchRecording {
   name: string;
   file: File;
@@ -14,15 +15,12 @@ export interface BatchRecording {
   public: boolean;
   location?: { lat: number; lon: number };
   gridCellId?: number;
+  siteName?: string;
+  software?: string;
+  detector?: string;
+  speciesList?: string;
+  unusualOccurrences?: string;
 }
-function getCurrentTime() {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  const seconds = String(now.getSeconds()).padStart(2, "0");
-  return hours + minutes + seconds;
-}
-
 export default defineComponent({
   components: {
     MapLocation,
@@ -62,6 +60,13 @@ export default defineComponent({
     );
     const gridCellId: Ref<number | undefined> = ref();
     const publicVal = ref(props.editing ? props.editing.public : false);
+    // Guano Metadata
+    const siteName = ref(props.editing?.siteName || '');
+    const software = ref(props.editing?.software || '');
+    const detector = ref(props.editing?.detector || '');
+    const speciesList = ref(props.editing?.speciesList || '');
+    const unusualOccurrences = ref(props.editing?.unusualOccurrences || '');
+
     const autoFill = async (filename: string) => {
       const regexPattern = /^(\d+)_(.+)_(\d{8})_(\d{6})(?:_(.*))?$/;
 
@@ -159,6 +164,43 @@ export default defineComponent({
       }
     };
 
+    const getMetadata = async () => {
+      if (fileModel.value) {
+        const results = await getGuanoMetadata(fileModel.value);
+        if (results.nabat_site_name) {
+          siteName.value = results.nabat_site_name;
+        }
+        if (results.nabat_software_type) {
+          software.value = results.nabat_software_type;
+        }
+        if (results.nabat_detector_type) {
+          detector.value = results.nabat_detector_type;
+        }
+        if (results.nabat_species_list) {
+          speciesList.value = results.nabat_species_list.join(',');
+        }
+        if (results.nabat_unusual_occurrences) {
+          unusualOccurrences.value = results.nabat_unusual_occurrences;
+        }
+        // Finally we get the latitude/longitude or gridCell Id if it's available.
+        const startTime = results.nabat_activation_start_time;
+        const NaBatgridCellId = results.nabat_grid_cell_grts_id;
+        const NABatlatitude = results.nabat_latitude;
+        const NABatlongitude = results.nabat_longitude;
+        if (startTime) {
+          const {date, time} = extractDateTimeComponents(startTime);
+          recordedDate.value = date;
+          recordedTime.value = time;
+        }
+        if (NaBatgridCellId) {
+          gridCellId.value = parseInt(NaBatgridCellId);
+        }
+        if (NABatlatitude && NABatlongitude) {
+          latitude.value = NABatlatitude;
+          longitude.value = NABatlongitude;
+        }
+      }
+    };
     const updateMap = ref(0); // updates the map when lat/lon change by editing directly;
 
     const triggerUpdateMap = () => (updateMap.value += 1);
@@ -224,6 +266,14 @@ export default defineComponent({
       publicVal,
       updateMap,
       recordedTime,
+      // Guano Metadata
+      siteName,
+      software,
+      detector,
+      speciesList,
+      unusualOccurrences,
+
+      getMetadata,
       selectFile,
       readFile,
       updateTime,
@@ -378,6 +428,50 @@ export default defineComponent({
                     <v-text-field
                       v-model="comments"
                       label="comments"
+                    />
+                  </v-row>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+              <v-expansion-panel>
+                <v-expansion-panel-title>Guano Metadata</v-expansion-panel-title>
+                <v-expansion-panel-text>
+                  <v-row v-if="fileModel">
+                    <v-btn
+                      color="secondary"
+                      :disabled="!fileModel"
+                      @click="getMetadata"
+                    >
+                      Get Guano Metadata
+                    </v-btn>
+                  </v-row>
+                  <v-row>
+                    <v-text-field
+                      v-model="siteName"
+                      label="Site Name"
+                    />
+                  </v-row>
+                  <v-row>
+                    <v-text-field
+                      v-model="software"
+                      label="Software"
+                    />
+                  </v-row>
+                  <v-row>
+                    <v-text-field
+                      v-model="detector"
+                      label="Detector"
+                    />
+                  </v-row>
+                  <v-row>
+                    <v-text-field
+                      v-model="speciesList"
+                      label="Species List"
+                    />
+                  </v-row>
+                  <v-row>
+                    <v-text-field
+                      v-model="unusualOccurrences"
+                      label="Unusual Occurences"
                     />
                   </v-row>
                 </v-expansion-panel-text>
