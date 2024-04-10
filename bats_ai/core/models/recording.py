@@ -3,6 +3,7 @@ import logging
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django_extensions.db.models import TimeStampedModel
+
 from .species import Species
 
 logger = logging.getLogger(__name__)

@@ -150,9 +150,9 @@ class Spectrogram(TimeStampedModel, models.Model):
         img = img.resize((w_, h_), resample=Image.Resampling.LANCZOS)
         w, h = img.size
 
-        img.save(f'temp.{colormap}.png')
+        img.save(f'/tmp/temp.{colormap}.jpg')
 
-        img_filtered = cv2.imread(f'temp.{colormap}.jpg', cv2.IMREAD_GRAYSCALE)
+        img_filtered = cv2.imread(f'/tmp/temp.{colormap}.jpg', cv2.IMREAD_GRAYSCALE)
         img_filtered = img_filtered.astype(np.float32)
         assert img_filtered.min() == 0
         assert img_filtered.max() == 255
