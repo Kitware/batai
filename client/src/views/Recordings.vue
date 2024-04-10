@@ -147,6 +147,11 @@ export default defineComponent({
         time: item.recorded_time,
         public: item.public,
         id: item.id,
+        siteName: item.site_name,
+        software: item.software,
+        detector: item.detector,
+        speciesList: item.species_list,
+        unusualOccurrences: item.unusual_occurrences,
       };
       if (item.recording_location) {
         const [ lon, lat ] = item.recording_location.coordinates;
