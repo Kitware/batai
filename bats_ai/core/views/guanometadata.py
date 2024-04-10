@@ -44,7 +44,10 @@ def default_data(
             'nabat_longitude': (gfile.get('NABat|Longitude', None)),
             'nabat_site_name': gfile.get('NABat|Site Name', None),
         }
-
+        if (
+            nabat_fields['nabat_longitude'] and nabat_fields['nabat_longitude'] > 0
+        ):  # individuals don't put the - in the longitude
+            nabat_fields['nabat_longitude'] = str(float(nabat_fields['nabat_longitude']) * -1)
         # Extract additional fields with conditionals
         additional_fields = {
             'nabat_activation_start_time': parse_datetime(
