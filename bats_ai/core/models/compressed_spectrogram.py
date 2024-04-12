@@ -1,22 +1,12 @@
-import base64
-import io
-import math
-
 from PIL import Image
 import cv2
-from django.core.files import File
-from django.db import models
-from django.db.models.fields.files import FieldFile
 from django.contrib.postgres.fields import ArrayField
-from django_extensions.db.models import TimeStampedModel
-import librosa
-import matplotlib.pyplot as plt
-import numpy as np
-import scipy
-import tqdm
-
-from bats_ai.core.models import Annotations, Recording, Spectrogram
+from django.db import models
 from django.dispatch import receiver
+from django_extensions.db.models import TimeStampedModel
+import numpy as np
+
+from bats_ai.core.models import Recording, Spectrogram
 
 FREQ_MIN = 5e3
 FREQ_MAX = 120e3
@@ -33,7 +23,6 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
     stops = ArrayField(ArrayField(models.IntegerField()))  # milliseconds
     widths = ArrayField(ArrayField(models.IntegerField()))  # hz
     cache_invalidated = models.BooleanField(default=True)
-    
 
     def predict(self):
         import json
@@ -109,6 +98,7 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
         confs = dict(zip(labels, outputs))
 
         return label, score, confs
+
 
 @receiver(models.signals.pre_delete, sender=Spectrogram)
 def delete_content(sender, instance, **kwargs):

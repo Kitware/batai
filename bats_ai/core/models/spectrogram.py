@@ -7,15 +7,14 @@ import cv2
 from django.core.files import File
 from django.db import models
 from django.db.models.fields.files import FieldFile
+from django.dispatch import receiver
 from django_extensions.db.models import TimeStampedModel
 import librosa
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy
 import tqdm
 
-from bats_ai.core.models import Annotations, Recording
-from django.dispatch import receiver
+from bats_ai.core.models import Recording
 
 FREQ_MIN = 5e3
 FREQ_MAX = 120e3
@@ -299,8 +298,8 @@ class Spectrogram(TimeStampedModel, models.Model):
 
         return label, score, confs
 
+
 @receiver(models.signals.pre_delete, sender=Spectrogram)
 def delete_content(sender, instance, **kwargs):
     if instance.image_file:
         instance.image_file.delete(save=False)
-

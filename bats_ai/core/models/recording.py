@@ -2,8 +2,8 @@ import logging
 
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
-from django_extensions.db.models import TimeStampedModel
 from django.dispatch import receiver
+from django_extensions.db.models import TimeStampedModel
 
 from .species import Species
 
@@ -83,7 +83,7 @@ class Recording(TimeStampedModel, models.Model):
 
     @property
     def spectrogram(self):
-        from bats_ai.core.models import Spectrogram
+        pass
 
         spectrograms = self.spectrograms
 
@@ -91,6 +91,7 @@ class Recording(TimeStampedModel, models.Model):
         spectrogram = spectrograms[0]  # most recently created
 
         return spectrogram
+
 
 @receiver(models.signals.pre_delete, sender=Recording)
 def delete_content(sender, instance, **kwargs):

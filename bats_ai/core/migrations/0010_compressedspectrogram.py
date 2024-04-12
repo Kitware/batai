@@ -7,7 +7,6 @@ import django_extensions.db.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0009_annotations_type_recording_computed_species_and_more'),
     ]
@@ -16,17 +15,66 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CompressedSpectrogram',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, verbose_name='created')),
-                ('modified', django_extensions.db.fields.ModificationDateTimeField(auto_now=True, verbose_name='modified')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
+                (
+                    'created',
+                    django_extensions.db.fields.CreationDateTimeField(
+                        auto_now_add=True, verbose_name='created'
+                    ),
+                ),
+                (
+                    'modified',
+                    django_extensions.db.fields.ModificationDateTimeField(
+                        auto_now=True, verbose_name='modified'
+                    ),
+                ),
                 ('image_file', models.FileField(upload_to='')),
                 ('length', models.IntegerField()),
-                ('starts', django.contrib.postgres.fields.ArrayField(base_field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), size=None), size=None)),
-                ('stops', django.contrib.postgres.fields.ArrayField(base_field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), size=None), size=None)),
-                ('widths', django.contrib.postgres.fields.ArrayField(base_field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), size=None), size=None)),
+                (
+                    'starts',
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=django.contrib.postgres.fields.ArrayField(
+                            base_field=models.IntegerField(), size=None
+                        ),
+                        size=None,
+                    ),
+                ),
+                (
+                    'stops',
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=django.contrib.postgres.fields.ArrayField(
+                            base_field=models.IntegerField(), size=None
+                        ),
+                        size=None,
+                    ),
+                ),
+                (
+                    'widths',
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=django.contrib.postgres.fields.ArrayField(
+                            base_field=models.IntegerField(), size=None
+                        ),
+                        size=None,
+                    ),
+                ),
                 ('cache_invalidated', models.BooleanField(default=True)),
-                ('recording', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.recording')),
-                ('spectrogram', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.spectrogram')),
+                (
+                    'recording',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='core.recording'
+                    ),
+                ),
+                (
+                    'spectrogram',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='core.spectrogram'
+                    ),
+                ),
             ],
             options={
                 'get_latest_by': 'modified',

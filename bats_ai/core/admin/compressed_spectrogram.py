@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from bats_ai.core.models import CompressedSpectrogram
 
+
 @admin.register(CompressedSpectrogram)
 class CompressedSpectrogramAdmin(admin.ModelAdmin):
     list_display = [

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0008_grtscells_recording_recorded_time'),
     ]
@@ -18,7 +17,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='recording',
             name='computed_species',
-            field=models.ManyToManyField(related_name='recording_computed_species', to='core.species'),
+            field=models.ManyToManyField(
+                related_name='recording_computed_species', to='core.species'
+            ),
         ),
         migrations.AddField(
             model_name='recording',
@@ -28,7 +29,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='recording',
             name='official_species',
-            field=models.ManyToManyField(related_name='recording_official_species', to='core.species'),
+            field=models.ManyToManyField(
+                related_name='recording_official_species', to='core.species'
+            ),
         ),
         migrations.AddField(
             model_name='recording',
