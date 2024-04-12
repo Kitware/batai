@@ -15,6 +15,7 @@ import scipy
 import tqdm
 
 from bats_ai.core.models import Annotations, Recording
+from django.dispatch import receiver
 
 FREQ_MIN = 5e3
 FREQ_MAX = 120e3
@@ -155,7 +156,6 @@ class Spectrogram(TimeStampedModel, models.Model):
         img_filtered = cv2.imread(f'/tmp/temp.{colormap}.jpg', cv2.IMREAD_GRAYSCALE)
         img_filtered = img_filtered.astype(np.float32)
         assert img_filtered.min() == 0
-        assert img_filtered.max() == 255
         img_filtered = img_filtered.astype(np.float32)
         img_filtered /= 0.9
         img_filtered[img_filtered < 0] = 0
@@ -188,7 +188,7 @@ class Spectrogram(TimeStampedModel, models.Model):
         img.save(buf, format='JPEG', quality=80)
         buf.seek(0)
 
-        name = 'spectrogram.jpg'
+        name = f'{recording.pk}_{colormap}_spectrogram.jpg'
         image_file = File(buf, name=name)
 
         spectrogram = cls(
@@ -202,148 +202,7 @@ class Spectrogram(TimeStampedModel, models.Model):
             colormap=colormap,
         )
         spectrogram.save()
-
-    @property
-    def compressed(self):
-        img = self.image_np
-
-        annotations = Annotations.objects.filter(recording=self.recording)
-
-        threshold = 0.5
-        while True:
-            canvas = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            canvas = canvas.astype(np.float32)
-
-            is_light = np.median(canvas) > 128.0
-            if is_light:
-                canvas = 255.0 - canvas
-
-            amplitude = canvas.max(axis=0)
-            amplitude -= amplitude.min()
-            amplitude /= amplitude.max()
-            amplitude[amplitude < threshold] = 0.0
-            amplitude[amplitude > 0] = 1.0
-            amplitude = amplitude.reshape(1, -1)
-
-            canvas -= canvas.min()
-            canvas /= canvas.max()
-            canvas *= 255.0
-            canvas *= amplitude
-            canvas = np.around(canvas).astype(np.uint8)
-
-            width = canvas.shape[1]
-            for annotation in annotations:
-                start = annotation.start_time / self.duration
-                stop = annotation.end_time / self.duration
-
-                start = int(np.around(start * width))
-                stop = int(np.around(stop * width))
-                canvas[:, start : stop + 1] = 255.0
-
-            mask = canvas.max(axis=0)
-            mask = scipy.signal.medfilt(mask, 3)
-            mask[0] = 0
-            mask[-1] = 0
-
-            starts = []
-            stops = []
-            for index in range(1, len(mask) - 1):
-                value_pre = mask[index - 1]
-                value = mask[index]
-                value_post = mask[index + 1]
-                if value != 0:
-                    if value_pre == 0:
-                        starts.append(index)
-                    if value_post == 0:
-                        stops.append(index)
-            assert len(starts) == len(stops)
-
-            starts = [val - 40 for val in starts]  # 10 ms buffer
-            stops = [val + 40 for val in stops]  # 10 ms buffer
-            ranges = list(zip(starts, stops))
-
-            while True:
-                found = False
-                merged = []
-                index = 0
-                while index < len(ranges) - 1:
-                    start1, stop1 = ranges[index]
-                    start2, stop2 = ranges[index + 1]
-
-                    start1 = min(max(start1, 0), len(mask))
-                    start2 = min(max(start2, 0), len(mask))
-                    stop1 = min(max(stop1, 0), len(mask))
-                    stop2 = min(max(stop2, 0), len(mask))
-
-                    if stop1 >= start2:
-                        found = True
-                        merged.append((start1, stop2))
-                        index += 2
-                    else:
-                        merged.append((start1, stop1))
-                        index += 1
-                    if index == len(ranges) - 1:
-                        merged.append((start2, stop2))
-                ranges = merged
-                if not found:
-                    for index in range(1, len(ranges)):
-                        start1, stop1 = ranges[index - 1]
-                        start2, stop2 = ranges[index]
-                        assert start1 < stop1
-                        assert start2 < stop2
-                        assert start1 < start2
-                        assert stop1 < stop2
-                        assert stop1 < start2
-                    break
-
-            segments = []
-            starts_ = []
-            stops_ = []
-            domain = img.shape[1]
-            widths = []
-            total_width = 0
-            for start, stop in ranges:
-                segment = img[:, start:stop]
-                segments.append(segment)
-
-                starts_.append(int(round(self.duration * (start / domain))))
-                stops_.append(int(round(self.duration * (stop / domain))))
-                widths.append(stop - start)
-                total_width += stop - start
-
-                # buffer = np.zeros((len(img), 20, 3), dtype=img.dtype)
-                # segments.append(buffer)
-            # segments = segments[:-1]
-
-            if len(segments) > 0:
-                break
-
-            threshold -= 0.05
-            if threshold < 0:
-                segments = None
-                break
-
-        if segments is None:
-            canvas = img.copy()
-        else:
-            canvas = np.hstack(segments)
-
-        canvas = Image.fromarray(canvas, 'RGB')
-
-        canvas.save('temp.compressed.jpg')
-
-        buf = io.BytesIO()
-        canvas.save(buf, format='JPEG', quality=80)
-        buf.seek(0)
-        img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-
-        metadata = {
-            'starts': starts_,
-            'stops': stops_,
-            'widths': widths,
-            'length': total_width,
-        }
-        return canvas, img_base64, metadata
+        return spectrogram.pk
 
     @property
     def image_np(self):
@@ -439,3 +298,9 @@ class Spectrogram(TimeStampedModel, models.Model):
         confs = dict(zip(labels, outputs))
 
         return label, score, confs
+
+@receiver(models.signals.pre_delete, sender=Spectrogram)
+def delete_content(sender, instance, **kwargs):
+    if instance.image_file:
+        instance.image_file.delete(save=False)
+

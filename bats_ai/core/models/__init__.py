@@ -6,6 +6,7 @@ from .recording_annotation_status import RecordingAnnotationStatus
 from .species import Species
 from .spectrogram import Spectrogram
 from .temporal_annotations import TemporalAnnotations
+from .compressed_spectrogram import CompressedSpectrogram
 
 __all__ = [
     'Annotations',
@@ -17,4 +18,5 @@ __all__ = [
     'TemporalAnnotations',
     'GRTSCells',
     'colormap',
+    'CompressedSpectrogram',
 ]
