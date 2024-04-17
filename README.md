@@ -15,8 +15,9 @@ This is the simplest configuration for developers to start with.
 
 ### Run Vue Frontend
 
-1. Run `npm install`
-2. Run `npm run dev`
+1. Run `cd client/`
+2. Run `npm install`
+3. Run `npm run dev`
 
 ### Run Application
 

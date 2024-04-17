@@ -268,7 +268,7 @@ def get_spectrogram(request: HttpRequest, id: int):
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    with colormap('light'):
+    with colormap():
         spectrogram = recording.spectrogram
 
     spectro_data = {
@@ -331,11 +331,11 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    with colormap():
+    with colormap('inference'):
         label, score, confs = recording.spectrogram.predict()
         print(label, score, confs)
 
-    with colormap('light'):
+    with colormap():
         spectrogram = recording.spectrogram
         _, compressed_base64, metadata = spectrogram.compressed
 

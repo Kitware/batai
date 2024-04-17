@@ -5,66 +5,15 @@ from django.contrib.gis.db import models
 from django_extensions.db.models import TimeStampedModel
 
 from .species import Species
-logger = logging.getLogger(__name__)
-
-
-COLORMAP = None
-COLORMAP_ALLOWED = [None, 'gist_yarg', 'gnuplot2']
-
-
-class colormap:
-    def __init__(self, colormap=None):
-        # Helpful aliases
-        if colormap in ['none', 'default', 'dark']:
-            colormap = None
-        if colormap in ['light']:
-            colormap = 'gist_yarg'
-        if colormap in ['heatmap']:
-            colormap = 'turbo'
-
-        # Supported colormaps
-        if colormap not in COLORMAP_ALLOWED:
-            logging.warning(f'Substituted requested {colormap} colormap to default')
-            logging.warning('See COLORMAP_ALLOWED')
-            colormap = None
-
-        self.colormap = colormap
-        self.previous = None
-
-    def __enter__(self):
-        global COLORMAP
-
-        self.previous = COLORMAP
-        COLORMAP = self.colormap
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        global COLORMAP
-
-        COLORMAP = self.previous
 
 logger = logging.getLogger(__name__)
 
 
 COLORMAP = None
-COLORMAP_ALLOWED = [None, 'gist_yarg', 'gnuplot2']
 
 
 class colormap:
     def __init__(self, colormap=None):
-        # Helpful aliases
-        if colormap in ['none', 'default', 'dark']:
-            colormap = None
-        if colormap in ['light']:
-            colormap = 'gist_yarg'
-        if colormap in ['heatmap']:
-            colormap = 'turbo'
-
-        # Supported colormaps
-        if colormap not in COLORMAP_ALLOWED:
-            logging.warning(f'Substituted requested {colormap} colormap to default')
-            logging.warning('See COLORMAP_ALLOWED')
-            colormap = None
-
         self.colormap = colormap
         self.previous = None
 

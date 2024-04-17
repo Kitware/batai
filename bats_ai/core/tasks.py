@@ -16,6 +16,7 @@ def recording_compute_spectrogram(recording_id: int):
 
     cmaps = [
         None,  # Default (dark) spectrogram
+        'inference',  # Machine learning inference spectrogram
         'light',  # Light spectrogram
     ]
 

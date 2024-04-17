@@ -1,5 +1,6 @@
 import base64
 import io
+import logging
 import math
 
 from PIL import Image
@@ -16,9 +17,13 @@ import tqdm
 
 from bats_ai.core.models import Annotations, Recording
 
+logger = logging.getLogger(__name__)
+
 FREQ_MIN = 5e3
 FREQ_MAX = 120e3
 FREQ_PAD = 2e3
+
+COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo']
 
 
 # TimeStampedModel also provides "created" and "modified" fields
@@ -33,7 +38,7 @@ class Spectrogram(TimeStampedModel, models.Model):
     colormap = models.CharField(max_length=20, blank=False, null=True)
 
     @classmethod
-    def generate(cls, recording, colormap=None, dpi=600):
+    def generate(cls, recording, colormap=None, dpi=520):
         """
         Ref: https://matplotlib.org/stable/users/explain/colors/colormaps.html
         """
@@ -50,13 +55,33 @@ class Spectrogram(TimeStampedModel, models.Model):
             print(e)
             return None
 
-        import IPython
+        # Helpful aliases
+        size_mod = 1
+        high_res = False
+        inference = False
 
-        IPython.embed()
+        if colormap in ['inference']:
+            colormap = None
+            dpi = 300
+            size_mod = 0
+            inference = True
+        if colormap in ['none', 'default', 'dark']:
+            colormap = None
+        if colormap in ['light']:
+            colormap = 'gist_yarg'
+        if colormap in ['heatmap']:
+            colormap = 'turbo'
+            high_res = True
+
+        # Supported colormaps
+        if colormap not in COLORMAP_ALLOWED:
+            logger.warning(f'Substituted requested {colormap} colormap to default')
+            logger.warning('See COLORMAP_ALLOWED')
+            colormap = None
 
         # Function to take a signal and return a spectrogram.
         size = int(0.001 * sr)  # 1.0ms resolution
-        size = 2 ** (math.ceil(math.log(size, 2)) + 0)
+        size = 2 ** (math.ceil(math.log(size, 2)) + size_mod)
         hop_length = int(size / 4)
 
         # Short-time Fourier Transform
@@ -89,7 +114,7 @@ class Spectrogram(TimeStampedModel, models.Model):
         vmin = window.min()
         vmax = window.max()
 
-        chunksize = int(2e3)
+        chunksize = int(5e3)
         arange = np.arange(chunksize, window.shape[1], chunksize)
         chunks = np.array_split(window, arange, axis=1)
 
@@ -139,50 +164,55 @@ class Spectrogram(TimeStampedModel, models.Model):
 
             imgs.append(img)
 
+        if inference:
+            w_ = int(4.0 * duration * 1e3)
+            h_ = int(dpi)
+        else:
+            w_ = int(8.0 * duration * 1e3)
+            h_ = 1200
+
         img = np.hstack(imgs)
+        img = cv2.resize(img, (w_, h_), interpolation=cv2.INTER_LANCZOS4)
+
+        if high_res:
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+            noise = 0.1
+            img = img.astype(np.float32)
+            img -= img.min()
+            img /= img.max()
+            img *= 255.0
+            img /= 1.0 - noise
+            img[img < 0] = 0
+            img[img > 255] = 255
+            img = 255.0 - img  # invert
+
+            img = cv2.blur(img, (9, 9))
+            img = cv2.resize(img, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_LANCZOS4)
+            img = cv2.blur(img, (9, 9))
+
+            img -= img.min()
+            img /= img.max()
+            img *= 255.0
+
+            mask = (img > 255 * noise).astype(np.float32)
+            mask = cv2.blur(mask, (5, 5))
+
+            img[img < 0] = 0
+            img[img > 255] = 255
+            img = np.around(img).astype(np.uint8)
+            img = cv2.applyColorMap(img, cv2.COLORMAP_TURBO)
+
+            img = img.astype(np.float32)
+            img *= mask.reshape(*mask.shape, 1)
+            img[img < 0] = 0
+            img[img > 255] = 255
+            img = np.around(img).astype(np.uint8)
+
+        # cv2.imwrite('temp.png', img)
+
         img = Image.fromarray(img, 'RGB')
-
         w, h = img.size
-        # ratio = dpi / h
-        # w_ = int(round(w * ratio))
-        w_ = int(4.0 * duration * 1e3) * 2
-        h_ = int(dpi) * 2
-        img = img.resize((w_, h_), resample=Image.Resampling.LANCZOS)
-        w, h = img.size
-
-        img.save(f'temp.{colormap}.png')
-
-        img_filtered = cv2.imread(f'temp.{colormap}.jpg', cv2.IMREAD_GRAYSCALE)
-        img_filtered = img_filtered.astype(np.float32)
-        assert img_filtered.min() == 0
-        assert img_filtered.max() == 255
-        img_filtered = img_filtered.astype(np.float32)
-        img_filtered /= 0.9
-        img_filtered[img_filtered < 0] = 0
-        img_filtered[img_filtered > 255] = 255
-        img_filtered = 255.0 - img_filtered
-
-        kernel = np.ones((3, 3), np.uint8)
-        # img_filtered = cv2.morphologyEx(img_filtered, cv2.MORPH_OPEN, kernel)
-        img_filtered = cv2.erode(img_filtered, kernel, iterations=1)
-
-        img_filtered = np.sqrt(img_filtered / 255.0) * 255.0
-
-        img_filtered = np.around(img_filtered).astype(np.uint8)
-        # img_filtered = cv2.resize(img_filtered, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
-        # img_filtered = cv2.medianBlur(img_filtered, 3)
-        # img_filtered = cv2.resize(img_filtered, None, fx=4.0, fy=4.0, interpolation=cv2.INTER_LINEAR)
-
-        mask = img_filtered < 255 * 0.1
-        img_filtered = cv2.applyColorMap(img_filtered, cv2.COLORMAP_TURBO)
-        img_filtered[mask] = [0, 0, 0]
-
-        cv2.imwrite('temp.png', img_filtered)
-
-        # img_filtered = img.resize((w_, h_), resample=Image.Resampling.LANCZOS)
-        # img_filtered = img_filtered.filter(ImageFilter.MedianFilter(size=3))
-        # img_filtered = img_filtered.resize((w, h), resample=Image.Resampling.BILINEAR)
-        # img_filtered.save(f'temp.{colormap}.median.jpg')
 
         buf = io.BytesIO()
         img.save(buf, format='JPEG', quality=80)
@@ -330,7 +360,7 @@ class Spectrogram(TimeStampedModel, models.Model):
 
         canvas = Image.fromarray(canvas, 'RGB')
 
-        canvas.save('temp.compressed.jpg')
+        # canvas.save('temp.compressed.jpg')
 
         buf = io.BytesIO()
         canvas.save(buf, format='JPEG', quality=80)

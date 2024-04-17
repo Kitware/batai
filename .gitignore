@@ -7,3 +7,5 @@ models/spectrograms/
 models/ignore/
 models/*.jpg
 models/*.pkl
+temp*.jpg
+temp*.png
