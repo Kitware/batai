@@ -160,7 +160,7 @@ export default defineComponent({
         clientHeight.value = containerRef.value.clientHeight;
       }
       if (containerRef.value && ! geoJS.getGeoViewer().value) {
-      geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true);
+        geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true);
       }
       const coords = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:0});
         const end = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:naturalHeight});

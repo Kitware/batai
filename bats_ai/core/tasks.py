@@ -1,4 +1,5 @@
 import io
+import tempfile
 
 from PIL import Image
 from celery import shared_task
@@ -11,7 +12,6 @@ from bats_ai.core.models import Annotations, CompressedSpectrogram, Recording, S
 
 
 def generate_compressed(recording: Recording, spectrogram: Spectrogram):
-    print(spectrogram)
     img = spectrogram.image_np
 
     annotations = Annotations.objects.filter(recording=recording)
@@ -137,15 +137,21 @@ def generate_compressed(recording: Recording, spectrogram: Spectrogram):
 
     canvas = Image.fromarray(canvas, 'RGB')
 
-    canvas.save('temp.compressed.jpg')
+    # Use temporary files
+    with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as temp_file:
+        temp_file_name = temp_file.name
+        canvas.save(temp_file_name)
 
-    buf = io.BytesIO()
-    canvas.save(buf, format='JPEG', quality=80)
-    buf.seek(0)
+        # Read the temporary file
+        with open(temp_file_name, 'rb') as f:
+            temp_file_content = f.read()
+
+    # Wrap the content in BytesIO
+    buf = io.BytesIO(temp_file_content)
     name = f'{spectrogram.pk}_spectrogram_compressed.jpg'
     image_file = File(buf, name=name)
 
-    return total_width, image_file, widths, starts, stops
+    return total_width, image_file, widths, starts_, stops_
 
 
 @shared_task
@@ -199,3 +205,10 @@ def generate_compress_spectrogram(recording_id: int, spectrogram_id: int):
             stops=stops,
             cache_invalidated=False,
         )
+
+
+@shared_task
+def predict(compressed_spectrogram_id: int):
+    compressed_spectrogram = CompressedSpectrogram.objects.get(pk=compressed_spectrogram_id)
+    label, score, confs = compressed_spectrogram.predict()
+    return label, score, confs
