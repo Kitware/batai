@@ -13,7 +13,6 @@ from bats_ai.core.models import Annotations, CompressedSpectrogram, Recording, S
 
 def generate_compressed(recording: Recording, spectrogram: Spectrogram):
     img = spectrogram.image_np
-
     annotations = Annotations.objects.filter(recording=recording)
 
     threshold = 0.5
@@ -136,6 +135,9 @@ def generate_compressed(recording: Recording, spectrogram: Spectrogram):
         canvas = np.hstack(segments)
 
     canvas = Image.fromarray(canvas, 'RGB')
+    buf = io.BytesIO()
+    canvas.save(buf, format='JPEG', quality=80)
+    buf.seek(0)
 
     # Use temporary files
     with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as temp_file:
