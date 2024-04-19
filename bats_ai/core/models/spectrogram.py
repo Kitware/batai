@@ -2,7 +2,6 @@ import base64
 import io
 import logging
 import math
-import os
 
 from PIL import Image
 import cv2
@@ -15,12 +14,9 @@ from django_extensions.db.models import TimeStampedModel
 import librosa
 import matplotlib.pyplot as plt
 import numpy as np
-
-from .recording import Recording
-import scipy
 import tqdm
 
-from bats_ai.core.models import Annotations, Recording
+from .recording import Recording
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +233,6 @@ class Spectrogram(TimeStampedModel, models.Model):
             colormap=colormap,
         )
         spectrogram.save()
-        os.remove(f'/tmp/temp.{colormap}.jpg')
         return spectrogram.pk
 
     @property

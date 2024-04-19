@@ -28,6 +28,8 @@ COPY ./setup.py /opt/django-project/setup.py
 
 # Use a directory name which will never be an import name, as isort considers this as first-party.
 WORKDIR /opt/django-project
+# hadolint ignore=DL3013
+RUN pip install --no-cache-dir --upgrade pip
 
 RUN set -ex \
  && pip install --no-cache-dir -e .[dev]

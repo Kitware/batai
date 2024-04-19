@@ -40,7 +40,6 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
 
         img = Image.open(self.image_file)
 
-
         relative = ('..',) * 4
         asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
 
