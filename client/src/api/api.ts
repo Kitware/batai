@@ -108,8 +108,7 @@ export interface UserInfo {
     id: number;
 }
 export interface Spectrogram {
-    'base64_spectrogram': string;
-    url?: string;
+    url: string;
     filename?: string;
     annotations?: SpectrogramAnnotation[];
     temporal?: SpectrogramTemporalAnnotation[];

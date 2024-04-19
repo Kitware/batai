@@ -17,6 +17,8 @@ const useGeoJS = () => {
     right: 1,
   };
 
+  let originalDimensions = { width: 0, height: 0 };
+
   const getGeoViewer = () => {
     return geoViewer;
   };
@@ -29,6 +31,7 @@ const useGeoJS = () => {
   ) => {
     thumbnail.value = thumbanilVal;
     container.value = sourceContainer;
+    originalDimensions = {width, height };
     const params = geo.util.pixelCoordinateParams(container.value, width, height);
     if (!container.value) {
       return;
@@ -112,7 +115,7 @@ const useGeoJS = () => {
         .draw();
     }
     if (resetCam) {
-    resetMapDimensions(width, height, 0.3,resetCam);
+    resetMapDimensions(width, height, 0.3, resetCam);
     } else {
       const params = geo.util.pixelCoordinateParams(container.value, width, height, width, height);
       const margin  = 0.3;
@@ -129,16 +132,21 @@ const useGeoJS = () => {
     
   };
   const resetZoom = () => {
-    const { width: mapWidth } = geoViewer.value.camera().viewport;
+    const { width: mapWidth, } = geoViewer.value.camera().viewport;
 
     const bounds = !thumbnail.value
       ? {
-          left: -125, // Making sure the legend is on the screen
-          top: 0,
-          right: mapWidth,
+          left: 0, // Making sure the legend is on the screen
+          top: -(originalBounds.bottom - originalDimensions.height) / 2.0,
+          right: mapWidth*2,
           bottom: originalBounds.bottom,
         }
-      : originalBounds;
+      : {
+        left: 0,
+        top: 0,
+        right: originalDimensions.width,
+        bottom: originalDimensions.height,
+      };
     const zoomAndCenter = geoViewer.value.zoomAndCenterFromBounds(bounds, 0);
     geoViewer.value.zoom(zoomAndCenter.zoom);
     geoViewer.value.center(zoomAndCenter.center);
@@ -154,13 +162,13 @@ const useGeoJS = () => {
     });
     const params = geo.util.pixelCoordinateParams(container.value, width, height, width, height);
     const { right, bottom } = params.map.maxBounds;
-    originalBounds = params.map.maxBounds;
     geoViewer.value.maxBounds({
       left: 0 - right * margin,
       top: 0 - bottom * margin,
       right: right * (1 + margin),
       bottom: bottom * (1 + margin),
     });
+    originalBounds = geoViewer.value.maxBounds();
     geoViewer.value.zoomRange({
       // do not set a min limit so that bounds clamping determines min
       min: -Infinity,

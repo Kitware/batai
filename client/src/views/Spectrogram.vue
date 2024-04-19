@@ -84,17 +84,25 @@ export default defineComponent({
     };
 
     const loadData = async () => {
+      loadedImage.value = false;
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
-      image.value.src = `data:image/png;base64,${response.data["base64_spectrogram"]}`;
+      if (response.data['url']) {
+        image.value.src = response.data['url'];
+      } else {
+        // TODO Error Out if there is no URL
+        console.error('No URL found for the spectrogram');
+      }
+      image.value.onload = () => {
+        loadedImage.value = true;
+      };
       spectroInfo.value = response.data["spectroInfo"];
       annotations.value = response.data["annotations"]?.sort((a, b) => a.start_time - b.start_time) || [];
       temporalAnnotations.value = response.data["temporal"]?.sort((a, b) => a.start_time - b.start_time) || [];
       if (response.data.currentUser) {
         currentUser.value = response.data.currentUser;
       }
-      loadedImage.value = true;
       const speciesResponse = await getSpecies();
       speciesList.value = speciesResponse.data;
       if (response.data.otherUsers && spectroInfo.value) {

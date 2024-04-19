@@ -160,7 +160,7 @@ export default defineComponent({
         clientHeight.value = containerRef.value.clientHeight;
       }
       if (containerRef.value && ! geoJS.getGeoViewer().value) {
-      geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true);
+        geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true);
       }
       const coords = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:0});
         const end = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:naturalHeight});
@@ -235,8 +235,8 @@ export default defineComponent({
     position: absolute;
     top: 50%;
     left: 50%;
-    -ms-transform: translate(-50%, -50%);
-    transform: translate(-50%, -50%);
+    // -ms-transform: translate(-50%, -50%);
+    // transform: translate(-50%, -50%);
   }
   .geojs-map.annotation-input {
     cursor: inherit;

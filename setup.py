@@ -44,7 +44,6 @@ setup(
         'django-allauth',
         'django-configurations[database,email]',
         'django-extensions',
-        'django-filter',
         'django-large-image',
         'django-oauth-toolkit',
         'djangorestframework',
@@ -55,17 +54,22 @@ setup(
         'django-s3-file-field[boto3]<1',
         'gunicorn',
         'flower',
-        'large-image[rasterio,pil]>=1.22',
+        # Spectrogram Generation
         'librosa',
         'matplotlib',
         'mercantile',
         'numpy',
+        # 'onnxruntime-gpu',
         'onnx',
         'onnxruntime',
-        # 'onnxruntime-gpu',
         'opencv-python-headless',
-        'rio-cogeo',
         'tqdm',
+        # large image
+        'django-large-image>=0.10.0',
+        'large-image[rasterio,pil]>=1.22',
+        'rio-cogeo',
+        # guano metadata
+        'guano',
     ],
     extras_require={
         'dev': [
