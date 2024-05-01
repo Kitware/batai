@@ -149,7 +149,9 @@ export default defineComponent({
         const diff = coords.y - end.y;
         // How much space to we have to multiply the size of the image
         yScale.value = (clientHeight.value *0.5) / diff;
-        geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+        if (props.image) {
+          geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+        }
       initialized.value = true;
       nextTick(() => createPolyLayer());
     });
@@ -167,7 +169,9 @@ export default defineComponent({
         const diff = coords.y - end.y;
         // How much space to we have to multiply the size of the image
         yScale.value = (clientHeight.value *0.5) / diff;
-      geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+      if (props.image) {
+        geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+      }
       initialized.value = true;
         nextTick(() => createPolyLayer());
 
@@ -235,8 +239,8 @@ export default defineComponent({
     position: absolute;
     top: 50%;
     left: 50%;
-    // -ms-transform: translate(-50%, -50%);
-    // transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
   }
   .geojs-map.annotation-input {
     cursor: inherit;

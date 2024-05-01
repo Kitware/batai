@@ -21,12 +21,12 @@ export default defineComponent({
   },
   props: {
     image: {
-      type: Object as PropType<HTMLImageElement>,
-      required: true,
+      type: Object as PropType<HTMLImageElement | undefined>,
+      default: () => undefined,
     },
     spectroInfo: {
-      type: Object as PropType<SpectroInfo | undefined>,
-      default: () => undefined,
+      type: Object as PropType<SpectroInfo>,
+        required: true,
     },
     recordingId: {
       type: String as PropType<string | null>,
@@ -48,6 +48,7 @@ export default defineComponent({
     const scaledWidth = ref(0);
     const scaledHeight = ref(0);
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
+    const tileURL = props.spectroInfo.spectroId ? `${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/v1/dynamic/spectrograms/${props.spectroInfo.spectroId}/tiles/{z}/{x}/{y}.png/` : "";
     const setCursor = (newCursor: string) => {
       cursor.value = newCursor;
     };
@@ -131,32 +132,50 @@ export default defineComponent({
       }
     };
     watch([containerRef], () => {
-      const { naturalWidth, naturalHeight } = props.image;
-      scaledWidth.value = naturalWidth;
-      scaledHeight.value = naturalHeight;
+      scaledWidth.value = props.spectroInfo?.width;
+      scaledHeight.value = props.spectroInfo?.height;
+      if (props.image) {
+        const { naturalWidth, naturalHeight } = props.image;
+        scaledWidth.value = naturalWidth;
+        scaledHeight.value = naturalHeight;
+
+      }
       if (containerRef.value) {
       if (!geoJS.getGeoViewer().value) {
-        geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight);
+        geoJS.initializeViewer(containerRef.value, scaledWidth.value, scaledHeight.value, false, props.image ? 'quad' : 'tile', tileURL);
         geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
       }
     }
-      geoJS.drawImage(props.image, naturalWidth, naturalHeight);
+      if (props.image) {
+        geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value);
+      } else {
+        const scaledTileWidth = (scaledWidth.value / props.spectroInfo?.width) * 256;
+        const scaledTileHeight = (scaledHeight.value / props.spectroInfo?.height) * 256;
+        geoJS.updateMapSize(tileURL, scaledWidth.value, scaledHeight.value, scaledTileWidth, scaledTileHeight);
+      }
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
     });
 
     watch(() => props.spectroInfo, () => {
-      const { naturalWidth, naturalHeight } = props.image;
-      scaledWidth.value = naturalWidth;
-      scaledHeight.value = naturalHeight;
-      geoJS.resetMapDimensions(naturalWidth, naturalHeight);
+
+      scaledHeight.value = props.spectroInfo?.height;
+      if (props.image) {
+        const { naturalWidth, naturalHeight } = props.image;
+        scaledWidth.value = naturalWidth;
+        scaledHeight.value = naturalHeight;
+
+      }
+      geoJS.resetMapDimensions(scaledWidth.value, scaledHeight.value);
       geoJS.getGeoViewer().value.bounds({
       left: 0,
       top: 0,
-      bottom: naturalHeight,
-      right: naturalWidth,
+      bottom: scaledHeight.value,
+      right: scaledWidth.value,
       });
-      geoJS.drawImage(props.image, naturalWidth, naturalHeight);
+      if (props.image) {
+        geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value);
+      } 
     });
 
     const updateAnnotation = async (annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation) => {
@@ -207,20 +226,41 @@ export default defineComponent({
     );
 
     const wheelEvent = (event: WheelEvent) => {
+      let baseWidth = 0;
+      let baseHeight = 0; 
+      if (props.image) {
       const { naturalWidth, naturalHeight } = props.image;
+      baseWidth = naturalWidth;
+      baseHeight = naturalHeight;
+      } else if (props.spectroInfo) {
+        baseWidth = props.spectroInfo.width;
+        baseHeight = props.spectroInfo.height;
+      }
 
       if (event.ctrlKey) {
         scaledWidth.value = scaledWidth.value + event.deltaY * -4;
-        if (scaledWidth.value < naturalWidth) {
-          scaledWidth.value = naturalWidth;
+        if (scaledWidth.value < baseWidth) {
+          scaledWidth.value = baseWidth;
         }
+        if (props.image) {
         geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+      } else if (tileURL) {
+        const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
+        const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
+        geoJS.updateMapSize(tileURL, scaledWidth.value, scaledHeight.value, scaledTileWidth, scaledTileHeight);
+      }
       } else if (event.shiftKey) {
         scaledHeight.value = scaledHeight.value + event.deltaY * -0.25;
-        if (scaledHeight.value < naturalHeight) {
-          scaledHeight.value = naturalHeight;
+        if (scaledHeight.value < baseHeight) {
+          scaledHeight.value = baseHeight;
         }
+        if (props.image) {
         geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+      } else {
+        const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
+        const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
+        geoJS.updateMapSize(tileURL, scaledWidth.value, scaledHeight.value, scaledTileWidth, scaledTileHeight);
+      }
       }
       const xScale = props.spectroInfo?.compressedWidth ? scaledWidth.value / props.spectroInfo.compressedWidth: scaledWidth.value / (props.spectroInfo?.width || 1) ;
       const yScale = scaledHeight.value / (props.spectroInfo?.height || 1) ;

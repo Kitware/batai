@@ -405,7 +405,7 @@ export default defineComponent({
         </v-container>
       </v-toolbar>
       <spectrogram-viewer
-        v-if="loadedImage"
+        v-if="loadedImage && spectroInfo"
         :image="image"
         :spectro-info="spectroInfo"
         :recording-id="id"

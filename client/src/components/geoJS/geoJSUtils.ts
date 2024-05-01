@@ -8,6 +8,9 @@ const useGeoJS = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let quadFeature: any;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let osmLayer: any;
+
   const thumbnail = ref(false);
 
   let originalBounds = {
@@ -27,12 +30,14 @@ const useGeoJS = () => {
     sourceContainer: HTMLElement,
     width: number,
     height: number,
-    thumbanilVal = false
+    thumbnailVal = false,
+    mapType: 'quad' | 'tile' = 'quad',
+    tileUrl = ""
   ) => {
-    thumbnail.value = thumbanilVal;
+    thumbnail.value = thumbnailVal;
     container.value = sourceContainer;
     originalDimensions = {width, height };
-    const params = geo.util.pixelCoordinateParams(container.value, width, height);
+    const params = geo.util.pixelCoordinateParams(container.value, width, height, mapType === 'tile' ? 256 : width, mapType === 'tile' ? 256 : height);
     if (!container.value) {
       return;
     }
@@ -94,16 +99,44 @@ const useGeoJS = () => {
       right: width,
     });
 
+    if (mapType === 'quad') {
     const quadFeatureLayer = geoViewer.value.createLayer("feature", {
       features: ["quad"],
       autoshareRenderer: false,
       renderer: "canvas",
     });
     quadFeature = quadFeatureLayer.createFeature("quad");
+    } else if ( mapType === 'tile') {
+      const params = geo.util.pixelCoordinateParams(
+        container.value, width, height, 256, 256);
+      params.layer.useCredentials = true;
+      params.layer.autoshareRenderer = false;
+      params.attributes = null;
+      params.layer.maxLevel = 18;
+      params.layer.minLevel = 0;
+      params.layer.url = tileUrl;
+
+      osmLayer = geoViewer.value.createLayer('osm', params.layer);
+      resetMapDimensions(width, height);
+    }
   };
 
-  const drawImage = (image: HTMLImageElement, width = image.width, height = image.height, resetCam=true) => {
-    if (quadFeature) {
+  const updateMapSize = (url ='', width =0, height = 0, tileWidth=256, tileHeight=256, resetCam=true) => {
+    const params = geo.util.pixelCoordinateParams(
+      container.value, width, height, tileWidth, tileHeight);
+    params.layer.url = url;
+    const tempLayer = osmLayer;
+    osmLayer = geoViewer.value.createLayer('osm', params.layer);
+    geoViewer.value.deleteLayer(tempLayer);
+    if (resetCam) {
+      resetMapDimensions(width, height, 0.3, resetCam);
+    }
+  };
+
+  const drawImage = (image: HTMLImageElement | string, width = 0, height = 0, resetCam=true) => {
+    let tilewidth = width;
+    let tileheight = height;
+    if (quadFeature && typeof (image) === 'object') {
       quadFeature
         .data([
           {
@@ -113,11 +146,23 @@ const useGeoJS = () => {
           },
         ])
         .draw();
-    }
+    } 
     if (resetCam) {
     resetMapDimensions(width, height, 0.3, resetCam);
     } else {
-      const params = geo.util.pixelCoordinateParams(container.value, width, height, width, height);
+      const params = geo.util.pixelCoordinateParams(container.value, width, height, tilewidth, tileheight);
+      if (osmLayer && typeof (image) === 'string') {
+        osmLayer.url(image);
+        tilewidth = 256;
+        tileheight = 256;
+  
+        osmLayer._options.maxLevel = params.layer.maxLevel;
+        osmLayer._options.tileWidth = params.layer.tileWidth;
+        osmLayer._options.tileHeight = params.layer.tileHeight;
+        osmLayer._options.tilesAtZoom = params.layer.tilesAtZoom;
+        osmLayer._options.tilesMaxBounds = params.layer.tilesMaxBounds;
+
+      }
       const margin  = 0.3;
       const { right, bottom } = params.map.maxBounds;
       originalBounds = params.map.maxBounds;
@@ -173,7 +218,7 @@ const useGeoJS = () => {
       // do not set a min limit so that bounds clamping determines min
       min: -Infinity,
       // 4x zoom max
-      max: 4,
+      max: 20,
     });
     geoViewer.value.clampBoundsX(true);
     geoViewer.value.clampBoundsY(true);
@@ -189,12 +234,14 @@ const useGeoJS = () => {
     drawImage,
     resetMapDimensions,
     resetZoom,
+    updateMapSize,
   };
 };
 
 import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
 
 export interface SpectroInfo {
+  spectroId: number;
   width: number;
   height: number;
   start_time: number;
