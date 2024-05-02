@@ -90,7 +90,10 @@ export default defineComponent({
         : await getSpectrogram(props.id);
       if (response.data['url']) {
         const updateHost = `${window.location.protocol}://${window.location.hostname}/`;
-        image.value.src = response.data['url'].replace('http://127.0.0.1:9000/', updateHost);
+        console.log(response.data['url']);
+        const updatedURL = response.data['url'].replace('http://127.0.0.1:9000/', updateHost);
+        console.log(updatedURL);
+        image.value.src = updatedURL;
       } else {
         // TODO Error Out if there is no URL
         console.error('No URL found for the spectrogram');
