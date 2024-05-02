@@ -149,7 +149,9 @@ export default defineComponent({
         const diff = coords.y - end.y;
         // How much space to we have to multiply the size of the image
         yScale.value = (clientHeight.value *0.5) / diff;
-        geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+        if (props.image) {
+          geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+        }
       initialized.value = true;
       nextTick(() => createPolyLayer());
     });
@@ -160,14 +162,16 @@ export default defineComponent({
         clientHeight.value = containerRef.value.clientHeight;
       }
       if (containerRef.value && ! geoJS.getGeoViewer().value) {
-      geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true);
+        geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true);
       }
       const coords = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:0});
         const end = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:naturalHeight});
         const diff = coords.y - end.y;
         // How much space to we have to multiply the size of the image
         yScale.value = (clientHeight.value *0.5) / diff;
-      geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+      if (props.image) {
+        geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+      }
       initialized.value = true;
         nextTick(() => createPolyLayer());
 

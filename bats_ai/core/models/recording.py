@@ -1,8 +1,33 @@
+import logging
+
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
+from django.dispatch import receiver
 from django_extensions.db.models import TimeStampedModel
 
 from .species import Species
+
+logger = logging.getLogger(__name__)
+
+
+COLORMAP = None
+
+
+class colormap:
+    def __init__(self, colormap=None):
+        self.colormap = colormap
+        self.previous = None
+
+    def __enter__(self):
+        global COLORMAP
+
+        self.previous = COLORMAP
+        COLORMAP = self.colormap
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        global COLORMAP
+
+        COLORMAP = self.previous
 
 
 # TimeStampedModel also provides "created" and "modified" fields
@@ -38,22 +63,22 @@ class Recording(TimeStampedModel, models.Model):
     def spectrograms(self):
         from bats_ai.core.models import Spectrogram
 
-        query = Spectrogram.objects.filter(recording=self).order_by('-created')
+        query = Spectrogram.objects.filter(recording=self, colormap=COLORMAP).order_by('-created')
         return query.all()
 
     @property
     def spectrogram(self):
-        from bats_ai.core.models import Spectrogram
+        pass
 
         spectrograms = self.spectrograms
-
-        if len(spectrograms) == 0:
-            Spectrogram.generate(self)
-
-            spectrograms = self.spectrograms
-            assert len(spectrograms) == 1
 
         assert len(spectrograms) >= 1
         spectrogram = spectrograms[0]  # most recently created
 
         return spectrogram
+
+
+@receiver(models.signals.pre_delete, sender=Recording)
+def delete_content(sender, instance, **kwargs):
+    if instance.audio_file:
+        instance.audio_file.delete(save=False)

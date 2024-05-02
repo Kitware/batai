@@ -11,7 +11,14 @@ from ninja import File, Form, Schema
 from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import Annotations, Recording, Species, TemporalAnnotations
+from bats_ai.core.models import (
+    Annotations,
+    CompressedSpectrogram,
+    Recording,
+    Species,
+    TemporalAnnotations,
+    colormap,
+)
 from bats_ai.core.tasks import recording_compute_spectrogram
 from bats_ai.core.views.species import SpeciesSchema
 from bats_ai.core.views.temporal_annotations import (
@@ -268,11 +275,13 @@ def get_spectrogram(request: HttpRequest, id: int):
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    spectrogram = recording.spectrogram
+    with colormap(None):
+        spectrogram = recording.spectrogram
 
     spectro_data = {
-        'base64_spectrogram': spectrogram.base64,
+        'url': spectrogram.image_url,
         'spectroInfo': {
+            'spectroId': spectrogram.pk,
             'width': spectrogram.width,
             'height': spectrogram.height,
             'start_time': 0,
@@ -327,25 +336,30 @@ def get_spectrogram(request: HttpRequest, id: int):
 def get_spectrogram_compressed(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
-    except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        compressed_spectrogram = CompressedSpectrogram.objects.filter(recording=id).first()
+    except compressed_spectrogram.DoesNotExist:
+        return {'error': 'Compressed Spectrogram'}
+    except recording.DoesNotExist:
+        return {'error': 'Recording does not exist'}
 
-    spectrogram = recording.spectrogram
-    compressed, starts, ends, widths, total_width = spectrogram.compressed
+    with colormap():
+        label, score, confs = compressed_spectrogram.predict()
+        print(label, score, confs)
 
     spectro_data = {
-        'base64_spectrogram': compressed,
+        'url': compressed_spectrogram.image_url,
         'spectroInfo': {
-            'width': spectrogram.width,
+            'spectroId': compressed_spectrogram.pk,
+            'width': compressed_spectrogram.spectrogram.width,
             'start_time': 0,
-            'end_time': spectrogram.duration,
-            'height': spectrogram.height,
-            'start_times': starts,
-            'end_times': ends,
-            'low_freq': spectrogram.frequency_min,
-            'high_freq': spectrogram.frequency_max,
-            'compressedWidth': total_width,
-            'widths': widths,
+            'end_time': compressed_spectrogram.spectrogram.duration,
+            'height': compressed_spectrogram.spectrogram.height,
+            'low_freq': compressed_spectrogram.spectrogram.frequency_min,
+            'high_freq': compressed_spectrogram.spectrogram.frequency_max,
+            'start_times': compressed_spectrogram.starts,
+            'end_times': compressed_spectrogram.stops,
+            'widths': compressed_spectrogram.widths,
+            'compressedWidth': compressed_spectrogram.length,
         },
     }
 

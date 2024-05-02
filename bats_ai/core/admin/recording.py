@@ -64,7 +64,6 @@ class RecordingAdmin(admin.ModelAdmin):
     def compute_spectrograms(self, request: HttpRequest, queryset: QuerySet):
         counter = 0
         for recording in queryset:
-            if not recording.has_spectrogram:
-                recording_compute_spectrogram.delay(recording.pk)
-                counter += 1
+            recording_compute_spectrogram.delay(recording.pk)
+            counter += 1
         self.message_user(request, f'{counter} recordings queued', messages.SUCCESS)
