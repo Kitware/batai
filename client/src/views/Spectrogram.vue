@@ -88,11 +88,10 @@ export default defineComponent({
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
+        // TODO This is a quick hack
       if (response.data['url']) {
         const updateHost = `${window.location.protocol}//${window.location.hostname}/`;
-        console.log(response.data['url']);
         const updatedURL = response.data['url'].replace('http://127.0.0.1:9000/', updateHost);
-        console.log(updatedURL);
         image.value.src = updatedURL.split('?')[0];
       } else {
         // TODO Error Out if there is no URL
