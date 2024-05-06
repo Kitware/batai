@@ -45,7 +45,7 @@ def default_data(
             'nabat_site_name': gfile.get('NABat|Site Name', None),
         }
         if (
-            nabat_fields['nabat_longitude'] and nabat_fields['nabat_longitude'] > 0
+            nabat_fields['nabat_longitude'] and float(nabat_fields['nabat_longitude']) > 0
         ):  # individuals don't put the - in the longitude
             nabat_fields['nabat_longitude'] = str(float(nabat_fields['nabat_longitude']) * -1)
         # Extract additional fields with conditionals

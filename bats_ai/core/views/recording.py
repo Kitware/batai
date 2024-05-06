@@ -342,10 +342,6 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
     except recording.DoesNotExist:
         return {'error': 'Recording does not exist'}
 
-    with colormap():
-        label, score, confs = compressed_spectrogram.predict()
-        print(label, score, confs)
-
     spectro_data = {
         'url': compressed_spectrogram.image_url,
         'spectroInfo': {
