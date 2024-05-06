@@ -74,7 +74,6 @@ class RecordingAdmin(admin.ModelAdmin):
             return link
         return None
 
-
     @admin.action(description='Compute Spectrograms')
     def compute_spectrograms(self, request: HttpRequest, queryset: QuerySet):
         counter = 0

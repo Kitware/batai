@@ -99,6 +99,7 @@ class Recording(TimeStampedModel, models.Model):
 
         return spectrogram
 
+
 @receiver(models.signals.pre_delete, sender=Recording)
 def delete_content(sender, instance, **kwargs):
     if instance.audio_file:
