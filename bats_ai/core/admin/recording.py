@@ -15,6 +15,7 @@ class RecordingAdmin(admin.ModelAdmin):
         'name',
         'audio_file',
         'spectrogram_status',
+        'compressed_spectrogram_status',
         'owner',
         'recorded_date',
         'recorded_time',
@@ -59,6 +60,20 @@ class RecordingAdmin(admin.ModelAdmin):
             link = mark_safe(f'<a href="{href}">{description}</a>')
             return link
         return None
+
+    @admin.display(
+        description='Compressed Spectrogram',
+        empty_value='Not computed',
+    )
+    def compressed_spectrogram_status(self, recording: Recording):
+        if recording.has_compressed_spectrogram:
+            spectrogram = recording.compressed_spectrogram
+            href = reverse('admin:core_spectrogram_change', args=(spectrogram.pk,))
+            description = str(spectrogram)
+            link = mark_safe(f'<a href="{href}">{description}</a>')
+            return link
+        return None
+
 
     @admin.action(description='Compute Spectrograms')
     def compute_spectrograms(self, request: HttpRequest, queryset: QuerySet):

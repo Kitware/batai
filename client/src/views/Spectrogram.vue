@@ -103,12 +103,16 @@ export default defineComponent({
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
       if (response.data["url"]) {
+        if (import.meta.env.PROD) {
         const updateHost = `${window.location.protocol}//${window.location.hostname}/`;
         const updatedURL = response.data["url"].replace(
           "http://127.0.0.1:9000/",
           updateHost
         );
         image.value.src = updatedURL.split("?")[0];
+        } else {
+          image.value.src = response.data['url'];
+        }
       } else {
         // TODO Error Out if there is no URL
         console.error("No URL found for the spectrogram");

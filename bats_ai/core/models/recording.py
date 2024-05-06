@@ -77,6 +77,27 @@ class Recording(TimeStampedModel, models.Model):
 
         return spectrogram
 
+    @property
+    def has_compressed_spectrogram(self):
+        return len(self.compressed_spectrograms) > 0
+
+    @property
+    def compressed_spectrograms(self):
+        from bats_ai.core.models import CompressedSpectrogram
+
+        query = CompressedSpectrogram.objects.filter(recording=self).order_by('-created')
+        return query.all()
+
+    @property
+    def compressed_spectrogram(self):
+        pass
+
+        compressed_spectrograms = self.compressed_spectrograms
+
+        assert len(compressed_spectrograms) >= 1
+        spectrogram = compressed_spectrograms[0]  # most recently created
+
+        return spectrogram
 
 @receiver(models.signals.pre_delete, sender=Recording)
 def delete_content(sender, instance, **kwargs):
