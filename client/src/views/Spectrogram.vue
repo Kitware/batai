@@ -1,5 +1,13 @@
 <script lang="ts">
-import { computed, defineComponent, onMounted, onUnmounted, Ref, ref, watch } from "vue";
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  onUnmounted,
+  Ref,
+  ref,
+  watch,
+} from "vue";
 import {
   getSpecies,
   getAnnotations,
@@ -57,16 +65,22 @@ export default defineComponent({
     const recordingInfo = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
-      annotations.value = response.data.sort((a, b) => a.start_time - b.start_time);
+      annotations.value = response.data.sort(
+        (a, b) => a.start_time - b.start_time
+      );
       const tempResp = await getTemporalAnnotations(props.id);
-      temporalAnnotations.value = tempResp.data.sort((a, b) => a.start_time - b.start_time);
+      temporalAnnotations.value = tempResp.data.sort(
+        (a, b) => a.start_time - b.start_time
+      );
       if (annotationId !== undefined) {
         selectedId.value = annotationId;
       }
     };
     const selectedIndex = computed(() => {
       if (annotations.value && selectedId.value !== null) {
-        return annotations.value.findIndex((item) => item.id === selectedId.value);
+        return annotations.value.findIndex(
+          (item) => item.id === selectedId.value
+        );
       }
       return -1;
     });
@@ -88,18 +102,33 @@ export default defineComponent({
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
-      if (response.data['url']) {
-        image.value.src = response.data['url'];
+      if (response.data["url"]) {
+        if (import.meta.env.PROD) {
+        const updateHost = `${window.location.protocol}//${window.location.hostname}/`;
+        const updatedURL = response.data["url"].replace(
+          "http://127.0.0.1:9000/",
+          updateHost
+        );
+        image.value.src = updatedURL.split("?")[0];
+        } else {
+          image.value.src = response.data['url'];
+        }
       } else {
         // TODO Error Out if there is no URL
-        console.error('No URL found for the spectrogram');
+        console.error("No URL found for the spectrogram");
       }
       image.value.onload = () => {
         loadedImage.value = true;
       };
       spectroInfo.value = response.data["spectroInfo"];
-      annotations.value = response.data["annotations"]?.sort((a, b) => a.start_time - b.start_time) || [];
-      temporalAnnotations.value = response.data["temporal"]?.sort((a, b) => a.start_time - b.start_time) || [];
+      annotations.value =
+        response.data["annotations"]?.sort(
+          (a, b) => a.start_time - b.start_time
+        ) || [];
+      temporalAnnotations.value =
+        response.data["temporal"]?.sort(
+          (a, b) => a.start_time - b.start_time
+        ) || [];
       if (response.data.currentUser) {
         currentUser.value = response.data.currentUser;
       }
@@ -116,14 +145,26 @@ export default defineComponent({
       selectedId.value = annotationId;
     };
     const selectedAnnotation = computed(() => {
-      if (selectedId.value !== null && selectedType.value === 'pulse' && annotations.value) {
-        const found = annotations.value.findIndex((item) => item.id === selectedId.value);
+      if (
+        selectedId.value !== null &&
+        selectedType.value === "pulse" &&
+        annotations.value
+      ) {
+        const found = annotations.value.findIndex(
+          (item) => item.id === selectedId.value
+        );
         if (found !== -1) {
           return annotations.value[found];
         }
       }
-      if (selectedId.value !== null && selectedType.value === 'sequence' && temporalAnnotations.value) {
-        const found = temporalAnnotations.value.findIndex((item) => item.id === selectedId.value);
+      if (
+        selectedId.value !== null &&
+        selectedType.value === "sequence" &&
+        temporalAnnotations.value
+      ) {
+        const found = temporalAnnotations.value.findIndex(
+          (item) => item.id === selectedId.value
+        );
         if (found !== -1) {
           return temporalAnnotations.value[found];
         }
@@ -133,9 +174,12 @@ export default defineComponent({
     watch(gridEnabled, () => {
       toggleLayerVisibility("grid");
     });
-    watch(() => props.id, () => {
-      loadData();
-    });
+    watch(
+      () => props.id,
+      () => {
+        loadData();
+      }
+    );
     onMounted(() => loadData());
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
@@ -169,7 +213,9 @@ export default defineComponent({
     const otherUsers = computed(() => Object.keys(otherUserAnnotations.value));
 
     const deleteChip = (item: string) => {
-      selectedUsers.value.splice(selectedUsers.value.findIndex((data) => data === item));
+      selectedUsers.value.splice(
+        selectedUsers.value.findIndex((data) => data === item)
+      );
       setSelectedUsers(selectedUsers.value);
     };
 
@@ -177,7 +223,13 @@ export default defineComponent({
       setSelectedUsers(selectedUsers.value);
     });
 
-    const processSelection = ({id, annotationType}: { id: number, annotationType: 'pulse' | 'sequence'}) => {
+    const processSelection = ({
+      id,
+      annotationType,
+    }: {
+      id: number;
+      annotationType: "pulse" | "sequence";
+    }) => {
       selectedId.value = id;
       selectedType.value = annotationType;
     };
@@ -233,10 +285,7 @@ export default defineComponent({
       <v-toolbar>
         <v-container>
           <v-row align="center">
-            <v-tooltip
-       
-              bottom
-            >
+            <v-tooltip bottom>
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
@@ -246,11 +295,9 @@ export default defineComponent({
                   mdi-information-outline
                 </v-icon>
               </template>
-              <span>
-                Recording Information
-              </span>
+              <span> Recording Information </span>
             </v-tooltip>
- 
+
             <v-col cols="2">
               <div>
                 <b>Time:</b>
@@ -280,13 +327,15 @@ export default defineComponent({
               class="px-0"
               style="font-size: 20px"
             >
-              <div v-if="annotationState !== '' && annotationState !== 'disabled'">
+              <div
+                v-if="annotationState !== '' && annotationState !== 'disabled'"
+              >
                 <b>Mode:</b>
                 <span> {{ annotationState }}</span>
               </div>
             </v-col>
             <v-col
-              v-if="otherUsers.length && colorScale" 
+              v-if="otherUsers.length && colorScale"
               cols="3"
               class="ma-0 pa-0 pt-5"
             >
@@ -309,7 +358,7 @@ export default defineComponent({
                     text-color="gray"
                     @click:close="deleteChip(item.value)"
                   >
-                    {{ item.value.replace(/@.*/, '') }}
+                    {{ item.value.replace(/@.*/, "") }}
                   </v-chip>
                 </template>
               </v-select>
