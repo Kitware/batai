@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType, ref, Ref, watch } from "vue";
+import { defineComponent, onMounted, onUnmounted, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
 import {
   patchAnnotation,
@@ -50,6 +50,7 @@ export default defineComponent({
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
     const tileURL = props.spectroInfo.spectroId ? `${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/v1/dynamic/spectrograms/${props.spectroInfo.spectroId}/tiles/{z}/{x}/{y}.png/` : "";
     const setCursor = (newCursor: string) => {
+      console.log(`Setting Cursor: ${newCursor}`);
       cursor.value = newCursor;
     };
 
@@ -131,6 +132,7 @@ export default defineComponent({
         }
       }
     };
+    onMounted(() => initialized.value = false);
     watch([containerRef], () => {
       scaledWidth.value = props.spectroInfo?.width;
       scaledHeight.value = props.spectroInfo?.height;
@@ -266,6 +268,8 @@ export default defineComponent({
       const yScale = scaledHeight.value / (props.spectroInfo?.height || 1) ;
       scaledVals.value = {x: xScale, y: yScale};
     };
+
+    onUnmounted(() => geoJS.destroyGeoViewer());
 
 
 
