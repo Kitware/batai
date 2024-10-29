@@ -579,7 +579,7 @@ def patch_annotation(
             annotation_instance.save()
 
             # Clear existing species associations
-            if species_ids:
+            if species_ids is not None:
                 annotation_instance.species.clear()
                 # Add species to the annotation based on the provided species_ids
                 for species_id in species_ids:

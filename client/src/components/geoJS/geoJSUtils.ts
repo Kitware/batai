@@ -26,6 +26,12 @@ const useGeoJS = () => {
     return geoViewer;
   };
 
+  const destroyGeoViewer = () => {
+    if (geoViewer.value) {
+      geoViewer.value.exit();
+    }
+  };
+
   const initializeViewer = (
     sourceContainer: HTMLElement,
     width: number,
@@ -235,6 +241,7 @@ const useGeoJS = () => {
     resetMapDimensions,
     resetZoom,
     updateMapSize,
+    destroyGeoViewer,
   };
 };
 

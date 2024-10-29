@@ -562,7 +562,7 @@ export default defineComponent({
     watch(
       () => annotationState.value,
       () => {
-        if (annotationState.value === "creating") {
+        if (!props.thumbnail && annotationState.value === "creating") {
           editing.value = false;
           selectedAnnotationId.value = null;
           editingAnnotation.value = null;
