@@ -68,7 +68,7 @@ class RecordingAdmin(admin.ModelAdmin):
     def compressed_spectrogram_status(self, recording: Recording):
         if recording.has_compressed_spectrogram:
             spectrogram = recording.compressed_spectrogram
-            href = reverse('admin:core_spectrogram_change', args=(spectrogram.pk,))
+            href = reverse('admin:core_compressedspectrogram_change', args=(spectrogram.pk,))
             description = str(spectrogram)
             link = mark_safe(f'<a href="{href}">{description}</a>')
             return link

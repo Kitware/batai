@@ -272,8 +272,14 @@ export default defineComponent({
 
 <template>
   <v-row>
-    <v-dialog v-model="recordingInfo" width="600">
-      <recording-info-dialog :id="id" @close="recordingInfo = false" />
+    <v-dialog
+      v-model="recordingInfo"
+      width="600"
+    >
+      <recording-info-dialog
+        :id="id"
+        @close="recordingInfo = false"
+      />
     </v-dialog>
     <v-col>
       <v-toolbar>
@@ -302,7 +308,10 @@ export default defineComponent({
                 <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
               </div>
             </v-col>
-            <v-col v-if="scaledVals.x > 1 || scaledVals.y > 1" cols="2">
+            <v-col
+              v-if="scaledVals.x > 1 || scaledVals.y > 1"
+              cols="2"
+            >
               <div>
                 <b>xScale:</b>
                 <span v-if="timeRef >= 0">{{ scaledVals.x.toFixed(2) }}x</span>
@@ -313,7 +322,11 @@ export default defineComponent({
               </div>
             </v-col>
 
-            <v-col cols="1" class="px-0" style="font-size: 20px">
+            <v-col
+              cols="1"
+              class="px-0"
+              style="font-size: 20px"
+            >
               <div
                 v-if="annotationState !== '' && annotationState !== 'disabled'"
               >
