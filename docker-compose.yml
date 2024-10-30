@@ -3,8 +3,8 @@ services:
   postgres:
     image: postgis/postgis:latest
     environment:
-      POSTGRES_DB: django
-      POSTGRES_PASSWORD: postgres
+      - POSTGRES_DB=${DJANGO_DATABASE_NAME:-django}
+      - POSTGRES_PASSWORD=${DJANGO_DATABASE_PASSWORD:-postgres}
     ports:
       - ${DOCKER_POSTGRES_PORT-5432}:5432
     volumes:
@@ -24,8 +24,8 @@ services:
     tty: true
     command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9001}"]
     environment:
-      MINIO_ROOT_USER: minioAccessKey
-      MINIO_ROOT_PASSWORD: minioSecretKey
+      - MINIO_ROOT_USER=${DJANGO_MINIO_STORAGE_ACCESS_KEY:-minioAccessKey}
+      - MINIO_ROOT_PASSWORD=${DJANGO_MINIO_STORAGE_SECRET_KEY:-minioSecretKey}
     ports:
       - ${DOCKER_MINIO_PORT-9000}:9000
       - ${DOCKER_MINIO_CONSOLE_PORT-9001}:9001

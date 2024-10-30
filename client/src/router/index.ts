@@ -2,18 +2,20 @@ import { createRouter, createWebHistory, RouteLocationNormalized } from 'vue-rou
 import HomePage from '../views/HomePage.vue';
 import Recordings from '../views/Recordings.vue';
 import Spectrogram from '../views/Spectrogram.vue';
+import Login from '../views/Login.vue';
 
 import oauthClient from '../plugins/Oauth';
+import Admin from '../views/Admin.vue';
 
 function beforeEach(
   to: RouteLocationNormalized,
   _: RouteLocationNormalized,
   next: (route?: string) => void,
 ) {
-  if (!oauthClient.isLoggedIn && to.name !== '/') {
-    next('/');
-  }
-  if (oauthClient.isLoggedIn && to.name === '/') {
+  if (!oauthClient.isLoggedIn && to.name !== 'Login') {
+    next('/login');
+    return;
+  }  if (oauthClient.isLoggedIn && to.name === 'Login') {
     next('/');
   }
   next();
@@ -29,8 +31,17 @@ function routerInit(){
         component: HomePage,
       },
       {
+        path: '/login',
+        name: 'Login',
+        component: Login,
+      },
+      {
         path: '/recordings',
         component: Recordings,
+      },
+      {
+        path: '/admin',
+        component: Admin,
       },
       {
         path: '/recording/:id/spectrogram',

@@ -1,94 +1,277 @@
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { computed, defineComponent, PropType } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
-import { SpectrogramAnnotation } from "../api/api";
 import useState from "../use/useState";
-
+import { watch, ref } from "vue";
+import AnnotationEditor from "./AnnotationEditor.vue";
+import { Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import RecordingAnnotations from "./RecordingAnnotations.vue";
 export default defineComponent({
   name: "AnnotationList",
   components: {
+    AnnotationEditor,
+    RecordingAnnotations,
   },
   props: {
     spectroInfo: {
       type: Object as PropType<SpectroInfo | undefined>,
       default: () => undefined,
     },
-    annotations: {
-      type: Array as PropType<SpectrogramAnnotation[]>,
-      default: () => [],
+    selectedAnnotation: {
+      type: Object as PropType<SpectrogramAnnotation | SpectrogramTemporalAnnotation | null>,
+      default: () => null,
     },
-    selectedId: {
-        type: Number as PropType<number | null>,
-        default: null,
+    species: {
+        type: Array as PropType<Species[]>,
+        required: true,
+    },
+    recordingId: {
+        type: String,
+        required: true,
     }
   },
-  emits: ['select'],
+  emits: ['select', 'update:annotation', 'delete:annotation'],
   setup() {
-    const { annotationState, setAnnotationState } = useState();
+    const { creationType, annotationState, setAnnotationState, annotations, temporalAnnotations, selectedId, selectedType, setSelectedId, sideTab, configuration } = useState();
+    const tab = ref('recording');
+    const scrollToId = (id: number) => {
+    const el = document.getElementById(`annotation-${id}`);
+    if (el) {
+      el.scrollIntoView({block: 'end', behavior: 'smooth'});
+    }
+  };
+  watch(selectedId, () => {
+    tab.value = selectedType.value;
+    if (selectedId.value !== null) {
+      scrollToId(selectedId.value);
+    }
+  });
+  watch(selectedType, () => {
+    tab.value = selectedType.value;
+  });
+  const pulseEnabled = computed(() => configuration.value.display_pulse_annotations);
+  const sequenceEnabled = computed(() => configuration.value.display_sequence_annotations);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tabSwitch = (event: any) => {
+    // On tab switches we want to deselect the curret annotation
+    if (['sequence', 'pulse'].includes(event)) {
+      tab.value = event as 'sequence' | 'pulse';
+      selectedType.value = event as 'sequence' | 'pulse';
+      selectedId.value = null;
+    } else {
+      tab.value = 'recording';
+    }
+  };
+
     return {
         annotationState,
+        annotations,
+        creationType,
+        temporalAnnotations,
+        selectedId,
+        selectedType,
         setAnnotationState,
+        setSelectedId,
+        tabSwitch,
+        tab,
+        sideTab,
+        pulseEnabled,
+        sequenceEnabled,
     };
   },
 });
 </script>
 
 <template>
-  <v-card class="pa-0 ma-0">
-    <v-card-title>
-      <v-row class="pa-2">
-        Annotations
-        <v-spacer />
-        <v-btn
-          :disabled="annotationState === 'creating'"
-          @click="annotationState = 'creating'"
-        >
-          Add<v-icon>mdi-plus</v-icon>
-        </v-btn>
-      </v-row>
-    </v-card-title>
-    <v-list>
-      <v-list-item
-        v-for="annotation in annotations"
-        :key="annotation.id"
-        :class="{selected: annotation.id===selectedId}"
-        class="d-flex flex-column align-start"
-        @click="$emit('select', annotation.id)"
+  <div
+    class="pa-2"
+    :class="{'annotation-list': ['pulse','sequence'].includes(tab),'recording-list': !['pulse','sequence'].includes(tab)}"
+  >
+    <v-row dense>
+      <v-tabs
+        v-model="tab"
+        class="ma-auto"
+        @update:model-value="tabSwitch($event)"
       >
-        <v-row>
-          <v-col
-            class="annotation-id"
-          >
-            {{ annotation.id }}
-          </v-col>
-          <v-col class="annotation-time">
-            <span>{{ annotation.start_time }}ms to {{ annotation.end_time }}ms </span>
-          </v-col>
-          <v-col class="annotation-freq">
-            <span>{{ annotation.low_freq }}hz to {{ annotation.high_freq }}hz </span>
-          </v-col>
-        </v-row>
-        <v-row
-          v-for="item in annotation.species"
-          :key="`${annotation.id}_${item.common_name}`"
+        <v-tooltip
+          location="bottom"
+          open-delay="400"
         >
-          <v-col>
-            <div class="species-name">
-              {{ item.common_name }}
-            </div>
-            <div
-              v-if="item.family"
-              class="species-hierarchy"
+          <template #activator="{ props }">
+            <v-tab
+              value="recording"
+              size="x-small"
+              v-bind="props"
             >
-              <span> {{ item.family }}</span>
-              <span v-if="item.genus">-></span>
-              <span v-if="item.genus">{{ item.genus }}</span>
-            </div>
+              Recording
+            </v-tab>
+          </template>
+          <span>Recording/File Level Species Annotations</span>
+        </v-tooltip>
+        <v-tooltip
+          v-if="sequenceEnabled"
+          location="bottom"
+          open-delay="400"
+        >
+          <template #activator="{ props }">
+            <v-tab
+              value="sequence"
+              size="x-small"
+              v-bind="props"
+            >
+              Sequence
+            </v-tab>
+          </template>
+          <span>Sequence Level annotations (Approach/Search/Terminal/Social)</span>
+        </v-tooltip>
+        <v-tooltip
+          v-if="pulseEnabled"
+          location="bottom"
+          open-delay="400"
+        >
+          <template #activator="{ props }">
+            <v-tab
+              value="pulse"
+              size="x-small"
+              v-bind="props"
+            >
+              Pulse
+            </v-tab>
+          </template>
+          <span>Pulse Level Annotations (for a single pulse)</span>
+        </v-tooltip>
+      </v-tabs>
+    </v-row>
+    <v-window v-model="tab">
+      <v-window-item value="pulse">
+        <v-row class="pa-2">
+          <v-col>
+            Annotations
+          </v-col>
+          <v-spacer />
+          <v-col>
+            <v-btn
+              :disabled="annotationState === 'creating'"
+              @click="annotationState = 'creating'; creationType = 'pulse' "
+            >
+              Add<v-icon>mdi-plus</v-icon>
+            </v-btn>
           </v-col>
         </v-row>
-      </v-list-item>
-    </v-list>
-  </v-card>
+
+        <v-list>
+          <v-list-item
+            v-for="annotation in annotations"
+            :id="`annotation-${annotation.id}`"
+            :key="annotation.id"
+            :class="{selected: annotation.id===selectedId}"
+            class="annotation-item"
+            @click="setSelectedId(annotation.id, 'pulse')"
+          >
+            <v-row>
+              <v-col class="annotation-time">
+                <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
+                <span class="pl-2"><b>({{ annotation.end_time - annotation.start_time }}ms)</b></span>
+              </v-col>
+              <v-col class="annotation-freq">
+                <span>{{ (annotation.low_freq/1000).toFixed(1) }}-{{ (annotation.high_freq/1000).toFixed() }}Khz </span>
+              </v-col>
+            </v-row>
+            <v-row
+              v-for="item in annotation.species"
+              :key="`${annotation.id}_${item.common_name}`"
+              class="ma-0 pa-0"
+            >
+              <v-col class="ma-0 pa-0">
+                <div class="species-name">
+                  {{ item.species_code || item.common_name }}
+                </div>
+                <div
+                  v-if="item.family"
+                  class="species-hierarchy"
+                >
+                  <span> {{ item.family }}</span>
+                  <span v-if="item.genus">-></span>
+                  <span v-if="item.genus">{{ item.genus }}</span>
+                </div>
+              </v-col>
+            </v-row>
+          </v-list-item>
+        </v-list>
+      </v-window-item>
+      <v-window-item value="sequence">
+        <v-row class="pa-2">
+          <v-col>
+            Annotations
+          </v-col>
+          <v-spacer />
+          <v-col>
+            <v-btn
+              :disabled="annotationState === 'creating'"
+              @click="annotationState = 'creating'; creationType = 'sequence' "
+            >
+              Add<v-icon>mdi-plus</v-icon>
+            </v-btn>
+          </v-col>
+        </v-row>
+
+        <v-list>
+          <v-list-item
+            v-for="annotation in temporalAnnotations"
+            :id="`annotation-${annotation.id}`"
+            :key="annotation.id"
+            :class="{selected: annotation.id===selectedId}"
+            class="annotation-item"
+            @click="setSelectedId(annotation.id, 'sequence')"
+          >
+            <v-row>
+              <v-col class="annotation-time">
+                <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
+                <span class="pl-2"><b>({{ annotation.end_time - annotation.start_time }}ms)</b></span>
+              </v-col>
+              <v-col class="annotation-time">
+                <b>Type:</b><span>{{ annotation.type }}</span>
+              </v-col>
+            </v-row>
+            <v-row
+              v-for="item in annotation.species"
+              :key="`${annotation.id}_${item.common_name}`"
+              class="ma-0 pa-0"
+            >
+              <v-col class="ma-0 pa-0">
+                <div class="species-name">
+                  {{ item.species_code || item.common_name }}
+                </div>
+                <div
+                  v-if="item.family"
+                  class="species-hierarchy"
+                >
+                  <span> {{ item.family }}</span>
+                  <span v-if="item.genus">-></span>
+                  <span v-if="item.genus">{{ item.genus }}</span>
+                </div>
+              </v-col>
+            </v-row>
+          </v-list-item>
+        </v-list>
+      </v-window-item>
+      <v-window-item value="recording">
+        <RecordingAnnotations 
+          :species="species"
+          :recording-id="parseInt(recordingId)"
+        />
+      </v-window-item>
+      <annotation-editor
+        v-if="selectedAnnotation && ['pulse', 'sequence'].includes(tab)"
+        :species="species"
+        :recording-id="recordingId"
+        :annotation="selectedAnnotation"
+        class="mt-4"
+        @update:annotation="$emit('update:annotation')"
+        @delete:annotation="$emit('delete:annotation')"
+      />
+    </v-window>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -97,19 +280,31 @@ export default defineComponent({
     text-decoration: underline;
 }
 .annotation-time {
-    font-size: 0.7em;
+    font-size: 1em;
 }
 .annotation-freq {
-    font-size: 0.7em;
+    font-size: 1em;
+}
+.annotation-item {
+  border: 1px solid gray;
 }
 .species-name {
     font-weight: bold;
-    font-size: 0.7em;
+    font-size: 1em;
 }
 .species-hierarchy {
-    font-size: 0.5em;
+    font-size: 0.75em;
 }
 .selected {
     background-color: cyan;
 }
+.annotation-list {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.recording-list {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
 </style>
