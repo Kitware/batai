@@ -4,6 +4,7 @@ import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
+import CompressedOverlayLayer from "./layers/compressedOverlayLayer";
 import TemporalLayer from "./layers/temporalLayer";
 import LegendLayer from "./layers/legendLayer";
 import TimeLayer from "./layers/timeLayer";
@@ -65,6 +66,7 @@ export default defineComponent({
     const editing = ref(false);
     const editingAnnotation: Ref<null | SpectrogramAnnotation | SpectrogramTemporalAnnotation> = ref(null);
     let rectAnnotationLayer: RectangleLayer;
+    let compressedOverlayLayer: CompressedOverlayLayer;
     let temporalAnnotationLayer: TemporalLayer;
     let editAnnotationLayer: EditAnnotationLayer;
     let legendLayer: LegendLayer;
@@ -315,6 +317,10 @@ export default defineComponent({
         );
         rectAnnotationLayer.redraw();
       }
+      if (compressedOverlayLayer && !props.spectroInfo?.compressedWidth && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
+        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+        compressedOverlayLayer.redraw();
+      }
       if (temporalAnnotationLayer && layerVisibility.value.includes('temporal')) {
         temporalAnnotationLayer.formatData(
           temporalAnnotations,
@@ -409,6 +415,9 @@ export default defineComponent({
       if (rectAnnotationLayer) {
         rectAnnotationLayer.destroy();
       }
+      if (compressedOverlayLayer) {
+        compressedOverlayLayer.destroy();
+      }
       if (temporalAnnotationLayer) {
         temporalAnnotationLayer.destroy();
       }
@@ -437,6 +446,11 @@ export default defineComponent({
         } else {
           rectAnnotationLayer.spectroInfo = props.spectroInfo;
         }
+        if (!compressedOverlayLayer) {
+          compressedOverlayLayer = new CompressedOverlayLayer(props.geoViewerRef, props.spectroInfo);
+        } else {
+          compressedOverlayLayer.spectroInfo = props.spectroInfo;
+        }
         if (!temporalAnnotationLayer) {
         temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
         } {
@@ -444,6 +458,10 @@ export default defineComponent({
         }
         rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
         rectAnnotationLayer.redraw();
+        if (compressedOverlayLayer && props.spectroInfo.start_times && props.spectroInfo.end_times) {
+          compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+          compressedOverlayLayer.redraw();
+        }
         temporalAnnotationLayer.formatData(localTemporalAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
         temporalAnnotationLayer.redraw();
         if (!props.thumbnail) {
@@ -514,6 +532,10 @@ export default defineComponent({
         props.yScale,
       );
       rectAnnotationLayer.redraw();
+      if (compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
+        compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+      }
       editAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (editing.value && editingAnnotation.value) {
         setTimeout(() => {

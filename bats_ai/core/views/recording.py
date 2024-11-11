@@ -277,6 +277,8 @@ def get_spectrogram(request: HttpRequest, id: int):
 
     with colormap(None):
         spectrogram = recording.spectrogram
+    
+    compressed = recording.compressed_spectrogram
 
     spectro_data = {
         'url': spectrogram.image_url,
@@ -290,6 +292,12 @@ def get_spectrogram(request: HttpRequest, id: int):
             'high_freq': spectrogram.frequency_max,
         },
     }
+    if compressed:
+        spectro_data['compressed'] = {
+            'start_times': compressed.starts,
+            'end_times': compressed.stops,
+        }
+
     # Get distinct other users who have made annotations on the recording
     if recording.owner == request.user:
         other_users_qs = (

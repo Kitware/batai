@@ -121,6 +121,10 @@ export default defineComponent({
         loadedImage.value = true;
       };
       spectroInfo.value = response.data["spectroInfo"];
+      if (response.data['compressed'] && spectroInfo.value) {
+        spectroInfo.value.start_times = response.data.compressed.start_times;
+        spectroInfo.value.end_times = response.data.compressed.end_times;
+      }
       annotations.value =
         response.data["annotations"]?.sort(
           (a, b) => a.start_time - b.start_time
