@@ -54,6 +54,7 @@ export default defineComponent({
       selectedId,
       selectedType,
       scaledVals,
+      viewCompressedOverlay,
     } = useState();
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -238,6 +239,10 @@ export default defineComponent({
       selectedType.value = annotationType;
     };
 
+    const toggleCompressedOverlay = () => {
+      viewCompressedOverlay.value = ! viewCompressedOverlay.value;
+    };
+
     return {
       annotationState,
       compressed,
@@ -260,6 +265,8 @@ export default defineComponent({
       layerVisibility,
       timeRef,
       freqRef,
+      toggleCompressedOverlay,
+      viewCompressedOverlay,
       // Other user selection
       otherUserAnnotations,
       temporalAnnotations,
@@ -453,6 +460,23 @@ export default defineComponent({
                 </v-icon>
               </template>
               <span> Toggle Compressed View</span>
+            </v-tooltip>
+            <v-tooltip
+              v-if="!compressed"
+              bottom
+            >
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="viewCompressedOverlay ? 'blue' : ''"
+                  @click="toggleCompressedOverlay()"
+                >
+                  mdi-format-color-highlight
+                </v-icon>
+              </template>
+              <span> Highlight Compressed Areas</span>
             </v-tooltip>
           </v-row>
         </v-container>

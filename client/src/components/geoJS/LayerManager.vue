@@ -58,6 +58,7 @@ export default defineComponent({
       selectedId,
       selectedType,
       setSelectedId,
+      viewCompressedOverlay,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -317,7 +318,7 @@ export default defineComponent({
         );
         rectAnnotationLayer.redraw();
       }
-      if (compressedOverlayLayer && !props.spectroInfo?.compressedWidth && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
+      if (viewCompressedOverlay.value && compressedOverlayLayer && !props.spectroInfo?.compressedWidth && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
         compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
         compressedOverlayLayer.redraw();
       }
@@ -436,6 +437,11 @@ export default defineComponent({
     });
     const initLayers = () => {
       if (props.spectroInfo) {
+        if (!compressedOverlayLayer) {
+          compressedOverlayLayer = new CompressedOverlayLayer(props.geoViewerRef, props.spectroInfo);
+        } else {
+          compressedOverlayLayer.spectroInfo = props.spectroInfo;
+        }
         if (!editAnnotationLayer) {
         editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
         } else {
@@ -446,11 +452,6 @@ export default defineComponent({
         } else {
           rectAnnotationLayer.spectroInfo = props.spectroInfo;
         }
-        if (!compressedOverlayLayer) {
-          compressedOverlayLayer = new CompressedOverlayLayer(props.geoViewerRef, props.spectroInfo);
-        } else {
-          compressedOverlayLayer.spectroInfo = props.spectroInfo;
-        }
         if (!temporalAnnotationLayer) {
         temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
         } {
@@ -458,7 +459,7 @@ export default defineComponent({
         }
         rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
         rectAnnotationLayer.redraw();
-        if (compressedOverlayLayer && props.spectroInfo.start_times && props.spectroInfo.end_times) {
+        if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo.start_times && props.spectroInfo.end_times) {
           compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
           compressedOverlayLayer.redraw();
         }
@@ -535,6 +536,7 @@ export default defineComponent({
       if (compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
         compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+        compressedOverlayLayer.redraw();
       }
       editAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (editing.value && editingAnnotation.value) {
@@ -580,6 +582,15 @@ export default defineComponent({
       }
 
 
+    });
+    watch(viewCompressedOverlay, () => {
+      if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
+        compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+        compressedOverlayLayer.redraw();
+      } else {
+        compressedOverlayLayer.disable();
+      }
     });
     watch(
       () => annotationState.value,

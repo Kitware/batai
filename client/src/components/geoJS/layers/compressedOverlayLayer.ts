@@ -86,15 +86,19 @@ export default class CompressedOverlayLayer {
   }
 
   formatData(
-    startTimes: number[],
-    endTimes: number[],
+    baseStartTimes: number[],
+    baseEndTimes: number[],
     yScale = 1,
   ) {
     const arr: RectCompressedGeoJSData[] = [];
-
+    const startTimes = [...baseStartTimes];
+    const endTimes = [...baseEndTimes];
+    startTimes.push(this.spectroInfo.end_time);
+    endTimes.unshift(this.spectroInfo.start_time);
     for (let i = 0; i< startTimes.length; i += 1) {
-      const startTime = startTimes[i];
-      const endTime = endTimes[i];
+      // These are swapped because we want to mask out the area inbetween
+      const startTime = endTimes[i];
+      const endTime = startTimes[i];
       const polygon = scaleCompressedTime(startTime, endTime, this.spectroInfo, yScale, this.scaledWidth, this.scaledHeight);
       const newAnnotation: RectCompressedGeoJSData = {
         polygon,
@@ -120,19 +124,18 @@ export default class CompressedOverlayLayer {
   createStyle(): LayerStyle<RectCompressedGeoJSData> {
     return {
       ...{
-        strokeColor: "black",
+        strokeColor: "transparent",
         strokeWidth: 2.0,
         antialiasing: 0,
         stroke: true,
         uniformPolygon: true,
-        fill: false,
+        fill: true,
+        fillColor: "black",
+        fillOpacity: 0.75,
       },
       // Style conversion to get array objects to work in geoJS
       position: (point) => {
         return { x: point[0], y: point[1] };
-      },
-      strokeColor: (_point, _index, data) => {
-        return "cyan";
       },
     };
   }

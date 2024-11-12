@@ -277,7 +277,7 @@ def get_spectrogram(request: HttpRequest, id: int):
 
     with colormap(None):
         spectrogram = recording.spectrogram
-    
+
     compressed = recording.compressed_spectrogram
 
     spectro_data = {
