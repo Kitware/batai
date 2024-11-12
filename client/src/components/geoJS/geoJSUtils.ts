@@ -26,6 +26,12 @@ const useGeoJS = () => {
     return geoViewer;
   };
 
+  const destroyGeoViewer = () => {
+    if (geoViewer.value) {
+      geoViewer.value.exit();
+    }
+  };
+
   const initializeViewer = (
     sourceContainer: HTMLElement,
     width: number,
@@ -235,6 +241,7 @@ const useGeoJS = () => {
     resetMapDimensions,
     resetZoom,
     updateMapSize,
+    destroyGeoViewer,
   };
 };
 
@@ -268,7 +275,7 @@ function spectroTemporalToGeoJSon(
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   // const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
   //scale pixels to time and frequency ranges
-  if (spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
+  if (spectroInfo.compressedWidth && spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
     const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     // Now we remap our annotation to pixel coordinates
     const start_time = annotation.start_time * widthScale;
@@ -367,7 +374,7 @@ function spectroToGeoJSon(
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
 
-  if (spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
+  if (spectroInfo.compressedWidth === undefined) {
     const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
@@ -389,7 +396,7 @@ function spectroToGeoJSon(
         ],
       ],
     };
-  } else if (spectroInfo.start_times && spectroInfo.end_times) {
+  } else if (spectroInfo.compressedWidth && spectroInfo.start_times && spectroInfo.end_times) {
     // Compressed Spectro has different conversion
     // Find what section the annotation is in
     const start = annotation.start_time;
@@ -497,7 +504,7 @@ function geojsonToSpectro(
   const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
 
   const coords = geojson.geometry.coordinates[0];
-  if (spectroInfo.start_times === undefined && spectroInfo.end_times === undefined) {
+  if (spectroInfo.compressedWidth === undefined) {
     const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     const start_time = Math.round(coords[1][0] / widthScale);

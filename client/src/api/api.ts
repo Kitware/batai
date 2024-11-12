@@ -113,6 +113,10 @@ export interface Spectrogram {
     annotations?: SpectrogramAnnotation[];
     temporal?: SpectrogramTemporalAnnotation[];
     spectroInfo?: SpectroInfo;
+    compressed?: {
+        start_times: number[];
+        end_times: number[];
+    }
     currentUser?: string;
     otherUsers?: UserInfo[];
 

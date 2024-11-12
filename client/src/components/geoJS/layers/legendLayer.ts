@@ -379,7 +379,7 @@ export default class LegendLayer {
     this.lineDataX.push({ line: xAxis });
     this.drawYAxis(0);
 
-    if (this.spectroInfo.start_times && this.spectroInfo.end_times) {
+    if (this.spectroInfo.compressedWidth && this.spectroInfo.start_times && this.spectroInfo.end_times) {
       this.drawXAxisLabelsCompressed(bottomOffset, topOffset, lefOffset);
     } else {
       this.drawXAxisLabels(bottomOffset, topOffset, lefOffset);
@@ -405,7 +405,7 @@ export default class LegendLayer {
     this.lineDataX.push({ line: xAxis });
     this.drawYAxis();
 
-    if (this.spectroInfo.start_times && this.spectroInfo.end_times) {
+    if (this.spectroInfo.compressedWidth && this.spectroInfo.start_times && this.spectroInfo.end_times) {
       this.drawXAxisLabelsCompressed();
     } else {
       this.drawXAxisLabels();

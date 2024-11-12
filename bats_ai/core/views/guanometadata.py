@@ -50,16 +50,16 @@ def default_data(
             nabat_fields['nabat_longitude'] = str(float(nabat_fields['nabat_longitude']) * -1)
         # Extract additional fields with conditionals
         additional_fields = {
-            'nabat_activation_start_time': parse_datetime(
-                gfile.get('NABat|Activation start time', None)
-            )
-            if 'NABat|Activation start time' in gfile
-            else None,
-            'nabat_activation_end_time': parse_datetime(
-                gfile.get('NABat|Activation end time', None)
-            )
-            if 'NABat|Activation end time' in gfile
-            else None,
+            'nabat_activation_start_time': (
+                parse_datetime(gfile.get('NABat|Activation start time', None))
+                if 'NABat|Activation start time' in gfile
+                else None
+            ),
+            'nabat_activation_end_time': (
+                parse_datetime(gfile.get('NABat|Activation end time', None))
+                if 'NABat|Activation end time' in gfile
+                else None
+            ),
             'nabat_software_type': gfile.get('NABat|Software type', None),
             'nabat_species_list': gfile.get('NABat|Species List', '').split(','),
             'nabat_comments': gfile.get('NABat|Comments', None),

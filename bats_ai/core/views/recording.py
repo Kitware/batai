@@ -278,6 +278,8 @@ def get_spectrogram(request: HttpRequest, id: int):
     with colormap(None):
         spectrogram = recording.spectrogram
 
+    compressed = recording.compressed_spectrogram
+
     spectro_data = {
         'url': spectrogram.image_url,
         'spectroInfo': {
@@ -290,6 +292,12 @@ def get_spectrogram(request: HttpRequest, id: int):
             'high_freq': spectrogram.frequency_max,
         },
     }
+    if compressed:
+        spectro_data['compressed'] = {
+            'start_times': compressed.starts,
+            'end_times': compressed.stops,
+        }
+
     # Get distinct other users who have made annotations on the recording
     if recording.owner == request.user:
         other_users_qs = (
@@ -579,7 +587,7 @@ def patch_annotation(
             annotation_instance.save()
 
             # Clear existing species associations
-            if species_ids:
+            if species_ids is not None:
                 annotation_instance.species.clear()
                 # Add species to the annotation based on the provided species_ids
                 for species_id in species_ids:

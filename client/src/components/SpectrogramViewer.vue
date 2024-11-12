@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType, ref, Ref, watch } from "vue";
+import { defineComponent, onMounted, onUnmounted, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
 import {
   patchAnnotation,
@@ -131,6 +131,7 @@ export default defineComponent({
         }
       }
     };
+    onMounted(() => initialized.value = false);
     watch([containerRef], () => {
       scaledWidth.value = props.spectroInfo?.width;
       scaledHeight.value = props.spectroInfo?.height;
@@ -266,6 +267,8 @@ export default defineComponent({
       const yScale = scaledHeight.value / (props.spectroInfo?.height || 1) ;
       scaledVals.value = {x: xScale, y: yScale};
     };
+
+    onUnmounted(() => geoJS.destroyGeoViewer());
 
 
 
