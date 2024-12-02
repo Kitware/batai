@@ -15,6 +15,7 @@ from bats_ai.core.models import (
     Annotations,
     CompressedSpectrogram,
     Recording,
+    RecordingAnnotation,
     Species,
     TemporalAnnotations,
     colormap,
@@ -215,6 +216,8 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
     # TODO with larger dataset it may be better to do this in a queryset instead of python
     for recording in recordings:
         user = User.objects.get(id=recording['owner_id'])
+        fileAnnotations = RecordingAnnotation.objects.filter(recording=recording['id'])
+        recording['fileAnnotations'] = fileAnnotations
         recording['owner_username'] = user.username
         recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
         recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
@@ -260,6 +263,8 @@ def get_recording(request: HttpRequest, id: int):
                 recording_id=recording['id'], owner=request.user
             ).exists()
             recording['userMadeAnnotations'] = user_has_annotations
+            annotations = RecordingAnnotation.objects.filter(recording=id).annotate('confidence')
+            recording['fileAnnotations'] = annotations
 
             return recording
         else:
