@@ -115,43 +115,45 @@ export default defineComponent({
         </v-btn>
       </v-row>
     </v-card-title>
-    <v-row>
-      <SpeciesInfo
-        :species-list="species"
-        :selected-species="speciesEdit"
-        class="my-2"
-      />
-    </v-row>
-    <v-row>
-      <v-autocomplete
-        v-model="speciesEdit"
-        multiple
-        closable-chips
-        chips
-        :items="speciesList"
-        label="Species"
-        @update:model-value="updateAnnotation()"
-      />
-    </v-row>
-    <v-row>
-      <v-autocomplete
-        v-model="type"
-        multiple
-        closable-chips
-        chips
-        :items="callTypes"
-        label="Type"
-        @update:model-value="updateAnnotation()"
-      />
-    </v-row>
+    <v-card-text>
+      <v-row>
+        <SpeciesInfo
+          :species-list="species"
+          :selected-species="speciesEdit"
+          class="my-2"
+        />
+      </v-row>
+      <v-row>
+        <v-autocomplete
+          v-model="speciesEdit"
+          multiple
+          closable-chips
+          chips
+          :items="speciesList"
+          label="Species"
+          @update:model-value="updateAnnotation()"
+        />
+      </v-row>
+      <v-row>
+        <v-autocomplete
+          v-model="type"
+          multiple
+          closable-chips
+          chips
+          :items="callTypes"
+          label="Type"
+          @update:model-value="updateAnnotation()"
+        />
+      </v-row>
 
-    <v-row>
-      <v-textarea
-        v-model="comments"
-        label="Comments"
-        @change="updateAnnotation()"
-      />
-    </v-row>
+      <v-row>
+        <v-textarea
+          v-model="comments"
+          label="Comments"
+          @change="updateAnnotation()"
+        />
+      </v-row>
+    </v-card-text> 
   </v-card>
 </template>
 

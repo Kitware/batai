@@ -62,6 +62,26 @@ class RecordingUploadSchema(Schema):
     unusual_occurrences: str = None
 
 
+class RecordingAnnotationSchema(Schema):
+    # species: list[SpeciesSchema] | None
+    comments: str | None = None
+    model: str | None = None
+    owner: str
+    confidence: float
+    id: int | None = None
+
+    @classmethod
+    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+        return cls(
+            # species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            owner=obj.owner.username,
+            confidence=obj.confidence,
+            comments=obj.comments,
+            model=obj.model,
+            id=obj.pk,
+        )
+
+
 class AnnotationSchema(Schema):
     start_time: int
     end_time: int
@@ -74,7 +94,7 @@ class AnnotationSchema(Schema):
     owner_email: str = None
 
     @classmethod
-    def from_orm(cls, obj, owner_email=None, **kwargs):
+    def from_orm(cls, obj: Annotations, owner_email=None, **kwargs):
         return cls(
             start_time=obj.start_time,
             end_time=obj.end_time,
@@ -217,7 +237,10 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
     for recording in recordings:
         user = User.objects.get(id=recording['owner_id'])
         fileAnnotations = RecordingAnnotation.objects.filter(recording=recording['id'])
-        recording['fileAnnotations'] = fileAnnotations
+        recording['fileAnnotations'] = [
+            RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
+            for fileAnnotation in fileAnnotations
+        ]
         recording['owner_username'] = user.username
         recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
         recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
@@ -263,8 +286,13 @@ def get_recording(request: HttpRequest, id: int):
                 recording_id=recording['id'], owner=request.user
             ).exists()
             recording['userMadeAnnotations'] = user_has_annotations
-            annotations = RecordingAnnotation.objects.filter(recording=id).annotate('confidence')
-            recording['fileAnnotations'] = annotations
+            fileAnnotations = RecordingAnnotation.objects.filter(recording=id).order_by(
+                'confidence'
+            )
+            recording['fileAnnotations'] = [
+                RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
+                for fileAnnotation in fileAnnotations
+            ]
 
             return recording
         else:

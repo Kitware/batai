@@ -20,8 +20,8 @@ import {
 import SpectrogramViewer from "../components/SpectrogramViewer.vue";
 import { SpectroInfo } from "../components/geoJS/geoJSUtils";
 import AnnotationList from "../components/AnnotationList.vue";
-import AnnotationEditor from "../components/AnnotationEditor.vue";
 import ThumbnailViewer from "../components/ThumbnailViewer.vue";
+import RecordingList from "../components/RecordingList.vue";
 import useState from "../use/useState";
 import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
 export default defineComponent({
@@ -29,9 +29,9 @@ export default defineComponent({
   components: {
     SpectrogramViewer,
     AnnotationList,
-    AnnotationEditor,
     ThumbnailViewer,
     RecordingInfoDialog,
+    RecordingList,
   },
   props: {
     id: {
@@ -55,6 +55,7 @@ export default defineComponent({
       selectedType,
       scaledVals,
       viewCompressedOverlay,
+      sideTab,
     } = useState();
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -267,6 +268,7 @@ export default defineComponent({
       freqRef,
       toggleCompressedOverlay,
       viewCompressedOverlay,
+      sideTab,
       // Other user selection
       otherUserAnnotations,
       temporalAnnotations,
@@ -282,7 +284,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-row>
+  <v-row dense>
     <v-dialog
       v-model="recordingInfo"
       width="600"
@@ -505,23 +507,70 @@ export default defineComponent({
       />
     </v-col>
     <v-col style="max-width: 400px">
-      <annotation-list
-        :annotations="annotations"
-        :temporal-annotations="temporalAnnotations"
-        @select="processSelection($event)"
-      />
-      <annotation-editor
-        v-if="selectedAnnotation"
-        :species="speciesList"
-        :recording-id="id"
-        :annotation="selectedAnnotation"
-        class="mt-4"
-        @update:annotation="getAnnotationsList()"
-        @delete:annotation="
-          getAnnotationsList();
-          selectedId = null;
-        "
-      />
+      <v-card>
+        <v-card-title>
+          <v-row dense>
+            <v-spacer />
+            <v-tooltip
+              bottom
+            >
+              <template #activator="{ props: subProps }">
+                <v-btn
+                  v-bind="subProps"
+                  :variant="sideTab === 'recordings' ? 'flat' : 'outlined'"
+                  :color="sideTab === 'recordings' ? 'primary' : ''"
+                  class="mx-2"
+                  size="small"
+                  @click="sideTab = 'recordings'"
+                >
+                  Recordings
+                </v-btn>
+              </template>
+              <span>
+                View Recordings in sideTab
+              </span>
+            </v-tooltip>
+            <v-tooltip
+              bottom
+            >
+              <template #activator="{ props: subProps }">
+                <v-btn
+                  v-bind="subProps"
+                  :variant="sideTab === 'annotations' ? 'flat' : 'outlined'"
+                  :color="sideTab === 'annotations' ? 'primary' : ''"
+                  class="mx-2"
+                  size="small"
+                  @click="sideTab = 'annotations'"
+                >
+                  Annotations
+                </v-btn>
+              </template>
+              <span>
+                View Annotations in sideTab
+              </span>
+            </v-tooltip>
+            <v-spacer />
+          </v-row>
+        </v-card-title>
+        <v-card-text class="pa-0">
+          <div v-if="sideTab === 'annotations'">
+            <annotation-list
+              :annotations="annotations"
+              :temporal-annotations="temporalAnnotations"
+              :selected-annotation="selectedAnnotation"
+              @select="processSelection($event)"
+              @update:annotation="getAnnotationsList()"
+              @delete:annotation="
+                getAnnotationsList();
+                selectedId = null;
+              "
+            />
+          </div>
+          <div v-else-if="sideTab === 'recordings'">
+            <recording-list />
+          </div>
+        </v-card-text>
+      </v-card>
     </v-col>
   </v-row>
 </template>
