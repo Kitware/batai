@@ -107,10 +107,30 @@ export interface UserInfo {
     email: string;
     id: number;
 }
+
+export interface FileAnnotation {
+    species: Species[];
+    comments?: string;
+    model?: string;
+    owner: string;
+    confidence: number;
+    id: number;
+}
+
+export interface UpdateFileAnnotation {
+    recordingId?: number;
+    species_list: number[] | null;
+    comments?: string;
+    model?: string;
+    confidence: number;
+    id?: number;
+}
+
 export interface Spectrogram {
     url: string;
     filename?: string;
     annotations?: SpectrogramAnnotation[];
+    fileAnnotations: FileAnnotation[];
     temporal?: SpectrogramTemporalAnnotation[];
     spectroInfo?: SpectroInfo;
     compressed?: {
@@ -310,6 +330,23 @@ async function getOtherUserAnnotations(recordingId: string) {
 async function getCellLocation(cellId: number, quadrant?: 'SW' | 'NE' | 'NW' | 'SE') {
     return axiosInstance.get<GRTSCellCenter>(`/grts/${cellId}`, { params: { quadrant }});
 }
+async function getFileAnnotations(recordingId: number) {
+    return axiosInstance.get<FileAnnotation[]>(`recording/${recordingId}/recording-annotations`);
+}
+
+
+async function putFileAnnotation(fileAnnotation: UpdateFileAnnotation) {
+    return axiosInstance.put<{message: string, id: number}>(`/recording-annotation`, { fileAnnotation });
+}
+
+async function patchFileAnnotation(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation) {
+    return axiosInstance.patch<{message: string, id: number}>(`/recording-annotation/${fileAnnotationId}`, { fileAnnotation });
+}
+
+async function deleteFileAnnotation(fileAnnotationId: number) {
+    return axiosInstance.delete<{message: string, id: number}>(`/recording-annotation/${fileAnnotationId}`);
+}
+
 
 interface CellIDReponse {
     grid_cell_id?: number;
@@ -367,4 +404,8 @@ export {
  getCellLocation,
  getCellfromLocation,
  getGuanoMetadata,
+ getFileAnnotations,
+ putFileAnnotation,
+ patchFileAnnotation,
+ deleteFileAnnotation,
 };

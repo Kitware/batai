@@ -5,10 +5,12 @@ import useState from "../use/useState";
 import { watch, ref } from "vue";
 import AnnotationEditor from "./AnnotationEditor.vue";
 import { Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import RecordingAnnotations from "./RecordingAnnotations.vue";
 export default defineComponent({
   name: "AnnotationList",
   components: {
     AnnotationEditor,
+    RecordingAnnotations,
   },
   props: {
     spectroInfo: {
@@ -55,7 +57,7 @@ export default defineComponent({
       selectedType.value = event as 'sequence' | 'pulse';
       selectedId.value = null;
     } else {
-      tab.value = 'recordings';
+      tab.value = 'recording';
     }
   };
 
@@ -220,14 +222,20 @@ export default defineComponent({
           </v-list-item>
         </v-list>
       </v-window-item>
+      <v-window-item value="recording">
+        <RecordingAnnotations 
+          :species="species"
+          :recording-id="parseInt(recordingId)"
+        />
+      </v-window-item>
       <annotation-editor
-        v-if="selectedAnnotation"
+        v-if="selectedAnnotation && ['pulse', 'sequence'].includes(tab)"
         :species="species"
         :recording-id="recordingId"
         :annotation="selectedAnnotation"
+        class="mt-4"
         @update:annotation="$emit('update:annotation')"
         @delete:annotation="$emit('delete:annotation')"
-        class="mt-4"
       />
     </v-window>
   </div>

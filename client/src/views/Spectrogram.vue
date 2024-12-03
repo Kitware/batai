@@ -558,6 +558,8 @@ export default defineComponent({
               :annotations="annotations"
               :temporal-annotations="temporalAnnotations"
               :selected-annotation="selectedAnnotation"
+              :species="speciesList"
+              :recording-id="id"
               @select="processSelection($event)"
               @update:annotation="getAnnotationsList()"
               @delete:annotation="

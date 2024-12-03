@@ -63,7 +63,7 @@ class RecordingUploadSchema(Schema):
 
 
 class RecordingAnnotationSchema(Schema):
-    # species: list[SpeciesSchema] | None
+    species: list[SpeciesSchema] | None
     comments: str | None = None
     model: str | None = None
     owner: str
@@ -73,7 +73,7 @@ class RecordingAnnotationSchema(Schema):
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
         return cls(
-            # species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             owner=obj.owner.username,
             confidence=obj.confidence,
             comments=obj.comments,
@@ -299,6 +299,18 @@ def get_recording(request: HttpRequest, id: int):
             return {'error': 'Recording not found'}
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
+
+
+@router.get('/{recording_id}/recording-annotations')
+def get_recording_annotations(request: HttpRequest, recording_id: int):
+    fileAnnotations = RecordingAnnotation.objects.filter(recording=recording_id).order_by(
+        'confidence'
+    )
+    output = [
+        RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
+        for fileAnnotation in fileAnnotations
+    ]
+    return output
 
 
 @router.get('/{id}/spectrogram')

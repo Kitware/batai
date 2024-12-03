@@ -5,6 +5,7 @@ from ninja import Router, Schema
 from ninja.errors import HttpError
 
 from bats_ai.core.models import Recording, RecordingAnnotation, Species
+from bats_ai.core.views.recording import SpeciesSchema
 
 logger = logging.getLogger(__name__)
 
@@ -13,17 +14,27 @@ router = Router()
 
 # Schemas for serialization
 class RecordingAnnotationSchema(Schema):
-    id: int
-    recording: int
+    species: list[SpeciesSchema] | None
+    comments: str | None = None
+    model: str | None = None
     owner: str
-    species: list[int]
-    comments: str = None
-    model: str = None
     confidence: float
+    id: int | None = None
+
+    @classmethod
+    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+        return cls(
+            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            owner=obj.owner.username,
+            confidence=obj.confidence,
+            comments=obj.comments,
+            model=obj.model,
+            id=obj.pk,
+        )
 
 
 class CreateRecordingAnnotationSchema(Schema):
-    recording: int
+    recordingId: int
     species: list[int]
     comments: str = None
     model: str = None
@@ -37,7 +48,6 @@ class UpdateRecordingAnnotationSchema(Schema):
     confidence: float = None
 
 
-# GET Endpoint
 @router.get('/{id}', response=RecordingAnnotationSchema)
 def get_recording_annotation(request: HttpRequest, id: int):
     try:
@@ -47,24 +57,15 @@ def get_recording_annotation(request: HttpRequest, id: int):
         if annotation.recording.owner != request.user and not annotation.recording.public:
             raise HttpError(403, 'Permission denied.')
 
-        return {
-            'id': annotation.id,
-            'recording': annotation.recording.id,
-            'owner': annotation.owner.username,
-            'species': [s.id for s in annotation.species.all()],
-            'comments': annotation.comments,
-            'model': annotation.model,
-            'confidence': annotation.confidence,
-        }
+        return RecordingAnnotationSchema.from_orm(annotation).dict()
     except RecordingAnnotation.DoesNotExist:
         raise HttpError(404, 'Recording annotation not found.')
 
 
-# PUT Endpoint
 @router.put('/', response={200: str})
 def create_recording_annotation(request: HttpRequest, data: CreateRecordingAnnotationSchema):
     try:
-        recording = Recording.objects.get(pk=data.recording)
+        recording = Recording.objects.get(pk=data.recordingId)
 
         # Check permission
         if recording.owner != request.user and not recording.public:
@@ -91,7 +92,6 @@ def create_recording_annotation(request: HttpRequest, data: CreateRecordingAnnot
         raise HttpError(404, 'One or more species IDs not found.')
 
 
-# PATCH Endpoint
 @router.patch('/{id}', response={200: str})
 def update_recording_annotation(
     request: HttpRequest, id: int, data: UpdateRecordingAnnotationSchema
