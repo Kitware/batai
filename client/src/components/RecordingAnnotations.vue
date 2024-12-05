@@ -13,12 +13,12 @@ export default defineComponent({
   },
   props: {
     species: {
-        type: Array as PropType<Species[]>,
-        required: true,
+      type: Array as PropType<Species[]>,
+      required: true,
     },
     recordingId: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     }
   },
   emits: [],
@@ -40,30 +40,30 @@ export default defineComponent({
     const addAnnotation = async () => {
       const newAnnotation: UpdateFileAnnotation = {
         recordingId: props.recordingId,
-        species_list: [],
-    comments: '',
-    model: 'User Defined',
-    confidence: 1.0,
+        species: [],
+        comments: '',
+        model: 'User Defined',
+        confidence: 1.0,
 
       };
       await putFileAnnotation(newAnnotation);
       await loadFileAnnotations();
       if (annotations.value.length) {
-        setSelectedId(annotations.value[annotations.value.length-1]);
+        setSelectedId(annotations.value[annotations.value.length - 1]);
       }
     };
 
-    const updatedAnnotation = async (deleted=false) => {
-     annotations.value = (await getFileAnnotations(props.recordingId)).data;
-     if (selectedAnnotation.value) {
-      const found = annotations.value.find((item) => selectedAnnotation.value?.id === item.id);
-      if (found) {
-        selectedAnnotation.value = found;
+    const updatedAnnotation = async (deleted = false) => {
+      annotations.value = (await getFileAnnotations(props.recordingId)).data;
+      if (selectedAnnotation.value) {
+        const found = annotations.value.find((item) => selectedAnnotation.value?.id === item.id);
+        if (found) {
+          selectedAnnotation.value = found;
+        }
       }
-     }
-     if (deleted) {
-      selectedAnnotation.value = null;
-     }
+      if (deleted) {
+        selectedAnnotation.value = null;
+      }
     };
 
     return {
@@ -88,7 +88,7 @@ export default defineComponent({
       <v-col>
         <v-btn
           :disabled="annotationState === 'creating'"
-          @click="addAnnotation;"
+          @click="addAnnotation()"
         >
           Add<v-icon>mdi-plus</v-icon>
         </v-btn>
@@ -100,7 +100,7 @@ export default defineComponent({
         v-for="annotation in annotations"
         :id="`annotation-${annotation.id}`"
         :key="annotation.id"
-        :class="{selected: annotation.id===selectedAnnotation?.id}"
+        :class="{ selected: annotation.id === selectedAnnotation?.id }"
         class="annotation-item"
         @click="setSelectedId(annotation)"
       >
@@ -143,45 +143,53 @@ export default defineComponent({
       :annotation="selectedAnnotation"
       class="mt-4"
       @update:annotation="updatedAnnotation()"
-      @delete:annotation="updatedAnnotation()"
+      @delete:annotation="updatedAnnotation(true)"
     />
   </div>
 </template>
 
 <style lang="scss" scoped>
 .annotation-id {
-    cursor:pointer;
-    text-decoration: underline;
+  cursor: pointer;
+  text-decoration: underline;
 }
+
 .annotation-owner {
-    font-size: 1em;
+  font-size: 1em;
 }
+
 .annotation-confidence {
-    font-size: 1em;
+  font-size: 1em;
 }
+
 .annotation-model {
-    font-size: 1em;
+  font-size: 1em;
 }
+
 .annotation-item {
   border: 1px solid gray;
 }
+
 .species-name {
-    font-weight: bold;
-    font-size: 1em;
+  font-weight: bold;
+  font-size: 1em;
 }
+
 .species-hierarchy {
-    font-size: 0.75em;
+  font-size: 0.75em;
 }
+
 .selected {
-    background-color: cyan;
+  background-color: cyan;
 }
+
 .annotation-list {
   max-height: 60vh;
   overflow-y: auto;
 }
+
 .recording-list {
   max-height: 85vh;
   overflow-y: auto;
 }
-
 </style>

@@ -33,7 +33,7 @@ export default defineComponent({
   emits: ['select', 'update:annotation', 'delete:annotation'],
   setup() {
     const { creationType, annotationState, setAnnotationState, annotations, temporalAnnotations, selectedId, selectedType, setSelectedId, sideTab } = useState();
-    const tab = ref('pulse');
+    const tab = ref('recording');
     const scrollToId = (id: number) => {
     const el = document.getElementById(`annotation-${id}`);
     if (el) {

@@ -119,7 +119,7 @@ export interface FileAnnotation {
 
 export interface UpdateFileAnnotation {
     recordingId?: number;
-    species_list: number[] | null;
+    species: number[] | null;
     comments?: string;
     model?: string;
     confidence: number;
@@ -336,11 +336,11 @@ async function getFileAnnotations(recordingId: number) {
 
 
 async function putFileAnnotation(fileAnnotation: UpdateFileAnnotation) {
-    return axiosInstance.put<{message: string, id: number}>(`/recording-annotation`, { fileAnnotation });
+    return axiosInstance.put<{message: string, id: number}>(`/recording-annotation/`, { ...fileAnnotation });
 }
 
 async function patchFileAnnotation(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation) {
-    return axiosInstance.patch<{message: string, id: number}>(`/recording-annotation/${fileAnnotationId}`, { fileAnnotation });
+    return axiosInstance.patch<{message: string, id: number}>(`/recording-annotation/${fileAnnotationId}`, { ...fileAnnotation });
 }
 
 async function deleteFileAnnotation(fileAnnotationId: number) {
