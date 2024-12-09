@@ -100,7 +100,7 @@ def update_recording_annotation(
         annotation = RecordingAnnotation.objects.get(pk=id)
 
         # Check permission
-        if annotation.recording.owner != request.user:
+        if annotation.recording.owner != request.user and not annotation.recording.public:
             raise HttpError(403, 'Permission denied.')
 
         # Update fields if provided

@@ -253,9 +253,12 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
             .count()
         )
         recording['userAnnotations'] = unique_users_with_annotations
-        user_has_annotations = Annotations.objects.filter(
-            recording_id=recording['id'], owner=request.user
-        ).exists()
+        user_has_annotations = (
+            Annotations.objects.filter(recording_id=recording['id'], owner=request.user).exists()
+            or RecordingAnnotation.objects.filter(
+                recording_id=recording['id'], owner=request.user
+            ).exists()
+        )
         recording['userMadeAnnotations'] = user_has_annotations
 
     return list(recordings)
@@ -275,16 +278,30 @@ def get_recording(request: HttpRequest, id: int):
             recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
             if recording['recording_location']:
                 recording['recording_location'] = json.loads(recording['recording_location'].json)
-            unique_users_with_annotations = (
+            annotation_owners = (
                 Annotations.objects.filter(recording_id=recording['id'])
-                .values('owner')
+                .values_list('owner', flat=True)
                 .distinct()
-                .count()
+            )
+            recording_annotation_owners = (
+                RecordingAnnotation.objects.filter(recording_id=recording['id'])
+                .values_list('owner', flat=True)
+                .distinct()
+            )
+
+            # Combine the sets of owners and count unique entries
+            unique_users_with_annotations = len(
+                set(annotation_owners).union(set(recording_annotation_owners))
             )
             recording['userAnnotations'] = unique_users_with_annotations
-            user_has_annotations = Annotations.objects.filter(
-                recording_id=recording['id'], owner=request.user
-            ).exists()
+            user_has_annotations = (
+                Annotations.objects.filter(
+                    recording_id=recording['id'], owner=request.user
+                ).exists()
+                or RecordingAnnotation.objects.filter(
+                    recording_id=recording['id'], owner=request.user
+                ).exists()
+            )
             recording['userMadeAnnotations'] = user_has_annotations
             fileAnnotations = RecordingAnnotation.objects.filter(recording=id).order_by(
                 'confidence'

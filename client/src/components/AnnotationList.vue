@@ -89,24 +89,51 @@ export default defineComponent({
         class="ma-auto"
         @update:model-value="tabSwitch($event)"
       >
-        <v-tab
-          value="recording"
-          size="x-small"
+        <v-tooltip
+          location="bottom"
+          open-delay="400"
         >
-          Recording
-        </v-tab>
-        <v-tab
-          value="pulse"
-          size="x-small"
+          <template #activator="{ props }">
+            <v-tab
+              value="recording"
+              size="x-small"
+              v-bind="props"
+            >
+              Recording
+            </v-tab>
+          </template>
+          <span>Recording/File Level Species Annotations</span>
+        </v-tooltip>
+        <v-tooltip
+          location="bottom"
+          open-delay="400"
         >
-          Pulse
-        </v-tab>
-        <v-tab
-          value="sequence"
-          size="x-small"
+          <template #activator="{ props }">
+            <v-tab
+              value="sequence"
+              size="x-small"
+              v-bind="props"
+            >
+              Sequence
+            </v-tab>
+          </template>
+          <span>Sequence Level annotations (Approach/Search/Terminal/Social)</span>
+        </v-tooltip>
+        <v-tooltip
+          location="bottom"
+          open-delay="400"
         >
-          Sequence
-        </v-tab>
+          <template #activator="{ props }">
+            <v-tab
+              value="pulse"
+              size="x-small"
+              v-bind="props"
+            >
+              Pulse
+            </v-tab>
+          </template>
+          <span>Pulse Level Annotations (for a single pulse)</span>
+        </v-tooltip>
       </v-tabs>
     </v-row>
     <v-window v-model="tab">

@@ -28,6 +28,7 @@ export interface Recording {
     userMadeAnnotations: boolean;
     userAnnotations: number;
     hasSpectrogram: boolean;
+    fileAnnotations: FileAnnotation[];
     site_name?: string;
     software?: string;
     detector?: string;
