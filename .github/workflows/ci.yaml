@@ -92,7 +92,7 @@ jobs:
       - name: Update Package References
         run: sudo apt-get update
       - name: Install system dependencies
-        run: apt-fast install --no-install-recommends --yes
+        run: apt-get install --no-install-recommends --yes
           libgdal30
           libproj22
           python3-cachecontrol
