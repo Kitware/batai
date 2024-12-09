@@ -12,7 +12,7 @@ export default defineComponent({
     const oauthClient = inject<OAuthClient>("oauthClient");
     const router = useRouter();
     const route = useRoute();
-    const { nextShared, sharedList } = useState();
+    const { nextShared, sharedList, sideTab, } = useState();
     const getShared = async () => {
       sharedList.value = (await getRecordings(true)).data;
     };
@@ -57,7 +57,7 @@ export default defineComponent({
       }
     });
 
-    return { oauthClient, containsSpectro, loginText, logInOrOut, activeTab, nextShared };
+    return { oauthClient, containsSpectro, loginText, logInOrOut, activeTab, nextShared, sideTab };
   },
 });
 </script>

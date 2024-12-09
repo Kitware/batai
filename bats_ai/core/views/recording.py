@@ -15,6 +15,7 @@ from bats_ai.core.models import (
     Annotations,
     CompressedSpectrogram,
     Recording,
+    RecordingAnnotation,
     Species,
     TemporalAnnotations,
     colormap,
@@ -61,6 +62,26 @@ class RecordingUploadSchema(Schema):
     unusual_occurrences: str = None
 
 
+class RecordingAnnotationSchema(Schema):
+    species: list[SpeciesSchema] | None
+    comments: str | None = None
+    model: str | None = None
+    owner: str
+    confidence: float
+    id: int | None = None
+
+    @classmethod
+    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+        return cls(
+            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            owner=obj.owner.username,
+            confidence=obj.confidence,
+            comments=obj.comments,
+            model=obj.model,
+            id=obj.pk,
+        )
+
+
 class AnnotationSchema(Schema):
     start_time: int
     end_time: int
@@ -73,7 +94,7 @@ class AnnotationSchema(Schema):
     owner_email: str = None
 
     @classmethod
-    def from_orm(cls, obj, owner_email=None, **kwargs):
+    def from_orm(cls, obj: Annotations, owner_email=None, **kwargs):
         return cls(
             start_time=obj.start_time,
             end_time=obj.end_time,
@@ -215,6 +236,11 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
     # TODO with larger dataset it may be better to do this in a queryset instead of python
     for recording in recordings:
         user = User.objects.get(id=recording['owner_id'])
+        fileAnnotations = RecordingAnnotation.objects.filter(recording=recording['id'])
+        recording['fileAnnotations'] = [
+            RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
+            for fileAnnotation in fileAnnotations
+        ]
         recording['owner_username'] = user.username
         recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
         recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
@@ -227,9 +253,12 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
             .count()
         )
         recording['userAnnotations'] = unique_users_with_annotations
-        user_has_annotations = Annotations.objects.filter(
-            recording_id=recording['id'], owner=request.user
-        ).exists()
+        user_has_annotations = (
+            Annotations.objects.filter(recording_id=recording['id'], owner=request.user).exists()
+            or RecordingAnnotation.objects.filter(
+                recording_id=recording['id'], owner=request.user
+            ).exists()
+        )
         recording['userMadeAnnotations'] = user_has_annotations
 
     return list(recordings)
@@ -249,23 +278,56 @@ def get_recording(request: HttpRequest, id: int):
             recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
             if recording['recording_location']:
                 recording['recording_location'] = json.loads(recording['recording_location'].json)
-            unique_users_with_annotations = (
+            annotation_owners = (
                 Annotations.objects.filter(recording_id=recording['id'])
-                .values('owner')
+                .values_list('owner', flat=True)
                 .distinct()
-                .count()
+            )
+            recording_annotation_owners = (
+                RecordingAnnotation.objects.filter(recording_id=recording['id'])
+                .values_list('owner', flat=True)
+                .distinct()
+            )
+
+            # Combine the sets of owners and count unique entries
+            unique_users_with_annotations = len(
+                set(annotation_owners).union(set(recording_annotation_owners))
             )
             recording['userAnnotations'] = unique_users_with_annotations
-            user_has_annotations = Annotations.objects.filter(
-                recording_id=recording['id'], owner=request.user
-            ).exists()
+            user_has_annotations = (
+                Annotations.objects.filter(
+                    recording_id=recording['id'], owner=request.user
+                ).exists()
+                or RecordingAnnotation.objects.filter(
+                    recording_id=recording['id'], owner=request.user
+                ).exists()
+            )
             recording['userMadeAnnotations'] = user_has_annotations
+            fileAnnotations = RecordingAnnotation.objects.filter(recording=id).order_by(
+                'confidence'
+            )
+            recording['fileAnnotations'] = [
+                RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
+                for fileAnnotation in fileAnnotations
+            ]
 
             return recording
         else:
             return {'error': 'Recording not found'}
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
+
+
+@router.get('/{recording_id}/recording-annotations')
+def get_recording_annotations(request: HttpRequest, recording_id: int):
+    fileAnnotations = RecordingAnnotation.objects.filter(recording=recording_id).order_by(
+        'confidence'
+    )
+    output = [
+        RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
+        for fileAnnotation in fileAnnotations
+    ]
+    return output
 
 
 @router.get('/{id}/spectrogram')

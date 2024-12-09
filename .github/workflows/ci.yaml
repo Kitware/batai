@@ -15,7 +15,7 @@ env:
 jobs:
   lint-python:
     name: Lint Python
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -55,7 +55,7 @@ jobs:
         working-directory: client
   test-django:
     name: Test Django [${{ matrix.tox-env }}]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -92,7 +92,7 @@ jobs:
       - name: Update Package References
         run: sudo apt-get update
       - name: Install system dependencies
-        run: apt-fast install --no-install-recommends --yes
+        run: sudo apt-get install --no-install-recommends --yes
           libgdal30
           libproj22
           python3-cachecontrol
@@ -110,7 +110,7 @@ jobs:
         working-directory: bats_ai
   test-vue:
     name: Test [vue]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

@@ -6,12 +6,14 @@ import MapLocation from '../components/MapLocation.vue';
 import useState from '../use/useState';
 import BatchUploadRecording from '../components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '../components/RecordingInfoDisplay.vue';
+import RecordingAnnotationSummary from '../components/RecordingAnnotationSummary.vue';
 export default defineComponent({
     components: {
         UploadRecording,
         MapLocation,
         BatchUploadRecording,
-        RecordingInfoDisplay
+        RecordingInfoDisplay,
+        RecordingAnnotationSummary,
     },
   setup() {
     const itemsPerPage = ref(-1);
@@ -26,10 +28,13 @@ export default defineComponent({
             title:'Edit',
             key:'edit',
         },
-
         {
             title:'Name',
             key:'name',
+        },
+        {
+          title: 'Annotation',
+          key:'annotation'
         },
         {
             title:'Owner',
@@ -38,10 +43,6 @@ export default defineComponent({
         {
             title:'Recorded Date',
             key:'recorded_date',
-        },
-        {
-            title:'Recorded Time',
-            key:'recorded_time',
         },
         {
             title:'Public',
@@ -72,16 +73,16 @@ export default defineComponent({
             key:'name',
         },
         {
+          title: 'Annotation',
+          key:'annotation'
+        },
+        {
             title:'Owner',
             key:'owner_username',
         },
         {
             title:'Recorded Date',
             key:'recorded_date',
-        },
-        {
-            title:'Recorded Time',
-            key:'recorded_time',
         },
         {
             title:'Public',
@@ -251,6 +252,14 @@ export default defineComponent({
             </v-tooltip>
           </div>
         </template>
+        <template #item.annotation="{ item }">
+          <RecordingAnnotationSummary :file-annotations="item.fileAnnotations" />
+        </template>
+
+        <template #item.recorded_date="{ item }">
+          {{ item.recorded_date }} {{ item.recorded_time }}
+        </template>
+
         <template #item.recording_location="{ item }">
           <v-menu
             v-if="item.recording_location"
@@ -355,6 +364,12 @@ export default defineComponent({
           >
             {{ item.name }}
           </router-link>
+        </template>
+        <template #item.recorded_date="{ item }">
+          {{ item.recorded_date }} {{ item.recorded_time }}
+        </template>
+        <template #item.annotation="{ item }">
+          <RecordingAnnotationSummary :file-annotations="item.fileAnnotations" />
         </template>
         <template #item.public="{ item }">
           <v-icon

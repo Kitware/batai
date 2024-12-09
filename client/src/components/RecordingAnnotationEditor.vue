@@ -1,8 +1,7 @@
 <script lang="ts">
 import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
-import { deleteAnnotation, deleteTemporalAnnotation, patchAnnotation, patchTemporalAnnotation, Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
-import useState from "../use/useState";
+import { deleteFileAnnotation, FileAnnotation, patchFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
 import SpeciesInfo from "./SpeciesInfo.vue";
 export default defineComponent({
   name: "AnnotationEditor",
@@ -15,7 +14,7 @@ export default defineComponent({
       default: () => undefined,
     },
     annotation: {
-      type: Object as PropType<SpectrogramAnnotation | SpectrogramTemporalAnnotation | null>,
+      type: Object as PropType<FileAnnotation | null>,
       default: () => null,
     },
     species: {
@@ -23,33 +22,29 @@ export default defineComponent({
         required: true,
     },
     recordingId: {
-        type: String,
+        type: Number,
         required: true,
     }
   },
   emits: ['update:annotation', 'delete:annotation'],
   setup(props, { emit }) {
-    const { selectedType } = useState();
     const speciesList = computed(() => {
         return props.species.map((item) => (item.species_code || item.common_name)).sort();
     });
 
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
-    const type: Ref<string[]> = ref([]);
-    const callTypes = ref(['Search', 'Approach', 'Terminal', 'Social']);
-
-      type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [];
+    const confidence: Ref<number> = ref(1.0);
 
     watch(() => props.annotation, () => {
         if (props.annotation?.species) {
             speciesEdit.value = props.annotation.species.map((item) => item.species_code || item.common_name);
         }
-        if (selectedType.value === 'pulse' && props.annotation?.comments) {
+        if (props.annotation?.comments) {
             comments.value = props.annotation.comments;
         }
-        if (selectedType.value === 'pulse' && (props.annotation as SpectrogramTemporalAnnotation).type) {
-            type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [];
+        if (props.annotation) {
+            confidence.value = props.annotation.confidence;
         }
     });
     const updateAnnotation = async () => {
@@ -62,12 +57,16 @@ export default defineComponent({
                     speciesIds.push(found.id);
                 }
             });
-            const updateType = type.value.join('+');
-            if (selectedType.value === 'pulse') {
-              await patchAnnotation(props.recordingId, props.annotation?.id, { ...props.annotation, comments: comments.value, type: updateType }, speciesIds );
-            } else if (selectedType.value === 'sequence') {
-              await patchTemporalAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: updateType }, speciesIds);
-            }
+
+            const updateAnnotation: UpdateFileAnnotation = {
+              recordingId: props.recordingId,
+              comments: comments.value,
+              confidence: confidence.value,
+              model: 'User Defined',
+              species: speciesIds,
+              id: props.annotation.id,
+            };
+            await patchFileAnnotation(props.annotation.id, updateAnnotation);
             // Signal to redownload the updated annotation values if possible
             emit('update:annotation');
         }
@@ -75,23 +74,16 @@ export default defineComponent({
     };
 
     const deleteAnno = async () => {
-      if (props.annotation && props.recordingId && selectedType.value === 'pulse') {
-            await deleteAnnotation(props.recordingId, props.annotation.id);
+      if (props.annotation && props.recordingId) {
+            await deleteFileAnnotation(props.annotation.id,);
             emit('delete:annotation');
         }
-        if (props.annotation && props.recordingId && selectedType.value === 'sequence') {
-            await deleteTemporalAnnotation(props.recordingId, props.annotation.id);
-            emit('delete:annotation');
-        }
-        
     };
     return {
-        callTypes,
         speciesList,
         speciesEdit,
+        confidence,
         comments,
-        type,
-        selectedType,
         updateAnnotation,
         deleteAnno
     };
@@ -135,17 +127,15 @@ export default defineComponent({
         />
       </v-row>
       <v-row>
-        <v-autocomplete
-          v-model="type"
-          multiple
-          closable-chips
-          chips
-          :items="callTypes"
-          label="Type"
-          @update:model-value="updateAnnotation()"
+        <v-slider
+          v-model="confidence"
+          min="0"
+          max="1"
+          step="0.01"
+          :label="`Confidence (${confidence.toFixed(2)})`"
+          @end="updateAnnotation()"
         />
       </v-row>
-
       <v-row>
         <v-textarea
           v-model="comments"
