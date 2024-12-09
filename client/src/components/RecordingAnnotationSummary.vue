@@ -1,15 +1,9 @@
 <script lang="ts">
-import { defineComponent, onMounted, PropType, Ref } from "vue";
-import { SpectroInfo } from './geoJS/geoJSUtils';
-import useState from "../use/useState";
-import { watch, ref } from "vue";
-import AnnotationEditor from "./AnnotationEditor.vue";
-import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation, UpdateFileAnnotation } from "../api/api";
-import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
+import { defineComponent, PropType } from "vue";
+import { FileAnnotation } from "../api/api";
 export default defineComponent({
   name: "AnnotationList",
   components: {
-    RecordingAnnotationEditor,
   },
   props: {
     fileAnnotations: {
@@ -18,7 +12,7 @@ export default defineComponent({
     },
   },
   emits: [],
-  setup(props) {
+  setup() {
 
     return {
     };

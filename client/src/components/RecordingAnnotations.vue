@@ -1,10 +1,7 @@
 <script lang="ts">
 import { defineComponent, onMounted, PropType, Ref } from "vue";
-import { SpectroInfo } from './geoJS/geoJSUtils';
-import useState from "../use/useState";
-import { watch, ref } from "vue";
-import AnnotationEditor from "./AnnotationEditor.vue";
-import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation, UpdateFileAnnotation } from "../api/api";
+import { ref } from "vue";
+import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
 export default defineComponent({
   name: "AnnotationList",
