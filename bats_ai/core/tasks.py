@@ -8,7 +8,15 @@ from django.core.files import File
 import numpy as np
 import scipy
 
-from bats_ai.core.models import Annotations, CompressedSpectrogram, Recording, Spectrogram, colormap
+from bats_ai.core.models import (
+    Annotations,
+    CompressedSpectrogram,
+    Recording,
+    RecordingAnnotation,
+    Species,
+    Spectrogram,
+    colormap,
+)
 
 
 def generate_compressed(recording: Recording, spectrogram: Spectrogram):
@@ -178,7 +186,8 @@ def recording_compute_spectrogram(recording_id: int):
             if cmap is None:
                 spectrogram_id = spectrogram_id_temp
     if spectrogram_id is not None:
-        generate_compress_spectrogram.delay(recording_id, spectrogram_id)
+        compressed_spectro = generate_compress_spectrogram(recording_id, spectrogram_id)
+        predict(compressed_spectro.pk)
 
 
 @shared_task
@@ -197,7 +206,7 @@ def generate_compress_spectrogram(recording_id: int, spectrogram_id: int):
         existing.cache_invalidated = False
         existing.save()
     else:
-        CompressedSpectrogram.objects.create(
+        existing = CompressedSpectrogram.objects.create(
             recording=recording,
             spectrogram=spectrogram,
             image_file=image_file,
@@ -207,10 +216,30 @@ def generate_compress_spectrogram(recording_id: int, spectrogram_id: int):
             stops=stops,
             cache_invalidated=False,
         )
+    return existing
 
 
 @shared_task
 def predict(compressed_spectrogram_id: int):
     compressed_spectrogram = CompressedSpectrogram.objects.get(pk=compressed_spectrogram_id)
     label, score, confs = compressed_spectrogram.predict()
+    confidences = [{'label': key, 'value': float(value)} for key, value in confs.items()]
+    sorted_confidences = sorted(confidences, key=lambda x: x['value'], reverse=True)
+    output = {
+        'label': label,
+        'score': float(score),
+        'confidences': sorted_confidences,
+    }
+    species = Species.objects.filter(species_code=label)
+
+    recording_annotation = RecordingAnnotation.objects.create(
+        recording=compressed_spectrogram.recording,
+        owner=compressed_spectrogram.recording.owner,
+        comments='Compressed Spectrogram Generation Prediction',
+        model='model.mobilenet.onnx',
+        confidence=output['score'],
+        additional_data=output,
+    )
+    recording_annotation.species.set(species)
+    recording_annotation.save()
     return label, score, confs
