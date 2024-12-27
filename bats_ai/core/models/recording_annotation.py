@@ -21,3 +21,6 @@ class RecordingAnnotation(TimeStampedModel, models.Model):
         ],
         help_text='A confidence value between 0 and 1.0, default is 1.0.',
     )
+    additional_data = models.JSONField(
+        blank=True, null=True, help_text='Additional information about the models/data'
+    )

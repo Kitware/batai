@@ -837,3 +837,26 @@ def delete_temporal_annotation(request, recording_id: int, id: int):
         return {'error': 'Recording not found'}
     except Annotations.DoesNotExist:
         return {'error': 'Annotation not found'}
+
+
+# TODO - this may be modified to use different models in the
+@router.post('/{id}/spectrogram/compressed/predict')
+def precit_spectrogram_compressed(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+        compressed_spectrogram = CompressedSpectrogram.objects.filter(recording=id).first()
+    except compressed_spectrogram.DoesNotExist:
+        return {'error': 'Compressed Spectrogram'}
+    except recording.DoesNotExist:
+        return {'error': 'Recording does not exist'}
+
+    label, score, confs = compressed_spectrogram.predict()
+    confidences = []
+    confidences = [{'label': key, 'value': float(value)} for key, value in confs.items()]
+    sorted_confidences = sorted(confidences, key=lambda x: x['value'], reverse=True)
+    output = {
+        'label': label,
+        'score': float(score),
+        'confidences': sorted_confidences,
+    }
+    return output
