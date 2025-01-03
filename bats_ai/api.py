@@ -4,6 +4,7 @@ from ninja import NinjaAPI
 from oauth2_provider.models import AccessToken
 
 from bats_ai.core.views import (
+    ConfigurationRouter,
     GRTSCellsRouter,
     GuanoMetadataRouter,
     RecordingAnnotationRouter,
@@ -35,3 +36,4 @@ api.add_router('/species/', SpeciesRouter)
 api.add_router('/grts/', GRTSCellsRouter)
 api.add_router('/guano/', GuanoMetadataRouter)
 api.add_router('/recording-annotation/', RecordingAnnotationRouter)
+api.add_router('/configuration/', ConfigurationRouter)

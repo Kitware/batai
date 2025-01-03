@@ -1,4 +1,5 @@
 from .annotations import router as AnnotationRouter
+from .configuration import router as ConfigurationRouter
 from .grts_cells import router as GRTSCellsRouter
 from .guanometadata import router as GuanoMetadataRouter
 from .recording import router as RecordingRouter
@@ -14,4 +15,5 @@ __all__ = [
     'GRTSCellsRouter',
     'GuanoMetadataRouter',
     'RecordingAnnotationRouter',
+    'ConfigurationRouter',
 ]
