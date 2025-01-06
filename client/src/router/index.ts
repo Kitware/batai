@@ -5,6 +5,7 @@ import Spectrogram from '../views/Spectrogram.vue';
 import Login from '../views/Login.vue';
 
 import oauthClient from '../plugins/Oauth';
+import Admin from '../views/Admin.vue';
 
 function beforeEach(
   to: RouteLocationNormalized,
@@ -37,6 +38,10 @@ function routerInit(){
       {
         path: '/recordings',
         component: Recordings,
+      },
+      {
+        path: '/admin',
+        component: Admin,
       },
       {
         path: '/recording/:id/spectrogram',

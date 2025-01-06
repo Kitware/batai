@@ -1,7 +1,7 @@
 import { ref, Ref, watch } from "vue";
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
-import { OtherUserAnnotations, Recording, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import { Configuration, getConfiguration, OtherUserAnnotations, Recording, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
 
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<'pulse' | 'sequence'> = ref("pulse");
@@ -22,6 +22,7 @@ const blackBackground = ref(true);
 const scaledVals: Ref<{x: number, y: number}> = ref({x: 0, y: 0});
 const viewCompressedOverlay = ref(false);
 const sideTab: Ref<'annotations' | 'recordings'> = ref('annotations');
+const configuration: Ref<Configuration> = ref({display_pulse_annotations: true, display_sequence_annotations: true, is_admin: false});
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -73,6 +74,10 @@ export default function useState() {
       nextShared.value = false;
     }
   });
+
+  async function loadConfiguration() {
+    configuration.value = (await getConfiguration()).data;
+  }
   
     return {
     annotationState,
@@ -86,8 +91,10 @@ export default function useState() {
     selectedUsers,
     currentUser,
     setSelectedId,
+    loadConfiguration,
     // State Passing Elements
     annotations,
+    configuration,
     temporalAnnotations,
     otherUserAnnotations,
     selectedId,

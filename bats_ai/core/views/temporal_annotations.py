@@ -12,7 +12,7 @@ class TemporalAnnotationSchema(Schema):
     id: int
     start_time: int
     end_time: int
-    type: str
+    type: str | None
     comments: str
     species: list[SpeciesSchema] | None
     owner_email: str = None
