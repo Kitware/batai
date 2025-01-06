@@ -357,6 +357,21 @@ async function getCellfromLocation(latitude: number, longitude: number) {
     return axiosInstance.get<CellIDReponse>(`/grts/grid_cell_id`, {params: {latitude, longitude}});
 }
 
+export interface ConfigurationSettings {
+display_pulse_annotations: boolean;
+display_sequence_annotations: boolean;
+is_admin: boolean;
+}
+
+export type Configuration = ConfigurationSettings & { is_admin : boolean };
+async function getConfiguration() {
+    return axiosInstance.get<Configuration>('/configuration/');
+}
+
+async function patchConfiguration(config: ConfigurationSettings) {
+    return axiosInstance.patch('/configuration/', {...config });
+}
+
 interface GuanoMetadata {
     nabat_grid_cell_grts_id?: string
     nabat_latitude?: number
@@ -409,4 +424,6 @@ export {
  putFileAnnotation,
  patchFileAnnotation,
  deleteFileAnnotation,
+ getConfiguration,
+ patchConfiguration,
 };

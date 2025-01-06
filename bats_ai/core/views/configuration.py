@@ -1,8 +1,6 @@
 import logging
 
-from django.contrib.auth.decorators import user_passes_test
 from django.http import JsonResponse
-from django.utils.decorators import method_decorator
 from ninja import Schema
 from ninja.pagination import RouterPaginated
 
@@ -18,11 +16,7 @@ router = RouterPaginated()
 class ConfigurationSchema(Schema):
     display_pulse_annotations: bool
     display_sequence_annotations: bool
-
-
-# Helper function to check admin user
-def is_admin(user):
-    return user.is_superuser
+    is_admin: bool | None = None
 
 
 # Endpoint to retrieve the configuration status
@@ -31,13 +25,18 @@ def get_configuration(request):
     config = Configuration.objects.first()
     if not config:
         return JsonResponse({'error': 'No configuration found'}, status=404)
-    return ConfigurationSchema.from_orm(config)
+    return ConfigurationSchema(
+        display_pulse_annotations=config.display_pulse_annotations,
+        display_sequence_annotations=config.display_sequence_annotations,
+        is_admin=request.user.is_authenticated and request.user.is_superuser,
+    )
 
 
 # Endpoint to update the configuration (admin only)
 @router.patch('/')
-@method_decorator(user_passes_test(is_admin), name='dispatch')
 def update_configuration(request, payload: ConfigurationSchema):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
     config = Configuration.objects.first()
     if not config:
         return JsonResponse({'error': 'No configuration found'}, status=404)

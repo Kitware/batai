@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { computed, defineComponent, PropType } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import useState from "../use/useState";
 import { watch, ref } from "vue";
@@ -32,7 +32,7 @@ export default defineComponent({
   },
   emits: ['select', 'update:annotation', 'delete:annotation'],
   setup() {
-    const { creationType, annotationState, setAnnotationState, annotations, temporalAnnotations, selectedId, selectedType, setSelectedId, sideTab } = useState();
+    const { creationType, annotationState, setAnnotationState, annotations, temporalAnnotations, selectedId, selectedType, setSelectedId, sideTab, configuration } = useState();
     const tab = ref('recording');
     const scrollToId = (id: number) => {
     const el = document.getElementById(`annotation-${id}`);
@@ -49,6 +49,8 @@ export default defineComponent({
   watch(selectedType, () => {
     tab.value = selectedType.value;
   });
+  const pulseEnabled = computed(() => configuration.value.display_pulse_annotations);
+  const sequenceEnabled = computed(() => configuration.value.display_sequence_annotations);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tabSwitch = (event: any) => {
     // On tab switches we want to deselect the curret annotation
@@ -73,6 +75,8 @@ export default defineComponent({
         tabSwitch,
         tab,
         sideTab,
+        pulseEnabled,
+        sequenceEnabled,
     };
   },
 });
@@ -105,6 +109,7 @@ export default defineComponent({
           <span>Recording/File Level Species Annotations</span>
         </v-tooltip>
         <v-tooltip
+          v-if="sequenceEnabled"
           location="bottom"
           open-delay="400"
         >
@@ -120,6 +125,7 @@ export default defineComponent({
           <span>Sequence Level annotations (Approach/Search/Terminal/Social)</span>
         </v-tooltip>
         <v-tooltip
+          v-if="pulseEnabled"
           location="bottom"
           open-delay="400"
         >

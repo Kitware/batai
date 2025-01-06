@@ -275,7 +275,7 @@ function spectroTemporalToGeoJSon(
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   // const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
   //scale pixels to time and frequency ranges
-  if (spectroInfo.compressedWidth && spectroInfo.start_times === undefined || spectroInfo.end_times === undefined) {
+  if (spectroInfo.compressedWidth === undefined) {
     const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     // Now we remap our annotation to pixel coordinates
     const start_time = annotation.start_time * widthScale;
@@ -292,7 +292,7 @@ function spectroTemporalToGeoJSon(
         ],
       ],
     };
-  } else if (spectroInfo.start_times && spectroInfo.end_times) {
+  } else if (spectroInfo.compressedWidth && spectroInfo.start_times && spectroInfo.end_times) {
     // Compressed Spectro has different conversion
     // Find what section the annotation is in
     const start = annotation.start_time;
@@ -301,21 +301,30 @@ function spectroTemporalToGeoJSon(
     const lengths = start_times.length === end_times.length ? start_times.length : 0;
     let foundStartIndex = -1;
     let foundEndIndex = -1;
-    for (let i = 0; i < lengths; i += 1) {
-      if (
-        foundStartIndex === -1 &&
-        start_times[i] < start &&
-        start < end_times[i]
-      ) {
-        foundStartIndex = i;
-      }
-      if (
-      foundEndIndex === -1 &&
-      start_times[i] < end &&
-      end < end_times[i]
-    ) {
-      foundEndIndex = i;
+    if (start < start_times[0]) {
+      foundStartIndex = 0;
     }
+    for (let i = 0; i < lengths; i += 1) {
+      if (foundStartIndex === -1) {
+        if (start < start_times[i]) {
+          foundStartIndex = i; // Lock to the current index if before the interval
+        } else if (start_times[i] <= start && start <= end_times[i]) {
+          foundStartIndex = i; // Found within the interval
+        } else if (i === lengths - 1 && start > end_times[i]) {
+          foundStartIndex = i; // Lock to the last interval's end
+        }
+      }
+    
+      // Check for end time
+      if (foundEndIndex === -1) {
+        if (end < start_times[i]) {
+          foundEndIndex = i; // Lock to the current index if before the interval
+        } else if (start_times[i] <= end && end <= end_times[i]) {
+          foundEndIndex = i; // Found within the interval
+        } else if (i === lengths - 1 && end > end_times[i]) {
+          foundEndIndex = i; // Lock to the last interval's end
+        }
+      }
   }
     // We need to build the length of times to pixel size for the time spaces before the annotation
     const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ?  scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;

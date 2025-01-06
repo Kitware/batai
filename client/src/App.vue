@@ -12,21 +12,22 @@ export default defineComponent({
     const oauthClient = inject<OAuthClient>("oauthClient");
     const router = useRouter();
     const route = useRoute();
-    const { nextShared, sharedList, sideTab, } = useState();
+    const { nextShared, sharedList, sideTab, loadConfiguration, configuration } = useState();
     const getShared = async () => {
       sharedList.value = (await getRecordings(true)).data;
     };
-    if (sharedList.value.length === 0) {
-      getShared();
-    }
     if (oauthClient === undefined) {
       throw new Error('Must provide "oauthClient" into component.');
     }
 
     const loginText = ref("Login");
-    const checkLogin = () => {
+    const checkLogin = async () => {
       if (oauthClient.isLoggedIn) {
         loginText.value = "Logout";
+        loadConfiguration();
+        if (sharedList.value.length === 0) {
+        getShared();
+        }
       } else {
         loginText.value = "Login";
       }
@@ -57,7 +58,18 @@ export default defineComponent({
       }
     });
 
-    return { oauthClient, containsSpectro, loginText, logInOrOut, activeTab, nextShared, sideTab };
+    const isAdmin = computed(() => configuration.value.is_admin);
+
+    return {
+      oauthClient,
+      containsSpectro,
+      loginText,
+      logInOrOut,
+      activeTab,
+      nextShared,
+      sideTab,
+      isAdmin,
+     };
   },
 });
 </script>
@@ -87,6 +99,13 @@ export default defineComponent({
           value="spectrogram"
         >
           Spectrogram
+        </v-tab>
+        <v-tab
+          v-show="isAdmin"
+          to="/admin"
+          value="admin"
+        >
+          Admin
         </v-tab>
       </v-tabs>
       <v-spacer />
