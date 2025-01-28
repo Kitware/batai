@@ -52,8 +52,8 @@ export default class TemporalLayer {
     this.hoverOn = false;
     this.selectedIndex = [];
     this.event = event;
-    this.scaledWidth = 0;
-    this.scaledHeight = 0;
+    this.scaledWidth = 1;
+    this.scaledHeight = 1;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["polygon"],

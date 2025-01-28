@@ -59,6 +59,7 @@ export default defineComponent({
       selectedType,
       setSelectedId,
       viewCompressedOverlay,
+      configuration,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -371,6 +372,16 @@ export default defineComponent({
           editAnnotationLayer.changeData(editingAnnotation.value, selectedType.value);
         }, 0);
       }
+      // We need to disable annotations that aren't required for different views
+      if (!configuration.value.display_pulse_annotations) {
+        rectAnnotationLayer?.disable();
+        speciesLayer?.disable();
+        freqLayer?.disable();
+      }
+      if (!configuration.value.display_sequence_annotations) {
+        temporalAnnotationLayer?.disable();
+        speciesSequenceLayer?.disable();
+      }
     };
     watch(
       annotations,
@@ -494,6 +505,7 @@ export default defineComponent({
             speciesLayer.spectroInfo = props.spectroInfo;
           }
 
+          timeLayer.setDisplaying({pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations});
           timeLayer.formatData(localAnnotations.value, temporalAnnotations.value);
           freqLayer.formatData(localAnnotations.value);
           speciesLayer.formatData(localAnnotations.value);
