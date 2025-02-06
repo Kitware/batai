@@ -30,7 +30,7 @@ class colormap:
 # TimeStampedModel also provides "created" and "modified" fields
 class AcousticBatch(TimeStampedModel, models.Model):
     name = models.CharField(max_length=255)
-    batch_id = models.BigIntegerField(blank=False, null=False)
+    batch_id = models.BigIntegerField(blank=False, null=False, unique=True)
     equipment = models.TextField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
     recording_location = models.GeometryField(srid=4326, blank=True, null=True)

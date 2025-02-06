@@ -841,7 +841,7 @@ def delete_temporal_annotation(request, recording_id: int, id: int):
 
 # TODO - this may be modified to use different models in the
 @router.post('/{id}/spectrogram/compressed/predict')
-def precit_spectrogram_compressed(request: HttpRequest, id: int):
+def predict_spectrogram_compressed(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
         compressed_spectrogram = CompressedSpectrogram.objects.filter(recording=id).first()
