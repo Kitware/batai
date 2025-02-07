@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from bats_ai.core.models import Recording
-from bats_ai.core.tasks import recording_compute_spectrogram
+from bats_ai.tasks.tasks import recording_compute_spectrogram
 
 
 @admin.register(Recording)

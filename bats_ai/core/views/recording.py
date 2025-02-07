@@ -20,12 +20,12 @@ from bats_ai.core.models import (
     TemporalAnnotations,
     colormap,
 )
-from bats_ai.core.tasks import recording_compute_spectrogram
 from bats_ai.core.views.species import SpeciesSchema
 from bats_ai.core.views.temporal_annotations import (
     TemporalAnnotationSchema,
     UpdateTemporalAnnotationSchema,
 )
+from bats_ai.tasks.tasks import recording_compute_spectrogram
 
 logger = logging.getLogger(__name__)
 
