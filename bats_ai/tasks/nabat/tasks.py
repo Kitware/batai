@@ -1,10 +1,13 @@
 import io
+import math
 import tempfile
 
 from PIL import Image
 from celery import shared_task
 import cv2
 from django.core.files import File
+import librosa
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 
@@ -15,6 +18,184 @@ from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
     NABatSpectrogram,
 )
+
+FREQ_MIN = 5e3
+FREQ_MAX = 120e3
+FREQ_PAD = 2e3
+
+COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo']
+
+
+def generate_spectrogram(acoustic_batch, file, colormap=None, dpi=520):
+    try:
+        sig, sr = librosa.load(file, sr=None)
+        duration = len(sig) / sr
+    except Exception as e:
+        print(f'Error loading file: {e}')
+        return None
+
+    size_mod = 1
+    high_res = False
+
+    if colormap in ['inference']:
+        colormap = None
+        dpi = 300
+        size_mod = 0
+    if colormap in ['none', 'default', 'dark']:
+        colormap = None
+    if colormap in ['light']:
+        colormap = 'gist_yarg'
+    if colormap in ['heatmap']:
+        colormap = 'turbo'
+        high_res = True
+
+    if colormap not in COLORMAP_ALLOWED:
+        print(f'Substituted requested {colormap} colormap to default')
+        colormap = None
+
+    size = int(0.001 * sr)  # 1.0ms resolution
+    size = 2 ** (math.ceil(math.log(size, 2)) + size_mod)
+    hop_length = int(size / 4)
+
+    window = librosa.stft(sig, n_fft=size, hop_length=hop_length, window='hamming')
+    window = np.abs(window) ** 2
+    window = librosa.power_to_db(window)
+
+    window -= np.median(window, axis=1, keepdims=True)
+    window_ = window[window > 0]
+    thresh = np.median(window_)
+    window[window <= thresh] = 0
+
+    bands = librosa.fft_frequencies(sr=sr, n_fft=size)
+    for index in range(len(bands)):
+        band_min = bands[index]
+        band_max = bands[index + 1] if index < len(bands) - 1 else np.inf
+        if band_max <= 1000 or 10000 <= band_min:
+            window[index, :] = -1
+
+    window = np.clip(window, 0, None)
+
+    freq_low = int(1000 - 50)
+    freq_high = int(10000 + 50)
+    vmin = window.min()
+    vmax = window.max()
+
+    chunksize = int(2e3)
+    arange = np.arange(chunksize, window.shape[1], chunksize)
+    chunks = np.array_split(window, arange, axis=1)
+
+    imgs = []
+    for chunk in chunks:
+        h, w = chunk.shape
+        alpha = 3
+        figsize = (int(math.ceil(w / h)) * alpha + 1, alpha)
+        fig = plt.figure(figsize=figsize, facecolor='black', dpi=dpi)
+        ax = plt.axes()
+        plt.margins(0)
+
+        kwargs = {
+            'sr': sr,
+            'n_fft': size,
+            'hop_length': hop_length,
+            'x_axis': 's',
+            'y_axis': 'fft',
+            'ax': ax,
+            'vmin': vmin,
+            'vmax': vmax,
+        }
+
+        if colormap is None:
+            librosa.display.specshow(chunk, **kwargs)
+        else:
+            librosa.display.specshow(chunk, cmap=colormap, **kwargs)
+
+        ax.set_ylim(freq_low, freq_high)
+        ax.axis('off')
+
+        buf = io.BytesIO()
+        fig.savefig(buf, bbox_inches='tight', pad_inches=0)
+
+        fig.clf()
+        plt.close()
+
+        buf.seek(0)
+        img = Image.open(buf)
+
+        img = np.array(img)
+        mask = img[:, :, -1]
+        flags = np.where(np.sum(mask != 0, axis=0) == 0)[0]
+        index = flags.min() if len(flags) > 0 else img.shape[1]
+        img = img[:, :index, :3]
+
+        imgs.append(img)
+
+    w_ = int(8.0 * duration * 1e3)
+    h_ = 1200
+
+    img = np.hstack(imgs)
+    img = cv2.resize(img, (w_, h_), interpolation=cv2.INTER_LANCZOS4)
+
+    if high_res:
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+        noise = 0.1
+        img = img.astype(np.float32)
+        img -= img.min()
+        img /= img.max()
+        img *= 255.0
+        img /= 1.0 - noise
+        img[img < 0] = 0
+        img[img > 255] = 255
+        img = 255.0 - img
+
+        img = cv2.blur(img, (9, 9))
+        img = cv2.resize(img, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_LANCZOS4)
+        img = cv2.blur(img, (9, 9))
+
+        img -= img.min()
+        img /= img.max()
+        img *= 255.0
+
+        mask = (img > 255 * noise).astype(np.float32)
+        mask = cv2.blur(mask, (5, 5))
+
+        img[img < 0] = 0
+        img[img > 255] = 255
+        img = np.around(img).astype(np.uint8)
+        img = cv2.applyColorMap(img, cv2.COLORMAP_TURBO)
+
+        img = img.astype(np.float32)
+        img *= mask.reshape(*mask.shape, 1)
+        img[img < 0] = 0
+        img[img > 255] = 255
+        img = np.around(img).astype(np.uint8)
+
+    img = Image.fromarray(img, 'RGB')
+    w, h = img.size
+
+    # Save image to temporary file
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+    img.save(temp_file, format='JPEG', quality=80)
+    temp_file.seek(0)
+
+    # Create new NABatSpectrogram
+    image_file = File(temp_file, name=f'{acoustic_batch.batch_id}_spectrogram.jpg')
+
+    spectrogram = NABatSpectrogram.objects.create(
+        acoustic_batch=acoustic_batch,
+        image_file=image_file,
+        width=w,
+        height=h,
+        duration=math.ceil(duration * 1e3),  # duration in ms
+        frequency_min=freq_low,
+        frequency_max=freq_high,
+        colormap=colormap,
+    )
+
+    # Clean up temporary file
+    temp_file.close()
+
+    return spectrogram
 
 
 def generate_compressed(spectrogram: NABatSpectrogram):
@@ -181,33 +362,6 @@ def generate_compress_spectrogram(acoustic_batch_id: int, spectrogram_id: int):
             cache_invalidated=False,
         )
     return existing
-
-
-@shared_task
-def acousting_batch_initialize(batch_id: int, api_token: str):
-    print(batch_id)
-    # Need to get the information from the server using the api_token and the batch_id
-    # 1. Use the batch_id and api_token to gather information about the AcousticBatch using graphQL endpoint
-    # 2. Create the AcousticBatch object, using the batch_id and values from the server
-    # 3. Use an additional GraphQL query to get the S3 Pre-Signed file URL for the recording object
-    # 4. Download the files from S3 and use it to convert into a spectrogram that can be saved to the system
-    # 5. Use the spectrogram to generate a compressed spectrogram
-    # 6. Use the compressed spectrogram to predict the species
-
-    # Eventual compressed generation
-    # cmaps = [
-    #     None,  # Default (dark) spectrogram
-    #     'light',  # Light spectrogram
-    # ]
-    # spectrogram_id = None
-    # for cmap in cmaps:
-    #     with colormap(cmap):
-    #         spectrogram_id_temp = NABatSpectrogram.generate(acoustic_batch, cmap)
-    #         if cmap is None:
-    #             spectrogram_id = spectrogram_id_temp
-    # if spectrogram_id is not None:
-    #     compressed_spectro = generate_compress_spectrogram(spectrogram_id)
-    #     predict(compressed_spectro.pk)
 
 
 @shared_task
