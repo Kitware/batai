@@ -88,7 +88,7 @@ query batsAIAcousticPresignedUrlByBucketKey {{
 
 
 @shared_task
-def acousting_batch_initialize(batch_id: int, api_token: str):
+def acoustic_batch_initialize(batch_id: int, api_token: str):
     headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
     base_query = QUERY.format(batch_id=batch_id)
     response = requests.post(BASE_URL, json={'query': base_query}, headers=headers)
