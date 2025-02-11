@@ -11,6 +11,7 @@ from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
 )
 from bats_ai.core.views.species import SpeciesSchema
+from bats_ai.tasks.nabat.nabat_data_retrieval import acousting_batch_initialize
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +63,8 @@ def generate_acoustic_batch(
     acoustic_batch = AcousticBatch.objects.filter(batch_id=payload.batchId)
     if not acoustic_batch.exists():
         # use a task to start downloading the file using the API key and generate the spectrograms
-        return {'taskId': 'TODO:TASKID'}
-
+        task = acousting_batch_initialize.delay(payload.batchId, payload.apiToken)
+        return {'task_id': task.id}
     return get_acoustic_batch_spectrogram(request, payload.batchId)
 
 

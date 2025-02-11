@@ -54,6 +54,10 @@ class NABatSpectrogram(TimeStampedModel, models.Model):
     def image_url(self):
         return default_storage.url(self.image_file.name)
 
+    class Meta:
+        verbose_name = 'NABat Spectrogram'
+        verbose_name_plural = 'NABat Spectrograms'
+
 
 @receiver(models.signals.pre_delete, sender=NABatSpectrogram)
 def delete_content(sender, instance, **kwargs):

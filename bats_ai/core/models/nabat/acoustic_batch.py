@@ -41,15 +41,23 @@ class AcousticBatch(TimeStampedModel, models.Model):
     software_developer = models.TextField(blank=True, null=True)
     software_version = models.TextField(blank=True, null=True)
     detector = models.TextField(blank=True, null=True)
-    nabat_auto_species = models.ForeignKey(Species, null=True)
-    nabat_manual_species = models.ForeignKey(Species, null=True)
+    nabat_auto_species = models.ForeignKey(Species, null=True, on_delete=models.SET_NULL)
+    nabat_manual_species = models.ForeignKey(Species, null=True, on_delete=models.SET_NULL)
     species_list = models.TextField(blank=True, null=True)
+    nabat_auto_species = models.ForeignKey(
+        Species, null=True, on_delete=models.SET_NULL, related_name='acousticbatch_auto_species'
+    )
+    nabat_manual_species = models.ForeignKey(
+        Species, null=True, on_delete=models.SET_NULL, related_name='acousticbatch_manual_species'
+    )
     computed_species = models.ManyToManyField(
-        Species, related_name='recording_computed_species'
+        Species, related_name='acousticbatch_computed_species'  # Changed related name
     )  # species from a computed sense
+
     official_species = models.ManyToManyField(
-        Species, related_name='recording_official_species'
+        Species, related_name='acousticbatch_official_species'  # Changed related name
     )  # species that are detemrined by the owner or from annotations as official species list
+
     unusual_occurrences = models.TextField(blank=True, null=True)
 
     @property
@@ -97,3 +105,7 @@ class AcousticBatch(TimeStampedModel, models.Model):
         spectrogram = compressed_spectrograms[0]  # most recently created
 
         return spectrogram
+
+    class Meta:
+        verbose_name = 'NABat Acoustic Batch'
+        verbose_name_plural = 'NABat Acoustic Batches'

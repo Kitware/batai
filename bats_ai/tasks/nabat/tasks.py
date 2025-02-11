@@ -70,13 +70,13 @@ def generate_spectrogram(acoustic_batch, file, colormap=None, dpi=520):
     for index in range(len(bands)):
         band_min = bands[index]
         band_max = bands[index + 1] if index < len(bands) - 1 else np.inf
-        if band_max <= 1000 or 10000 <= band_min:
+        if band_max <= FREQ_MIN or FREQ_MAX <= band_min:
             window[index, :] = -1
 
     window = np.clip(window, 0, None)
 
-    freq_low = int(1000 - 50)
-    freq_high = int(10000 + 50)
+    freq_low = int(FREQ_MIN - FREQ_PAD)
+    freq_high = int(FREQ_MAX + FREQ_PAD)
     vmin = window.min()
     vmax = window.max()
 

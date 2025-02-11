@@ -1,3 +1,4 @@
+import json
 import logging
 import tempfile
 
@@ -12,78 +13,77 @@ from .tasks import generate_compress_spectrogram, generate_spectrogram, predict
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('NABatDataRetrieval')
 
 BASE_URL = 'https://api.sciencebase.gov/nabat-graphql/graphql'
 PROJECT_ID = 7168
 QUERY = """
-query batsAIAcousticInfoByFileBatchId {
-  acousticFileBatchById(id: "{batch_id}") {
+query batsAIAcousticInfoByFileBatchId {{
+  acousticFileBatchById(id: "{batch_id}") {{
     batchId
-    acousticBatchByBatchId {
-      softwareBySoftwareId {
+    acousticBatchByBatchId {{
+      softwareBySoftwareId {{
         developer
         name
         versionNumber
-      }
-      classifierByClassifierId {
+      }}
+      classifierByClassifierId {{
         createdDate
         description
         name
         public
-        speciesClassifiersByClassifierId {
-          nodes {
-            speciesBySpeciesId {
+        speciesClassifiersByClassifierId {{
+          nodes {{
+            speciesBySpeciesId {{
               speciesCode
-            }
-          }
-        }
-      }
-      surveyEventBySurveyEventId {
+            }}
+          }}
+        }}
+      }}
+      surveyEventBySurveyEventId {{
         createdBy
         createdDate
-        eventGeometryByEventGeometryId {
+        eventGeometryByEventGeometryId {{
           description
-          geom {
+          geom {{
             geojson
-          }
-        }
-      }
+          }}
+        }}
+      }}
       createdDate
       id
-    }
-    acousticFileByFileId {
+    }}
+    acousticFileByFileId {{
       fileName
       recordingTime
       s3Verified
       sizeBytes
-    }
+    }}
     manualId
     recordingNight
-    speciesByAutoId {
+    speciesByAutoId {{
       id
       speciesCode
-    }
-    speciesByManualId {
+    }}
+    speciesByManualId {{
       id
       speciesCode
-    }
+    }}
     autoId
-  }
-}
-"""
+  }}
+}}"""
 
 PRESIGNED_URL_QUERY = """
-query batsAIAcousticPresignedUrlByBucketKey {
+query batsAIAcousticPresignedUrlByBucketKey {{
   s3FileServiceDownloadFile(
     bucket: "nabat-prod-acoustic-recordings",
     key: "{key}"
-  ) {
+  ) {{
     s3PresignedUrl
     success
     message
-  }
-}
+  }}
+}}
 """
 
 
@@ -93,6 +93,20 @@ def acousting_batch_initialize(batch_id: int, api_token: str):
     base_query = QUERY.format(batch_id=batch_id)
     response = requests.post(BASE_URL, json={'query': base_query}, headers=headers)
     batch_data = {}
+
+    if response.status_code == 200:
+        try:
+            batch_data = response.json()
+            with open('output.json', 'w') as f:
+                json.dump(batch_data, f, indent=2)
+            logger.info('Data successfully fetched and saved to output.json')
+        except (KeyError, TypeError, json.JSONDecodeError) as e:
+            logger.error(f'Error processing batch data: {e}')
+            return
+    else:
+        logger.error(f'Failed to fetch data: {response.status_code}, {response.text}')
+        return
+
     try:
         file_name = batch_data['data']['acousticFileBatchById']['acousticFileByFileId']['fileName']
         file_key = f'{PROJECT_ID}/{file_name}'
@@ -181,7 +195,7 @@ def create_acoustic_batch_from_response(response_data):
             recording_location = None
 
         # Get the species info
-        species_code = acoustic_batch_data['acousticFileByFileId']['speciesByAutoId']['speciesCode']
+        species_code = acoustic_batch_data['speciesByAutoId']['speciesCode']
         species = Species.objects.filter(species_code=species_code).first()
 
         # Create the AcousticBatch instance

@@ -105,6 +105,10 @@ class NABatCompressedSpectrogram(TimeStampedModel, models.Model):
 
         return label, score, confs
 
+    class Meta:
+        verbose_name = 'NABat Compressed Spectrogram'
+        verbose_name_plural = 'NABat Compressed Spectrogram'
+
 
 @receiver(models.signals.pre_delete, sender=NABatSpectrogram)
 def delete_content(sender, instance, **kwargs):

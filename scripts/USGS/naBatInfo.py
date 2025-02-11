@@ -12,76 +12,76 @@ logger = logging.getLogger(__name__)
 AUTH_TOKEN = ''
 BASE_URL = 'https://api.sciencebase.gov/nabat-graphql/graphql'
 PROJECT_ID = 7168
-
+BATCH_ID = 319479412
 # GraphQL queries
 QUERY = """
-query batsAIAcousticInfoByFileBatchId {
-  acousticFileBatchById(id: "319479412") {
+query batsAIAcousticInfoByFileBatchId {{
+  acousticFileBatchById(id: "{batch_id}") {{
     batchId
-    acousticBatchByBatchId {
-      softwareBySoftwareId {
+    acousticBatchByBatchId {{
+      softwareBySoftwareId {{
         developer
         name
         versionNumber
-      }
-      classifierByClassifierId {
+      }}
+      classifierByClassifierId {{
         createdDate
         description
         name
         public
-        speciesClassifiersByClassifierId {
-          nodes {
-            speciesBySpeciesId {
+        speciesClassifiersByClassifierId {{
+          nodes {{
+            speciesBySpeciesId {{
               speciesCode
-            }
-          }
-        }
-      }
-      surveyEventBySurveyEventId {
+            }}
+          }}
+        }}
+      }}
+      surveyEventBySurveyEventId {{
         createdBy
         createdDate
-        eventGeometryByEventGeometryId {
+        eventGeometryByEventGeometryId {{
           description
-          geom {
+          geom {{
             geojson
-          }
-        }
-      }
+          }}
+        }}
+      }}
       createdDate
       id
-    }
-    acousticFileByFileId {
+    }}
+    acousticFileByFileId {{
       fileName
       recordingTime
       s3Verified
       sizeBytes
-    }
+    }}
     manualId
     recordingNight
-    speciesByAutoId {
+    speciesByAutoId {{
       id
       speciesCode
-    }
-    speciesByManualId {
+    }}
+    speciesByManualId {{
       id
       speciesCode
-    }
+    }}
     autoId
-  }
-}
+  }}
+}}
 """
 
 PRESIGNED_URL_QUERY = """
-query batsAIAcousticPresignedUrlByBucketKey {
+query batsAIAcousticPresignedUrlByBucketKey {{
   s3FileServiceDownloadFile(
     bucket: "nabat-prod-acoustic-recordings",
     key: "{key}"
-  ) {
+  ) {{
     s3PresignedUrl
     success
     message
-  }
-}
+  }}
+}}
 """
 
 
@@ -92,7 +92,8 @@ def fetch_and_save():
 
     # Fetch batch data
     logger.info('Fetching batch data...')
-    response = requests.post(BASE_URL, json={'query': QUERY}, headers=headers)
+    batch_query = QUERY.format(batch_id=BATCH_ID)
+    response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
     batch_data = {}
 
     if response.status_code == 200:

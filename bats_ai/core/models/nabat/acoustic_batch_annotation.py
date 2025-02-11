@@ -23,3 +23,7 @@ class AcousticBatchAnnotation(TimeStampedModel, models.Model):
     additional_data = models.JSONField(
         blank=True, null=True, help_text='Additional information about the models/data'
     )
+
+    class Meta:
+        verbose_name = 'NABat Acoustic Batch Annotation'
+        verbose_name_plural = 'NABat Acoustic Batch Annotations'
