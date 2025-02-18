@@ -51,11 +51,11 @@ class NABatCompressedSpectrogramAdmin(admin.ModelAdmin):
     list_filter = ('acoustic_batch', 'cache_invalidated')
 
 
+@admin.register(AcousticBatch)
 class AcousticBatchAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'batch_id',
-        'recorded_date',
         'equipment',
         'comments',
         'recording_location',
@@ -64,7 +64,3 @@ class AcousticBatchAdmin(admin.ModelAdmin):
     )
     search_fields = ('name', 'batch_id', 'recording_location')
     list_filter = ('name', 'batch_id', 'recording_location')
-
-
-# Register the models under the NaBat category
-admin.site.register(AcousticBatch)

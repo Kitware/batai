@@ -10,10 +10,6 @@ import numpy as np
 from .recording import Recording
 from .spectrogram import Spectrogram
 
-FREQ_MIN = 5e3
-FREQ_MAX = 120e3
-FREQ_PAD = 2e3
-
 
 # TimeStampedModel also provides "created" and "modified" fields
 class CompressedSpectrogram(TimeStampedModel, models.Model):

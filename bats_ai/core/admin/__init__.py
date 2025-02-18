@@ -8,6 +8,7 @@ from .nabat.admin import (
     NABatCompressedSpectrogram,
     NABatSpectrogram,
 )
+from .processing_task import ProcessingTaskAdmin
 from .recording import RecordingAdmin
 from .recording_annotations import RecordingAnnotationAdmin
 from .species import SpeciesAdmin
@@ -29,4 +30,5 @@ __all__ = [
     'NABatCompressedSpectrogram',
     'NABatSpectrogram',
     'AcousticBatch',
+    'ProcessingTaskAdmin',
 ]

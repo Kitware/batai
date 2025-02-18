@@ -24,6 +24,7 @@ class BatsAiMixin(ConfigMixin):
     FILE_UPLOAD_HANDLERS = [
         'django.core.files.uploadhandler.TemporaryFileUploadHandler',
     ]
+    CELERY_RESULT_BACKEND = 'django-db'
 
     @staticmethod
     def mutate_configuration(configuration: ComposedConfiguration) -> None:
@@ -36,6 +37,7 @@ class BatsAiMixin(ConfigMixin):
         configuration.INSTALLED_APPS += [
             'django.contrib.gis',
             'django_large_image',
+            'django_celery_results',
         ]
 
         configuration.MIDDLEWARE = [

@@ -4,7 +4,7 @@ from django.http import HttpRequest
 from ninja import Form, Schema
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import colormap
+from bats_ai.core.models import ProcessingTask, colormap
 from bats_ai.core.models.nabat import (
     AcousticBatch,
     AcousticBatchAnnotation,
@@ -60,18 +60,39 @@ def generate_acoustic_batch(
     request: HttpRequest,
     payload: Form[AcousticBatchGenerateSchema],
 ):
+    existing_task = ProcessingTask.objects.filter(
+        metadata__batchId=payload.batchId,
+        status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING],
+    ).first()
+
+    if existing_task:
+        return {
+            'error': 'A task is already processing this batchId.',
+            'taskId': existing_task.celery_id,
+            'status': existing_task.status,
+        }, 400
+
     acoustic_batch = AcousticBatch.objects.filter(batch_id=payload.batchId)
     if not acoustic_batch.exists():
         # use a task to start downloading the file using the API key and generate the spectrograms
         task = acoustic_batch_initialize.delay(payload.batchId, payload.apiToken)
-        return {'task_id': task.id}
+        ProcessingTask.objects.create(
+            name=f'Processing Acoustic BatchId {payload.batchId}',
+            status=ProcessingTask.Status.QUEUED,
+            metadata={
+                'type': 'AcousticBatchProcessing',
+                'batchId': payload.batchId,
+            },
+            celery_id=task.id,
+        )
+        return {'taskId': task.id}
     return get_acoustic_batch_spectrogram(request, payload.batchId)
 
 
 @router.get('/')
 def get_acoustic_batch_spectrogram(request: HttpRequest, id: int):
     try:
-        acoustic_batch = AcousticBatch.objects.get(pk=id)
+        acoustic_batch = AcousticBatch.objects.get(batch_id=id)
     except AcousticBatch.DoesNotExist:
         return {'error': 'AcousticBatch not found'}
 

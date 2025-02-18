@@ -59,7 +59,7 @@ export default defineComponent({
     });
 
     const isAdmin = computed(() => configuration.value.is_admin);
-
+    const isNaBat = computed(() => route.path.includes('nabat'));
     return {
       oauthClient,
       containsSpectro,
@@ -69,6 +69,7 @@ export default defineComponent({
       nextShared,
       sideTab,
       isAdmin,
+      isNaBat,
      };
   },
 });
@@ -78,7 +79,7 @@ export default defineComponent({
   <v-app id="app">
     <v-app-bar app>
       <v-tabs
-        v-if="oauthClient.isLoggedIn && activeTab"
+        v-if="oauthClient.isLoggedIn && activeTab && !isNaBat"
         v-model="activeTab"
         fixed-tabs
       >
@@ -108,6 +109,9 @@ export default defineComponent({
           Admin
         </v-tab>
       </v-tabs>
+      <h3 class="mx-3">
+        NA Bat Spectrogram Viewer
+      </h3>
       <v-spacer />
       <v-tooltip
         v-if="containsSpectro && nextShared !== false"

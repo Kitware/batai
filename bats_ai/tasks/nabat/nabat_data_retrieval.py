@@ -2,11 +2,11 @@ import json
 import logging
 import tempfile
 
-from celery import shared_task
 from django.contrib.gis.geos import Point
 import requests
 
-from bats_ai.core.models import Species
+from bats_ai.celery import app
+from bats_ai.core.models import ProcessingTask, Species
 from bats_ai.core.models.nabat import AcousticBatch
 
 from .tasks import generate_compress_spectrogram, generate_spectrogram, predict
@@ -87,11 +87,19 @@ query batsAIAcousticPresignedUrlByBucketKey {{
 """
 
 
-@shared_task
-def acoustic_batch_initialize(batch_id: int, api_token: str):
+@app.task(bind=True)
+def acoustic_batch_initialize(self, batch_id: int, api_token: str):
+    processing_task = ProcessingTask.objects.filter(celery_id=self.request.id)
+    processing_task.update(status=ProcessingTask.Status.RUNNING)
     headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
     base_query = QUERY.format(batch_id=batch_id)
-    response = requests.post(BASE_URL, json={'query': base_query}, headers=headers)
+    try:
+        response = requests.post(BASE_URL, json={'query': base_query}, headers=headers)
+    except Exception as e:
+        processing_task.update(
+            status=ProcessingTask.Status.ERROR, error=f'Error with API Reqeust: {e}'
+        )
+        raise
     batch_data = {}
 
     if response.status_code == 200:
@@ -102,9 +110,16 @@ def acoustic_batch_initialize(batch_id: int, api_token: str):
             logger.info('Data successfully fetched and saved to output.json')
         except (KeyError, TypeError, json.JSONDecodeError) as e:
             logger.error(f'Error processing batch data: {e}')
-            return
+            processing_task.update(
+                status=ProcessingTask.Status.ERROR, error=f'Error processing batch data: {e}'
+            )
+            raise
     else:
         logger.error(f'Failed to fetch data: {response.status_code}, {response.text}')
+        processing_task.update(
+            status=ProcessingTask.Status.ERROR,
+            error=f'Failed to fetch data: {response.status_code}, {response.text}',
+        )
         return
 
     try:
@@ -112,14 +127,21 @@ def acoustic_batch_initialize(batch_id: int, api_token: str):
         file_key = f'{PROJECT_ID}/{file_name}'
     except (KeyError, TypeError) as e:
         logger.error(f'Error extracting file information: {e}')
-        return
+        processing_task.update(
+            status=ProcessingTask.Status.ERROR, error=f'Error extracting file information: {e}'
+        )
+        raise
     presigned_query = PRESIGNED_URL_QUERY.format(key=file_key)
     logger.info('Fetching presigned URL...')
     response = requests.post(BASE_URL, json={'query': presigned_query}, headers=headers)
 
     if response.status_code != 200:
         logger.error(f'Failed to fetch presigned URL: {response.status_code}, {response.text}')
-        return
+        processing_task.update(
+            status=ProcessingTask.Status.ERROR,
+            error=f'Failed to fetch presigned URL: {response.status_code}, {response.text}',
+        )
+        raise
 
     try:
         presigned_data = response.json()
@@ -127,10 +149,17 @@ def acoustic_batch_initialize(batch_id: int, api_token: str):
         presigned_url = url_info['s3PresignedUrl']
         if not url_info['success']:
             logger.error(f'Failed to get presigned URL: {url_info["message"]}')
+            processing_task.update(
+                status=ProcessingTask.Status.ERROR,
+                error=f'Failed to get presigned URL: {url_info["message"]}',
+            )
             return
     except (KeyError, TypeError) as e:
         logger.error(f'Error extracting presigned URL: {e}')
-        return
+        processing_task.update(
+            status=ProcessingTask.Status.ERROR, error=f'Error extracting presigned URL: {e}'
+        )
+        raise
 
     logger.info('Presigned URL obtained. Downloading file...')
 
@@ -145,7 +174,7 @@ def acoustic_batch_initialize(batch_id: int, api_token: str):
 
                 # Now create the AcousticBatch using the response data
                 logger.info('Creating Acoustic Batch...')
-                acoustic_batch = create_acoustic_batch_from_response(batch_data)
+                acoustic_batch = create_acoustic_batch_from_response(batch_data, batch_id)
 
                 # Call generate_spectrogram with the acoustic_batch and the temporary file
                 logger.info('Generating spectrogram...')
@@ -155,21 +184,35 @@ def acoustic_batch_initialize(batch_id: int, api_token: str):
                     acoustic_batch.pk, spectrogram.pk
                 )
                 logger.info('Running Prediction...')
-                predict(compressed_spectrogram.pk)
+                try:
+                    predict(compressed_spectrogram.pk)
+                except Exception as e:
+                    logger.error(f'Error Performing Prediction: {e}')
+                    processing_task.update(
+                        status=ProcessingTask.Status.ERROR,
+                        error=f'Error extracting presigned URL: {e}',
+                    )
+                    raise
+                processing_task.update(status=ProcessingTask.Status.COMPLETE)
 
             else:
+                processing_task.update(
+                    status=ProcessingTask.Status.ERROR,
+                    error=f'Failed to download file: {file_response.status_code}',
+                )
                 logger.error(f'Failed to download file: {file_response.status_code}')
     except Exception as e:
+        processing_task.update(status=ProcessingTask.Status.ERROR, error=str(e))
         logger.error(f'Error handling file download or temporary file: {e}')
+        raise
 
 
-def create_acoustic_batch_from_response(response_data):
+def create_acoustic_batch_from_response(response_data, batch_id):
     try:
         # Extract the batch data from the response
         acoustic_batch_data = response_data['data']['acousticFileBatchById']
 
         # Extract nested data from the response
-        batch_id = acoustic_batch_data['batchId']
         software_name = acoustic_batch_data['acousticBatchByBatchId']['softwareBySoftwareId'][
             'name'
         ]

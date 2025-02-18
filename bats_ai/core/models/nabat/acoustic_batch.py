@@ -90,9 +90,9 @@ class AcousticBatch(TimeStampedModel, models.Model):
 
     @property
     def compressed_spectrograms(self):
-        from bats_ai.core.models import CompressedSpectrogram
+        from bats_ai.core.models.nabat import NABatCompressedSpectrogram
 
-        query = CompressedSpectrogram.objects.filter(acoustic_batch=self).order_by('-created')
+        query = NABatCompressedSpectrogram.objects.filter(acoustic_batch=self).order_by('-created')
         return query.all()
 
     @property
