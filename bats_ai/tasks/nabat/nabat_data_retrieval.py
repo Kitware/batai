@@ -93,6 +93,10 @@ def acoustic_batch_initialize(self, batch_id: int, api_token: str):
     processing_task.update(status=ProcessingTask.Status.RUNNING)
     headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
     base_query = QUERY.format(batch_id=batch_id)
+    self.update_state(
+        state='Progress',
+        meta={'description': 'Fetching NAbat Recording Data'},
+    )
     try:
         response = requests.post(BASE_URL, json={'query': base_query}, headers=headers)
     except Exception as e:
@@ -133,6 +137,11 @@ def acoustic_batch_initialize(self, batch_id: int, api_token: str):
         raise
     presigned_query = PRESIGNED_URL_QUERY.format(key=file_key)
     logger.info('Fetching presigned URL...')
+    self.update_state(
+        state='Progress',
+        meta={'description': 'Fetching Recording File'},
+    )
+
     response = requests.post(BASE_URL, json={'query': presigned_query}, headers=headers)
 
     if response.status_code != 200:
@@ -178,12 +187,27 @@ def acoustic_batch_initialize(self, batch_id: int, api_token: str):
 
                 # Call generate_spectrogram with the acoustic_batch and the temporary file
                 logger.info('Generating spectrogram...')
+                self.update_state(
+                    state='Progress',
+                    meta={'description': 'Generating Spectrogram'},
+                )
+
                 spectrogram = generate_spectrogram(acoustic_batch, open(temp_file_path, 'rb'))
                 logger.info('Generating compressed spectrogram...')
+                self.update_state(
+                    state='Progress',
+                    meta={'description': 'Generating Compressed Spectrogram'},
+                )
+
                 compressed_spectrogram = generate_compress_spectrogram(
                     acoustic_batch.pk, spectrogram.pk
                 )
                 logger.info('Running Prediction...')
+                self.update_state(
+                    state='Progress',
+                    meta={'description': 'Running Prediction'},
+                )
+
                 try:
                     predict(compressed_spectrogram.pk)
                 except Exception as e:

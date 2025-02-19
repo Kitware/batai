@@ -40,7 +40,7 @@ class NABatCompressedSpectrogram(TimeStampedModel, models.Model):
 
         img = Image.open(self.image_file)
 
-        relative = ('..',) * 4
+        relative = ('..',) * 5
         asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
 
         onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')

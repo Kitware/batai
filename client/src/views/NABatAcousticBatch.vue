@@ -2,7 +2,8 @@
   <script lang="ts">
   import { defineComponent, ref, onMounted, onUnmounted, Ref} from 'vue';
 import { getProcessingTaskDetails } from '../api/api';
-import { postAcousticBatch } from '../api/NABatApi';
+import { AcousticBatchDataResponse, postAcousticBatch } from '../api/NABatApi';
+import { useRouter } from 'vue-router';
   
   export default defineComponent({
     props: {
@@ -20,32 +21,39 @@ import { postAcousticBatch } from '../api/NABatApi';
       const loading = ref(true);
       const taskId: Ref<string | null> = ref(null);
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      const taskInfo = ref('');
+      const router = useRouter();
   
       const fetchTaskDetails = async () => {
         if (taskId.value) {
           try {
             const response = await getProcessingTaskDetails(taskId.value);
-              if (response.celery_data.status === 'Complete') {
+            if (response.celery_data.status === 'Complete') {
               loading.value = false;
               if (timeoutId !== null) {
                 clearTimeout(timeoutId);
                 timeoutId = null;
               }
+              taskInfo.value = '';
+              await checkAcousticBatch();
               return;
             } else if (response.celery_data.status === 'Error') {
               loading.value = false;
               errorMessage.value = response.celery_data.error;
+              taskInfo.value = '';
               return;
+            } else if (response.celery_data.info?.description) {
+              taskInfo.value = response.celery_data.info?.description;
             }
           } catch (error) {
             loading.value = false;
             errorMessage.value = 'Failed to fetch task details';
           }
         }
-        timeoutId = setTimeout(fetchTaskDetails, 5000);
+        timeoutId = setTimeout(fetchTaskDetails, 1000);
       };
-  
-      onMounted(async () => {
+
+      const checkAcousticBatch = async () => {
         try {
           const response = await postAcousticBatch(props.batchId, props.apiToken);
           if ('error' in response && response.error) {
@@ -53,17 +61,20 @@ import { postAcousticBatch } from '../api/NABatApi';
             errorMessage.value = response.error;
           } if ('taskId' in response && response?.taskId && !response?.error) {
             taskId.value = response.taskId;
-            timeoutId = setTimeout(fetchTaskDetails, 2000);
+            timeoutId = setTimeout(fetchTaskDetails, 1000);
           } else {
             loading.value = false;
             // Load in new NABatSpectrogramViewer either by route or component
-            console.log('Data is loaded, please start loading spectrogram');
+            const id = (response as AcousticBatchDataResponse).acousticId;
+            router.push(`/nabat/${id}/spectrogram`);
           }
         } catch (error) {
           errorMessage.value = 'Failed to start processing';
           loading.value = false;
         }
-      });
+      };
+  
+      onMounted(async () => checkAcousticBatch());
   
       onUnmounted(() => {
         if (timeoutId !== null) {
@@ -75,26 +86,40 @@ import { postAcousticBatch } from '../api/NABatApi';
       return {
         errorMessage,
         loading,
+        taskInfo,
       };
     },
   });
   </script>
 <template>
-  <VCard>
-    <VCardText>
-      <VProgressCircular
-        v-if="loading"
-        indeterminate
-      />
-      <VAlert
-        v-else-if="errorMessage"
-        type="error"
-      >
-        {{ errorMessage }}
-      </VAlert>
-      <div v-else>
-        <p>Load Spectrogram</p>
-      </div>
-    </VCardText>
-  </VCard>
+  <v-card>
+    <v-card-text>
+      <v-row dense>
+        <v-spacer />
+        <v-col
+          justify="center"
+          cols="auto"
+        >
+          <v-progress-circular
+            v-if="loading"
+            indeterminate
+            :size="256"
+            :width="30"
+          >
+            Loading...
+          </v-progress-circular>
+          <v-alert
+            v-else-if="errorMessage"
+            type="error"
+          >
+            {{ errorMessage }}
+          </v-alert>
+          <h3 v-if="loading && taskInfo">
+            {{ taskInfo }}
+          </h3>
+        </v-col>
+        <v-spacer />
+      </v-row>
+    </v-card-text>
+  </v-card>
 </template>

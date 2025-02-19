@@ -39,7 +39,6 @@ class AcousticBatchAnnotationSchema(Schema):
     species: list[SpeciesSchema] | None
     comments: str | None = None
     model: str | None = None
-    owner: str
     confidence: float
     id: int | None = None
 
@@ -47,7 +46,6 @@ class AcousticBatchAnnotationSchema(Schema):
     def from_orm(cls, obj: AcousticBatchAnnotation, **kwargs):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
-            owner=obj.owner.username,
             confidence=obj.confidence,
             comments=obj.comments,
             model=obj.model,
@@ -86,7 +84,7 @@ def generate_acoustic_batch(
             celery_id=task.id,
         )
         return {'taskId': task.id}
-    return get_acoustic_batch_spectrogram(request, payload.batchId)
+    return {'acousticId': acoustic_batch.first().pk}
 
 
 @router.get('/')
@@ -125,7 +123,7 @@ def get_acoustic_batch_spectrogram(request: HttpRequest, id: int):
     return spectro_data
 
 
-@router.get('/{acoustc_batch_id}/recording-annotations')
+@router.get('/{acoustic_batch_id}/recording-annotations')
 def get_acoustic_batch_annotation(request: HttpRequest, acoustic_batch_id: int):
     fileAnnotations = AcousticBatchAnnotation.objects.filter(
         acoustic_batch=acoustic_batch_id
@@ -159,3 +157,80 @@ def predict_spectrogram_compressed(request: HttpRequest, id: int):
         'confidences': sorted_confidences,
     }
     return output
+
+
+@router.get('/{id}/spectrogram')
+def get_spectrogram(request: HttpRequest, id: int):
+    try:
+        acoustic_batch = AcousticBatch.objects.get(pk=id)
+    except AcousticBatch.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+    with colormap(None):
+        spectrogram = acoustic_batch.spectrogram
+
+    compressed = acoustic_batch.compressed_spectrogram
+
+    spectro_data = {
+        'url': spectrogram.image_url,
+        'spectroInfo': {
+            'spectroId': spectrogram.pk,
+            'width': spectrogram.width,
+            'height': spectrogram.height,
+            'start_time': 0,
+            'end_time': spectrogram.duration,
+            'low_freq': spectrogram.frequency_min,
+            'high_freq': spectrogram.frequency_max,
+        },
+    }
+    if compressed:
+        spectro_data['compressed'] = {
+            'start_times': compressed.starts,
+            'end_times': compressed.stops,
+        }
+
+    # Serialize the annotations using AnnotationSchema
+    annotations_data = []
+    temporal_annotations_data = []
+
+    spectro_data['annotations'] = annotations_data
+    spectro_data['temporal'] = temporal_annotations_data
+    return spectro_data
+
+
+@router.get('/{id}/spectrogram/compressed')
+def get_spectrogram_compressed(request: HttpRequest, id: int):
+    try:
+        acoustic_batch = AcousticBatch.objects.get(pk=id)
+        compressed_spectrogram = NABatCompressedSpectrogram.objects.filter(
+            acoustic_batch=id
+        ).first()
+    except compressed_spectrogram.DoesNotExist:
+        return {'error': 'Compressed Spectrogram'}
+    except acoustic_batch.DoesNotExist:
+        return {'error': 'Recording does not exist'}
+
+    spectro_data = {
+        'url': compressed_spectrogram.image_url,
+        'spectroInfo': {
+            'spectroId': compressed_spectrogram.pk,
+            'width': compressed_spectrogram.spectrogram.width,
+            'start_time': 0,
+            'end_time': compressed_spectrogram.spectrogram.duration,
+            'height': compressed_spectrogram.spectrogram.height,
+            'low_freq': compressed_spectrogram.spectrogram.frequency_min,
+            'high_freq': compressed_spectrogram.spectrogram.frequency_max,
+            'start_times': compressed_spectrogram.starts,
+            'end_times': compressed_spectrogram.stops,
+            'widths': compressed_spectrogram.widths,
+            'compressedWidth': compressed_spectrogram.length,
+        },
+    }
+
+    # Serialize the annotations using AnnotationSchema
+    annotations_data = []
+    temporal_annotations_data = []
+
+    spectro_data['annotations'] = annotations_data
+    spectro_data['temporal'] = temporal_annotations_data
+    return spectro_data

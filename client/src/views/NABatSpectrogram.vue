@@ -8,23 +8,25 @@ import {
 } from "vue";
 import {
   getSpecies,
-  getSpectrogram,
   Species,
-  getSpectrogramCompressed,
 } from "../api/api";
+import {
+  getSpectrogram,
+  getSpectrogramCompressed,
+} from "../api/NABatApi";
 import SpectrogramViewer from "../components/SpectrogramViewer.vue";
 import { SpectroInfo } from "../components/geoJS/geoJSUtils";
 import ThumbnailViewer from "../components/ThumbnailViewer.vue";
-import RecordingList from "../components/RecordingList.vue";
 import useState from "../use/useState";
 import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
+import RecordingAnnotations from "../components/RecordingAnnotations.vue";
 export default defineComponent({
   name: "Spectrogram",
   components: {
     SpectrogramViewer,
     ThumbnailViewer,
     RecordingInfoDialog,
-    RecordingList,
+    RecordingAnnotations,
   },
   props: {
     id: {
@@ -52,6 +54,7 @@ export default defineComponent({
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
 
+    const disabledFeatures = ref(['speciesLabel', 'endpointLabels', 'durationLabels', 'timeLabels']);
     const loadData = async () => {
       loadedImage.value = false;
       const response = compressed.value
@@ -79,6 +82,7 @@ export default defineComponent({
       if (response.data['compressed'] && spectroInfo.value) {
         spectroInfo.value.start_times = response.data.compressed.start_times;
         spectroInfo.value.end_times = response.data.compressed.end_times;
+        viewCompressedOverlay.value = false;
       }
       const speciesResponse = await getSpecies();
       speciesList.value = speciesResponse.data;
@@ -141,6 +145,8 @@ export default defineComponent({
       colorScale,
       scaledVals,
       recordingInfo,
+      // Disabled Featuers not in NABat
+      disabledFeatures,
     };
   },
 });
@@ -198,7 +204,10 @@ export default defineComponent({
               </div>
             </v-col>
             <v-spacer />
-            <v-tooltip bottom>
+            <v-tooltip
+              v-if="!disabledFeatures.includes('speciesLabel')"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
@@ -212,7 +221,10 @@ export default defineComponent({
               </template>
               <span> Turn Species Label On/Off</span>
             </v-tooltip>
-            <v-tooltip bottom>
+            <v-tooltip
+              v-if="!disabledFeatures.includes('endpointLabels')"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
@@ -227,7 +239,10 @@ export default defineComponent({
               </template>
               <span> Turn Time Endpoint Labels On/Off</span>
             </v-tooltip>
-            <v-tooltip bottom>
+            <v-tooltip
+              v-if="!disabledFeatures.includes('durationLabels')"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
@@ -242,7 +257,10 @@ export default defineComponent({
               </template>
               <span> Turn Time Duration Labels On/Off</span>
             </v-tooltip>
-            <v-tooltip bottom>
+            <v-tooltip
+              v-if="!disabledFeatures.includes('timeLabels')"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
@@ -335,25 +353,6 @@ export default defineComponent({
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
-                  :variant="sideTab === 'recordings' ? 'flat' : 'outlined'"
-                  :color="sideTab === 'recordings' ? 'primary' : ''"
-                  class="mx-2"
-                  size="small"
-                  @click="sideTab = 'recordings'"
-                >
-                  Recordings
-                </v-btn>
-              </template>
-              <span>
-                View Recordings in sideTab
-              </span>
-            </v-tooltip>
-            <v-tooltip
-              bottom
-            >
-              <template #activator="{ props: subProps }">
-                <v-btn
-                  v-bind="subProps"
                   :variant="sideTab === 'annotations' ? 'flat' : 'outlined'"
                   :color="sideTab === 'annotations' ? 'primary' : ''"
                   class="mx-2"
@@ -371,8 +370,12 @@ export default defineComponent({
           </v-row>
         </v-card-title>
         <v-card-text class="pa-0">
-          <div v-if="sideTab === 'recordings'">
-            <recording-list v-if="false" />
+          <div v-if="sideTab === 'annotations'">
+            <RecordingAnnotations 
+              :species="speciesList"
+              :recording-id="parseInt(id)"
+              type="nabat"
+            />
           </div>
         </v-card-text>
       </v-card>

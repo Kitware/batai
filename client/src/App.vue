@@ -59,7 +59,7 @@ export default defineComponent({
     });
 
     const isAdmin = computed(() => configuration.value.is_admin);
-    const isNaBat = computed(() => route.path.includes('nabat'));
+    const isNaBat = computed(() => (route.path.includes('nabat')));
     return {
       oauthClient,
       containsSpectro,
@@ -109,7 +109,10 @@ export default defineComponent({
           Admin
         </v-tab>
       </v-tabs>
-      <h3 class="mx-3">
+      <h3
+        v-if="isNaBat"
+        class="mx-3"
+      >
         NA Bat Spectrogram Viewer
       </h3>
       <v-spacer />

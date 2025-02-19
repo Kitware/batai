@@ -378,7 +378,7 @@ def predict(compressed_spectrogram_id: int):
     species = Species.objects.filter(species_code=label)
 
     acoustic_batch_annotation = AcousticBatchAnnotation.objects.create(
-        recording=compressed_spectrogram.recording,
+        acoustic_batch=compressed_spectrogram.acoustic_batch,
         comments='Compressed Spectrogram Generation Prediction',
         model='model.mobilenet.onnx',
         confidence=output['score'],
