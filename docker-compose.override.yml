@@ -42,3 +42,24 @@ services:
       - postgres
       - rabbitmq
       - minio
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./dev/django.Dockerfile
+    command: [
+      "celery",
+      "--app", "bats_ai.celery",
+      "flower"
+    ]
+    tty: false
+    env_file: ./dev/.env.docker-compose
+    volumes:
+      - .:/opt/django-project
+    ports:
+      - ${DOCKER_FLOWER_PORT-5555}:5555
+    depends_on:
+      - postgres
+      - rabbitmq
+      - minio
+      - celery
