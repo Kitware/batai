@@ -105,6 +105,7 @@ import { useRouter } from 'vue-router';
             indeterminate
             :size="256"
             :width="30"
+            color="primary"
           >
             Loading...
           </v-progress-circular>
@@ -114,7 +115,10 @@ import { useRouter } from 'vue-router';
           >
             {{ errorMessage }}
           </v-alert>
-          <h3 v-if="loading && taskInfo">
+          <h3
+            v-if="loading && taskInfo"
+            style="text-align: center"
+          >
             {{ taskInfo }}
           </h3>
         </v-col>

@@ -25,7 +25,7 @@ from bats_ai.core.views.temporal_annotations import (
     TemporalAnnotationSchema,
     UpdateTemporalAnnotationSchema,
 )
-from bats_ai.tasks.tasks import recording_compute_spectrogram
+from bats_ai.tasks.tasks import predict_compressed, recording_compute_spectrogram
 
 logger = logging.getLogger(__name__)
 
@@ -850,7 +850,7 @@ def predict_spectrogram_compressed(request: HttpRequest, id: int):
     except recording.DoesNotExist:
         return {'error': 'Recording does not exist'}
 
-    label, score, confs = compressed_spectrogram.predict()
+    label, score, confs = predict_compressed(compressed_spectrogram.image_file)
     confidences = []
     confidences = [{'label': key, 'value': float(value)} for key, value in confs.items()]
     sorted_confidences = sorted(confidences, key=lambda x: x['value'], reverse=True)

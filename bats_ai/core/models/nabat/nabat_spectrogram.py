@@ -12,12 +12,6 @@ from .acoustic_batch import AcousticBatch
 
 logger = logging.getLogger(__name__)
 
-FREQ_MIN = 5e3
-FREQ_MAX = 120e3
-FREQ_PAD = 2e3
-
-COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo']
-
 
 # TimeStampedModel also provides "created" and "modified" fields
 class NABatSpectrogram(TimeStampedModel, models.Model):

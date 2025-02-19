@@ -404,7 +404,7 @@ def generate_compress_spectrogram(recording_id: int, spectrogram_id: int):
 @shared_task
 def predict(compressed_spectrogram_id: int):
     compressed_spectrogram = CompressedSpectrogram.objects.get(pk=compressed_spectrogram_id)
-    label, score, confs = compressed_spectrogram.predict()
+    label, score, confs = predict_compressed(compressed_spectrogram.image_file)
     confidences = [{'label': key, 'value': float(value)} for key, value in confs.items()]
     sorted_confidences = sorted(confidences, key=lambda x: x['value'], reverse=True)
     output = {
@@ -424,4 +424,80 @@ def predict(compressed_spectrogram_id: int):
     )
     recording_annotation.species.set(species)
     recording_annotation.save()
+    return label, score, confs
+
+
+def predict_compressed(image_file):
+    import json
+    import os
+
+    import onnx
+    import onnxruntime as ort
+    import tqdm
+
+    img = Image.open(image_file)
+
+    relative = ('..',) * 3
+    asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
+
+    onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')
+    assert os.path.exists(onnx_filename)
+
+    session = ort.InferenceSession(
+        onnx_filename,
+        providers=[
+            (
+                'CUDAExecutionProvider',
+                {
+                    'cudnn_conv_use_max_workspace': '1',
+                    'device_id': 0,
+                    'cudnn_conv_algo_search': 'HEURISTIC',
+                },
+            ),
+            'CPUExecutionProvider',
+        ],
+    )
+
+    img = np.array(img)
+
+    h, w, c = img.shape
+    ratio_y = 224 / h
+    ratio_x = ratio_y * 0.5
+    raw = cv2.resize(img, None, fx=ratio_x, fy=ratio_y, interpolation=cv2.INTER_LANCZOS4)
+
+    h, w, c = raw.shape
+    if w <= h:
+        canvas = np.zeros((h, h + 1, 3), dtype=raw.dtype)
+        canvas[:, :w, :] = raw
+        raw = canvas
+        h, w, c = raw.shape
+
+    inputs_ = []
+    for index in range(0, w - h, 100):
+        inputs_.append(raw[:, index : index + h, :])
+    inputs_.append(raw[:, -h:, :])
+    inputs_ = np.array(inputs_)
+
+    chunksize = 1
+    chunks = np.array_split(inputs_, np.arange(chunksize, len(inputs_), chunksize))
+    outputs = []
+    for chunk in tqdm.tqdm(chunks, desc='Inference'):
+        outputs_ = session.run(
+            None,
+            {'input': chunk},
+        )
+        outputs.append(outputs_[0])
+    outputs = np.vstack(outputs)
+    outputs = outputs.mean(axis=0)
+
+    model = onnx.load(onnx_filename)
+    mapping = json.loads(model.metadata_props[0].value)
+    labels = [mapping['forward'][str(index)] for index in range(len(mapping['forward']))]
+
+    prediction = np.argmax(outputs)
+    label = labels[prediction]
+    score = outputs[prediction]
+
+    confs = dict(zip(labels, outputs))
+
     return label, score, confs

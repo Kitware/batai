@@ -109,9 +109,6 @@ def acoustic_batch_initialize(self, batch_id: int, api_token: str):
     if response.status_code == 200:
         try:
             batch_data = response.json()
-            with open('output.json', 'w') as f:
-                json.dump(batch_data, f, indent=2)
-            logger.info('Data successfully fetched and saved to output.json')
         except (KeyError, TypeError, json.JSONDecodeError) as e:
             logger.error(f'Error processing batch data: {e}')
             processing_task.update(

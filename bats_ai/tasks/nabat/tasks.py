@@ -18,6 +18,7 @@ from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
     NABatSpectrogram,
 )
+from bats_ai.tasks.tasks import predict_compressed
 
 FREQ_MIN = 5e3
 FREQ_MAX = 120e3
@@ -367,7 +368,7 @@ def generate_compress_spectrogram(acoustic_batch_id: int, spectrogram_id: int):
 @shared_task
 def predict(compressed_spectrogram_id: int):
     compressed_spectrogram = NABatCompressedSpectrogram.objects.get(pk=compressed_spectrogram_id)
-    label, score, confs = compressed_spectrogram.predict()
+    label, score, confs = predict_compressed(compressed_spectrogram.image_file)
     confidences = [{'label': key, 'value': float(value)} for key, value in confs.items()]
     sorted_confidences = sorted(confidences, key=lambda x: x['value'], reverse=True)
     output = {
