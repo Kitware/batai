@@ -9,3 +9,4 @@ models/*.jpg
 models/*.pkl
 temp*.jpg
 temp*.png
+**/__pycache__/**
