@@ -64,6 +64,8 @@ setup(
         # guano metadata
         'guano',
         'django_celery_results',
+        # ML Ops
+        'mlflow',
     ],
     extras_require={
         'dev': [
