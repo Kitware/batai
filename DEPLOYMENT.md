@@ -19,6 +19,10 @@ The `client` service also uses a reverse proxy to route
 The client will need to be built with a different Client ID
 for accessing the server.
 
+### Copy templated environment File
+Copy over the ./dev/.env.prod.docker-compose.template
+   to `.env` and change the default passwords for fields
+
 ### Initial Setup for Deployment
 
 1. Run `docker compose run --rm django ./manage.py migrate`
@@ -33,8 +37,6 @@ for accessing the server.
    to collect the static files
 6. Run `docker compose -f docker-compose.prod.yml up` to start the server
    add `-d` for a silent version to run in the background
-7. Copy over the ./dev/.env.prod.docker-compose.template
-   to `./dev/.env.prod.docker-compose.template` and change the default passwords
 8. Change the ID in the `./client/env.production` to a custom ID - this will
    probably require a `docker compose build` to build the app afterwards
 9. After creating the basic application log into the django admin `batdetectai.kitware.com/admin`
