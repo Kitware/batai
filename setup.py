@@ -69,6 +69,8 @@ setup(
         'rio-cogeo',
         # guano metadata
         'guano',
+        # ML Ops
+        'mlflow',
     ],
     extras_require={
         'dev': [

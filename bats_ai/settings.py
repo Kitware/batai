@@ -78,6 +78,8 @@ class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
     MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
 
+    MLFLOW_ENDPOINT = values.Value('http://localhost:5000')
+
 
 class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
     pass
