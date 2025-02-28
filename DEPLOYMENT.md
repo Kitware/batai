@@ -20,6 +20,7 @@ The client will need to be built with a different Client ID
 for accessing the server.
 
 ### Copy templated environment File
+
 Copy over the ./dev/.env.prod.docker-compose.template
    to `.env` and change the default passwords for fields
 
@@ -37,11 +38,11 @@ Copy over the ./dev/.env.prod.docker-compose.template
    to collect the static files
 6. Run `docker compose -f docker-compose.prod.yml up` to start the server
    add `-d` for a silent version to run in the background
-8. Change the ID in the `./client/env.production` to a custom ID - this will
+7. Change the ID in the `./client/env.production` to a custom ID - this will
    probably require a `docker compose build` to build the app afterwards
-9. After creating the basic application log into the django admin `batdetectai.kitware.com/admin`
+8. After creating the basic application log into the django admin `batdetectai.kitware.com/admin`
    and change the ApplicationId to the ID in the `./client.env.production`
-10. Test logging in/out and uploading data to the server.
+9. Test logging in/out and uploading data to the server.
 
 ### GRTS Cell Id suppoer
 
