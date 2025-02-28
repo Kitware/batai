@@ -11,3 +11,5 @@ temp*.jpg
 temp*.png
 **/__pycache__/**
 staticfiles/
+.env
+dev/.env.prod.docker-compose
