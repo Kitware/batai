@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # COMMENTED OUT UNTIL READY TO TEST
   traefik:
@@ -137,29 +135,6 @@ services:
       - ${DOCKER_MINIO_CONSOLE_PORT-9001}:9001
     volumes:
       - minio:/data
-
-  flower:
-    env_file: ./dev/.env.prod.docker-compose
-    build:
-      context: .
-      dockerfile: ./dev/django.Dockerfile
-    command: [
-      "celery",
-      "--app", "bats_ai.celery",
-      "flower"
-    ]
-    tty: false
-    volumes:
-      - .:/opt/django-project
-    networks:
-      - django-nginx
-    ports:
-      - ${DOCKER_FLOWER_PORT-5555}:5555
-    depends_on:
-      - postgres
-      - rabbitmq
-      - minio
-      - celery
 
 volumes:
   postgres:
