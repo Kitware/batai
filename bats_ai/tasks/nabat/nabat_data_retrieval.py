@@ -7,7 +7,7 @@ import requests
 
 from bats_ai.celery import app
 from bats_ai.core.models import ProcessingTask, Species
-from bats_ai.core.models.nabat import AcousticBatch
+from bats_ai.core.models.nabat import AcousticBatch, AcousticBatchAnnotation
 
 from .tasks import generate_compress_spectrogram, generate_spectrogram, predict
 
@@ -259,8 +259,10 @@ def create_acoustic_batch_from_response(response_data, batch_id):
             recording_location = None
 
         # Get the species info
-        species_code = acoustic_batch_data['speciesByAutoId']['speciesCode']
-        species = Species.objects.filter(species_code=species_code).first()
+        species_code_auto = acoustic_batch_data.get('speciesByAutoId', {}).get('speciesCode', False)
+        species_code_manual = acoustic_batch_data.get('speciesByManualId', {}).get(
+            'speciesCode', False
+        )
 
         # Create the AcousticBatch instance
         acoustic_batch = AcousticBatch.objects.create(
@@ -270,8 +272,31 @@ def create_acoustic_batch_from_response(response_data, batch_id):
             software_developer=software_developer,
             software_version=software_version,
             recording_location=recording_location,
-            nabat_auto_species=species,
         )
+
+        if species_code_auto:
+            species = Species.objects.filter(species_code=species_code_auto)
+            if species:
+                acoustic_batch_annotation = AcousticBatchAnnotation.objects.create(
+                    acoustic_batch=acoustic_batch,
+                    comments='NABat Auto Annotation',
+                    model='NABat Auto Annotation',
+                    confidence=1.0,
+                )
+                acoustic_batch_annotation.species.set(species)
+                acoustic_batch_annotation.save()
+
+        if species_code_manual:
+            species = Species.objects.filter(species_code=species_code_manual)
+            if species:
+                acoustic_batch_annotation = AcousticBatchAnnotation.objects.create(
+                    acoustic_batch=acoustic_batch,
+                    comments='NABat Manual',
+                    model='NABat Manual Annotation',
+                    confidence=1.0,
+                )
+                acoustic_batch_annotation.species.set(species)
+                acoustic_batch_annotation.save()
 
         return acoustic_batch
 
