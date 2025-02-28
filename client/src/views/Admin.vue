@@ -20,7 +20,7 @@ import { patchConfiguration } from '../api/api';
       // Function to save the settings
       const saveSettings = async () => {
         // Mock save function: replace with API call if necessary
-        const result = await patchConfiguration( {
+        await patchConfiguration( {
             display_pulse_annotations: settings.displayPulseAnnotations,
             display_sequence_annotations: settings.displaySequenceAnnotations
         });
@@ -60,8 +60,8 @@ import { patchConfiguration } from '../api/api';
         <v-btn
           color="primary"
           variant="outlined"
-          @click="saveSettings"
           class="mx-2"
+          @click="saveSettings"
         >
           Save
         </v-btn>
