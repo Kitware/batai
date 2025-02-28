@@ -145,11 +145,6 @@ export interface Spectrogram {
 
 export type OtherUserAnnotations = Record<string, {annotations: SpectrogramAnnotation[], temporal: SpectrogramTemporalAnnotation[]}>;
 
-interface PaginatedNinjaResponse<T> {
-    count: number,
-    items: T[],
-}
-
 export type UploadLocation =  null | { latitude?: number, longitude?: number, gridCellId?: number};
 
 export const axiosInstance = axios.create({
