@@ -4,7 +4,7 @@ services:
   # COMMENTED OUT UNTIL READY TO TEST
   traefik:
     restart: always
-    image: traefik:v2.4
+    image: traefik
     container_name: traefik
     env_file: ./dev/.env.prod.docker-compose
     networks:
