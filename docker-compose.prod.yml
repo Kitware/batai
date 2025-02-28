@@ -53,6 +53,8 @@ services:
       - django-nginx
     volumes:
       - .:/opt/django-project
+      - ./dev/grtsCells:/app/csv  # Map the host CSV directory to a directory in the container
+
     environment:
       - SERVERHOSTNAME=${SERVERHOSTNAME:-batdetectai.kitware.com}
     ports:
