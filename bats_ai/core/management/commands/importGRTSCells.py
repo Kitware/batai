@@ -11,9 +11,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('csv_file', type=str, help='Path to the CSV file')
+        parser.add_argument(
+            '--batch-size', type=int, default=500, help='Batch size for database insertion'
+        )
 
     def handle(self, *args, **options):
         csv_file = options['csv_file']
+        batch_size = options['batch_size']
         model_fields = {field.name for field in GRTSCells._meta.get_fields()}
 
         # Boolean field conversion map
@@ -22,7 +26,6 @@ class Command(BaseCommand):
         # Track existing records
         existing_records = set(GRTSCells.objects.values_list('id', flat=True))
 
-        batch_size = 500  # Adjust batch size based on your database performance
         records_to_create = []
         counter = 0
 
