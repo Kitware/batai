@@ -27,7 +27,7 @@ to `.env` and change the default passwords for fields
 ### Initial Setup for Deployment
 
 1. Run `docker compose -f docker-compose.prod.yml run --rm django ./manage.py migrate`
-2. Run `docker compose -f docker-compose.prod.ymlrun --rm django ./manage.py createsuperuser`
+2. Run `docker compose -f docker-compose.prod.yml run --rm django ./manage.py createsuperuser`
    and follow the prompts to create your own user
 3. Run `docker compose  -f docker-compose.prod.yml run \
                     --rm django ./manage.py makeclient \
