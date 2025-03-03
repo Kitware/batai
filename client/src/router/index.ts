@@ -6,7 +6,7 @@ import Login from '../views/Login.vue';
 
 import oauthClient from '../plugins/Oauth';
 import Admin from '../views/Admin.vue';
-import NABatAcousticBatch from '../views/NABatAcousticBatch.vue';
+import NABatRecording from '../views/NABatRecording.vue';
 import NABatSpectrogram from '../views/NABatSpectrogram.vue';
 
 function beforeEach(
@@ -57,10 +57,10 @@ function routerInit(){
       },
 
       {
-        path: '/nabat/:batchId/',
-        component: NABatAcousticBatch,
+        path: '/nabat/:recordingId/',
+        component: NABatRecording,
         props: (route) => ({
-          batchId: parseInt(route.params.batchId as string, 10),
+          recordingId: parseInt(route.params.recordingId as string, 10),
           apiToken: route.query.apiToken,
         }),
       },

@@ -13,9 +13,9 @@ import scipy
 
 from bats_ai.core.models import Species
 from bats_ai.core.models.nabat import (
-    AcousticBatch,
-    AcousticBatchAnnotation,
     NABatCompressedSpectrogram,
+    NABatRecording,
+    NABatRecordingAnnotation,
     NABatSpectrogram,
 )
 from bats_ai.tasks.tasks import predict_compressed
@@ -27,7 +27,7 @@ FREQ_PAD = 2e3
 COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo']
 
 
-def generate_spectrogram(acoustic_batch, file, colormap=None, dpi=520):
+def generate_spectrogram(nabat_recording, file, colormap=None, dpi=520):
     try:
         sig, sr = librosa.load(file, sr=None)
         duration = len(sig) / sr
@@ -180,10 +180,10 @@ def generate_spectrogram(acoustic_batch, file, colormap=None, dpi=520):
     temp_file.seek(0)
 
     # Create new NABatSpectrogram
-    image_file = File(temp_file, name=f'{acoustic_batch.batch_id}_spectrogram.jpg')
+    image_file = File(temp_file, name=f'{nabat_recording.recording_id}_spectrogram.jpg')
 
     spectrogram = NABatSpectrogram.objects.create(
-        acoustic_batch=acoustic_batch,
+        nabat_recording=nabat_recording,
         image_file=image_file,
         width=w,
         height=h,
@@ -335,12 +335,12 @@ def generate_compressed(spectrogram: NABatSpectrogram):
 
 
 @shared_task
-def generate_compress_spectrogram(acoustic_batch_id: int, spectrogram_id: int):
-    acoustic_batch = AcousticBatch.objects.get(pk=acoustic_batch_id)
+def generate_compress_spectrogram(nabat_recording_id: int, spectrogram_id: int):
+    nabat_recording = NABatRecording.objects.get(pk=nabat_recording_id)
     spectrogram = NABatSpectrogram.objects.get(pk=spectrogram_id)
     length, image_file, widths, starts, stops = generate_compressed(spectrogram)
     found = NABatCompressedSpectrogram.objects.filter(
-        acoustic_batch=acoustic_batch_id, spectrogram=spectrogram
+        nabat_recording=nabat_recording_id, spectrogram=spectrogram
     )
     if found.exists():
         existing = found.first()
@@ -353,7 +353,7 @@ def generate_compress_spectrogram(acoustic_batch_id: int, spectrogram_id: int):
         existing.save()
     else:
         existing = NABatCompressedSpectrogram.objects.create(
-            acoustic_batch=acoustic_batch,
+            nabat_recording=nabat_recording,
             spectrogram=spectrogram,
             image_file=image_file,
             length=length,
@@ -378,13 +378,13 @@ def predict(compressed_spectrogram_id: int):
     }
     species = Species.objects.filter(species_code=label)
 
-    acoustic_batch_annotation = AcousticBatchAnnotation.objects.create(
-        acoustic_batch=compressed_spectrogram.acoustic_batch,
+    nabat_recording_annotation = NABatRecordingAnnotation.objects.create(
+        nabat_recording=compressed_spectrogram.nabat_recording,
         comments='Compressed Spectrogram Generation Prediction',
         model='model.mobilenet.onnx',
         confidence=output['score'],
         additional_data=output,
     )
-    acoustic_batch_annotation.species.set(species)
-    acoustic_batch_annotation.save()
+    nabat_recording_annotation.species.set(species)
+    nabat_recording_annotation.save()
     return label, score, confs

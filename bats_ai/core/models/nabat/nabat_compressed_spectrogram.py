@@ -4,13 +4,13 @@ from django.db import models
 from django.dispatch import receiver
 from django_extensions.db.models import TimeStampedModel
 
-from .acoustic_batch import AcousticBatch
+from .nabat_recording import NABatRecording
 from .nabat_spectrogram import NABatSpectrogram
 
 
 # TimeStampedModel also provides "created" and "modified" fields
 class NABatCompressedSpectrogram(TimeStampedModel, models.Model):
-    acoustic_batch = models.ForeignKey(AcousticBatch, on_delete=models.CASCADE)
+    nabat_recording = models.ForeignKey(NABatRecording, on_delete=models.CASCADE)
     spectrogram = models.ForeignKey(NABatSpectrogram, on_delete=models.CASCADE)
     image_file = models.FileField()
     length = models.IntegerField()
