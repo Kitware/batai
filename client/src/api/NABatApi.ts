@@ -1,49 +1,49 @@
 import { axiosInstance, FileAnnotation, ProcessingTask, Spectrogram } from "./api";
 
-export interface AcousticBatchCompleteResponse {
+export interface NABatRecordingCompleteResponse {
     error?: string;
     taskId: string;
     status?: ProcessingTask['status'];
 }
 
-export interface AcousticBatchDataResponse {
-    acousticId: string;
+export interface NABatRecordingDataResponse {
+    recordingId: string;
 }
-export type AcousticBatchResponse = AcousticBatchCompleteResponse | AcousticBatchDataResponse;
+export type NABatRecordingResponse = NABatRecordingCompleteResponse | NABatRecordingDataResponse;
 
-function isAcousticBatchCompleteResponse(response: AcousticBatchResponse): response is AcousticBatchCompleteResponse {
+function isNABatRecordingCompleteResponse(response: NABatRecordingResponse): response is NABatRecordingCompleteResponse {
     return "taskId" in response;
 }
 
-async function postAcousticBatch(batchId: number, apiToken: string) {
+async function postNABatRecording(recordingId: number, apiToken: string) {
     const formData = new FormData();
-    formData.append('batchId', batchId.toString());
+    formData.append('recordingId', recordingId.toString());
     formData.append('apiToken', apiToken);
-    const response =  (await (axiosInstance.post<AcousticBatchResponse>('/nabat/acoustic-batch/', formData))).data;
-    if (isAcousticBatchCompleteResponse(response)) {
-        return response as AcousticBatchCompleteResponse;
+    const response =  (await (axiosInstance.post<NABatRecordingResponse>('/nabat/recording/', formData))).data;
+    if (isNABatRecordingCompleteResponse(response)) {
+        return response as NABatRecordingCompleteResponse;
     }
-    return response as AcousticBatchDataResponse;
+    return response as NABatRecordingDataResponse;
 }
 
 async function getSpectrogram(id: string) {
-    return axiosInstance.get<Spectrogram>(`/nabat/acoustic-batch/${id}/spectrogram`);
+    return axiosInstance.get<Spectrogram>(`/nabat/recording/${id}/spectrogram`);
 }
 
 async function getSpectrogramCompressed(id: string) {
-    return axiosInstance.get<Spectrogram>(`/nabat/acoustic-batch/${id}/spectrogram/compressed`);
+    return axiosInstance.get<Spectrogram>(`/nabat/recording/${id}/spectrogram/compressed`);
 
 }
 
-async function getAcousticFileAnnotations(batchId: number) {
-    return axiosInstance.get<FileAnnotation[]>(`/nabat/acoustic-batch/${batchId}/recording-annotations`);
+async function getNABatRecordingFileAnnotations(recordingId: number) {
+    return axiosInstance.get<FileAnnotation[]>(`/nabat/recording/${recordingId}/recording-annotations`);
 }
 
 
 
 export {
-    postAcousticBatch,
+    postNABatRecording,
     getSpectrogram,
     getSpectrogramCompressed,
-    getAcousticFileAnnotations,
+    getNABatRecordingFileAnnotations,
 };

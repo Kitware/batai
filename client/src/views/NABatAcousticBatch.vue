@@ -2,12 +2,12 @@
   <script lang="ts">
   import { defineComponent, ref, onMounted, onUnmounted, Ref} from 'vue';
 import { getProcessingTaskDetails } from '../api/api';
-import { AcousticBatchDataResponse, postAcousticBatch } from '../api/NABatApi';
+import { NABatRecordingDataResponse, postNABatRecording } from '../api/NABatApi';
 import { useRouter } from 'vue-router';
   
   export default defineComponent({
     props: {
-      batchId: {
+      recordingId: {
         type: Number,
         required: true,
       },
@@ -35,7 +35,7 @@ import { useRouter } from 'vue-router';
                 timeoutId = null;
               }
               taskInfo.value = '';
-              await checkAcousticBatch();
+              await checkNABatRecording();
               return;
             } else if (response.celery_data.status === 'Error') {
               loading.value = false;
@@ -53,9 +53,9 @@ import { useRouter } from 'vue-router';
         timeoutId = setTimeout(fetchTaskDetails, 1000);
       };
 
-      const checkAcousticBatch = async () => {
+      const checkNABatRecording = async () => {
         try {
-          const response = await postAcousticBatch(props.batchId, props.apiToken);
+          const response = await postNABatRecording(props.recordingId, props.apiToken);
           if ('error' in response && response.error) {
             loading.value = false;
             errorMessage.value = response.error;
@@ -65,7 +65,7 @@ import { useRouter } from 'vue-router';
           } else {
             loading.value = false;
             // Load in new NABatSpectrogramViewer either by route or component
-            const id = (response as AcousticBatchDataResponse).acousticId;
+            const id = (response as NABatRecordingDataResponse).recordingId;
             router.push(`/nabat/${id}/spectrogram`);
           }
         } catch (error) {
@@ -74,7 +74,7 @@ import { useRouter } from 'vue-router';
         }
       };
   
-      onMounted(async () => checkAcousticBatch());
+      onMounted(async () => checkNABatRecording());
   
       onUnmounted(() => {
         if (timeoutId !== null) {

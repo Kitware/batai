@@ -1,5 +1,5 @@
-from .acoustic_batch import router as AcouticBatchRouter
+from .nabat_recording import router as NABatRecordingRouter
 
 __all__ = [
-    'AcouticBatchRouter',
+    'NABatRecordingRouter',
 ]

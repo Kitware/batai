@@ -7,7 +7,7 @@ import requests
 
 from bats_ai.celery import app
 from bats_ai.core.models import ProcessingTask, Species
-from bats_ai.core.models.nabat import AcousticBatch, AcousticBatchAnnotation
+from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
 
 from .tasks import generate_compress_spectrogram, generate_spectrogram, predict
 
@@ -19,7 +19,7 @@ BASE_URL = 'https://api.sciencebase.gov/nabat-graphql/graphql'
 PROJECT_ID = 7168
 QUERY = """
 query batsAIAcousticInfoByFileBatchId {{
-  acousticFileBatchById(id: "{batch_id}") {{
+  acousticFileBatchById(id: "{recording_id}") {{
     batchId
     acousticBatchByBatchId {{
       softwareBySoftwareId {{
@@ -88,11 +88,11 @@ query batsAIAcousticPresignedUrlByBucketKey {{
 
 
 @app.task(bind=True)
-def acoustic_batch_initialize(self, batch_id: int, api_token: str):
+def nabat_recording_initialize(self, recording_id: int, api_token: str):
     processing_task = ProcessingTask.objects.filter(celery_id=self.request.id)
     processing_task.update(status=ProcessingTask.Status.RUNNING)
     headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
-    base_query = QUERY.format(batch_id=batch_id)
+    base_query = QUERY.format(recording_id=recording_id)
     self.update_state(
         state='Progress',
         meta={'description': 'Fetching NAbat Recording Data'},
@@ -178,18 +178,18 @@ def acoustic_batch_initialize(self, batch_id: int, api_token: str):
                 temp_file_path = temp_file.name  # This gives the path of the temp file
                 logger.info(f'File downloaded to temporary file: {temp_file_path}')
 
-                # Now create the AcousticBatch using the response data
-                logger.info('Creating Acoustic Batch...')
-                acoustic_batch = create_acoustic_batch_from_response(batch_data, batch_id)
+                # Now create the NABatRecording using the response data
+                logger.info('Creating NA Bat Recording...')
+                nabat_recording = create_nabat_recording_from_response(batch_data, recording_id)
 
-                # Call generate_spectrogram with the acoustic_batch and the temporary file
+                # Call generate_spectrogram with the nabat_recording and the temporary file
                 logger.info('Generating spectrogram...')
                 self.update_state(
                     state='Progress',
                     meta={'description': 'Generating Spectrogram'},
                 )
 
-                spectrogram = generate_spectrogram(acoustic_batch, open(temp_file_path, 'rb'))
+                spectrogram = generate_spectrogram(nabat_recording, open(temp_file_path, 'rb'))
                 logger.info('Generating compressed spectrogram...')
                 self.update_state(
                     state='Progress',
@@ -197,7 +197,7 @@ def acoustic_batch_initialize(self, batch_id: int, api_token: str):
                 )
 
                 compressed_spectrogram = generate_compress_spectrogram(
-                    acoustic_batch.pk, spectrogram.pk
+                    nabat_recording.pk, spectrogram.pk
                 )
                 logger.info('Running Prediction...')
                 self.update_state(
@@ -228,24 +228,24 @@ def acoustic_batch_initialize(self, batch_id: int, api_token: str):
         raise
 
 
-def create_acoustic_batch_from_response(response_data, batch_id):
+def create_nabat_recording_from_response(response_data, recording_id):
     try:
         # Extract the batch data from the response
-        acoustic_batch_data = response_data['data']['acousticFileBatchById']
+        nabat_recording_data = response_data['data']['acousticFileBatchById']
 
         # Extract nested data from the response
-        software_name = acoustic_batch_data['acousticBatchByBatchId']['softwareBySoftwareId'][
+        software_name = nabat_recording_data['acousticBatchByBatchId']['softwareBySoftwareId'][
             'name'
         ]
-        software_developer = acoustic_batch_data['acousticBatchByBatchId']['softwareBySoftwareId'][
+        software_developer = nabat_recording_data['acousticBatchByBatchId']['softwareBySoftwareId'][
             'developer'
         ]
-        software_version = acoustic_batch_data['acousticBatchByBatchId']['softwareBySoftwareId'][
+        software_version = nabat_recording_data['acousticBatchByBatchId']['softwareBySoftwareId'][
             'versionNumber'
         ]
 
         # Optional fields
-        recording_location_data = acoustic_batch_data['acousticBatchByBatchId'][
+        recording_location_data = nabat_recording_data['acousticBatchByBatchId'][
             'surveyEventBySurveyEventId'
         ]['eventGeometryByEventGeometryId']['geom']['geojson']
 
@@ -259,15 +259,17 @@ def create_acoustic_batch_from_response(response_data, batch_id):
             recording_location = None
 
         # Get the species info
-        species_code_auto = acoustic_batch_data.get('speciesByAutoId', {}).get('speciesCode', False)
-        species_code_manual = acoustic_batch_data.get('speciesByManualId', {}).get(
+        species_code_auto = nabat_recording_data.get('speciesByAutoId', {}).get(
+            'speciesCode', False
+        )
+        species_code_manual = nabat_recording_data.get('speciesByManualId', {}).get(
             'speciesCode', False
         )
 
-        # Create the AcousticBatch instance
-        acoustic_batch = AcousticBatch.objects.create(
-            batch_id=batch_id,
-            name=f'Batch {batch_id}',
+        # Create the NABatRecording instance
+        nabat_recording = NABatRecording.objects.create(
+            recording_id=recording_id,
+            name=f'Recording {recording_id}',
             software_name=software_name,
             software_developer=software_developer,
             software_version=software_version,
@@ -277,32 +279,32 @@ def create_acoustic_batch_from_response(response_data, batch_id):
         if species_code_auto:
             species = Species.objects.filter(species_code=species_code_auto)
             if species:
-                acoustic_batch_annotation = AcousticBatchAnnotation.objects.create(
-                    acoustic_batch=acoustic_batch,
+                nabat_recording_annotation = NABatRecordingAnnotation.objects.create(
+                    nabat_recording=nabat_recording,
                     comments='NABat Auto Annotation',
                     model='NABat Auto Annotation',
                     confidence=1.0,
                 )
-                acoustic_batch_annotation.species.set(species)
-                acoustic_batch_annotation.save()
+                nabat_recording_annotation.species.set(species)
+                nabat_recording_annotation.save()
 
         if species_code_manual:
             species = Species.objects.filter(species_code=species_code_manual)
             if species:
-                acoustic_batch_annotation = AcousticBatchAnnotation.objects.create(
-                    acoustic_batch=acoustic_batch,
+                nabat_recording_annotation = NABatRecordingAnnotation.objects.create(
+                    nabat_recording=nabat_recording,
                     comments='NABat Manual',
                     model='NABat Manual Annotation',
                     confidence=1.0,
                 )
-                acoustic_batch_annotation.species.set(species)
-                acoustic_batch_annotation.save()
+                nabat_recording_annotation.species.set(species)
+                nabat_recording_annotation.save()
 
-        return acoustic_batch
+        return nabat_recording
 
     except KeyError as e:
         print(f'Missing key: {e}')
         return None
     except Exception as e:
-        print(f'Error creating AcousticBatch: {e}')
+        print(f'Error creating NABatRecording: {e}')
         return None
