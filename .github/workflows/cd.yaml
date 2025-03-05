@@ -2,7 +2,7 @@ name: CD
 on:
   push:
     branches:
-      - "main"
+      - "container-action"
   release:
     types:
       - published
@@ -16,6 +16,9 @@ jobs:
   build:
     name: Build [batai]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [server, client]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,23 +31,21 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate image tags
-        uses: actions/github-script@v6
+        uses: docker/metadata-action@v5
         id: image-tags
         with:
-          result-encoding: string
-          script: |
-            const image = 'ghcr.io/${{ github.repository }}'.toLowerCase();
-            let tags = `${image}/batai:latest`;
-            if ('${{ github.ref }}'.startsWith('refs/tags/v')) {
-              tags += `,${image}/batai:${{ github.ref_name }}`;
-            }
-            return tags;
+          images:
+            ghcr.io/Kitware/batai/${{ matrix.image }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          context: .
+          file: ${{ matrix.image == 'server' && 'dev/django.Dockerfile' || 'dev/client.Dockerfile' }}
+          context: ${{ matrix.image == 'server' && '.' || 'client' }}
           platforms: linux/amd64
-          push: true
+          push: false
           tags: ${{ steps.image-tags.outputs.result }}
