@@ -45,7 +45,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           file: ${{ matrix.image == 'server' && 'dev/django.Dockerfile' || 'dev/client.Dockerfile' }}
-          context: ${{ matrix.image == 'server' && '.' || 'client' }}
+          context: .
           platforms: linux/amd64
           push: false
           tags: ${{ steps.image-tags.outputs.result }}
