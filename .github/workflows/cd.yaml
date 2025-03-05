@@ -2,7 +2,9 @@ name: CD
 on:
   push:
     branches:
-      - "container-action"
+      - "main"
+    tags:
+      - "v*"
   release:
     types:
       - published
@@ -47,5 +49,5 @@ jobs:
           file: ${{ matrix.image == 'server' && 'dev/django.Dockerfile' || 'dev/client.Dockerfile' }}
           context: .
           platforms: linux/amd64
-          push: false
+          push: true
           tags: ${{ steps.image-tags.outputs.result }}
