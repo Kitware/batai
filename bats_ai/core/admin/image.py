@@ -3,7 +3,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from bats_ai.core.models import Image
-from bats_ai.core.tasks import image_compute_checksum
+from bats_ai.tasks.tasks import image_compute_checksum
 
 
 @admin.register(Image)

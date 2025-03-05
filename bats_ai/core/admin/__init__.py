@@ -2,6 +2,13 @@ from .annotations import AnnotationsAdmin
 from .compressed_spectrogram import CompressedSpectrogramAdmin
 from .grts_cells import GRTSCellsAdmin
 from .image import ImageAdmin
+from .nabat.admin import (
+    AcousticBatch,
+    AcousticBatchAnnotation,
+    NABatCompressedSpectrogram,
+    NABatSpectrogram,
+)
+from .processing_task import ProcessingTaskAdmin
 from .recording import RecordingAdmin
 from .recording_annotations import RecordingAnnotationAdmin
 from .species import SpeciesAdmin
@@ -18,4 +25,10 @@ __all__ = [
     'GRTSCellsAdmin',
     'CompressedSpectrogramAdmin',
     'RecordingAnnotationAdmin',
+    # NABat Models
+    'AcousticBatchAnnotation',
+    'NABatCompressedSpectrogram',
+    'NABatSpectrogram',
+    'AcousticBatch',
+    'ProcessingTaskAdmin',
 ]
