@@ -85,6 +85,11 @@ After run `sudo systemctl enable batai.service`
 Then to start you can use `sudo systemctl start batai.service`
 Stopping: `sudo systemctl stop batai.service`
 
+### URI Redirect Errors
+
+If when logging in you're getting redirect URI errors go into the
+django-admin interface and make sure you have the trailing '/' on the URL.
+
 ### User Management
 
 There is no email server connected up so users need to be
