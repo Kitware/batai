@@ -1,13 +1,22 @@
 from django.conf import settings
 import djclick as click
-from mlflow import MlflowClient
-from sklearn.datasets import load_diabetes
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
+import mlflow
+
+from bats_ai.tasks.tasks import example_train
 
 
 @click.command()
-def command():
-    click.echo("Running Mlflow experiment")
-
-    client = MlflowClient(tracking_uri=settings.MLFLOW_ENDPOINT)
+@click.option('--experiment-name', type=click.STRING, required=False, default='Default')
+def command(experiment_name):
+    click.echo('Finding experiment')
+    mlflow.set_tracking_uri(settings.MLFLOW_ENDPOINT)
+    experiment = mlflow.get_experiment_by_name(experiment_name)
+    if experiment:
+        click.echo(f'Creating a log for experiment {experiment_name}')
+        example_train.delay(experiment_name)
+        # train_body(experiment_name)
+    else:
+        click.echo(
+            f'Could not find experiment {experiment_name}.'
+            ' Use the create experiment command to create a new experiement.'
+        )
