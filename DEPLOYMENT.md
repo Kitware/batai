@@ -19,6 +19,11 @@ The `client` service also uses a reverse proxy to route
 The client will need to be built with a different Client ID
 for accessing the server.
 
+### git lfs
+
+Remember to `git lfs pull` to download the onnx model used for inference in the repo.
+The onnx model file is in the `/assets` folder and is bind mounted into the containers
+
 ### Initial Setup for Deployment
 
 1. Run `docker compose run --rm django ./manage.py migrate`
