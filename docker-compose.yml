@@ -47,14 +47,26 @@ services:
       - minio:/data
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:latest
+    build:
+      context: .
+      dockerfile: ./dev/mlflow.Dockerfile
     ports:
       - "5000:5000"
     environment:
       - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
-      - AWS_ACCESS_KEY=${DJANGO_MINIO_STORAGE_ACCESS_KEY:-minioAccessKey}
+      - AWS_ACCESS_KEY_ID=${DJANGO_MINIO_STORAGE_ACCESS_KEY:-minioAccessKey}
       - AWS_SECRET_ACCESS_KEY=${DJANGO_DATABASE_PASSWORD:-minioSecretKey}
-    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://postgres:postgres@postgres:5432/mlflow --artifacts-destination s3://bucket
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://postgres:postgres@postgres:5432/mlflow --artifacts-destination s3://mlflow --default-artifact-root s3://mlflow
+
+#   mlflow:
+#     image: ghcr.io/mlflow/mlflow:latest
+#     ports:
+#       - "5000:5000"
+#     environment:
+#       - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+#       - AWS_ACCESS_KEY_ID=${DJANGO_MINIO_STORAGE_ACCESS_KEY:-minioAccessKey}
+#       - AWS_SECRET_ACCESS_KEY=${DJANGO_DATABASE_PASSWORD:-minioSecretKey}
+#     command: bash -c "python3 -m pip install psycopg2-binary boto3 && mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://postgres:postgres@postgres:5432/mlflow --artifacts-destination s3://mlflow --default-artifact-root s3://mlflow"
 
 volumes:
   postgres:
