@@ -4,6 +4,7 @@ import tempfile
 
 from PIL import Image
 from celery import shared_task
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 
@@ -113,3 +114,56 @@ def recording_compute_spectrogram(recording_id: int):
             recording_annotation.save()
 
         return {'spectrogram_id': spectrogram.id, 'compressed_id': compressed_obj.id}
+
+
+def train_body(experiment_name: str):
+    import mlflow
+    from mlflow.models import infer_signature
+    from sklearn import datasets
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import accuracy_score
+    from sklearn.model_selection import train_test_split
+
+    X, y = datasets.load_iris(return_X_y=True)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    params = {
+        'solver': 'lbfgs',
+        'max_iter': 1000,
+        'multi_class': 'auto',
+        'random_state': 8888,
+    }
+
+    lr = LogisticRegression(**params)
+    lr.fit(X_train, y_train)
+
+    y_pred = lr.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+
+    mlflow.set_tracking_uri(settings.MLFLOW_ENDPOINT)
+    mlflow.set_experiment(experiment_name)
+
+    print(mlflow.get_tracking_uri())
+    print(mlflow.get_artifact_uri())
+
+    mlflow.end_run()
+    with mlflow.start_run():
+        mlflow.log_params(params)
+        mlflow.log_metric('accuracy', accuracy)
+        mlflow.set_tag('Training Info', 'Basic LR model for iris data')
+
+        signature = infer_signature(X_train, lr.predict(X_train))
+        _ = mlflow.sklearn.log_model(
+            sk_model=lr,
+            artifact_path='iris_model',
+            signature=signature,
+            input_example=X_train,
+            registered_model_name='tracking-quickstart',
+        )
+
+
+@shared_task
+def example_train(experiment_name: str):
+    train_body(experiment_name)
