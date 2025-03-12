@@ -39,7 +39,12 @@ services:
       - "443:443"
 
   django:
+    # Specifying both image and build without pull_policy will default to
+    # attempting to pull the image first, then build from source if that fails.
     image: ghcr.io/Kitware/batai/server:latest
+    build:
+      context: .
+      dockerfile: ./dev/django.Dockerfile
     command: 'gunicorn bats_ai.wsgi:application --bind 0.0.0.0:8000'
     # ./manage.py runserver 0.0.0.0:8000 --noreload
     # entrypoint: ["/bin/bash"]
@@ -83,7 +88,12 @@ services:
       - rabbitmq
       - minio
   client:
+    # Specifying both image and build without pull_policy will default to
+    # attempting to pull the image first, then build from source if that fails.
     image: ghcr.io/Kitware/batai/client:latest
+    build:
+      context: .
+      dockerfile: ./dev/client.Dockerfile
     env_file: ./dev/.env.prod.docker-compose
     networks:
       - django-nginx
