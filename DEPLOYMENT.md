@@ -19,6 +19,11 @@ The `client` service also uses a reverse proxy to route
 The client will need to be built with a different Client ID
 for accessing the server.
 
+### git lfs
+
+Remember to `git lfs pull` to download the onnx model used for inference in the repo.
+The onnx model file is in the `/assets` folder and is bind mounted into the containers
+
 ### Copy templated environment File
 
 Copy over the ./dev/.env.prod.docker-compose.template
@@ -91,6 +96,11 @@ WantedBy=multi-user.target
 After run `sudo systemctl enable batai.service`
 Then to start you can use `sudo systemctl start batai.service`
 Stopping: `sudo systemctl stop batai.service`
+
+### URI Redirect Errors
+
+If when logging in you're getting redirect URI errors go into the
+django-admin interface and make sure you have the trailing '/' on the URL.
 
 ### User Management
 
