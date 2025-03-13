@@ -39,6 +39,9 @@ services:
       - "443:443"
 
   django:
+    # Specifying both image and build without pull_policy will default to
+    # attempting to pull the image first, then build from source if that fails.
+    image: ghcr.io/Kitware/batai/server:latest
     build:
       context: .
       dockerfile: ./dev/django.Dockerfile
@@ -85,6 +88,9 @@ services:
       - rabbitmq
       - minio
   client:
+    # Specifying both image and build without pull_policy will default to
+    # attempting to pull the image first, then build from source if that fails.
+    image: ghcr.io/Kitware/batai/client:latest
     build:
       context: .
       dockerfile: ./dev/client.Dockerfile
