@@ -24,33 +24,40 @@ for accessing the server.
 Remember to `git lfs pull` to download the onnx model used for inference in the repo.
 The onnx model file is in the `/assets` folder and is bind mounted into the containers
 
+### Copy templated environment File
+
+Copy over the ./dev/.env.prod.docker-compose.template
+to `.env` and change the default passwords for fields
+
 ### Initial Setup for Deployment
 
-1. Run `docker compose run --rm django ./manage.py migrate`
-2. Run `docker compose run --rm django ./manage.py createsuperuser`
+1. Run `docker compose -f docker-compose.prod.yml run --rm django ./manage.py migrate`
+2. Run `docker compose -f docker-compose.prod.yml run --rm django ./manage.py createsuperuser`
    and follow the prompts to create your own user
-3. Run  `docker compose run --rm django ./manage.py makeclient \
-                            --username your.super.user@email.address \
-                            --uri https://batdetectai.kitware.com/`
-4. Run `docker compose run --rm django ./manage.py loaddata species` to load species
-   data into the database
-5. Run `docker compose run --rm django ./manage.py collectstatic`
+3. Run `docker compose  -f docker-compose.prod.yml run \
+                    --rm django ./manage.py makeclient \
+                    --username your.super.user@email.address \
+                    --uri https://batdetectai.kitware.com/`
+4. Run `docker compose -f docker-compose.prod.yml run \
+         --rm django ./manage.py loaddata species`
+   to load species data into the database
+5. Run `docker compose -f docker-compose.prod.yml run --rm django ./manage.py collectstatic`
    to collect the static files
 6. Run `docker compose -f docker-compose.prod.yml up` to start the server
    add `-d` for a silent version to run in the background
-7. Copy over the ./dev/.env.prod.docker-compose.template
-   to `./dev/.env.prod.docker-compose.template` and change the default passwords
-8. Change the ID in the `./client/env.production` to a custom ID - this will
-   probably require a `docker compose build` to build the app afterwards
-9. After creating the basic application log into the django admin `batdetectai.kitware.com/admin`
+7. Change the ID in the `./client/env.production` to a custom ID - this will
+   probably require a `docker compose -f docker-compose.prod.yml build` \
+   to build the app afterwards
+8. After creating the basic application log into the django admin `batdetectai.kitware.com/admin`
    and change the ApplicationId to the ID in the `./client.env.production`
-10. Test logging in/out and uploading data to the server.
+9. Test logging in/out and uploading data to the server.
 
 ### GRTS Cell Id suppoer
 
 Make sure that there is the grts.csv in the /opt/batai/dev/grtsCells folder
 
-Then run `docker compose run --rm django ./manage.py importGRTSCells /app/csv/grts.csv`
+Then run `docker compose -f docker-compose.prod.yml run \
+   --rm django ./manage.py importGRTSCells /app/csv/grts.csv`
 
 It may take a few minutes to upload because it is loading
 around 500k rows into the DB.
