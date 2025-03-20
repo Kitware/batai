@@ -310,18 +310,23 @@ export default class LegendLayer {
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
     const timeToPixels = adjustedWidth / time;
 
+    const { start_times, end_times, widths, compressedWidth } = this.spectroInfo;
+    const compressed = (start_times && end_times && widths && compressedWidth);
+
     // every 100 ms a small tick and every 1000 a big tick
-    for (let i = 0; i < time; i += 10) {
-      this.gridLines.push({
-        line: {
-          type: "LineString",
-          coordinates: [
-            [i * timeToPixels, 0],
-            [i * timeToPixels, baseYPos + length],
-          ],
-        },
-        grid: true,
-      });
+    if (!compressed) {
+      for (let i = 0; i < time; i += 10) {
+        this.gridLines.push({
+          line: {
+            type: "LineString",
+            coordinates: [
+              [i * timeToPixels, 0],
+              [i * timeToPixels, baseYPos + length],
+            ],
+          },
+          grid: true,
+        });
+      }
     }
   }
 

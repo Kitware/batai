@@ -545,7 +545,7 @@ export default defineComponent({
         props.yScale,
       );
       rectAnnotationLayer.redraw();
-      if (compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
+      if (compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times && viewCompressedOverlay.value) {
         compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
         compressedOverlayLayer.redraw();
@@ -590,10 +590,9 @@ export default defineComponent({
           colorScale.value,
           props.yScale,
         );
-        temporalAnnotationLayer.redraw();
       }
-
-
+      // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
+      legendLayer.onPan();
     });
     watch(viewCompressedOverlay, () => {
       if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
