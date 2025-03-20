@@ -24,7 +24,7 @@ FREQ_MIN = 5e3
 FREQ_MAX = 120e3
 FREQ_PAD = 2e3
 
-COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo']
+COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo', 'gray']
 
 
 # TimeStampedModel also provides "created" and "modified" fields

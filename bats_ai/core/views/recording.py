@@ -20,6 +20,7 @@ from bats_ai.core.models import (
     TemporalAnnotations,
     colormap,
 )
+from bats_ai.core.models.recording import COLORMAP as recording_colormap
 from bats_ai.core.tasks import recording_compute_spectrogram
 from bats_ai.core.views.species import SpeciesSchema
 from bats_ai.core.views.temporal_annotations import (
@@ -337,7 +338,7 @@ def get_spectrogram(request: HttpRequest, id: int):
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    with colormap(None):
+    with colormap(recording_colormap):
         spectrogram = recording.spectrogram
 
     compressed = recording.compressed_spectrogram

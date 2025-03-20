@@ -10,7 +10,7 @@ from .species import Species
 logger = logging.getLogger(__name__)
 
 
-COLORMAP = None
+COLORMAP = 'gray'
 
 
 class colormap:

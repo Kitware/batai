@@ -17,6 +17,7 @@ from bats_ai.core.models import (
     Spectrogram,
     colormap,
 )
+from bats_ai.core.models.recording import COLORMAP as recording_colormap
 
 
 def generate_compressed(recording: Recording, spectrogram: Spectrogram):
@@ -176,14 +177,14 @@ def recording_compute_spectrogram(recording_id: int):
     recording = Recording.objects.get(pk=recording_id)
 
     cmaps = [
-        None,  # Default (dark) spectrogram
+        recording_colormap,  # Default (grayscale) spectrogram
         'light',  # Light spectrogram
     ]
     spectrogram_id = None
     for cmap in cmaps:
         with colormap(cmap):
             spectrogram_id_temp = Spectrogram.generate(recording, cmap)
-            if cmap is None:
+            if cmap == recording_colormap:
                 spectrogram_id = spectrogram_id_temp
     if spectrogram_id is not None:
         compressed_spectro = generate_compress_spectrogram(recording_id, spectrogram_id)
