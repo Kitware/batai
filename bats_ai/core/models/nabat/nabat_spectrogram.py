@@ -1,4 +1,5 @@
 import base64
+import logging
 
 from PIL import Image
 from django.core.files.storage import default_storage
@@ -7,11 +8,14 @@ from django.dispatch import receiver
 from django_extensions.db.models import TimeStampedModel
 import numpy as np
 
-from .recording import Recording
+from .acoustic_batch import AcousticBatch
+
+logger = logging.getLogger(__name__)
 
 
-class Spectrogram(TimeStampedModel, models.Model):
-    recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
+# TimeStampedModel also provides "created" and "modified" fields
+class NABatSpectrogram(TimeStampedModel, models.Model):
+    acoustic_batch = models.ForeignKey(AcousticBatch, on_delete=models.CASCADE)
     image_file = models.FileField()
     width = models.IntegerField()  # pixels
     height = models.IntegerField()  # pixels
@@ -44,8 +48,12 @@ class Spectrogram(TimeStampedModel, models.Model):
     def image_url(self):
         return default_storage.url(self.image_file.name)
 
+    class Meta:
+        verbose_name = 'NABat Spectrogram'
+        verbose_name_plural = 'NABat Spectrograms'
 
-@receiver(models.signals.pre_delete, sender=Spectrogram)
+
+@receiver(models.signals.pre_delete, sender=NABatSpectrogram)
 def delete_content(sender, instance, **kwargs):
     if instance.image_file:
         instance.image_file.delete(save=False)
