@@ -116,7 +116,7 @@ export default defineComponent({
         // compressed view
         if (x >= 0 && adjustedHeight - y >= 0) {
           const timeLength = props.spectroInfo.end_time - props.spectroInfo.start_time;
-          const timeToPixels = adjustedWidth / timeLength;
+          const timeToPixels = (adjustedWidth / timeLength) * scaledVals.value.x;
           // find X in the range
           let offsetAdditive = 0;
           for (let i = 0; i < props.spectroInfo.start_times.length; i += 1) {
@@ -195,6 +195,19 @@ export default defineComponent({
         scaledWidth.value = baseWidth * scaledVals.value.x; // Maintain aspect ratio
         if (scaledWidth.value < baseWidth) {
           scaledWidth.value = baseWidth;
+        }
+        if (props.image) {
+          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+        } else {
+          const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
+          const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
+          geoJS.updateMapSize(
+            tileURL,
+            scaledWidth.value,
+            scaledHeight.value,
+            scaledTileWidth,
+            scaledTileHeight
+          );
         }
       }
 
@@ -390,7 +403,10 @@ export default defineComponent({
       @create:annotation="createAnnotation($event)"
       @set-cursor="setCursor($event)"
     />
-    <div ref="imageCursorRef" class="imageCursor">
+    <div
+      ref="imageCursorRef"
+      class="imageCursor"
+    >
       <v-icon color="white">
         {{ cursor }}
       </v-icon>
