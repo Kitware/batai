@@ -69,6 +69,7 @@ class RecordingAnnotationSchema(Schema):
     owner: str
     confidence: float
     id: int | None = None
+    hasDetails: bool
 
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
@@ -79,6 +80,7 @@ class RecordingAnnotationSchema(Schema):
             comments=obj.comments,
             model=obj.model,
             id=obj.pk,
+            hasDetails=obj.additional_data is not None,
         )
 
 

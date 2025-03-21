@@ -194,8 +194,8 @@ export default class LegendLayer {
     if (start_times && end_times && widths) {
       // We need a pixel time to map to the 0 position
       let pixelOffset = 0;
+      const length = yBuffer * 4;
       for (let i = 0; i < start_times.length; i += 1) {
-        const length = yBuffer * 4;
         const start_time = start_times[i];
         const end_time = end_times[i];
         const width = this.scaledWidth > compressedWidth ? (this.scaledWidth / compressedWidth) * widths[i] : widths[i];
@@ -203,7 +203,7 @@ export default class LegendLayer {
         const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  50)  && leftOffset !== 0 && topOffset !== 0;
      
 
-        if (!bottomWithinYAxisStart) {
+      if (!bottomWithinYAxisStart) {
         this.lineDataX.push({
           line: {
             type: "LineString",
@@ -286,12 +286,15 @@ export default class LegendLayer {
 
   calcGridLines() {
     // Y-Axis grid lines:
-    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
+    let adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
     const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
     const xBuffer = this.axisBuffer;
     const hz = this.spectroInfo.high_freq - this.spectroInfo.low_freq;
     const hzToPixels = adjustedHeight / hz;
     this.gridLines = [];
+    if (this.spectroInfo.compressedWidth && this.scaledWidth > this.spectroInfo.compressedWidth) {
+      adjustedWidth = this.scaledWidth;
+    }
     for (let i = 0; i < hz; i += 10000) {
       this.gridLines.push({
         line: {
@@ -310,18 +313,23 @@ export default class LegendLayer {
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
     const timeToPixels = adjustedWidth / time;
 
+    const { start_times, end_times, widths, compressedWidth } = this.spectroInfo;
+    const compressed = (start_times && end_times && widths && compressedWidth);
+
     // every 100 ms a small tick and every 1000 a big tick
-    for (let i = 0; i < time; i += 10) {
-      this.gridLines.push({
-        line: {
-          type: "LineString",
-          coordinates: [
-            [i * timeToPixels, 0],
-            [i * timeToPixels, baseYPos + length],
-          ],
-        },
-        grid: true,
-      });
+    if (!compressed) {
+      for (let i = 0; i < time; i += 10) {
+        this.gridLines.push({
+          line: {
+            type: "LineString",
+            coordinates: [
+              [i * timeToPixels, 0],
+              [i * timeToPixels, baseYPos + length],
+            ],
+          },
+          grid: true,
+        });
+      }
     }
   }
 
@@ -365,9 +373,12 @@ export default class LegendLayer {
   }
 
   drawXAxis(bottomOffset = 0, topOffset = 0, lefOffset = 0) {
-    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
+    let adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
     const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
 
+    if (this.spectroInfo.compressedWidth && this.scaledWidth > this.spectroInfo.compressedWidth) {
+      adjustedWidth = this.scaledWidth;
+    }
     const xAxis: GeoJSON.LineString = {
       type: "LineString",
       coordinates: [

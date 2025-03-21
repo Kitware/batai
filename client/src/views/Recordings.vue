@@ -25,10 +25,6 @@ export default defineComponent({
     const batchUploadDialog = ref(false);
     const headers = ref([
         {
-            title:'Edit',
-            key:'edit',
-        },
-        {
             title:'Name',
             key:'name',
         },
@@ -64,6 +60,10 @@ export default defineComponent({
         {
             title:'Users Annotated',
             key:'userAnnotations',
+        },
+        {
+            title:'Edit',
+            key:'edit',
         },
     ]);
 

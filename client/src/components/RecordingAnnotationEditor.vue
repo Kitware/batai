@@ -34,14 +34,14 @@ export default defineComponent({
 
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
-    const confidence: Ref<number> = ref(1.0);
+    const confidence: Ref<number> = ref(props.annotation?.confidence || 1.0);
 
     watch(() => props.annotation, () => {
         if (props.annotation?.species) {
             speciesEdit.value = props.annotation.species.map((item) => item.species_code || item.common_name);
         }
-        if (props.annotation?.comments) {
-            comments.value = props.annotation.comments;
+        if (props.annotation) {
+            comments.value = props.annotation.comments || '';
         }
         if (props.annotation) {
             confidence.value = props.annotation.confidence;
