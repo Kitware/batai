@@ -44,6 +44,8 @@ export default defineComponent({
       toggleLayerVisibility,
       layerVisibility,
       colorScale,
+      colorSchemes,
+      colorScheme,
       setSelectedUsers,
       createColorScale,
       currentUser,
@@ -106,12 +108,12 @@ export default defineComponent({
         : await getSpectrogram(props.id);
       if (response.data["url"]) {
         if (import.meta.env.PROD) {
-        const updateHost = `${window.location.protocol}//${window.location.hostname}/`;
-        const updatedURL = response.data["url"].replace(
-          "http://127.0.0.1:9000/",
-          updateHost
-        );
-        image.value.src = updatedURL.split("?")[0];
+          const updateHost = `${window.location.protocol}//${window.location.hostname}/`;
+          const updatedURL = response.data["url"].replace(
+            "http://127.0.0.1:9000/",
+            updateHost
+          );
+          image.value.src = updatedURL.split("?")[0];
         } else {
           image.value.src = response.data['url'];
         }
@@ -241,7 +243,7 @@ export default defineComponent({
     };
 
     const toggleCompressedOverlay = () => {
-      viewCompressedOverlay.value = ! viewCompressedOverlay.value;
+      viewCompressedOverlay.value = !viewCompressedOverlay.value;
     };
 
     return {
@@ -269,6 +271,8 @@ export default defineComponent({
       toggleCompressedOverlay,
       viewCompressedOverlay,
       sideTab,
+      colorSchemes,
+      colorScheme,
       // Other user selection
       otherUserAnnotations,
       temporalAnnotations,
@@ -340,9 +344,7 @@ export default defineComponent({
               class="px-0"
               style="font-size: 20px"
             >
-              <div
-                v-if="annotationState !== '' && annotationState !== 'disabled'"
-              >
+              <div v-if="annotationState !== '' && annotationState !== 'disabled'">
                 <b>Mode:</b>
                 <span> {{ annotationState }}</span>
               </div>
@@ -480,6 +482,18 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
+            <v-select
+              v-model="colorScheme"
+              label="Color Scheme"
+              :items="colorSchemes"
+              item-title="title"
+              item-value="scheme"
+              variant="outlined"
+              density="compact"
+              width="75"
+              hide-details
+              return-object
+            />
           </v-row>
         </v-container>
       </v-toolbar>
@@ -512,9 +526,7 @@ export default defineComponent({
         <v-card-title>
           <v-row dense>
             <v-spacer />
-            <v-tooltip
-              bottom
-            >
+            <v-tooltip bottom>
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
@@ -531,9 +543,7 @@ export default defineComponent({
                 View Recordings in sideTab
               </span>
             </v-tooltip>
-            <v-tooltip
-              bottom
-            >
+            <v-tooltip bottom>
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"

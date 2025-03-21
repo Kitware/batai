@@ -47,6 +47,7 @@ export default defineComponent({
       creationType,
       blackBackground,
       scaledVals,
+      colorScheme,
     } = useState();
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
@@ -99,9 +100,9 @@ export default defineComponent({
       const freq =
         adjustedHeight - y >= 0
           ? ((adjustedHeight - y) * (props.spectroInfo.high_freq - props.spectroInfo.low_freq)) /
-              adjustedHeight /
-              1000 +
-            props.spectroInfo.low_freq / 1000
+          adjustedHeight /
+          1000 +
+          props.spectroInfo.low_freq / 1000
           : -1;
 
       if (!props.compressed) {
@@ -183,7 +184,7 @@ export default defineComponent({
       if (props.compressed) {
         scaledVals.value = { x: 2.5, y: 1 };
         let baseWidth = 0;
-          let baseHeight = 0;
+        let baseHeight = 0;
         if (props.image) {
           const { naturalWidth, naturalHeight } = props.image;
           baseWidth = naturalWidth;

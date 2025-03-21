@@ -2,17 +2,35 @@ import { ref, Ref, watch } from "vue";
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import { Configuration, getConfiguration, OtherUserAnnotations, Recording, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import {
+  interpolateCividis,
+  interpolateViridis,
+  interpolateInferno,
+  interpolateMagma,
+  interpolatePlasma,
+  interpolateTurbo,
+} from "d3-scale-chromatic";
 
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<'pulse' | 'sequence'> = ref("pulse");
 type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal' | 'duration';
 const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'duration', 'freq']);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
+const colorSchemes = [
+  { title: 'Cividis', scheme: interpolateCividis },
+  { title: 'Viridis', scheme: interpolateViridis },
+  { title: 'Inferno', scheme: interpolateInferno },
+  { title: 'Magma', scheme: interpolateMagma },
+  { title: 'Plasma', scheme: interpolatePlasma },
+  { title: 'Turbo', scheme: interpolateTurbo },
+
+];
+const colorScheme: Ref<{ title: string, scheme: (input: number) => string }> = ref(colorSchemes[0]);
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref('');
 const selectedId: Ref<number | null> = ref(null);
 const selectedType: Ref<'pulse' | 'sequence'> = ref('pulse');
-const annotations : Ref<SpectrogramAnnotation[]> = ref([]);
+const annotations: Ref<SpectrogramAnnotation[]> = ref([]);
 const temporalAnnotations: Ref<SpectrogramTemporalAnnotation[]> = ref([]);
 const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
 const sharedList: Ref<Recording[]> = ref([]);
@@ -22,7 +40,7 @@ const blackBackground = ref(true);
 const scaledVals: Ref<{x: number, y: number}> = ref({x: 1, y: 1});
 const viewCompressedOverlay = ref(false);
 const sideTab: Ref<'annotations' | 'recordings'> = ref('annotations');
-const configuration: Ref<Configuration> = ref({display_pulse_annotations: true, display_sequence_annotations: true, is_admin: false});
+const configuration: Ref<Configuration> = ref({ display_pulse_annotations: true, display_sequence_annotations: true, is_admin: false });
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -55,12 +73,12 @@ export default function useState() {
 
   function createColorScale(userEmails: string[]) {
     colorScale.value = d3.scaleOrdinal<string>()
-    .domain(userEmails)
-    .range(d3.schemeCategory10.filter(color => color !== 'red' && color !== 'cyan' && color !== 'yellow'));
+      .domain(userEmails)
+      .range(d3.schemeCategory10.filter(color => color !== 'red' && color !== 'cyan' && color !== 'yellow'));
 
   }
 
-  function setSelectedId(id: number | null, annotationType?: 'pulse' | 'sequence' ) {
+  function setSelectedId(id: number | null, annotationType?: 'pulse' | 'sequence') {
     selectedId.value = id;
     if (annotationType) {
       selectedType.value = annotationType;
@@ -69,7 +87,7 @@ export default function useState() {
   watch(sharedList, () => {
     const filtered = sharedList.value.filter((item) => !item.userMadeAnnotations);
     if (filtered.length > 0) {
-     nextShared.value = filtered[0];
+      nextShared.value = filtered[0];
     } else {
       nextShared.value = false;
     }
@@ -78,8 +96,8 @@ export default function useState() {
   async function loadConfiguration() {
     configuration.value = (await getConfiguration()).data;
   }
-  
-    return {
+
+  return {
     annotationState,
     creationType,
     setAnnotationState,
@@ -87,6 +105,8 @@ export default function useState() {
     layerVisibility,
     createColorScale,
     colorScale,
+    colorSchemes,
+    colorScheme,
     setSelectedUsers,
     selectedUsers,
     currentUser,
