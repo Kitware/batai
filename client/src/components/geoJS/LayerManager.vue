@@ -1,5 +1,6 @@
 <script lang="ts">
 import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
+import * as d3 from "d3";
 import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
@@ -13,6 +14,7 @@ import SpeciesLayer from "./layers/speciesLayer";
 import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import { cloneDeep } from "lodash";
 import useState from "../../use/useState";
+import { RGBColor } from "d3";
 export default defineComponent({
   name: "LayerManager",
   props: {
@@ -60,6 +62,8 @@ export default defineComponent({
       setSelectedId,
       viewCompressedOverlay,
       configuration,
+      colorScheme,
+      colorSchemes,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -459,9 +463,9 @@ export default defineComponent({
         }
         rectAnnotationLayer.spectroInfo = props.spectroInfo;
         rectAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-        
+
         if (!temporalAnnotationLayer) {
-        temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
+          temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
         } {
           temporalAnnotationLayer.spectroInfo = props.spectroInfo;
         }
@@ -476,7 +480,7 @@ export default defineComponent({
         if (!props.thumbnail) {
           if (!legendLayer) {
             legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
-          } 
+          }
           legendLayer.spectroInfo = props.spectroInfo;
           legendLayer.createLabels();
           legendLayer.calcGridLines();
@@ -484,15 +488,15 @@ export default defineComponent({
           legendLayer.onPan();
           if (!timeLayer) {
             timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
-          } 
+          }
           timeLayer.spectroInfo = props.spectroInfo;
           timeLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!freqLayer) {
             freqLayer = new FreqLayer(props.geoViewerRef, event, props.spectroInfo);
-          } 
+          }
           freqLayer.spectroInfo = props.spectroInfo;
           freqLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-         
+
           if (!speciesSequenceLayer) {
             speciesSequenceLayer = new SpeciesSequenceLayer(props.geoViewerRef, event, props.spectroInfo);
           }
@@ -500,11 +504,11 @@ export default defineComponent({
           speciesSequenceLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!speciesLayer) {
           speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
-          } 
+          }
           speciesLayer.spectroInfo = props.spectroInfo;
           speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
 
-          timeLayer.setDisplaying({pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations});
+          timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
           timeLayer.formatData(localAnnotations.value, temporalAnnotations.value);
           freqLayer.formatData(localAnnotations.value);
           speciesLayer.formatData(localAnnotations.value);
@@ -524,7 +528,10 @@ export default defineComponent({
       }
       triggerUpdate();
     };
-    onMounted(() => initLayers());
+    onMounted(() => {
+      initLayers();
+      updateColorMap(colorScheme.value.scheme);
+    });
 
     watch(() => props.spectroInfo, () => initLayers());
     watch(layerVisibility, () => {
@@ -614,12 +621,39 @@ export default defineComponent({
         }
       }
     );
+    // Color scheme
+    const rValues = ref('0.267 0.283 0.254 0.207 0.164 0.128 0.135 0.267 0.477 0.741 0.906');
+    const gValues = ref('0.004 0.141 0.253 0.322 0.38 0.443 0.545 0.671 0.729 0.659 0.471');
+    const bValues = ref('0.329 0.458 0.529 0.552 0.557 0.553 0.492 0.369 0.216 0.149 0.047');
+
+    function updateColorMap(colorFunc: (input: number) => string) {
+      const redStops: number[] = [];
+      const greenStops: number[] = [];
+      const blueStops: number[] = [];
+      for (let i = 0; i <= 1.0; i += 0.1) {
+        const rgbStopString = colorFunc(i);
+        const color = d3.color(rgbStopString) as RGBColor;
+        redStops.push(color.r / 255);
+        greenStops.push(color.g / 255);
+        blueStops.push(color.b / 255);
+      }
+      rValues.value = redStops.join(" ");
+      gValues.value = greenStops.join(" ");
+      bValues.value = blueStops.join(" ");
+    }
+
+    watch(colorScheme, () => {
+      updateColorMap(colorScheme.value.scheme);
+    });
     return {
       annotationState,
       localAnnotations,
       displayError,
       errorMsg,
       selectedUsers,
+      rValues,
+      gValues,
+      bValues,
     };
   },
 });
@@ -647,4 +681,34 @@ export default defineComponent({
       </v-card-actions>
     </v-card>
   </v-dialog>
+  <svg
+    width="0"
+    height="0"
+    style="position: absolute; top: -1px; left: -1px;"
+  >
+    <filter id="apply-color-scheme">
+      <!-- convert to grayscale -->
+      <feColorMatrix
+        type="saturate"
+        values="0"
+        result="grayscale"
+      />
+
+      <!-- apply viridis color mapping -->
+      <feComponentTransfer>
+        <feFuncR
+          type="table"
+          :tableValues="rValues"
+        />
+        <feFuncG
+          type="table"
+          :tableValues="gValues"
+        />
+        <feFuncB
+          type="table"
+          :tableValues="bValues"
+        />
+      </feComponentTransfer>
+    </filter>
+  </svg>
 </template>

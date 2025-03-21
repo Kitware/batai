@@ -42,7 +42,7 @@ const useGeoJS = () => {
   ) => {
     thumbnail.value = thumbnailVal;
     container.value = sourceContainer;
-    originalDimensions = {width, height };
+    originalDimensions = { width, height };
     const params = geo.util.pixelCoordinateParams(container.value, width, height, mapType === 'tile' ? 256 : width, mapType === 'tile' ? 256 : height);
     if (!container.value) {
       return;
@@ -106,13 +106,14 @@ const useGeoJS = () => {
     });
 
     if (mapType === 'quad') {
-    const quadFeatureLayer = geoViewer.value.createLayer("feature", {
-      features: ["quad"],
-      autoshareRenderer: false,
-      renderer: "canvas",
-    });
-    quadFeature = quadFeatureLayer.createFeature("quad");
-    } else if ( mapType === 'tile') {
+      const quadFeatureLayer = geoViewer.value.createLayer("feature", {
+        features: ["quad"],
+        autoshareRenderer: false,
+        renderer: "canvas",
+      });
+      quadFeatureLayer.node().css('filter', 'url(#apply-color-scheme)');
+      quadFeature = quadFeatureLayer.createFeature("quad");
+    } else if (mapType === 'tile') {
       const params = geo.util.pixelCoordinateParams(
         container.value, width, height, 256, 256);
       params.layer.useCredentials = true;
@@ -127,7 +128,7 @@ const useGeoJS = () => {
     }
   };
 
-  const updateMapSize = (url ='', width =0, height = 0, tileWidth=256, tileHeight=256, resetCam=true) => {
+  const updateMapSize = (url = '', width = 0, height = 0, tileWidth = 256, tileHeight = 256, resetCam = true) => {
     const params = geo.util.pixelCoordinateParams(
       container.value, width, height, tileWidth, tileHeight);
     params.layer.url = url;
@@ -139,29 +140,27 @@ const useGeoJS = () => {
     }
   };
 
-  const drawImage = (image: HTMLImageElement | string, width = 0, height = 0, resetCam=true) => {
+  const drawImage = (image: HTMLImageElement | string, width = 0, height = 0, resetCam = true) => {
     let tilewidth = width;
     let tileheight = height;
     if (quadFeature && typeof (image) === 'object') {
-      quadFeature
-        .data([
-          {
-            ul: { x: 0, y: 0 },
-            lr: { x: width, y: height },
-            image: image,
-          },
-        ])
-        .draw();
-    } 
+      quadFeature.data([
+        {
+          ul: { x: 0, y: 0 },
+          lr: { x: width, y: height },
+          image: image,
+        },
+      ]).draw();
+    }
     if (resetCam) {
-    resetMapDimensions(width, height, 0.3, resetCam);
+      resetMapDimensions(width, height, 0.3, resetCam);
     } else {
       const params = geo.util.pixelCoordinateParams(container.value, width, height, tilewidth, tileheight);
       if (osmLayer && typeof (image) === 'string') {
         osmLayer.url(image);
         tilewidth = 256;
         tileheight = 256;
-  
+
         osmLayer._options.maxLevel = params.layer.maxLevel;
         osmLayer._options.tileWidth = params.layer.tileWidth;
         osmLayer._options.tileHeight = params.layer.tileHeight;
@@ -169,7 +168,7 @@ const useGeoJS = () => {
         osmLayer._options.tilesMaxBounds = params.layer.tilesMaxBounds;
 
       }
-      const margin  = 0.3;
+      const margin = 0.3;
       const { right, bottom } = params.map.maxBounds;
       originalBounds = params.map.maxBounds;
       geoViewer.value.maxBounds({
@@ -178,20 +177,20 @@ const useGeoJS = () => {
         right: right * (1 + margin),
         bottom: bottom * (1 + margin),
       });
-  
+
     }
-    
+
   };
   const resetZoom = () => {
     const { width: mapWidth, } = geoViewer.value.camera().viewport;
 
     const bounds = !thumbnail.value
       ? {
-          left: 0, // Making sure the legend is on the screen
-          top: -(originalBounds.bottom - originalDimensions.height) / 2.0,
-          right: mapWidth*2,
-          bottom: originalBounds.bottom,
-        }
+        left: 0, // Making sure the legend is on the screen
+        top: -(originalBounds.bottom - originalDimensions.height) / 2.0,
+        right: mapWidth * 2,
+        bottom: originalBounds.bottom,
+      }
       : {
         left: 0,
         top: 0,
@@ -314,7 +313,7 @@ function spectroTemporalToGeoJSon(
           foundStartIndex = i; // Lock to the last interval's end
         }
       }
-    
+
       // Check for end time
       if (foundEndIndex === -1) {
         if (end < start_times[i]) {
@@ -325,9 +324,9 @@ function spectroTemporalToGeoJSon(
           foundEndIndex = i; // Lock to the last interval's end
         }
       }
-  }
+    }
     // We need to build the length of times to pixel size for the time spaces before the annotation
-    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ?  scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
+    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
     const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time) * compressedScale;
     let pixelAddStart = 0;
     let pixelAddEnd = 0;
@@ -431,8 +430,8 @@ function spectroToGeoJSon(
       }
     }
     // We need to build the length of times to pixel size for the time spaces before the annotation
-    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ?  scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
-    const widthScale =(adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) * compressedScale;
+    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
+    const widthScale = (adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) * compressedScale;
     let pixelAddStart = 0;
     let pixelAddEnd = 0;
     for (let i = 0; i < Math.max(foundStartIndex, foundEndIndex); i += 1) {
@@ -451,7 +450,7 @@ function spectroToGeoJSon(
     const high_freq =
       adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
     const start_time = (pixelAddStart * compressedScale) + (annotation.start_time - start_times[foundStartIndex]) * widthScale;
-    const end_time = (pixelAddEnd  * compressedScale) + (annotation.end_time - start_times[foundEndIndex]) * widthScale;
+    const end_time = (pixelAddEnd * compressedScale) + (annotation.end_time - start_times[foundEndIndex]) * widthScale;
 
     return {
       type: "Polygon",
@@ -499,7 +498,7 @@ function spectroToCenter(annotation: SpectrogramAnnotation | SpectrogramTemporal
     const geoJSON = spectroTemporalToGeoJSon(annotation as SpectrogramTemporalAnnotation, spectroInfo);
     return findPolygonCenter(geoJSON);
   }
-  return [0,0];
+  return [0, 0];
 }
 
 /* beginning at bottom left, rectangle is defined clockwise */
@@ -528,7 +527,7 @@ function geojsonToSpectro(
     };
   } else if (spectroInfo.start_times && spectroInfo.end_times) {
     // first need to map the X positions to times based on the start/endtimes
-    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ?  scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
+    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
     const start = coords[1][0] / compressedScale;
     const end = coords[3][0] / compressedScale;
     const { start_times, widths } = spectroInfo;
