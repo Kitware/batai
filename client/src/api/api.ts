@@ -115,9 +115,15 @@ export interface FileAnnotation {
     model?: string;
     owner: string;
     confidence: number;
+    hasDetails: boolean;
     id: number;
 }
 
+export interface FileAnnotationDetails {
+    label: string;
+    score: number;
+    confidences: { label: string, value: string}[];
+}
 export interface UpdateFileAnnotation {
     recordingId?: number;
     species: number[] | null;
@@ -330,6 +336,10 @@ async function getFileAnnotations(recordingId: number) {
     return axiosInstance.get<FileAnnotation[]>(`recording/${recordingId}/recording-annotations`);
 }
 
+async function getFileAnnotationDetails(recordingId: number) {
+    return axiosInstance.get<(FileAnnotation & {details: FileAnnotationDetails })>(`recording-annotation/${recordingId}/details`);
+
+}
 
 async function putFileAnnotation(fileAnnotation: UpdateFileAnnotation) {
     return axiosInstance.put<{message: string, id: number}>(`/recording-annotation/`, { ...fileAnnotation });
@@ -421,4 +431,5 @@ export {
  deleteFileAnnotation,
  getConfiguration,
  patchConfiguration,
+ getFileAnnotationDetails,
 };
