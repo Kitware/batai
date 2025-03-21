@@ -44,6 +44,8 @@ export default defineComponent({
       toggleLayerVisibility,
       layerVisibility,
       colorScale,
+      colorSchemes,
+      colorScheme,
       setSelectedUsers,
       createColorScale,
       currentUser,
@@ -270,6 +272,8 @@ export default defineComponent({
       toggleCompressedOverlay,
       viewCompressedOverlay,
       sideTab,
+      colorSchemes,
+      colorScheme,
       // Other user selection
       otherUserAnnotations,
       temporalAnnotations,
@@ -479,6 +483,18 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
+            <v-select
+              v-model="colorScheme"
+              label="Color Scheme"
+              :items="colorSchemes"
+              item-title="title"
+              item-value="scheme"
+              variant="outlined"
+              density="compact"
+              width="75"
+              hide-details
+              return-object
+            />
           </v-row>
         </v-container>
       </v-toolbar>

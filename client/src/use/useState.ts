@@ -2,12 +2,30 @@ import { ref, Ref, watch } from "vue";
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import { Configuration, getConfiguration, OtherUserAnnotations, Recording, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import {
+  interpolateCividis,
+  interpolateViridis,
+  interpolateInferno,
+  interpolateMagma,
+  interpolatePlasma,
+  interpolateTurbo,
+} from "d3-scale-chromatic";
 
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<'pulse' | 'sequence'> = ref("pulse");
 type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal' | 'duration';
 const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'duration', 'freq']);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
+const colorSchemes = [
+  { title: 'Cividis', scheme: interpolateCividis },
+  { title: 'Viridis', scheme: interpolateViridis },
+  { title: 'Inferno', scheme: interpolateInferno },
+  { title: 'Magma', scheme: interpolateMagma },
+  { title: 'Plasma', scheme: interpolatePlasma },
+  { title: 'Turbo', scheme: interpolateTurbo },
+
+];
+const colorScheme: Ref<{ title: string, scheme: (input: number) => string }> = ref(colorSchemes[0]);
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref('');
 const selectedId: Ref<number | null> = ref(null);
@@ -94,6 +112,8 @@ export default function useState() {
     layerVisibility,
     createColorScale,
     colorScale,
+    colorSchemes,
+    colorScheme,
     setSelectedUsers,
     selectedUsers,
     currentUser,
