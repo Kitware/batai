@@ -98,7 +98,6 @@ export default defineComponent({
         editing.value = data.edit;
         editingAnnotation.value = null;
         selectedId.value = selectedAnnotationId.value;
-        //emit("selected", selectedAnnotationId.value);
         if (data.id !== null) {
           setSelectedId(selectedAnnotationId.value, 'sequence');
         }
@@ -124,7 +123,6 @@ export default defineComponent({
           setSelectedId(selectedAnnotationId.value, 'sequence');
         }
         setSelectedId(selectedAnnotationId.value);
-        //emit("selected", selectedAnnotationId.value);
         triggerUpdate();
       }
 
@@ -152,7 +150,6 @@ export default defineComponent({
           setSelectedId(selectedAnnotationId.value, 'pulse');
         }
         setSelectedId(selectedAnnotationId.value);
-        //emit("selected", selectedAnnotationId.value);
       }
       if (type === "annotation-clicked") {
         if (selectedAnnotationId.value !== null) {
@@ -196,7 +193,6 @@ export default defineComponent({
           localAnnotations.value[foundIndex].editing = undefined;
         }
         setSelectedId(selectedAnnotationId.value, 'pulse');
-        //emit("selected", selectedAnnotationId.value);
         triggerUpdate();
       }
       if (type === "update:geojson") {
