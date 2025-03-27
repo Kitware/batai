@@ -52,7 +52,9 @@ export default defineComponent({
           :items="annotationData.confidences"
           :items-per-page="-1"
           density="compact"
-        />
+        >
+          <template #bottom />
+        </v-data-table>
       </div>
     </v-card-text>
   </v-card>
