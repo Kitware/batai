@@ -101,7 +101,6 @@ export default defineComponent({
     </v-card-text>
     <v-card-actions>
       <v-row>
-        <v-spacer />
         <v-btn
           color="primary"
           variant="outlined"
