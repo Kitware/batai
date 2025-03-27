@@ -56,15 +56,16 @@ export default defineComponent({
       scaledVals,
       viewCompressedOverlay,
       sideTab,
+      configuration,
     } = useState();
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
-    const compressed = ref(false);
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
+    const compressed = computed(() => configuration.value.spectrogram_view === 'compressed');
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
       annotations.value = response.data.sort(
@@ -106,12 +107,12 @@ export default defineComponent({
         : await getSpectrogram(props.id);
       if (response.data["url"]) {
         if (import.meta.env.PROD) {
-        const updateHost = `${window.location.protocol}//${window.location.hostname}/`;
-        const updatedURL = response.data["url"].replace(
-          "http://127.0.0.1:9000/",
-          updateHost
-        );
-        image.value.src = updatedURL.split("?")[0];
+          const updateHost = `${window.location.protocol}//${window.location.hostname}/`;
+          const updatedURL = response.data["url"].replace(
+            "http://127.0.0.1:9000/",
+            updateHost
+          );
+          image.value.src = updatedURL.split("?")[0];
         } else {
           image.value.src = response.data['url'];
         }
@@ -241,7 +242,7 @@ export default defineComponent({
     };
 
     const toggleCompressedOverlay = () => {
-      viewCompressedOverlay.value = ! viewCompressedOverlay.value;
+      viewCompressedOverlay.value = !viewCompressedOverlay.value;
     };
 
     return {
@@ -340,9 +341,7 @@ export default defineComponent({
               class="px-0"
               style="font-size: 20px"
             >
-              <div
-                v-if="annotationState !== '' && annotationState !== 'disabled'"
-              >
+              <div v-if="annotationState !== '' && annotationState !== 'disabled'">
                 <b>Mode:</b>
                 <span> {{ annotationState }}</span>
               </div>
@@ -512,9 +511,7 @@ export default defineComponent({
         <v-card-title>
           <v-row dense>
             <v-spacer />
-            <v-tooltip
-              bottom
-            >
+            <v-tooltip bottom>
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
@@ -531,9 +528,7 @@ export default defineComponent({
                 View Recordings in sideTab
               </span>
             </v-tooltip>
-            <v-tooltip
-              bottom
-            >
+            <v-tooltip bottom>
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
