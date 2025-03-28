@@ -11,6 +11,7 @@ import scipy
 from bats_ai.core.models import (
     Annotations,
     CompressedSpectrogram,
+    Configuration,
     Recording,
     RecordingAnnotation,
     Species,
@@ -187,7 +188,9 @@ def recording_compute_spectrogram(recording_id: int):
                 spectrogram_id = spectrogram_id_temp
     if spectrogram_id is not None:
         compressed_spectro = generate_compress_spectrogram(recording_id, spectrogram_id)
-        predict(compressed_spectro.pk)
+        config = Configuration.objects.first()
+        if not config or not config.run_inference_on_upload:
+            predict(compressed_spectro.pk)
 
 
 @shared_task
