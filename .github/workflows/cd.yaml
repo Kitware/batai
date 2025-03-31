@@ -37,7 +37,7 @@ jobs:
         id: image-tags
         with:
           images:
-            ghcr.io/Kitware/batai/${{ matrix.image }}:latest
+            ghcr.io/Kitware/batai/${{ matrix.image }}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -50,4 +50,4 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.image-tags.outputs.result }}
+          tags: ${{ steps.image-tags.outputs.tags }}
