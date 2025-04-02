@@ -115,9 +115,15 @@ export interface FileAnnotation {
     model?: string;
     owner: string;
     confidence: number;
+    hasDetails: boolean;
     id: number;
 }
 
+export interface FileAnnotationDetails {
+    label: string;
+    score: number;
+    confidences: { label: string, value: string}[];
+}
 export interface UpdateFileAnnotation {
     recordingId?: number;
     species: number[] | null;
@@ -144,11 +150,6 @@ export interface Spectrogram {
 }
 
 export type OtherUserAnnotations = Record<string, {annotations: SpectrogramAnnotation[], temporal: SpectrogramTemporalAnnotation[]}>;
-
-interface PaginatedNinjaResponse<T> {
-    count: number,
-    items: T[],
-}
 
 export type UploadLocation =  null | { latitude?: number, longitude?: number, gridCellId?: number};
 
@@ -335,6 +336,10 @@ async function getFileAnnotations(recordingId: number) {
     return axiosInstance.get<FileAnnotation[]>(`recording/${recordingId}/recording-annotations`);
 }
 
+async function getFileAnnotationDetails(recordingId: number) {
+    return axiosInstance.get<(FileAnnotation & {details: FileAnnotationDetails })>(`recording-annotation/${recordingId}/details`);
+
+}
 
 async function putFileAnnotation(fileAnnotation: UpdateFileAnnotation) {
     return axiosInstance.put<{message: string, id: number}>(`/recording-annotation/`, { ...fileAnnotation });
@@ -474,4 +479,5 @@ export {
  getProcessingTaskDetails,
  cancelProcessingTask,
  getFilteredProcessingTasks,
+ getFileAnnotationDetails,
 };

@@ -20,6 +20,7 @@ class RecordingAnnotationSchema(Schema):
     owner: str
     confidence: float
     id: int | None = None
+    hasDetails: bool
 
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
@@ -29,6 +30,31 @@ class RecordingAnnotationSchema(Schema):
             confidence=obj.confidence,
             comments=obj.comments,
             model=obj.model,
+            id=obj.pk,
+            hasDetails=obj.additional_data is not None,
+        )
+
+
+class RecordingAnnotationDetailsSchema(Schema):
+    species: list[SpeciesSchema] | None
+    comments: str | None = None
+    model: str | None = None
+    owner: str
+    confidence: float
+    id: int | None = None
+    details: dict
+    hasDetails: bool
+
+    @classmethod
+    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+        return cls(
+            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            owner=obj.owner.username,
+            confidence=obj.confidence,
+            comments=obj.comments,
+            model=obj.model,
+            hasDetails=obj.additional_data is not None,
+            details=obj.additional_data,
             id=obj.pk,
         )
 
@@ -58,6 +84,20 @@ def get_recording_annotation(request: HttpRequest, id: int):
             raise HttpError(403, 'Permission denied.')
 
         return RecordingAnnotationSchema.from_orm(annotation).dict()
+    except RecordingAnnotation.DoesNotExist:
+        raise HttpError(404, 'Recording annotation not found.')
+
+
+@router.get('/{id}/details', response=RecordingAnnotationDetailsSchema)
+def get_recording_annotation_details(request: HttpRequest, id: int):
+    try:
+        annotation = RecordingAnnotation.objects.get(pk=id)
+
+        # Check permission
+        if annotation.recording.owner != request.user and not annotation.recording.public:
+            raise HttpError(403, 'Permission denied.')
+
+        return RecordingAnnotationDetailsSchema.from_orm(annotation).dict()
     except RecordingAnnotation.DoesNotExist:
         raise HttpError(404, 'Recording annotation not found.')
 

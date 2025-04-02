@@ -98,7 +98,6 @@ export default defineComponent({
         editing.value = data.edit;
         editingAnnotation.value = null;
         selectedId.value = selectedAnnotationId.value;
-        //emit("selected", selectedAnnotationId.value);
         if (data.id !== null) {
           setSelectedId(selectedAnnotationId.value, 'sequence');
         }
@@ -124,7 +123,6 @@ export default defineComponent({
           setSelectedId(selectedAnnotationId.value, 'sequence');
         }
         setSelectedId(selectedAnnotationId.value);
-        //emit("selected", selectedAnnotationId.value);
         triggerUpdate();
       }
 
@@ -152,7 +150,6 @@ export default defineComponent({
           setSelectedId(selectedAnnotationId.value, 'pulse');
         }
         setSelectedId(selectedAnnotationId.value);
-        //emit("selected", selectedAnnotationId.value);
       }
       if (type === "annotation-clicked") {
         if (selectedAnnotationId.value !== null) {
@@ -196,7 +193,6 @@ export default defineComponent({
           localAnnotations.value[foundIndex].editing = undefined;
         }
         setSelectedId(selectedAnnotationId.value, 'pulse');
-        //emit("selected", selectedAnnotationId.value);
         triggerUpdate();
       }
       if (type === "update:geojson") {
@@ -450,19 +446,20 @@ export default defineComponent({
       if (props.spectroInfo) {
         if (!compressedOverlayLayer) {
           compressedOverlayLayer = new CompressedOverlayLayer(props.geoViewerRef, props.spectroInfo);
-        } else {
-          compressedOverlayLayer.spectroInfo = props.spectroInfo;
         }
+        compressedOverlayLayer.spectroInfo = props.spectroInfo;
+        compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         if (!editAnnotationLayer) {
         editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
-        } else {
-          editAnnotationLayer.spectroInfo = props.spectroInfo;
         }
+        editAnnotationLayer.spectroInfo = props.spectroInfo;
+        editAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         if (!rectAnnotationLayer) {
-        rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
-        } else {
-          rectAnnotationLayer.spectroInfo = props.spectroInfo;
+          rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
         }
+        rectAnnotationLayer.spectroInfo = props.spectroInfo;
+        rectAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        
         if (!temporalAnnotationLayer) {
         temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
         } {
@@ -478,32 +475,34 @@ export default defineComponent({
         temporalAnnotationLayer.redraw();
         if (!props.thumbnail) {
           if (!legendLayer) {
-          legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
-          } else {
-            legendLayer.spectroInfo = props.spectroInfo;
-            legendLayer.createLabels();
-            legendLayer.calcGridLines();
-          }
+            legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
+          } 
+          legendLayer.spectroInfo = props.spectroInfo;
+          legendLayer.createLabels();
+          legendLayer.calcGridLines();
+          legendLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          legendLayer.onPan();
           if (!timeLayer) {
-          timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
-          } else {
-            timeLayer.spectroInfo = props.spectroInfo;
-          }
+            timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
+          } 
+          timeLayer.spectroInfo = props.spectroInfo;
+          timeLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!freqLayer) {
-          freqLayer = new FreqLayer(props.geoViewerRef, event, props.spectroInfo);
-          } else {
-            freqLayer.spectroInfo = props.spectroInfo;
-          }
+            freqLayer = new FreqLayer(props.geoViewerRef, event, props.spectroInfo);
+          } 
+          freqLayer.spectroInfo = props.spectroInfo;
+          freqLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+         
           if (!speciesSequenceLayer) {
-          speciesSequenceLayer = new SpeciesSequenceLayer(props.geoViewerRef, event, props.spectroInfo);
-          } else {
-            speciesSequenceLayer.spectroInfo = props.spectroInfo;
+            speciesSequenceLayer = new SpeciesSequenceLayer(props.geoViewerRef, event, props.spectroInfo);
           }
+          speciesSequenceLayer.spectroInfo = props.spectroInfo;
+          speciesSequenceLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!speciesLayer) {
           speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
-          } else {
-            speciesLayer.spectroInfo = props.spectroInfo;
-          }
+          } 
+          speciesLayer.spectroInfo = props.spectroInfo;
+          speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
 
           timeLayer.setDisplaying({pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations});
           timeLayer.formatData(localAnnotations.value, temporalAnnotations.value);
@@ -590,10 +589,9 @@ export default defineComponent({
           colorScale.value,
           props.yScale,
         );
-        temporalAnnotationLayer.redraw();
       }
-
-
+      // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
+      legendLayer.onPan();
     });
     watch(viewCompressedOverlay, () => {
       if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {

@@ -327,11 +327,11 @@ export default defineComponent({
             >
               <div>
                 <b>xScale:</b>
-                <span v-if="timeRef >= 0">{{ scaledVals.x.toFixed(2) }}x</span>
+                <span>{{ scaledVals.x.toFixed(2) }}x</span>
               </div>
               <div>
                 <b>ySAcale:</b>
-                <span v-if="freqRef >= 0">{{ scaledVals.y.toFixed(2) }}x</span>
+                <span>{{ scaledVals.y.toFixed(2) }}x</span>
               </div>
             </v-col>
 
@@ -490,6 +490,7 @@ export default defineComponent({
         :recording-id="id"
         :other-user-annotations="otherUserAnnotations"
         :grid="gridEnabled"
+        :compressed="compressed"
         class="spectro-main"
         @selected="setSelection($event)"
         @create:annotation="getAnnotationsList($event)"

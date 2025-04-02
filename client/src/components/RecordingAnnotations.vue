@@ -4,10 +4,12 @@ import { ref } from "vue";
 import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
 import { getNABatRecordingFileAnnotations } from "../api/NABatApi";
+import RecordingAnnotationDetails from "./RecordingAnnotationDetails.vue";
 export default defineComponent({
   name: "AnnotationList",
   components: {
     RecordingAnnotationEditor,
+    RecordingAnnotationDetails,
   },
   props: {
     species: {
@@ -28,6 +30,8 @@ export default defineComponent({
     const selectedAnnotation: Ref<null | FileAnnotation> = ref(null);
     const annotationState: Ref<'creating' | 'editing' | null> = ref(null);
     const annotations: Ref<FileAnnotation[]> = ref([]);
+    const detailsDialog = ref(false);
+    const detailRecordingId = ref(-1);
 
     const setSelectedId = (annotation: FileAnnotation) => {
       if (!props.type) {
@@ -74,6 +78,11 @@ export default defineComponent({
       }
     };
 
+    const loadDetails = async (id: number) => {
+      detailRecordingId.value = id;
+      detailsDialog.value = true;
+    };
+
     return {
       selectedAnnotation,
       annotationState,
@@ -81,6 +90,9 @@ export default defineComponent({
       setSelectedId,
       addAnnotation,
       updatedAnnotation,
+      loadDetails,
+      detailsDialog,
+      detailRecordingId,
     };
   },
 });
@@ -114,7 +126,14 @@ export default defineComponent({
       >
         <v-row>
           <v-col class="annotation-owner">
-            <span>{{ annotation.owner }}</span>
+            <div>{{ annotation.owner }}</div>
+            <v-btn
+              v-if="annotation.hasDetails"
+              size="small"
+              @click.stop.prevent="loadDetails(annotation.id)"
+            >
+              Details
+            </v-btn>
           </v-col>
           <v-col class="annotation-confidence">
             <span>{{ annotation.confidence }} </span>
@@ -153,6 +172,15 @@ export default defineComponent({
       @update:annotation="updatedAnnotation()"
       @delete:annotation="updatedAnnotation(true)"
     />
+    <v-dialog
+      v-model="detailsDialog"
+      width="600"
+    >
+      <RecordingAnnotationDetails
+        :recording-id="detailRecordingId"
+        @close="detailsDialog = false"
+      />
+    </v-dialog>
   </div>
 </template>
 
