@@ -36,7 +36,7 @@ export interface Recording {
     unusual_occurrences?: string;
 }
 
-export interface AcousticFiles {
+export interface NATBatFiles {
     id: number,
     recording_time: string;
     recording_location: string | null;
@@ -382,7 +382,7 @@ export interface ProcessingTask {
     error? : string;
     info?: string;
     status: 'Complete' | 'Running' | 'Error' | 'Queued';
-    metadata: Record<string, unknown> & { type?: 'AcousticBatchProcessing' } & { batchId: string };
+    metadata: Record<string, unknown> & { type?: 'NABatRecordingProcessing' } & { recordingId: string };
     output_metadata: Record<string, unknown>;
 }
 export interface ProcessingTaskDetails {

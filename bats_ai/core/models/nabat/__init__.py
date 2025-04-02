@@ -1,11 +1,11 @@
-from .acoustic_batch import AcousticBatch
-from .acoustic_batch_annotation import AcousticBatchAnnotation
 from .nabat_compressed_spectrogram import NABatCompressedSpectrogram
+from .nabat_recording import NABatRecording
+from .nabat_recording_annotation import NABatRecordingAnnotation
 from .nabat_spectrogram import NABatSpectrogram
 
 __all__ = [
     'NABatSpectrogram',
     'NABatCompressedSpectrogram',
-    'AcousticBatch',
-    'AcousticBatchAnnotation',
+    'NABatRecording',
+    'NABatRecordingAnnotation',
 ]

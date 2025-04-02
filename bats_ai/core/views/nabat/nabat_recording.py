@@ -6,12 +6,12 @@ from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import ProcessingTask, colormap
 from bats_ai.core.models.nabat import (
-    AcousticBatch,
-    AcousticBatchAnnotation,
     NABatCompressedSpectrogram,
+    NABatRecording,
+    NABatRecordingAnnotation,
 )
 from bats_ai.core.views.species import SpeciesSchema
-from bats_ai.tasks.nabat.nabat_data_retrieval import acoustic_batch_initialize
+from bats_ai.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
 from bats_ai.tasks.tasks import predict_compressed
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 router = RouterPaginated()
 
 
-class AcousticBatchSchema(Schema):
+class NABatRecordingSchema(Schema):
     name: str
-    batch_id: int
+    recording_id: int
     recorded_date: str | None
     equipment: str | None
     comments: str | None
@@ -31,12 +31,12 @@ class AcousticBatchSchema(Schema):
     grts_cell: int | None
 
 
-class AcousticBatchGenerateSchema(Schema):
+class NABatRecordingGenerateSchema(Schema):
     apiToken: str
-    batchId: int
+    recordingId: int
 
 
-class AcousticBatchAnnotationSchema(Schema):
+class NABatRecordingAnnotationSchema(Schema):
     species: list[SpeciesSchema] | None
     comments: str | None = None
     model: str | None = None
@@ -44,7 +44,7 @@ class AcousticBatchAnnotationSchema(Schema):
     id: int | None = None
 
     @classmethod
-    def from_orm(cls, obj: AcousticBatchAnnotation, **kwargs):
+    def from_orm(cls, obj: NABatRecordingAnnotation, **kwargs):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             confidence=obj.confidence,
@@ -55,50 +55,50 @@ class AcousticBatchAnnotationSchema(Schema):
 
 
 @router.post('/')
-def generate_acoustic_batch(
+def generate_nabat_recording(
     request: HttpRequest,
-    payload: Form[AcousticBatchGenerateSchema],
+    payload: Form[NABatRecordingGenerateSchema],
 ):
     existing_task = ProcessingTask.objects.filter(
-        metadata__batchId=payload.batchId,
+        metadata__recordingId=payload.recordingId,
         status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING],
     ).first()
 
     if existing_task:
         return {
-            'error': 'A task is already processing this batchId.',
+            'error': 'A task is already processing this recordingId.',
             'taskId': existing_task.celery_id,
             'status': existing_task.status,
         }, 400
 
-    acoustic_batch = AcousticBatch.objects.filter(batch_id=payload.batchId)
-    if not acoustic_batch.exists():
+    nabat_recording = NABatRecording.objects.filter(recording_id=payload.recordingId)
+    if not nabat_recording.exists():
         # use a task to start downloading the file using the API key and generate the spectrograms
-        task = acoustic_batch_initialize.delay(payload.batchId, payload.apiToken)
+        task = nabat_recording_initialize.delay(payload.recordingId, payload.apiToken)
         ProcessingTask.objects.create(
-            name=f'Processing Acoustic BatchId {payload.batchId}',
+            name=f'Processing Recording {payload.recordingId}',
             status=ProcessingTask.Status.QUEUED,
             metadata={
-                'type': 'AcousticBatchProcessing',
-                'batchId': payload.batchId,
+                'type': 'NABatRecordingProcessing',
+                'recordingId': payload.recordingId,
             },
             celery_id=task.id,
         )
         return {'taskId': task.id}
-    return {'acousticId': acoustic_batch.first().pk}
+    return {'recordingId': nabat_recording.first().pk}
 
 
 @router.get('/')
-def get_acoustic_batch_spectrogram(request: HttpRequest, id: int):
+def get_nabat_recording_spectrogram(request: HttpRequest, id: int):
     try:
-        acoustic_batch = AcousticBatch.objects.get(batch_id=id)
-    except AcousticBatch.DoesNotExist:
-        return {'error': 'AcousticBatch not found'}
+        nabat_recording = NABatRecording.objects.get(recording_id=id)
+    except NABatRecording.DoesNotExist:
+        return {'error': 'NABatRecording not found'}
 
     with colormap(None):
-        spectrogram = acoustic_batch.spectrogram
+        spectrogram = nabat_recording.spectrogram
 
-    compressed = acoustic_batch.compressed_spectrogram
+    compressed = nabat_recording.compressed_spectrogram
 
     spectro_data = {
         'url': spectrogram.image_url,
@@ -124,13 +124,13 @@ def get_acoustic_batch_spectrogram(request: HttpRequest, id: int):
     return spectro_data
 
 
-@router.get('/{acoustic_batch_id}/recording-annotations')
-def get_acoustic_batch_annotation(request: HttpRequest, acoustic_batch_id: int):
-    fileAnnotations = AcousticBatchAnnotation.objects.filter(
-        acoustic_batch=acoustic_batch_id
+@router.get('/{nabat_recording_id}/recording-annotations')
+def get_nabat_recording_annotation(request: HttpRequest, nabat_recording_id: int):
+    fileAnnotations = NABatRecordingAnnotation.objects.filter(
+        nabat_recording=nabat_recording_id
     ).order_by('confidence')
     output = [
-        AcousticBatchAnnotationSchema.from_orm(fileAnnotation).dict()
+        NABatRecordingAnnotationSchema.from_orm(fileAnnotation).dict()
         for fileAnnotation in fileAnnotations
     ]
     return output
@@ -139,9 +139,9 @@ def get_acoustic_batch_annotation(request: HttpRequest, acoustic_batch_id: int):
 @router.post('/{id}/spectrogram/compressed/predict')
 def predict_spectrogram_compressed(request: HttpRequest, id: int):
     try:
-        recording = AcousticBatch.objects.get(pk=id)
+        recording = NABatRecording.objects.get(pk=id)
         compressed_spectrogram = NABatCompressedSpectrogram.objects.filter(
-            acoustic_batch=id
+            nabat_recording=id
         ).first()
     except compressed_spectrogram.DoesNotExist:
         return {'error': 'Compressed Spectrogram'}
@@ -163,14 +163,14 @@ def predict_spectrogram_compressed(request: HttpRequest, id: int):
 @router.get('/{id}/spectrogram')
 def get_spectrogram(request: HttpRequest, id: int):
     try:
-        acoustic_batch = AcousticBatch.objects.get(pk=id)
-    except AcousticBatch.DoesNotExist:
+        nabat_recording = NABatRecording.objects.get(pk=id)
+    except NABatRecording.DoesNotExist:
         return {'error': 'Recording not found'}
 
     with colormap(None):
-        spectrogram = acoustic_batch.spectrogram
+        spectrogram = nabat_recording.spectrogram
 
-    compressed = acoustic_batch.compressed_spectrogram
+    compressed = nabat_recording.compressed_spectrogram
 
     spectro_data = {
         'url': spectrogram.image_url,
@@ -202,13 +202,13 @@ def get_spectrogram(request: HttpRequest, id: int):
 @router.get('/{id}/spectrogram/compressed')
 def get_spectrogram_compressed(request: HttpRequest, id: int):
     try:
-        acoustic_batch = AcousticBatch.objects.get(pk=id)
+        nabat_recording = NABatRecording.objects.get(pk=id)
         compressed_spectrogram = NABatCompressedSpectrogram.objects.filter(
-            acoustic_batch=id
+            nabat_recording=id
         ).first()
     except compressed_spectrogram.DoesNotExist:
         return {'error': 'Compressed Spectrogram'}
-    except acoustic_batch.DoesNotExist:
+    except nabat_recording.DoesNotExist:
         return {'error': 'Recording does not exist'}
 
     spectro_data = {

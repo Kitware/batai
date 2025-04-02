@@ -3,9 +3,9 @@ from .compressed_spectrogram import CompressedSpectrogramAdmin
 from .grts_cells import GRTSCellsAdmin
 from .image import ImageAdmin
 from .nabat.admin import (
-    AcousticBatch,
-    AcousticBatchAnnotation,
     NABatCompressedSpectrogram,
+    NABatRecording,
+    NABatRecordingAnnotation,
     NABatSpectrogram,
 )
 from .processing_task import ProcessingTaskAdmin
@@ -26,9 +26,9 @@ __all__ = [
     'CompressedSpectrogramAdmin',
     'RecordingAnnotationAdmin',
     # NABat Models
-    'AcousticBatchAnnotation',
+    'NABatRecordingAnnotation',
     'NABatCompressedSpectrogram',
     'NABatSpectrogram',
-    'AcousticBatch',
+    'NABatRecording',
     'ProcessingTaskAdmin',
 ]

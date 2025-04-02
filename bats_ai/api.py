@@ -12,7 +12,7 @@ from bats_ai.core.views import (
     RecordingRouter,
     SpeciesRouter,
 )
-from bats_ai.core.views.nabat import AcouticBatchRouter
+from bats_ai.core.views.nabat import NABatRecordingRouter
 
 logger = logging.getLogger(__name__)
 
@@ -40,4 +40,4 @@ api.add_router('/guano/', GuanoMetadataRouter)
 api.add_router('/recording-annotation/', RecordingAnnotationRouter)
 api.add_router('/configuration/', ConfigurationRouter)
 api.add_router('/processing-task/', ProcessingTaskRouter)
-api.add_router('/nabat/acoustic-batch/', AcouticBatchRouter)
+api.add_router('/nabat/recording/', NABatRecordingRouter)

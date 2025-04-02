@@ -28,9 +28,9 @@ class colormap:
 
 
 # TimeStampedModel also provides "created" and "modified" fields
-class AcousticBatch(TimeStampedModel, models.Model):
+class NABatRecording(TimeStampedModel, models.Model):
     name = models.CharField(max_length=255)
-    batch_id = models.BigIntegerField(blank=False, null=False, unique=True)
+    recording_id = models.BigIntegerField(blank=False, null=False, unique=True)
     equipment = models.TextField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
     recording_location = models.GeometryField(srid=4326, blank=True, null=True)
@@ -45,17 +45,17 @@ class AcousticBatch(TimeStampedModel, models.Model):
     nabat_manual_species = models.ForeignKey(Species, null=True, on_delete=models.SET_NULL)
     species_list = models.TextField(blank=True, null=True)
     nabat_auto_species = models.ForeignKey(
-        Species, null=True, on_delete=models.SET_NULL, related_name='acousticbatch_auto_species'
+        Species, null=True, on_delete=models.SET_NULL, related_name='nabatrecording_auto_species'
     )
     nabat_manual_species = models.ForeignKey(
-        Species, null=True, on_delete=models.SET_NULL, related_name='acousticbatch_manual_species'
+        Species, null=True, on_delete=models.SET_NULL, related_name='nabatrecording_manual_species'
     )
     computed_species = models.ManyToManyField(
-        Species, related_name='acousticbatch_computed_species'  # Changed related name
+        Species, related_name='nabatrecording_computed_species'  # Changed related name
     )  # species from a computed sense
 
     official_species = models.ManyToManyField(
-        Species, related_name='acousticbatch_official_species'  # Changed related name
+        Species, related_name='nabatrecording_official_species'  # Changed related name
     )  # species that are detemrined by the owner or from annotations as official species list
 
     unusual_occurrences = models.TextField(blank=True, null=True)
@@ -68,7 +68,7 @@ class AcousticBatch(TimeStampedModel, models.Model):
     def spectrograms(self):
         from bats_ai.core.models.nabat import NABatSpectrogram
 
-        query = NABatSpectrogram.objects.filter(acoustic_batch=self, colormap=COLORMAP).order_by(
+        query = NABatSpectrogram.objects.filter(nabat_recording=self, colormap=COLORMAP).order_by(
             '-created'
         )
         return query.all()
@@ -92,7 +92,7 @@ class AcousticBatch(TimeStampedModel, models.Model):
     def compressed_spectrograms(self):
         from bats_ai.core.models.nabat import NABatCompressedSpectrogram
 
-        query = NABatCompressedSpectrogram.objects.filter(acoustic_batch=self).order_by('-created')
+        query = NABatCompressedSpectrogram.objects.filter(nabat_recording=self).order_by('-created')
         return query.all()
 
     @property
@@ -107,5 +107,5 @@ class AcousticBatch(TimeStampedModel, models.Model):
         return spectrogram
 
     class Meta:
-        verbose_name = 'NABat Acoustic Batch'
-        verbose_name_plural = 'NABat Acoustic Batches'
+        verbose_name = 'NABat Recording'
+        verbose_name_plural = 'NABat Recording'

@@ -3,7 +3,7 @@ import { defineComponent, onMounted, PropType, Ref } from "vue";
 import { ref } from "vue";
 import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
-import { getAcousticFileAnnotations } from "../api/NABatApi";
+import { getNABatRecordingFileAnnotations } from "../api/NABatApi";
 export default defineComponent({
   name: "AnnotationList",
   components: {
@@ -37,7 +37,7 @@ export default defineComponent({
 
     const loadFileAnnotations = async () => {
       if (props.type === 'nabat') {
-        annotations.value = (await getAcousticFileAnnotations(props.recordingId)).data;
+        annotations.value = (await getNABatRecordingFileAnnotations(props.recordingId)).data;
       } else {
         annotations.value = (await getFileAnnotations(props.recordingId)).data;
       }

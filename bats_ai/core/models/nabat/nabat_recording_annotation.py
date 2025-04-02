@@ -4,11 +4,11 @@ from django_extensions.db.models import TimeStampedModel
 
 from bats_ai.core.models import Species
 
-from .acoustic_batch import AcousticBatch
+from .nabat_recording import NABatRecording
 
 
-class AcousticBatchAnnotation(TimeStampedModel, models.Model):
-    acoustic_batch = models.ForeignKey(AcousticBatch, on_delete=models.CASCADE)
+class NABatRecordingAnnotation(TimeStampedModel, models.Model):
+    nabat_recording = models.ForeignKey(NABatRecording, on_delete=models.CASCADE)
     species = models.ManyToManyField(Species)
     comments = models.TextField(blank=True, null=True)
     model = models.TextField(blank=True, null=True)  # AI Model information if inference used
@@ -25,5 +25,5 @@ class AcousticBatchAnnotation(TimeStampedModel, models.Model):
     )
 
     class Meta:
-        verbose_name = 'NABat Acoustic Batch Annotation'
-        verbose_name_plural = 'NABat Acoustic Batch Annotations'
+        verbose_name = 'NABat Recording Annotation'
+        verbose_name_plural = 'NABat Recording Annotations'
