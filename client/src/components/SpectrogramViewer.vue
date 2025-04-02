@@ -26,21 +26,28 @@ export default defineComponent({
     },
     spectroInfo: {
       type: Object as PropType<SpectroInfo>,
-        required: true,
+      required: true,
     },
     recordingId: {
       type: String as PropType<string | null>,
       required: true,
     },
+    compressed: {
+      type: Boolean,
+      required: true,
+    }
   },
-  emits: [
-    "update:annotation",
-    "create:annotation",
-    "geoViewerRef",
-    "hoverData",
-  ],
+  emits: ["update:annotation", "create:annotation", "geoViewerRef", "hoverData"],
   setup(props, { emit }) {
-    const { annotations, temporalAnnotations, selectedId, selectedType, creationType, blackBackground, scaledVals } = useState();
+    const {
+      annotations,
+      temporalAnnotations,
+      selectedId,
+      selectedType,
+      creationType,
+      blackBackground,
+      scaledVals,
+    } = useState();
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized = ref(false);
@@ -48,7 +55,9 @@ export default defineComponent({
     const scaledWidth = ref(0);
     const scaledHeight = ref(0);
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
-    const tileURL = props.spectroInfo.spectroId ? `${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/v1/dynamic/spectrograms/${props.spectroInfo.spectroId}/tiles/{z}/{x}/{y}.png/` : "";
+    const tileURL = props.spectroInfo.spectroId
+      ? `${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/v1/dynamic/spectrograms/${props.spectroInfo.spectroId}/tiles/{z}/{x}/{y}.png/`
+      : "";
     const setCursor = (newCursor: string) => {
       cursor.value = newCursor;
     };
@@ -80,36 +89,34 @@ export default defineComponent({
       if (!props.spectroInfo) {
         return;
       }
-      const adjustedWidth = scaledWidth.value > props.spectroInfo.width ? scaledWidth.value : props.spectroInfo.width;
-      const adjustedHeight = scaledHeight.value > props.spectroInfo.height ? scaledHeight.value : props.spectroInfo.height;
+      const adjustedWidth =
+        scaledWidth.value > props.spectroInfo.width ? scaledWidth.value : props.spectroInfo.width;
+      const adjustedHeight =
+        scaledHeight.value > props.spectroInfo.height
+          ? scaledHeight.value
+          : props.spectroInfo.height;
 
       const freq =
         adjustedHeight - y >= 0
-          ? ((adjustedHeight - y) *
-            (props.spectroInfo.high_freq - props.spectroInfo.low_freq)) /
-          adjustedHeight /
-          1000 +
-          props.spectroInfo.low_freq / 1000
+          ? ((adjustedHeight - y) * (props.spectroInfo.high_freq - props.spectroInfo.low_freq)) /
+              adjustedHeight /
+              1000 +
+            props.spectroInfo.low_freq / 1000
           : -1;
 
-      if (!props.spectroInfo.end_times && !props.spectroInfo.start_times) {
+      if (!props.compressed) {
         if (x >= 0 && adjustedHeight - y >= 0) {
           const time =
-            x *
-            ((props.spectroInfo.end_time - props.spectroInfo.start_time) / adjustedWidth);
+            x * ((props.spectroInfo.end_time - props.spectroInfo.start_time) / adjustedWidth);
           emit("hoverData", { time, freq });
         } else {
           emit("hoverData", { time: -1, freq: -1 });
         }
-      } else if (
-        props.spectroInfo &&
-        props.spectroInfo.start_times &&
-        props.spectroInfo.end_times
-      ) {
+      } else if (props.compressed && props.spectroInfo.start_times && props.spectroInfo.end_times) {
         // compressed view
         if (x >= 0 && adjustedHeight - y >= 0) {
           const timeLength = props.spectroInfo.end_time - props.spectroInfo.start_time;
-          const timeToPixels = adjustedWidth / timeLength;
+          const timeToPixels = (adjustedWidth / timeLength) * scaledVals.value.x;
           // find X in the range
           let offsetAdditive = 0;
           for (let i = 0; i < props.spectroInfo.start_times.length; i += 1) {
@@ -131,7 +138,12 @@ export default defineComponent({
         }
       }
     };
-    onMounted(() => initialized.value = false);
+    onMounted(() => {
+      initialized.value = false;
+      scaledHeight.value = 0;
+      scaledWidth.value = 0;
+      scaledVals.value = { x: 1, y: 1 };
+    });
     watch([containerRef], () => {
       scaledWidth.value = props.spectroInfo?.width;
       scaledHeight.value = props.spectroInfo?.height;
@@ -139,138 +151,213 @@ export default defineComponent({
         const { naturalWidth, naturalHeight } = props.image;
         scaledWidth.value = naturalWidth;
         scaledHeight.value = naturalHeight;
-
       }
       if (containerRef.value) {
-      if (!geoJS.getGeoViewer().value) {
-        geoJS.initializeViewer(containerRef.value, scaledWidth.value, scaledHeight.value, false, props.image ? 'quad' : 'tile', tileURL);
-        geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
+        if (!geoJS.getGeoViewer().value) {
+          geoJS.initializeViewer(
+            containerRef.value,
+            scaledWidth.value,
+            scaledHeight.value,
+            false,
+            props.image ? "quad" : "tile",
+            tileURL
+          );
+          geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
+        }
       }
-    }
       if (props.image) {
         geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value);
       } else {
         const scaledTileWidth = (scaledWidth.value / props.spectroInfo?.width) * 256;
         const scaledTileHeight = (scaledHeight.value / props.spectroInfo?.height) * 256;
-        geoJS.updateMapSize(tileURL, scaledWidth.value, scaledHeight.value, scaledTileWidth, scaledTileHeight);
+        geoJS.updateMapSize(
+          tileURL,
+          scaledWidth.value,
+          scaledHeight.value,
+          scaledTileWidth,
+          scaledTileHeight
+        );
       }
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
-    });
-
-    watch(() => props.spectroInfo, () => {
-
-      scaledHeight.value = props.spectroInfo?.height;
-      if (props.image) {
-        const { naturalWidth, naturalHeight } = props.image;
-        scaledWidth.value = naturalWidth;
-        scaledHeight.value = naturalHeight;
-
+      if (props.compressed) {
+        scaledVals.value = { x: 2.5, y: 1 };
+        let baseWidth = 0;
+          let baseHeight = 0;
+        if (props.image) {
+          const { naturalWidth, naturalHeight } = props.image;
+          baseWidth = naturalWidth;
+          baseHeight = naturalHeight;
+        } else if (props.spectroInfo) {
+          baseWidth = props.spectroInfo.width;
+          baseHeight = props.spectroInfo.height;
+        }
+        scaledWidth.value = baseWidth * scaledVals.value.x; // Maintain aspect ratio
+        if (scaledWidth.value < baseWidth) {
+          scaledWidth.value = baseWidth;
+        }
+        if (props.image) {
+          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+        } else {
+          const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
+          const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
+          geoJS.updateMapSize(
+            tileURL,
+            scaledWidth.value,
+            scaledHeight.value,
+            scaledTileWidth,
+            scaledTileHeight
+          );
+        }
       }
-      geoJS.resetMapDimensions(scaledWidth.value, scaledHeight.value);
-      geoJS.getGeoViewer().value.bounds({
-      left: 0,
-      top: 0,
-      bottom: scaledHeight.value,
-      right: scaledWidth.value,
-      });
-      if (props.image) {
-        geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value);
-      } 
+
     });
 
-    const updateAnnotation = async (annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation) => {
+    watch(
+      () => props.spectroInfo,
+      () => {
+        scaledHeight.value = props.spectroInfo?.height;
+        if (props.image) {
+          const { naturalWidth, naturalHeight } = props.image;
+          scaledWidth.value = naturalWidth;
+          scaledHeight.value = naturalHeight;
+        }
+        geoJS.resetMapDimensions(scaledWidth.value, scaledHeight.value);
+        geoJS.getGeoViewer().value.bounds({
+          left: 0,
+          top: 0,
+          bottom: scaledHeight.value,
+          right: scaledWidth.value,
+        });
+        if (props.image) {
+          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value);
+        }
+      }
+    );
+
+    const updateAnnotation = async (
+      annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation
+    ) => {
       // We call the patch on the selected annotation
       if (props.recordingId !== null && selectedId.value !== null) {
-        if (selectedType.value === 'pulse') {
+        if (selectedType.value === "pulse") {
           await patchAnnotation(props.recordingId, selectedId.value, annotation);
-        } else if (selectedType.value === 'sequence') {
+        } else if (selectedType.value === "sequence") {
           await patchTemporalAnnotation(props.recordingId, selectedId.value, annotation);
         }
         emit("update:annotation", annotation);
       }
     };
 
-    const createAnnotation = async (annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation) => {
+    const createAnnotation = async (
+      annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation
+    ) => {
       // We call the patch on the selected annotation
       if (props.recordingId !== null) {
-        if (creationType.value === 'pulse') {
+        if (creationType.value === "pulse") {
           const response = await putAnnotation(props.recordingId, annotation);
           emit("create:annotation", response.data.id);
-        } else if (creationType.value === 'sequence') {
+        } else if (creationType.value === "sequence") {
           const response = await putTemporalAnnotation(props.recordingId, annotation);
           emit("create:annotation", response.data.id);
         }
       }
     };
     let skipNextSelected = false;
-    watch(
-      selectedId,
-      () => {
-        if (skipNextSelected) {
-          skipNextSelected = false;
-          return;
-
-        }
-        const found = selectedType.value === 'pulse' ? annotations.value.find((item) => item.id === selectedId.value) : temporalAnnotations.value.find((item) => item.id === selectedId.value);
-        if (found && props.spectroInfo) {
-
-          const center = spectroToCenter(found, props.spectroInfo, selectedType.value);
-          const x = center[0];
-          const y = center[1];
-          const bounds = geoJS.getGeoViewer().value.bounds();
-          if (x < bounds.left || x > bounds.right) {
-            geoJS.getGeoViewer().value.center({ x, y });
-          }
+    watch(selectedId, () => {
+      if (skipNextSelected) {
+        skipNextSelected = false;
+        return;
+      }
+      const found =
+        selectedType.value === "pulse"
+          ? annotations.value.find((item) => item.id === selectedId.value)
+          : temporalAnnotations.value.find((item) => item.id === selectedId.value);
+      if (found && props.spectroInfo) {
+        const center = spectroToCenter(found, props.spectroInfo, selectedType.value);
+        const x = center[0];
+        const y = center[1];
+        const bounds = geoJS.getGeoViewer().value.bounds();
+        if (x < bounds.left || x > bounds.right) {
+          geoJS.getGeoViewer().value.center({ x, y });
         }
       }
-    );
+    });
 
     const wheelEvent = (event: WheelEvent) => {
       let baseWidth = 0;
-      let baseHeight = 0; 
+      let baseHeight = 0;
       if (props.image) {
-      const { naturalWidth, naturalHeight } = props.image;
-      baseWidth = naturalWidth;
-      baseHeight = naturalHeight;
+        const { naturalWidth, naturalHeight } = props.image;
+        baseWidth = naturalWidth;
+        baseHeight = naturalHeight;
       } else if (props.spectroInfo) {
         baseWidth = props.spectroInfo.width;
         baseHeight = props.spectroInfo.height;
       }
 
+      const incrementX = 0.1; // Scaling increment
+      const incrementY = 0.1; // Scaling increment
+
       if (event.ctrlKey) {
-        scaledWidth.value = scaledWidth.value + event.deltaY * -4;
+        if (event.deltaY > 0) {
+          scaledVals.value.x -= incrementX;
+        } else {
+          scaledVals.value.x += incrementX;
+        }
+        if (scaledVals.value.x < 1) {
+          scaledVals.value.x = 1;
+        }
+        scaledWidth.value = baseWidth * scaledVals.value.x; // Maintain aspect ratio
         if (scaledWidth.value < baseWidth) {
           scaledWidth.value = baseWidth;
         }
+
         if (props.image) {
-        geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
-      } else if (tileURL) {
-        const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
-        const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
-        geoJS.updateMapSize(tileURL, scaledWidth.value, scaledHeight.value, scaledTileWidth, scaledTileHeight);
-      }
+          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+        } else if (tileURL) {
+          const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
+          const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
+          geoJS.updateMapSize(
+            tileURL,
+            scaledWidth.value,
+            scaledHeight.value,
+            scaledTileWidth,
+            scaledTileHeight
+          );
+        }
       } else if (event.shiftKey) {
-        scaledHeight.value = scaledHeight.value + event.deltaY * -0.25;
+        if (event.deltaY > 0) {
+          scaledVals.value.y -= incrementY;
+        } else {
+          scaledVals.value.y += incrementY;
+        }
+        if (scaledVals.value.y < 1) {
+          scaledVals.value.y = 1;
+        }
+
+        scaledHeight.value = baseHeight * scaledVals.value.y;
+
         if (scaledHeight.value < baseHeight) {
           scaledHeight.value = baseHeight;
         }
         if (props.image) {
-        geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
-      } else {
-        const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
-        const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
-        geoJS.updateMapSize(tileURL, scaledWidth.value, scaledHeight.value, scaledTileWidth, scaledTileHeight);
+          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+        } else {
+          const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
+          const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
+          geoJS.updateMapSize(
+            tileURL,
+            scaledWidth.value,
+            scaledHeight.value,
+            scaledTileWidth,
+            scaledTileHeight
+          );
+        }
       }
-      }
-      const xScale = props.spectroInfo?.compressedWidth ? scaledWidth.value / props.spectroInfo.compressedWidth: scaledWidth.value / (props.spectroInfo?.width || 1) ;
-      const yScale = scaledHeight.value / (props.spectroInfo?.height || 1) ;
-      scaledVals.value = {x: xScale, y: yScale};
     };
 
     onUnmounted(() => geoJS.destroyGeoViewer());
-
-
 
     return {
       containerRef,
@@ -346,7 +433,6 @@ export default defineComponent({
       outline: none;
     }
   }
-
 
   .playback-container {
     flex: 1;
