@@ -75,15 +75,27 @@ export default defineComponent({
       </v-row>
       <v-row>
         <v-col cols="3">
-          <v-text-field
+          <div class="text-caption">
+            Stretch compressed spectrogram
+          </div>
+          <v-slider
             v-model="settings.spectrogramXStretch"
             density="compact"
             type="number"
             step="0.25"
-            min="1"
-            max="5"
-            label="Stretch spectrogram"
-          />
+            :min="1"
+            :max="10"
+          >
+            <template #append>
+              <v-text-field
+                :model-value="settings.spectrogramXStretch"
+                density="compact"
+                width="70"
+                readonly
+                hide-details
+              />
+            </template>
+          </v-slider>
         </v-col>
       </v-row>
       <v-row>
