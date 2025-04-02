@@ -36,7 +36,7 @@ export interface Recording {
     unusual_occurrences?: string;
 }
 
-export interface AcousticFiles {
+export interface NATBatFiles {
     id: number,
     recording_time: string;
     recording_location: string | null;
@@ -362,6 +362,7 @@ async function getCellfromLocation(latitude: number, longitude: number) {
     return axiosInstance.get<CellIDReponse>(`/grts/grid_cell_id`, {params: {latitude, longitude}});
 }
 
+
 export interface ConfigurationSettings {
 display_pulse_annotations: boolean;
 display_sequence_annotations: boolean;
@@ -376,6 +377,49 @@ async function getConfiguration() {
 async function patchConfiguration(config: ConfigurationSettings) {
     return axiosInstance.patch('/configuration/', {...config });
 }
+
+export interface ProcessingTask {
+    id: number;
+    created: string;
+    modified: string;
+    name: string;
+    file_items: number[];
+    error? : string;
+    info?: string;
+    status: 'Complete' | 'Running' | 'Error' | 'Queued';
+    metadata: Record<string, unknown> & { type?: 'NABatRecordingProcessing' } & { recordingId: string };
+    output_metadata: Record<string, unknown>;
+}
+export interface ProcessingTaskDetails {
+    name: string;
+    celery_data: {
+        "state": 'PENDING' | 'RECEIVED' | 'STARTED' | 'SUCCESS' | 'FAILURE' | 'RETRY' | 'REVOKED',
+        "status": ProcessingTask['status'],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        info: Record<string, any>
+        error:string;
+    }
+
+}  
+
+async function getProcessingTasks(): Promise<ProcessingTask[]> {
+    return (await axiosInstance.get('/processing-task')).data;
+  }
+
+  async function getProcessingTaskDetails(taskId: string): Promise<ProcessingTaskDetails> {
+    return (await axiosInstance.get(`/processing-task/${taskId}/details`)).data;
+  }
+
+  async function getFilteredProcessingTasks(
+    status: ProcessingTask['status'],
+  ): Promise<ProcessingTask[]> {
+    return (await axiosInstance.get('/processing-task/filtered/', { params: { status } })).data;
+  }
+
+  async function cancelProcessingTask(taskId: number): Promise<{ detail: string }> {
+    return (await axiosInstance.post(`/processing-task/${taskId}/cancel/`)).data;
+  }
+
 
 interface GuanoMetadata {
     nabat_grid_cell_grts_id?: string
@@ -431,5 +475,9 @@ export {
  deleteFileAnnotation,
  getConfiguration,
  patchConfiguration,
+ getProcessingTasks,
+ getProcessingTaskDetails,
+ cancelProcessingTask,
+ getFilteredProcessingTasks,
  getFileAnnotationDetails,
 };

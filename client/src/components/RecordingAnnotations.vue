@@ -3,6 +3,7 @@ import { defineComponent, onMounted, PropType, Ref } from "vue";
 import { ref } from "vue";
 import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
+import { getNABatRecordingFileAnnotations } from "../api/NABatApi";
 import RecordingAnnotationDetails from "./RecordingAnnotationDetails.vue";
 export default defineComponent({
   name: "AnnotationList",
@@ -18,6 +19,10 @@ export default defineComponent({
     recordingId: {
       type: Number,
       required: true,
+    },
+    type: {
+      type: String as PropType<'nabat' | null>,
+      default: () => null,
     }
   },
   emits: [],
@@ -29,11 +34,17 @@ export default defineComponent({
     const detailRecordingId = ref(-1);
 
     const setSelectedId = (annotation: FileAnnotation) => {
-      selectedAnnotation.value = annotation;
+      if (!props.type) {
+        selectedAnnotation.value = annotation;
+      }
     };
 
     const loadFileAnnotations = async () => {
-      annotations.value = (await getFileAnnotations(props.recordingId)).data;
+      if (props.type === 'nabat') {
+        annotations.value = (await getNABatRecordingFileAnnotations(props.recordingId)).data;
+      } else {
+        annotations.value = (await getFileAnnotations(props.recordingId)).data;
+      }
     };
 
     onMounted(() => loadFileAnnotations());
@@ -94,7 +105,7 @@ export default defineComponent({
         Annotations
       </v-col>
       <v-spacer />
-      <v-col>
+      <v-col v-if="!type">
         <v-btn
           :disabled="annotationState === 'creating'"
           @click="addAnnotation()"

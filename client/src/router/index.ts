@@ -6,6 +6,8 @@ import Login from '../views/Login.vue';
 
 import oauthClient from '../plugins/Oauth';
 import Admin from '../views/Admin.vue';
+import NABatRecording from '../views/NABatRecording.vue';
+import NABatSpectrogram from '../views/NABatSpectrogram.vue';
 
 function beforeEach(
   to: RouteLocationNormalized,
@@ -47,6 +49,20 @@ function routerInit(){
         path: '/recording/:id/spectrogram',
         component: Spectrogram,
         props: true,
+      },
+      {
+        path: '/nabat/:id/spectrogram',
+        component: NABatSpectrogram,
+        props: true,
+      },
+
+      {
+        path: '/nabat/:recordingId/',
+        component: NABatRecording,
+        props: (route) => ({
+          recordingId: parseInt(route.params.recordingId as string, 10),
+          apiToken: route.query.apiToken,
+        }),
       },
 
     ],
