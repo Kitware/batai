@@ -17,9 +17,9 @@ type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal' | 'duration';
 const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'duration', 'freq']);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
 const colorSchemes = [
+  { title: 'Inferno', scheme: interpolateInferno },
   { title: 'Cividis', scheme: interpolateCividis },
   { title: 'Viridis', scheme: interpolateViridis },
-  { title: 'Inferno', scheme: interpolateInferno },
   { title: 'Magma', scheme: interpolateMagma },
   { title: 'Plasma', scheme: interpolatePlasma },
   { title: 'Turbo', scheme: interpolateTurbo },
