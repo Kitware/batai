@@ -46,6 +46,7 @@ export default defineComponent({
       colorScale,
       colorSchemes,
       colorScheme,
+      backgroundColor,
       setSelectedUsers,
       createColorScale,
       currentUser,
@@ -68,6 +69,7 @@ export default defineComponent({
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
     const compressed =  ref(configuration.value.spectrogram_view === 'compressed');
+    const colorpickerMenu = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
       annotations.value = response.data.sort(
@@ -274,6 +276,8 @@ export default defineComponent({
       sideTab,
       colorSchemes,
       colorScheme,
+      backgroundColor,
+      colorpickerMenu,
       // Other user selection
       otherUserAnnotations,
       temporalAnnotations,
@@ -495,6 +499,32 @@ export default defineComponent({
               hide-details
               return-object
             />
+            <v-menu
+              v-model="colorpickerMenu"
+              :close-on-content-click="false"
+              offset-y
+            >
+              <template #activator="{ props: subProps }">
+                <v-tooltip text="Spectrogram background color">
+                  <template #activator="{ props: tooltipProps }">
+                    <v-btn
+                      v-bind="{ ...subProps, ...tooltipProps }"
+                      :style="{ backgroundColor: backgroundColor }"
+                      class="color-square mx-2"
+                    />
+                  </template>
+                </v-tooltip>
+              </template>
+              <v-card>
+                <v-card-text>
+                  <v-color-picker
+                    v-model="backgroundColor"
+                    mode="rbg"
+                    elevation="0"
+                  />
+                </v-card-text>
+              </v-card>
+            </v-menu>
           </v-row>
         </v-container>
       </v-toolbar>
@@ -592,5 +622,12 @@ export default defineComponent({
 <style scoped>
 .spectro-main {
   height: calc(100vh - 21vh - 64px - 72px);
+}
+
+.color-square {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 4px;
 }
 </style>
