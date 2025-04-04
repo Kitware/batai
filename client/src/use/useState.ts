@@ -26,6 +26,7 @@ const colorSchemes = [
 
 ];
 const colorScheme: Ref<{ title: string, scheme: (input: number) => string }> = ref(colorSchemes[0]);
+const backgroundColor = ref('rgba(0, 0, 0, 1)');
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref('');
 const selectedId: Ref<number | null> = ref(null);
@@ -114,6 +115,7 @@ export default function useState() {
     colorScale,
     colorSchemes,
     colorScheme,
+    backgroundColor,
     setSelectedUsers,
     selectedUsers,
     currentUser,

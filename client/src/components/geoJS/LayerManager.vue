@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
+import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch, watchEffect } from "vue";
 import * as d3 from "d3";
 import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
@@ -63,7 +63,7 @@ export default defineComponent({
       viewCompressedOverlay,
       configuration,
       colorScheme,
-      colorSchemes,
+      backgroundColor,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -530,7 +530,6 @@ export default defineComponent({
     };
     onMounted(() => {
       initLayers();
-      updateColorMap(colorScheme.value.scheme);
     });
 
     watch(() => props.spectroInfo, () => initLayers());
@@ -622,29 +621,27 @@ export default defineComponent({
       }
     );
     // Color scheme
-    const rValues = ref('0.267 0.283 0.254 0.207 0.164 0.128 0.135 0.267 0.477 0.741 0.906');
-    const gValues = ref('0.004 0.141 0.253 0.322 0.38 0.443 0.545 0.671 0.729 0.659 0.471');
-    const bValues = ref('0.329 0.458 0.529 0.552 0.557 0.553 0.492 0.369 0.216 0.149 0.047');
+    const rValues = ref('');
+    const gValues = ref('');
+    const bValues = ref('');
 
-    function updateColorMap(colorFunc: (input: number) => string) {
-      const redStops: number[] = [];
-      const greenStops: number[] = [];
-      const blueStops: number[] = [];
-      for (let i = 0; i <= 1.0; i += 0.1) {
-        const rgbStopString = colorFunc(i);
+    watchEffect(() => {
+      const backgroundRgbColor = d3.color(backgroundColor.value) as RGBColor;
+      const redStops: number[] = [backgroundRgbColor.r / 255];
+      const greenStops: number[] = [backgroundRgbColor.g / 255];
+      const blueStops: number[] = [backgroundRgbColor.b / 255];
+      for (let i = 0.1; i <= 1.0; i += 0.1) {
+        const rgbStopString = colorScheme.value.scheme(i);
         const color = d3.color(rgbStopString) as RGBColor;
         redStops.push(color.r / 255);
         greenStops.push(color.g / 255);
         blueStops.push(color.b / 255);
       }
-      rValues.value = redStops.join(" ");
-      gValues.value = greenStops.join(" ");
-      bValues.value = blueStops.join(" ");
-    }
-
-    watch(colorScheme, () => {
-      updateColorMap(colorScheme.value.scheme);
+      rValues.value = redStops.join(' ');
+      gValues.value = greenStops.join(' ');
+      bValues.value = blueStops.join(' ');
     });
+
     return {
       annotationState,
       localAnnotations,
@@ -694,7 +691,7 @@ export default defineComponent({
         result="grayscale"
       />
 
-      <!-- apply viridis color mapping -->
+      <!-- apply color scheme -->
       <feComponentTransfer>
         <feFuncR
           type="table"
