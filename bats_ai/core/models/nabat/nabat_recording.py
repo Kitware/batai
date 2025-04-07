@@ -31,6 +31,8 @@ class colormap:
 class NABatRecording(TimeStampedModel, models.Model):
     name = models.CharField(max_length=255)
     recording_id = models.BigIntegerField(blank=False, null=False, unique=True)
+    survey_event_id = models.BigIntegerField(blank=False, null=False)
+    acoustic_batch_id = models.BigIntegerField(blank=True, null=True)
     equipment = models.TextField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
     recording_location = models.GeometryField(srid=4326, blank=True, null=True)

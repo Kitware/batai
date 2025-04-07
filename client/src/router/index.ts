@@ -62,6 +62,8 @@ function routerInit(){
         props: (route) => ({
           recordingId: parseInt(route.params.recordingId as string, 10),
           apiToken: route.query.apiToken,
+          surveyEventId: parseInt(route.query.surveyEventId as string, 10),
+
         }),
       },
 

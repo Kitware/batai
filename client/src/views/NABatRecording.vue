@@ -11,6 +11,10 @@ import { useRouter } from 'vue-router';
         type: Number,
         required: true,
       },
+      surveyEventId: {
+        type: Number,
+        required: true,
+      },
       apiToken: {
         type: String,
         required: true,
@@ -55,7 +59,8 @@ import { useRouter } from 'vue-router';
 
       const checkNABatRecording = async () => {
         try {
-          const response = await postNABatRecording(props.recordingId, props.apiToken);
+          console.log(props.surveyEventId);
+          const response = await postNABatRecording(props.recordingId, props.surveyEventId, props.apiToken);
           if ('error' in response && response.error) {
             loading.value = false;
             errorMessage.value = response.error;
@@ -66,7 +71,7 @@ import { useRouter } from 'vue-router';
             loading.value = false;
             // Load in new NABatSpectrogramViewer either by route or component
             const id = (response as NABatRecordingDataResponse).recordingId;
-            router.push(`/nabat/${id}/spectrogram`);
+            router.push(`/nabat/${id}/spectrogram?apiToken=${props.apiToken}`);
           }
         } catch (error) {
           errorMessage.value = 'Failed to start processing';

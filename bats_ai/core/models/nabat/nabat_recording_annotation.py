@@ -11,6 +11,16 @@ class NABatRecordingAnnotation(TimeStampedModel, models.Model):
     nabat_recording = models.ForeignKey(NABatRecording, on_delete=models.CASCADE)
     species = models.ManyToManyField(Species)
     comments = models.TextField(blank=True, null=True)
+    user_id = models.UUIDField(
+        blank=True,
+        null=True,
+        help_text='User ID of the person who created the annotation',
+    )
+    user_email = models.TextField(
+        blank=True,
+        null=True,
+        help_text='User ID of the person who created the annotation',
+    )
     model = models.TextField(blank=True, null=True)  # AI Model information if inference used
     confidence = models.FloatField(
         default=1.0,

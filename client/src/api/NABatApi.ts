@@ -15,10 +15,11 @@ function isNABatRecordingCompleteResponse(response: NABatRecordingResponse): res
     return "taskId" in response;
 }
 
-async function postNABatRecording(recordingId: number, apiToken: string) {
+async function postNABatRecording(recordingId: number, surveyEventId: number, apiToken: string) {
     const formData = new FormData();
     formData.append('recordingId', recordingId.toString());
     formData.append('apiToken', apiToken);
+    formData.append('surveyEventId', surveyEventId.toString());
     const response =  (await (axiosInstance.post<NABatRecordingResponse>('/nabat/recording/', formData))).data;
     if (isNABatRecordingCompleteResponse(response)) {
         return response as NABatRecordingCompleteResponse;

@@ -199,7 +199,7 @@ export default defineComponent({
                 <span v-if="timeRef >= 0">{{ scaledVals.x.toFixed(2) }}x</span>
               </div>
               <div>
-                <b>ySAcale:</b>
+                <b>yScale:</b>
                 <span v-if="freqRef >= 0">{{ scaledVals.y.toFixed(2) }}x</span>
               </div>
             </v-col>
@@ -328,6 +328,7 @@ export default defineComponent({
         :spectro-info="spectroInfo"
         :recording-id="id"
         :grid="gridEnabled"
+        :compressed="compressed"
         class="spectro-main"
         @selected="setSelection($event)"
         @geo-viewer-ref="setParentGeoViewer($event)"

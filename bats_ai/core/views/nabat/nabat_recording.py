@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 
 from django.http import HttpRequest
 from ninja import Form, Schema
@@ -34,6 +35,7 @@ class NABatRecordingSchema(Schema):
 class NABatRecordingGenerateSchema(Schema):
     apiToken: str
     recordingId: int
+    surveyEventId: int
 
 
 class NABatRecordingAnnotationSchema(Schema):
@@ -74,7 +76,9 @@ def generate_nabat_recording(
     nabat_recording = NABatRecording.objects.filter(recording_id=payload.recordingId)
     if not nabat_recording.exists():
         # use a task to start downloading the file using the API key and generate the spectrograms
-        task = nabat_recording_initialize.delay(payload.recordingId, payload.apiToken)
+        task = nabat_recording_initialize.delay(
+            payload.recordingId, payload.surveyEventId, payload.apiToken
+        )
         ProcessingTask.objects.create(
             name=f'Processing Recording {payload.recordingId}',
             status=ProcessingTask.Status.QUEUED,
@@ -125,10 +129,18 @@ def get_nabat_recording_spectrogram(request: HttpRequest, id: int):
 
 
 @router.get('/{nabat_recording_id}/recording-annotations')
-def get_nabat_recording_annotation(request: HttpRequest, nabat_recording_id: int):
-    fileAnnotations = NABatRecordingAnnotation.objects.filter(
-        nabat_recording=nabat_recording_id
-    ).order_by('confidence')
+def get_nabat_recording_annotation(
+    request: HttpRequest,
+    nabat_recording_id: int,
+    user_id: UUID | None = None,
+):
+    fileAnnotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
+
+    if user_id:
+        fileAnnotations = fileAnnotations.filter(user_id=user_id)
+
+    fileAnnotations = fileAnnotations.order_by('confidence')
+
     output = [
         NABatRecordingAnnotationSchema.from_orm(fileAnnotation).dict()
         for fileAnnotation in fileAnnotations
