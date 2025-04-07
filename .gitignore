@@ -13,3 +13,4 @@ temp*.png
 staticfiles/
 .env
 dev/.env.prod.docker-compose
+**/*.egg-info/**
