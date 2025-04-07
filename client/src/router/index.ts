@@ -53,9 +53,11 @@ function routerInit(){
       {
         path: '/nabat/:id/spectrogram',
         component: NABatSpectrogram,
-        props: true,
+        props: (route) => ({
+          id: route.params.id,
+          apiToken: route.query.apiToken,
+        }),
       },
-
       {
         path: '/nabat/:recordingId/',
         component: NABatRecording,

@@ -1,5 +1,6 @@
 <script lang="ts">
 import {
+  computed,
   defineComponent,
   onMounted,
   Ref,
@@ -33,6 +34,10 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    apiToken: {
+        type: String,
+        required: true,
+      },
   },
   setup(props) {
     const {
@@ -44,22 +49,28 @@ export default defineComponent({
       scaledVals,
       viewCompressedOverlay,
       sideTab,
+      configuration,
     } = useState();
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
-    const compressed = ref(false);
+    const compressed = computed(() => configuration.value.spectrogram_view === 'compressed');
+    const errorMessage: Ref<string | null> = ref(null);
+    const additionalErrors: Ref<string[]> = ref([]);
+
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
 
     const disabledFeatures = ref(['speciesLabel', 'endpointLabels', 'durationLabels', 'timeLabels']);
     const loadData = async () => {
       loadedImage.value = false;
+      try {
       const response = compressed.value
-        ? await getSpectrogramCompressed(props.id)
-        : await getSpectrogram(props.id);
+        ? await getSpectrogramCompressed(props.id, props.apiToken)
+        : await getSpectrogram(props.id, props.apiToken);
+      console.log(response);
       if (response.data["url"]) {
         if (import.meta.env.PROD) {
         const updateHost = `${window.location.protocol}//${window.location.hostname}/`;
@@ -86,6 +97,16 @@ export default defineComponent({
       }
       const speciesResponse = await getSpecies();
       speciesList.value = speciesResponse.data;
+    } catch (error) {
+        errorMessage.value = `Failed fetch Spectrogram: ${error.message}:`;
+        if (error.response.data.errors?.length) {
+          additionalErrors.value = error.response.data.errors.map((item) => JSON.stringify(item));
+        } else if (error.response.data.error) {
+          additionalErrors.value.push(error.response.data.error);
+        } else {
+          additionalErrors.value.push('An unknown error occurred');
+        }
+      }
     };
     const setSelection = (annotationId: number) => {
       selectedId.value = annotationId;
@@ -121,6 +142,8 @@ export default defineComponent({
     };
 
     return {
+      errorMessage,
+      additionalErrors,
       compressed,
       loadedImage,
       image,
@@ -153,7 +176,10 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-row dense>
+  <v-row
+    v-if="!errorMessage"
+    dense
+  >
     <v-dialog
       v-model="recordingInfo"
       width="600"
@@ -382,6 +408,22 @@ export default defineComponent({
       </v-card>
     </v-col>
   </v-row>
+  <v-alert
+    v-if="errorMessage"
+    type="error"
+  >
+    {{ errorMessage }}
+    <div v-if="additionalErrors.length">
+      <ul>
+        <li
+          v-for="(error, index) in additionalErrors"
+          :key="index"
+        >
+          {{ error }}
+        </li>
+      </ul>
+    </div>
+  </v-alert>
 </template>
 
 <style scoped>

@@ -22,7 +22,8 @@ import { useRouter } from 'vue-router';
     },
     setup(props) {
       const errorMessage: Ref<string | null> = ref(null);
-      const loading = ref(true);
+      const additionalErrors: Ref<string[]> = ref([]);
+        const loading = ref(true);
       const taskId: Ref<string | null> = ref(null);
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const taskInfo = ref('');
@@ -58,8 +59,9 @@ import { useRouter } from 'vue-router';
       };
 
       const checkNABatRecording = async () => {
+        errorMessage.value = null;
+        additionalErrors.value = [];
         try {
-          console.log(props.surveyEventId);
           const response = await postNABatRecording(props.recordingId, props.surveyEventId, props.apiToken);
           if ('error' in response && response.error) {
             loading.value = false;
@@ -73,8 +75,16 @@ import { useRouter } from 'vue-router';
             const id = (response as NABatRecordingDataResponse).recordingId;
             router.push(`/nabat/${id}/spectrogram?apiToken=${props.apiToken}`);
           }
-        } catch (error) {
-          errorMessage.value = 'Failed to start processing';
+        } catch (error: AxiosError) {
+          console.log(error);
+          errorMessage.value = `Failed to start processing: ${error.message}:`;
+          if (error.response.data.errors?.length) {
+            additionalErrors.value = error.response.data.errors.map((item) => JSON.stringify(item));
+          } else if (error.response.data.error) {
+            additionalErrors.value.push(error.response.data.error);
+          } else {
+            additionalErrors.value.push('An unknown error occurred');
+          }
           loading.value = false;
         }
       };
@@ -92,6 +102,7 @@ import { useRouter } from 'vue-router';
         errorMessage,
         loading,
         taskInfo,
+        additionalErrors,
       };
     },
   });
@@ -119,6 +130,16 @@ import { useRouter } from 'vue-router';
             type="error"
           >
             {{ errorMessage }}
+            <div v-if="additionalErrors.length">
+              <ul>
+                <li
+                  v-for="(error, index) in additionalErrors"
+                  :key="index"
+                >
+                  {{ error }}
+                </li>
+              </ul>
+            </div>
           </v-alert>
           <h3
             v-if="loading && taskInfo"

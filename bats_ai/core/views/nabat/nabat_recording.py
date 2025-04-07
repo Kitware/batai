@@ -1,9 +1,11 @@
+import json
 import logging
 from uuid import UUID
 
-from django.http import HttpRequest
+from django.http import HttpRequest, JsonResponse
 from ninja import Form, Schema
 from ninja.pagination import RouterPaginated
+import requests
 
 from bats_ai.core.models import ProcessingTask, colormap
 from bats_ai.core.models.nabat import (
@@ -19,6 +21,15 @@ logger = logging.getLogger(__name__)
 
 
 router = RouterPaginated()
+
+BASE_URL = 'https://api.sciencebase.gov/nabat-graphql/graphql'
+QUERY = """
+query fetchAcousticAndSurveyEventInfo {
+  presignedUrlFromAcousticFile(acousticFileId: "%(acoustic_file_id)s") {
+    s3PresignedUrl
+  }
+}
+"""
 
 
 class NABatRecordingSchema(Schema):
@@ -56,7 +67,7 @@ class NABatRecordingAnnotationSchema(Schema):
         )
 
 
-@router.post('/')
+@router.post('/', auth=None)
 def generate_nabat_recording(
     request: HttpRequest,
     payload: Form[NABatRecordingGenerateSchema],
@@ -67,11 +78,14 @@ def generate_nabat_recording(
     ).first()
 
     if existing_task:
-        return {
-            'error': 'A task is already processing this recordingId.',
-            'taskId': existing_task.celery_id,
-            'status': existing_task.status,
-        }, 400
+        return JsonResponse(
+            {
+                'error': 'A task is already processing this recordingId.',
+                'taskId': existing_task.celery_id,
+                'status': existing_task.status,
+            },
+            status=409,
+        )
 
     nabat_recording = NABatRecording.objects.filter(recording_id=payload.recordingId)
     if not nabat_recording.exists():
@@ -89,15 +103,63 @@ def generate_nabat_recording(
             celery_id=task.id,
         )
         return {'taskId': task.id}
-    return {'recordingId': nabat_recording.first().pk}
-
-
-@router.get('/')
-def get_nabat_recording_spectrogram(request: HttpRequest, id: int):
+    # we want to check the apiToken and make sure the user has access to the file before returning it
+    api_token = payload.apiToken
+    recording_id = payload.recordingId
+    headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
+    batch_query = QUERY % {
+        'acoustic_file_id': recording_id,
+    }
     try:
-        nabat_recording = NABatRecording.objects.get(recording_id=id)
+        response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
+        logger.info(response.json())
+    except Exception:
+        return JsonResponse(response.json(), status=500)
+
+    if response.status_code == 200:
+        try:
+            batch_data = response.json()
+            logger.info(batch_data)
+            if batch_data['data']['presignedUrlFromAcousticFile'] is None:
+                return JsonResponse({'error': 'Recording not found or access denied'}, status=404)
+            else:
+                return {'recordingId': nabat_recording.first().pk}
+        except (KeyError, TypeError, json.JSONDecodeError) as e:
+            logger.error(f'Error processing batch data: {e}')
+            return JsonResponse({'error': f'Error with API Request: {e}'}, status=500)
+    else:
+        logger.error(f'Failed to fetch data: {response.status_code}, {response.text}')
+        return JsonResponse(response.json(), status=500)
+
+
+@router.get('/', auth=None)
+def get_nabat_recording_spectrogram(request: HttpRequest, id: int, apiToken: str):
+    try:
+        nabat_recording = NABatRecording.objects.get(pk=id)
     except NABatRecording.DoesNotExist:
-        return {'error': 'NABatRecording not found'}
+        return JsonResponse({'error': 'Recording does not exist'}, status=404)
+
+    headers = {'Authorization': f'Bearer {apiToken}', 'Content-Type': 'application/json'}
+    batch_query = QUERY % {
+        'acoustic_file_id': nabat_recording.recording_id,
+    }
+    try:
+        response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
+    except Exception as e:
+        logger.error(f'API Request Failed: {e}')
+        return JsonResponse({'error': 'Failed to connect to NABat API'}, status=500)
+
+    if response.status_code != 200:
+        logger.error(f'Failed NABat API Query: {response.status_code} - {response.text}')
+        return JsonResponse({'error': 'Failed to verify recording access'}, status=500)
+
+    try:
+        batch_data = response.json()
+        if batch_data['data']['presignedUrlFromAcousticFile'] is None:
+            return JsonResponse({'error': 'Recording not found or access denied'}, status=404)
+    except (KeyError, TypeError, json.JSONDecodeError) as e:
+        logger.error(f'Error parsing NABat API response: {e}')
+        return JsonResponse({'error': 'Invalid response from NABat API'}, status=500)
 
     with colormap(None):
         spectrogram = nabat_recording.spectrogram
@@ -122,7 +184,6 @@ def get_nabat_recording_spectrogram(request: HttpRequest, id: int):
             'end_times': compressed.stops,
         }
 
-    # Pulse and Sequence Annotations may be implemented in the future
     spectro_data['annotations'] = []
     spectro_data['temporal'] = []
     return spectro_data
@@ -211,17 +272,42 @@ def get_spectrogram(request: HttpRequest, id: int):
     return spectro_data
 
 
-@router.get('/{id}/spectrogram/compressed')
-def get_spectrogram_compressed(request: HttpRequest, id: int):
+@router.get('/{id}/spectrogram/compressed', auth=None)
+def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
     try:
         nabat_recording = NABatRecording.objects.get(pk=id)
-        compressed_spectrogram = NABatCompressedSpectrogram.objects.filter(
-            nabat_recording=id
-        ).first()
-    except compressed_spectrogram.DoesNotExist:
-        return {'error': 'Compressed Spectrogram'}
-    except nabat_recording.DoesNotExist:
-        return {'error': 'Recording does not exist'}
+    except NABatRecording.DoesNotExist:
+        return JsonResponse({'error': 'Recording does not exist'}, status=404)
+
+    headers = {'Authorization': f'Bearer {apiToken}', 'Content-Type': 'application/json'}
+    batch_query = QUERY % {
+        'acoustic_file_id': nabat_recording.recording_id,
+    }
+
+    try:
+        response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
+    except Exception as e:
+        logger.error(f'API request failed: {e}')
+        return JsonResponse({'error': 'Failed to verify API token'}, status=500)
+
+    if response.status_code != 200:
+        logger.error(f'Failed API auth check: {response.status_code} - {response.text}')
+        return JsonResponse(response.json(), status=response.status_code)
+
+    try:
+        batch_data = response.json()
+        if batch_data['data']['presignedUrlFromAcousticFile'] is None:
+            return JsonResponse({'error': 'Recording not found or access denied'}, status=404)
+    except (KeyError, TypeError, json.JSONDecodeError) as e:
+        logger.error(f'Error processing batch data: {e}')
+        return JsonResponse({'error': 'Error processing API response'}, status=500)
+
+    # --- passed authorization check ---
+
+    compressed_spectrogram = NABatCompressedSpectrogram.objects.filter(nabat_recording=id).first()
+
+    if not compressed_spectrogram:
+        return JsonResponse({'error': 'Compressed Spectrogram not found'}, status=404)
 
     spectro_data = {
         'url': compressed_spectrogram.image_url,
@@ -238,12 +324,8 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
             'widths': compressed_spectrogram.widths,
             'compressedWidth': compressed_spectrogram.length,
         },
+        'annotations': [],
+        'temporal': [],
     }
 
-    # Serialize the annotations using AnnotationSchema
-    annotations_data = []
-    temporal_annotations_data = []
-
-    spectro_data['annotations'] = annotations_data
-    spectro_data['temporal'] = temporal_annotations_data
     return spectro_data

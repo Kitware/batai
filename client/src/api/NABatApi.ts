@@ -27,12 +27,12 @@ async function postNABatRecording(recordingId: number, surveyEventId: number, ap
     return response as NABatRecordingDataResponse;
 }
 
-async function getSpectrogram(id: string) {
-    return axiosInstance.get<Spectrogram>(`/nabat/recording/${id}/spectrogram`);
+async function getSpectrogram(id: string, apiToken: string) {
+    return axiosInstance.get<Spectrogram>(`/nabat/recording/${id}/spectrogram?apiToken=${apiToken}`);
 }
 
-async function getSpectrogramCompressed(id: string) {
-    return axiosInstance.get<Spectrogram>(`/nabat/recording/${id}/spectrogram/compressed`);
+async function getSpectrogramCompressed(id: string, apiToken: string) {
+    return axiosInstance.get<Spectrogram>(`/nabat/recording/${id}/spectrogram/compressed?apiToken=${apiToken}`);
 
 }
 
