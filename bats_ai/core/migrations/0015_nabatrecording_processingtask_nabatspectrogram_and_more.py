@@ -10,7 +10,7 @@ import django_extensions.db.fields
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0013_configuration'),
+        ('core', '0014_configuration'),
     ]
 
     operations = [
