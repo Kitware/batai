@@ -17,6 +17,9 @@ class ConfigurationSchema(Schema):
     display_pulse_annotations: bool
     display_sequence_annotations: bool
     is_admin: bool | None = None
+    run_inference_on_upload: bool
+    spectrogram_x_stretch: float
+    spectrogram_view: Configuration.SpectrogramViewMode
 
 
 # Endpoint to retrieve the configuration status
@@ -28,6 +31,9 @@ def get_configuration(request):
     return ConfigurationSchema(
         display_pulse_annotations=config.display_pulse_annotations,
         display_sequence_annotations=config.display_sequence_annotations,
+        run_inference_on_upload=config.run_inference_on_upload,
+        spectrogram_x_stretch=config.spectrogram_x_stretch,
+        spectrogram_view=config.spectrogram_view,
         is_admin=request.user.is_authenticated and request.user.is_superuser,
     )
 
