@@ -110,18 +110,19 @@ export interface UserInfo {
 }
 
 export interface FileAnnotation {
-  species: Species[];
-  comments?: string;
-  model?: string;
-  owner: string;
-  confidence: number;
-  id: number;
+    species: Species[];
+    comments?: string;
+    model?: string;
+    owner: string;
+    confidence: number;
+    hasDetails: boolean;
+    id: number;
 }
 
 export interface FileAnnotationDetails {
-  label: string;
-  score: number;
-  confidences: { label: string, value: string }[];
+    label: string;
+    score: number;
+    confidences: { label: string, value: string}[];
 }
 export interface UpdateFileAnnotation {
   recordingId?: number;
@@ -336,8 +337,7 @@ async function getFileAnnotations(recordingId: number) {
 }
 
 async function getFileAnnotationDetails(recordingId: number) {
-  return axiosInstance.get<(FileAnnotation & { details: FileAnnotationDetails })>(`recording-annotation/${recordingId}/details`);
-
+    return axiosInstance.get<(FileAnnotation & {details: FileAnnotationDetails })>(`recording-annotation/${recordingId}/details`);
 }
 
 async function putFileAnnotation(fileAnnotation: UpdateFileAnnotation) {
@@ -407,31 +407,31 @@ async function getGuanoMetadata(file: File): Promise<GuanoMetadata> {
 }
 
 export {
-  uploadRecordingFile,
-  getRecordings,
-  getRecording,
-  patchRecording,
-  deleteRecording,
-  getSpectrogram,
-  getSpectrogramCompressed,
-  getTemporalAnnotations,
-  getOtherUserAnnotations,
-  getSpecies,
-  getAnnotations,
-  patchAnnotation,
-  patchTemporalAnnotation,
-  putAnnotation,
-  putTemporalAnnotation,
-  deleteAnnotation,
-  deleteTemporalAnnotation,
-  getCellLocation,
-  getCellfromLocation,
-  getGuanoMetadata,
-  getFileAnnotations,
-  putFileAnnotation,
-  patchFileAnnotation,
-  deleteFileAnnotation,
-  getConfiguration,
-  patchConfiguration,
-  getFileAnnotationDetails,
+ uploadRecordingFile,
+ getRecordings,
+ getRecording,
+ patchRecording,
+ deleteRecording,
+ getSpectrogram,
+ getSpectrogramCompressed,
+ getTemporalAnnotations,
+ getOtherUserAnnotations,
+ getSpecies,
+ getAnnotations,
+ patchAnnotation,
+ patchTemporalAnnotation,
+ putAnnotation,
+ putTemporalAnnotation,
+ deleteAnnotation,
+ deleteTemporalAnnotation,
+ getCellLocation,
+ getCellfromLocation,
+ getGuanoMetadata,
+ getFileAnnotations,
+ putFileAnnotation,
+ patchFileAnnotation,
+ deleteFileAnnotation,
+ getConfiguration,
+ patchConfiguration,
+ getFileAnnotationDetails,
 };
