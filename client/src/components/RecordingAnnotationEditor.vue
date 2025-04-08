@@ -2,6 +2,7 @@
 import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import { deleteFileAnnotation, FileAnnotation, patchFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
+import { deleteNABatFileAnnotation, patchNABatFileAnnotation } from "../api/NABatApi";
 import SpeciesInfo from "./SpeciesInfo.vue";
 export default defineComponent({
   name: "AnnotationEditor",
@@ -24,7 +25,15 @@ export default defineComponent({
     recordingId: {
         type: Number,
         required: true,
-    }
+    },
+    apiToken: {
+      type: String,
+      default: () => undefined,
+    },
+    type: {
+      type: String as PropType<'nabat' | null>,
+      default: () => null,
+    },
   },
   emits: ['update:annotation', 'delete:annotation'],
   setup(props, { emit }) {
@@ -58,15 +67,16 @@ export default defineComponent({
                 }
             });
 
-            const updateAnnotation: UpdateFileAnnotation = {
+            const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
               recordingId: props.recordingId,
               comments: comments.value,
               confidence: confidence.value,
               model: 'User Defined',
               species: speciesIds,
               id: props.annotation.id,
+              apiToken: props.apiToken,
             };
-            await patchFileAnnotation(props.annotation.id, updateAnnotation);
+            props.type === 'nabat' ? await patchNABatFileAnnotation(props.annotation.id, updateAnnotation) : await patchFileAnnotation(props.annotation.id, updateAnnotation);
             // Signal to redownload the updated annotation values if possible
             emit('update:annotation');
         }
@@ -75,7 +85,7 @@ export default defineComponent({
 
     const deleteAnno = async () => {
       if (props.annotation && props.recordingId) {
-            await deleteFileAnnotation(props.annotation.id,);
+            props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken) : await deleteFileAnnotation(props.annotation.id,);
             emit('delete:annotation');
         }
     };
@@ -98,6 +108,7 @@ export default defineComponent({
         Edit Annotations
         <v-spacer />
         <v-btn
+          v-if="type !== 'nabat' || (annotation?.owner && type === 'nabat')"
           size="x-small"
           color="error"
           class="mt-1"

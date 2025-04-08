@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 
+from django.db.models import Q
 from django.http import HttpRequest, JsonResponse
 from ninja import Form, Schema
 from ninja.pagination import RouterPaginated
@@ -316,7 +317,7 @@ class NABatRecordingAnnotationSchema(Schema):
     species: list[SpeciesSchema] | None
     comments: str | None = None
     model: str | None = None
-    owner: str
+    owner: str | None = None
     confidence: float
     id: int | None = None
     hasDetails: bool
@@ -338,7 +339,7 @@ class NABatRecordingAnnotationDetailsSchema(Schema):
     species: list[SpeciesSchema] | None
     comments: str | None = None
     model: str | None = None
-    owner: str
+    owner: str | None = None
     confidence: float
     id: int | None = None
     details: dict
@@ -379,7 +380,7 @@ def get_nabat_recording_annotation(
     fileAnnotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
 
     if user_id:
-        fileAnnotations = fileAnnotations.filter(user_id=user_id)
+        fileAnnotations = fileAnnotations.filter(Q(user_id=user_id) | Q(user_id__isnull=True))
 
     fileAnnotations = fileAnnotations.order_by('confidence')
 
@@ -395,7 +396,10 @@ def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
     token_data = decode_jwt(apiToken)
     user_id = token_data['sub']
     try:
-        annotation = NABatRecordingAnnotation.objects.get(nabat_recording=id, user_id=user_id)
+        annotation = NABatRecordingAnnotation.objects.get(pk=id)
+
+        if user_id:
+            annotation = annotation.filter(Q(user_id=user_id) | Q(user_id__isnull=True))
 
         return NABatRecordingAnnotationSchema.from_orm(annotation).dict()
     except NABatRecordingAnnotation.DoesNotExist:
@@ -407,7 +411,9 @@ def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: st
     token_data = decode_jwt(apiToken)
     user_id = token_data['sub']
     try:
-        annotation = NABatRecordingAnnotation.objects.get(nabat_recording=id, user_id=user_id)
+        annotation = NABatRecordingAnnotation.objects.get(
+            Q(pk=id) & (Q(user_id=user_id) | Q(user_id__isnull=True))
+        )
 
         return NABatRecordingAnnotationDetailsSchema.from_orm(annotation).dict()
     except NABatRecordingAnnotation.DoesNotExist:
@@ -420,7 +426,7 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
     user_id = token_data['sub']
     user_email = token_data['email']
     try:
-        recording = NABatRecording.objects.get(npk=data.recordingId)
+        recording = NABatRecording.objects.get(pk=data.recordingId)
 
         # Create the recording annotation
         annotation = NABatRecordingAnnotation.objects.create(
@@ -444,14 +450,14 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
         return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
 
 
-@router.patch('/{id}', response={200: str})
+@router.patch('recording-annotation/{id}', response={200: str})
 def update_recording_annotation(
     request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
 ):
     token_data = decode_jwt(data.apiToken)
     user_id = token_data['sub']
     try:
-        annotation = NABatRecordingAnnotation.objects.get(nabat_recording=id, user_id=user_id)
+        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_id=user_id)
         # Check permission
 
         # Update fields if provided
@@ -475,12 +481,12 @@ def update_recording_annotation(
         return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
 
 
-@router.delete('/recording-annotation/{id}', response={200: str})
+@router.delete('recording-annotation/{id}', response={200: str})
 def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str):
     token_data = decode_jwt(apiToken)
     user_id = token_data['sub']
     try:
-        annotation = NABatRecordingAnnotation.objects.get(nabat_recording=id, user_id=user_id)
+        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_id=user_id)
 
         # Check permission
 

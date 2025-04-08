@@ -3,7 +3,7 @@ import { defineComponent, onMounted, PropType, Ref } from "vue";
 import { ref } from "vue";
 import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
-import { getNABatRecordingFileAnnotations } from "../api/NABatApi";
+import { getNABatRecordingFileAnnotations, putNABatFileAnnotation } from "../api/NABatApi";
 import RecordingAnnotationDetails from "./RecordingAnnotationDetails.vue";
 export default defineComponent({
   name: "AnnotationList",
@@ -23,7 +23,11 @@ export default defineComponent({
     type: {
       type: String as PropType<'nabat' | null>,
       default: () => null,
-    }
+    },
+    apiToken: {
+      type: String,
+      default: () => undefined,
+    },
   },
   emits: [],
   setup(props) {
@@ -34,14 +38,12 @@ export default defineComponent({
     const detailRecordingId = ref(-1);
 
     const setSelectedId = (annotation: FileAnnotation) => {
-      if (!props.type) {
-        selectedAnnotation.value = annotation;
-      }
+      selectedAnnotation.value = annotation;
     };
 
     const loadFileAnnotations = async () => {
       if (props.type === 'nabat') {
-        annotations.value = (await getNABatRecordingFileAnnotations(props.recordingId)).data;
+        annotations.value = (await getNABatRecordingFileAnnotations(props.recordingId, props.apiToken)).data;
       } else {
         annotations.value = (await getFileAnnotations(props.recordingId)).data;
       }
@@ -50,15 +52,16 @@ export default defineComponent({
     onMounted(() => loadFileAnnotations());
 
     const addAnnotation = async () => {
-      const newAnnotation: UpdateFileAnnotation = {
+      const newAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
         recordingId: props.recordingId,
         species: [],
         comments: '',
         model: 'User Defined',
         confidence: 1.0,
+        apiToken: props.apiToken,
 
       };
-      await putFileAnnotation(newAnnotation);
+      props.type === 'nabat' ? await putNABatFileAnnotation(newAnnotation) : putFileAnnotation(newAnnotation);
       await loadFileAnnotations();
       if (annotations.value.length) {
         setSelectedId(annotations.value[annotations.value.length - 1]);
@@ -66,7 +69,7 @@ export default defineComponent({
     };
 
     const updatedAnnotation = async (deleted = false) => {
-      annotations.value = (await getFileAnnotations(props.recordingId)).data;
+      await loadFileAnnotations();
       if (selectedAnnotation.value) {
         const found = annotations.value.find((item) => selectedAnnotation.value?.id === item.id);
         if (found) {
@@ -105,7 +108,7 @@ export default defineComponent({
         Annotations
       </v-col>
       <v-spacer />
-      <v-col v-if="!type">
+      <v-col>
         <v-btn
           :disabled="annotationState === 'creating'"
           @click="addAnnotation()"
@@ -168,6 +171,8 @@ export default defineComponent({
       :species="species"
       :recording-id="recordingId"
       :annotation="selectedAnnotation"
+      :api-token="apiToken"
+      :type="type"
       class="mt-4"
       @update:annotation="updatedAnnotation()"
       @delete:annotation="updatedAnnotation(true)"
@@ -178,6 +183,7 @@ export default defineComponent({
     >
       <RecordingAnnotationDetails
         :recording-id="detailRecordingId"
+        :api-token="apiToken"
         @close="detailsDialog = false"
       />
     </v-dialog>

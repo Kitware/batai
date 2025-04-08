@@ -36,8 +36,8 @@ async function getSpectrogramCompressed(id: string, apiToken: string) {
 
 }
 
-async function getNABatRecordingFileAnnotations(recordingId: number) {
-    return axiosInstance.get<FileAnnotation[]>(`/nabat/recording/${recordingId}/recording-annotations`);
+async function getNABatRecordingFileAnnotations(recordingId: number, apiToken?: string) {
+    return axiosInstance.get<FileAnnotation[]>(`/nabat/recording/${recordingId}/recording-annotations`, { params: { apiToken } });
 }
 
 
@@ -45,20 +45,20 @@ async function getNABatFileAnnotations(recordingId: number) {
   return axiosInstance.get<FileAnnotation[]>(`recording/${recordingId}/recording-annotations`);
 }
 
-async function getNABatFileAnnotationDetails(recordingId: number) {
-    return axiosInstance.get<(FileAnnotation & {details: FileAnnotationDetails })>(`recording-annotation/${recordingId}/details`);
+async function getNABatFileAnnotationDetails(recordingId: number, apiToken?: string) {
+    return axiosInstance.get<(FileAnnotation & {details: FileAnnotationDetails })>(`nabat/recording/recording-annotation/${recordingId}/details`, { params: { apiToken } });
 }
 
-async function putNABatFileAnnotation(fileAnnotation: UpdateFileAnnotation & { apiToken: string}) {
-  return axiosInstance.put<{ message: string, id: number }>(`/recording-annotation/`, { ...fileAnnotation });
+async function putNABatFileAnnotation(fileAnnotation: UpdateFileAnnotation & { apiToken?: string}) {
+  return axiosInstance.put<{ message: string, id: number }>(`nabat/recording/recording-annotation`, { ...fileAnnotation });
 }
 
-async function patchNABatFileAnnotation(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation) {
-  return axiosInstance.patch<{ message: string, id: number }>(`/recording-annotation/${fileAnnotationId}`, { ...fileAnnotation });
+async function patchNABatFileAnnotation(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation & { apiToken?: string}) {
+  return axiosInstance.patch<{ message: string, id: number }>(`nabat/recording/recording-annotation/${fileAnnotationId}`, { ...fileAnnotation });
 }
 
-async function deleteNABatFileAnnotation(fileAnnotationId: number) {
-  return axiosInstance.delete<{ message: string, id: number }>(`/recording-annotation/${fileAnnotationId}`);
+async function deleteNABatFileAnnotation(fileAnnotationId: number, apiToken?: string) {
+  return axiosInstance.delete<{ message: string, id: number }>(`nabat/recording/recording-annotation/${fileAnnotationId}`, { params: { apiToken } });
 }
 
 

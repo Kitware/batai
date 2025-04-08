@@ -400,6 +400,7 @@ export default defineComponent({
             <RecordingAnnotations 
               :species="speciesList"
               :recording-id="parseInt(id)"
+              :api-token="apiToken"
               type="nabat"
             />
           </div>
