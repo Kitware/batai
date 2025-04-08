@@ -6,8 +6,8 @@ from django.contrib.gis.geos import Point
 import requests
 
 from bats_ai.celery import app
-from bats_ai.core.models import ProcessingTask
-from bats_ai.core.models.nabat import NABatRecording
+from bats_ai.core.models import Configuration, ProcessingTask, Species
+from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
 
 from .tasks import generate_compress_spectrogram, generate_spectrogram, predict
 
@@ -16,6 +16,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
 
 BASE_URL = 'https://api.sciencebase.gov/nabat-graphql/graphql'
+SOFTWARE_ID = 81
 QUERY = """
 query fetchAcousticAndSurveyEventInfo {
   presignedUrlFromAcousticFile(acousticFileId: "%(acoustic_file_id)s") {
@@ -28,6 +29,21 @@ query fetchAcousticAndSurveyEventInfo {
       description
       geom {
         geojson
+      }
+    }
+    acousticBatchesBySurveyEventId(filter: {softwareId: {equalTo:%(software_id)d}}) {
+      nodes {
+        id
+        acousticFileBatchesByBatchId(filter: {fileId: {equalTo: "%(acoustic_file_id)s"}}) {
+          nodes {
+            autoId
+            manualId
+            vetter
+            speciesByManualId {
+              speciesCode
+            }
+          }
+        }
       }
     }
   }
@@ -49,6 +65,7 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
     batch_query = QUERY % {
         'acoustic_file_id': recording_id,
         'survey_event_id': survey_event_id,
+        'software_id': SOFTWARE_ID,
     }
     self.update_state(
         state='Progress',
@@ -128,7 +145,9 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
                 )
 
                 try:
-                    predict(compressed_spectrogram.pk)
+                    config = Configuration.objects.first()
+                    if not config or not config.run_inference_on_upload:
+                        predict(compressed_spectrogram.pk)
                 except Exception as e:
                     logger.error(f'Error Performing Prediction: {e}')
                     processing_task.update(
@@ -177,6 +196,19 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
             name=file_name,
             recording_location=recording_location,
         )
+
+        species_list = nabat_recording_data['surveyEventById']['acousticBatchesBySurveyEventId'][
+            'nodes'
+        ]
+        for node in species_list:
+            species_id = node.get('manualId', False)
+            if species_id is not False:
+                annotation = NABatRecordingAnnotation.objects.create(
+                    nabat_recording=nabat_recording,
+                    user_email=node['vetter'],
+                )
+                species = Species.objects.get(pk=species_id)
+                annotation.species.add(species)
 
         return nabat_recording
 
