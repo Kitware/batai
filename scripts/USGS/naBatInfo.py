@@ -17,6 +17,7 @@ SURVEY_EVENT_ID = 4768736
 ACOUSTIC_FILE_ID = 190255936
 PROJECT_ID = 7168
 BATCH_ID = 319479412
+SOFTWARE_ID = 81
 # GraphQL queries
 QUERY = """
 query fetchAcousticAndSurveyEventInfo {
@@ -30,6 +31,21 @@ query fetchAcousticAndSurveyEventInfo {
       description
       geom {
         geojson
+      }
+    }
+    acousticBatchesBySurveyEventId(filter: {softwareId: {equalTo:%(software_id)d}}) {
+      nodes {
+        id
+        acousticFileBatchesByBatchId(filter: {fileId: {equalTo: "%(acoustic_file_id)s"}}) {
+          nodes {
+            autoId
+            manualId
+            vetter
+            speciesByManualId {
+              speciesCode
+            }
+          }
+        }
       }
     }
   }
@@ -72,6 +88,7 @@ def fetch_and_save():
     batch_query = QUERY % {
         'acoustic_file_id': ACOUSTIC_FILE_ID,
         'survey_event_id': SURVEY_EVENT_ID,
+        'software_id': SOFTWARE_ID,
     }
     response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
     batch_data = {}

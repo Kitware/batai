@@ -76,7 +76,6 @@ import { useRouter } from 'vue-router';
             router.push(`/nabat/${id}/spectrogram?apiToken=${props.apiToken}`);
           }
         } catch (error: AxiosError) {
-          console.log(error);
           errorMessage.value = `Failed to start processing: ${error.message}:`;
           if (error.response.data.errors?.length) {
             additionalErrors.value = error.response.data.errors.map((item) => JSON.stringify(item));

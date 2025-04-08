@@ -70,7 +70,6 @@ export default defineComponent({
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id, props.apiToken)
         : await getSpectrogram(props.id, props.apiToken);
-      console.log(response);
       if (response.data["url"]) {
         if (import.meta.env.PROD) {
         const updateHost = `${window.location.protocol}//${window.location.hostname}/`;

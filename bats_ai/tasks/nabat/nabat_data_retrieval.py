@@ -1,4 +1,3 @@
-import base64
 import json
 import logging
 import tempfile
@@ -40,25 +39,6 @@ query fetchAcousticAndSurveyEventInfo {
   }
 }
 """
-
-
-def decode_jwt(token):
-    # Split the token into parts
-    parts = token.split('.')
-    if len(parts) != 3:
-        raise ValueError('Invalid JWT token format')
-
-    # JWT uses base64url encoding, so need to fix padding
-    payload = parts[1]
-    padding = '=' * (4 - (len(payload) % 4))  # Fix padding if needed
-    payload += padding
-
-    # Decode the payload
-    decoded_bytes = base64.urlsafe_b64decode(payload)
-    decoded_str = decoded_bytes.decode('utf-8')
-
-    # Parse JSON
-    return json.loads(decoded_str)
 
 
 @app.task(bind=True)

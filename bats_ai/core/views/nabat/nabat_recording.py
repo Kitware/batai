@@ -1,13 +1,13 @@
+import base64
 import json
 import logging
-from uuid import UUID
 
 from django.http import HttpRequest, JsonResponse
 from ninja import Form, Schema
 from ninja.pagination import RouterPaginated
 import requests
 
-from bats_ai.core.models import ProcessingTask, colormap
+from bats_ai.core.models import ProcessingTask, Species, colormap
 from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
     NABatRecording,
@@ -32,6 +32,25 @@ query fetchAcousticAndSurveyEventInfo {
 """
 
 
+def decode_jwt(token):
+    # Split the token into parts
+    parts = token.split('.')
+    if len(parts) != 3:
+        raise ValueError('Invalid JWT token format')
+
+    # JWT uses base64url encoding, so need to fix padding
+    payload = parts[1]
+    padding = '=' * (4 - (len(payload) % 4))  # Fix padding if needed
+    payload += padding
+
+    # Decode the payload
+    decoded_bytes = base64.urlsafe_b64decode(payload)
+    decoded_str = decoded_bytes.decode('utf-8')
+
+    # Parse JSON
+    return json.loads(decoded_str)
+
+
 class NABatRecordingSchema(Schema):
     name: str
     recording_id: int
@@ -47,24 +66,6 @@ class NABatRecordingGenerateSchema(Schema):
     apiToken: str
     recordingId: int
     surveyEventId: int
-
-
-class NABatRecordingAnnotationSchema(Schema):
-    species: list[SpeciesSchema] | None
-    comments: str | None = None
-    model: str | None = None
-    confidence: float
-    id: int | None = None
-
-    @classmethod
-    def from_orm(cls, obj: NABatRecordingAnnotation, **kwargs):
-        return cls(
-            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
-            confidence=obj.confidence,
-            comments=obj.comments,
-            model=obj.model,
-            id=obj.pk,
-        )
 
 
 @router.post('/', auth=None)
@@ -189,26 +190,6 @@ def get_nabat_recording_spectrogram(request: HttpRequest, id: int, apiToken: str
     return spectro_data
 
 
-@router.get('/{nabat_recording_id}/recording-annotations')
-def get_nabat_recording_annotation(
-    request: HttpRequest,
-    nabat_recording_id: int,
-    user_id: UUID | None = None,
-):
-    fileAnnotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
-
-    if user_id:
-        fileAnnotations = fileAnnotations.filter(user_id=user_id)
-
-    fileAnnotations = fileAnnotations.order_by('confidence')
-
-    output = [
-        NABatRecordingAnnotationSchema.from_orm(fileAnnotation).dict()
-        for fileAnnotation in fileAnnotations
-    ]
-    return output
-
-
 @router.post('/{id}/spectrogram/compressed/predict')
 def predict_spectrogram_compressed(request: HttpRequest, id: int):
     try:
@@ -329,3 +310,181 @@ def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
     }
 
     return spectro_data
+
+
+class NABatRecordingAnnotationSchema(Schema):
+    species: list[SpeciesSchema] | None
+    comments: str | None = None
+    model: str | None = None
+    owner: str
+    confidence: float
+    id: int | None = None
+    hasDetails: bool
+
+    @classmethod
+    def from_orm(cls, obj: NABatRecordingAnnotation, **kwargs):
+        return cls(
+            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            owner=obj.user_email,
+            confidence=obj.confidence,
+            comments=obj.comments,
+            model=obj.model,
+            id=obj.pk,
+            hasDetails=obj.additional_data is not None,
+        )
+
+
+class NABatRecordingAnnotationDetailsSchema(Schema):
+    species: list[SpeciesSchema] | None
+    comments: str | None = None
+    model: str | None = None
+    owner: str
+    confidence: float
+    id: int | None = None
+    details: dict
+    hasDetails: bool
+
+    @classmethod
+    def from_orm(cls, obj: NABatRecordingAnnotation, **kwargs):
+        return cls(
+            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            owner=obj.user_email,
+            confidence=obj.confidence,
+            comments=obj.comments,
+            model=obj.model,
+            hasDetails=obj.additional_data is not None,
+            details=obj.additional_data,
+            id=obj.pk,
+        )
+
+
+class NABatCreateRecordingAnnotationSchema(Schema):
+    recordingId: int
+    species: list[int]
+    comments: str = None
+    model: str = None
+    confidence: float
+    apiToken: str
+
+
+@router.get('/{nabat_recording_id}/recording-annotations')
+def get_nabat_recording_annotation(
+    request: HttpRequest,
+    nabat_recording_id: int,
+    apiToken: str | None = None,
+):
+    token_data = decode_jwt(apiToken)
+    user_id = token_data['sub']
+
+    fileAnnotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
+
+    if user_id:
+        fileAnnotations = fileAnnotations.filter(user_id=user_id)
+
+    fileAnnotations = fileAnnotations.order_by('confidence')
+
+    output = [
+        NABatRecordingAnnotationSchema.from_orm(fileAnnotation).dict()
+        for fileAnnotation in fileAnnotations
+    ]
+    return output
+
+
+@router.get('recording-annotation/{id}', response=NABatRecordingAnnotationSchema)
+def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
+    token_data = decode_jwt(apiToken)
+    user_id = token_data['sub']
+    try:
+        annotation = NABatRecordingAnnotation.objects.get(nabat_recording=id, user_id=user_id)
+
+        return NABatRecordingAnnotationSchema.from_orm(annotation).dict()
+    except NABatRecordingAnnotation.DoesNotExist:
+        return JsonResponse({'error': 'Recording annotation not found.'}, 404)
+
+
+@router.get('recording-annotation/{id}/details', response=NABatRecordingAnnotationDetailsSchema)
+def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: str):
+    token_data = decode_jwt(apiToken)
+    user_id = token_data['sub']
+    try:
+        annotation = NABatRecordingAnnotation.objects.get(nabat_recording=id, user_id=user_id)
+
+        return NABatRecordingAnnotationDetailsSchema.from_orm(annotation).dict()
+    except NABatRecordingAnnotation.DoesNotExist:
+        return JsonResponse({'error': 'Recording annotation not found.'}, 404)
+
+
+@router.put('recording-annotation', response={200: str})
+def create_recording_annotation(request: HttpRequest, data: NABatCreateRecordingAnnotationSchema):
+    token_data = decode_jwt(data.apiToken)
+    user_id = token_data['sub']
+    user_email = token_data['email']
+    try:
+        recording = NABatRecording.objects.get(npk=data.recordingId)
+
+        # Create the recording annotation
+        annotation = NABatRecordingAnnotation.objects.create(
+            nabat_recording=recording,
+            user_email=user_email,
+            user_id=user_id,
+            comments=data.comments,
+            model=data.model,
+            confidence=data.confidence,
+        )
+
+        # Add species
+        for species_id in data.species:
+            species = Species.objects.get(pk=species_id)
+            annotation.species.add(species)
+
+        return 'Recording annotation created successfully.'
+    except NABatRecording.DoesNotExist:
+        return JsonResponse({'error': 'Recording not found.'}, 404)
+    except Species.DoesNotExist:
+        return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
+
+
+@router.patch('/{id}', response={200: str})
+def update_recording_annotation(
+    request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
+):
+    token_data = decode_jwt(data.apiToken)
+    user_id = token_data['sub']
+    try:
+        annotation = NABatRecordingAnnotation.objects.get(nabat_recording=id, user_id=user_id)
+        # Check permission
+
+        # Update fields if provided
+        if data.comments is not None:
+            annotation.comments = data.comments
+        if data.model is not None:
+            annotation.model = data.model
+        if data.confidence is not None:
+            annotation.confidence = data.confidence
+        if data.species is not None:
+            annotation.species.clear()  # Clear existing species
+            for species_id in data.species:
+                species = Species.objects.get(pk=species_id)
+                annotation.species.add(species)
+
+        annotation.save()
+        return 'Recording annotation updated successfully.'
+    except NABatRecordingAnnotation.DoesNotExist:
+        return JsonResponse({'error': 'Recording not found.'}, 404)
+    except Species.DoesNotExist:
+        return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
+
+
+@router.delete('/recording-annotation/{id}', response={200: str})
+def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str):
+    token_data = decode_jwt(apiToken)
+    user_id = token_data['sub']
+    try:
+        annotation = NABatRecordingAnnotation.objects.get(nabat_recording=id, user_id=user_id)
+
+        # Check permission
+
+        annotation.delete()
+        return 'Recording annotation deleted successfully.'
+    except NABatRecordingAnnotation.DoesNotExist:
+        return JsonResponse({'error': 'Recording not found.'}, 404)

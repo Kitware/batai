@@ -1,4 +1,4 @@
-import { axiosInstance, FileAnnotation, ProcessingTask, Spectrogram } from "./api";
+import { axiosInstance, FileAnnotation, FileAnnotationDetails, ProcessingTask, Spectrogram, UpdateFileAnnotation } from "./api";
 
 export interface NABatRecordingCompleteResponse {
     error?: string;
@@ -41,10 +41,36 @@ async function getNABatRecordingFileAnnotations(recordingId: number) {
 }
 
 
+async function getNABatFileAnnotations(recordingId: number) {
+  return axiosInstance.get<FileAnnotation[]>(`recording/${recordingId}/recording-annotations`);
+}
+
+async function getNABatFileAnnotationDetails(recordingId: number) {
+    return axiosInstance.get<(FileAnnotation & {details: FileAnnotationDetails })>(`recording-annotation/${recordingId}/details`);
+}
+
+async function putNABatFileAnnotation(fileAnnotation: UpdateFileAnnotation & { apiToken: string}) {
+  return axiosInstance.put<{ message: string, id: number }>(`/recording-annotation/`, { ...fileAnnotation });
+}
+
+async function patchNABatFileAnnotation(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation) {
+  return axiosInstance.patch<{ message: string, id: number }>(`/recording-annotation/${fileAnnotationId}`, { ...fileAnnotation });
+}
+
+async function deleteNABatFileAnnotation(fileAnnotationId: number) {
+  return axiosInstance.delete<{ message: string, id: number }>(`/recording-annotation/${fileAnnotationId}`);
+}
+
+
 
 export {
     postNABatRecording,
     getSpectrogram,
     getSpectrogramCompressed,
     getNABatRecordingFileAnnotations,
+    getNABatFileAnnotations,
+    getNABatFileAnnotationDetails,
+    putNABatFileAnnotation,
+    patchNABatFileAnnotation,
+    deleteNABatFileAnnotation
 };
