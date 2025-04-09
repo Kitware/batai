@@ -375,12 +375,14 @@ def get_nabat_recording_annotation(
     apiToken: str | None = None,
 ):
     token_data = decode_jwt(apiToken)
-    user_id = token_data['sub']
+    user_email = token_data['email']
 
     fileAnnotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
 
-    if user_id:
-        fileAnnotations = fileAnnotations.filter(Q(user_id=user_id) | Q(user_id__isnull=True))
+    if user_email:
+        fileAnnotations = fileAnnotations.filter(
+            Q(user_email=user_email) | Q(user_email__isnull=True)
+        )
 
     fileAnnotations = fileAnnotations.order_by('confidence')
 
@@ -394,12 +396,12 @@ def get_nabat_recording_annotation(
 @router.get('recording-annotation/{id}', response=NABatRecordingAnnotationSchema)
 def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
     token_data = decode_jwt(apiToken)
-    user_id = token_data['sub']
+    user_email = token_data['email']
     try:
         annotation = NABatRecordingAnnotation.objects.get(pk=id)
 
-        if user_id:
-            annotation = annotation.filter(Q(user_id=user_id) | Q(user_id__isnull=True))
+        if user_email:
+            annotation = annotation.filter(Q(user_email=user_email) | Q(user_email__isnull=True))
 
         return NABatRecordingAnnotationSchema.from_orm(annotation).dict()
     except NABatRecordingAnnotation.DoesNotExist:
@@ -409,10 +411,10 @@ def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
 @router.get('recording-annotation/{id}/details', response=NABatRecordingAnnotationDetailsSchema)
 def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: str):
     token_data = decode_jwt(apiToken)
-    user_id = token_data['sub']
+    user_email = token_data['email']
     try:
         annotation = NABatRecordingAnnotation.objects.get(
-            Q(pk=id) & (Q(user_id=user_id) | Q(user_id__isnull=True))
+            Q(pk=id) & (Q(user_email=user_email) | Q(user_email__isnull=True))
         )
 
         return NABatRecordingAnnotationDetailsSchema.from_orm(annotation).dict()
@@ -455,9 +457,9 @@ def update_recording_annotation(
     request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
 ):
     token_data = decode_jwt(data.apiToken)
-    user_id = token_data['sub']
+    user_email = token_data['email']
     try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_id=user_id)
+        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_email=user_email)
         # Check permission
 
         # Update fields if provided
@@ -484,13 +486,12 @@ def update_recording_annotation(
 @router.delete('recording-annotation/{id}', response={200: str})
 def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str):
     token_data = decode_jwt(apiToken)
-    user_id = token_data['sub']
+    user_email = token_data['email']
     try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_id=user_id)
+        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_email=user_email)
 
         # Check permission
-
         annotation.delete()
         return 'Recording annotation deleted successfully.'
     except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({'error': 'Recording not found.'}, 404)
+        return JsonResponse({'error': 'Recording not found for this user.'}, 404)
