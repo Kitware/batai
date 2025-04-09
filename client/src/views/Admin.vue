@@ -12,13 +12,14 @@ export default defineComponent({
   setup() {
     // Reactive state for the settings
     const tab: Ref<'admin' | 'nabat'> = ref('admin');
-    const { configuration, loadConfiguration } = useState();
+    const { colorSchemes, configuration, loadConfiguration } = useState();
     const settings = reactive({
       displayPulseAnnotations: configuration.value.display_pulse_annotations,
       displaySequenceAnnotations: configuration.value.display_sequence_annotations,
       runInferenceOnUpload: configuration.value.run_inference_on_upload,
       spectrogramXStretch: configuration.value.spectrogram_x_stretch,
       spectrogramView: configuration.value.spectrogram_view,
+      defaultColorScheme: configuration.value.default_color_scheme,
     });
     const spectrogramViewOptions = [
       { title: 'Compressed', value: 'compressed' },
@@ -29,6 +30,7 @@ export default defineComponent({
       settings.displaySequenceAnnotations = configuration.value.display_sequence_annotations;
       settings.runInferenceOnUpload = configuration.value.run_inference_on_upload;
       settings.spectrogramXStretch = configuration.value.spectrogram_x_stretch;
+      settings.defaultColorScheme = configuration.value.default_color_scheme;
       settings.spectrogramView = configuration.value.spectrogram_view;
     });
     // Function to save the settings
@@ -39,6 +41,7 @@ export default defineComponent({
         display_sequence_annotations: settings.displaySequenceAnnotations,
         run_inference_on_upload: settings.runInferenceOnUpload,
         spectrogram_x_stretch: settings.spectrogramXStretch,
+        default_color_scheme: settings.defaultColorScheme,
         spectrogram_view: settings.spectrogramView,
       });
       loadConfiguration();
@@ -49,6 +52,7 @@ export default defineComponent({
       saveSettings,
       spectrogramViewOptions,
       tab,
+      colorSchemes,
     };
   },
 });
@@ -73,7 +77,7 @@ export default defineComponent({
         NABat Admin
       </v-tab>
     </v-tabs>
-      
+
     <v-window v-model="tab">
       <v-window-item value="admin">
         <v-card-title>Admin Settings</v-card-title>
@@ -133,6 +137,20 @@ export default defineComponent({
                 item-value="value"
                 density="compact"
                 label="Default spectrogram view"
+              />
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="3">
+              <v-select
+                v-model="settings.defaultColorScheme"
+                label="Default Color Scheme"
+                :items="colorSchemes"
+                item-title="title"
+                item-value="value"
+                variant="outlined"
+                density="compact"
+                hide-details
               />
             </v-col>
           </v-row>

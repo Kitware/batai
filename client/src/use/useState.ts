@@ -1,7 +1,14 @@
 import { ref, Ref, watch } from "vue";
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
-import { Configuration, getConfiguration, OtherUserAnnotations, Recording, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import {
+  Configuration,
+	getConfiguration,
+	OtherUserAnnotations,
+	Recording,
+	SpectrogramAnnotation,
+	SpectrogramTemporalAnnotation,
+} from "../api/api";
 import {
   interpolateCividis,
   interpolateViridis,
@@ -17,15 +24,14 @@ type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal' | 'duration';
 const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'duration', 'freq']);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
 const colorSchemes = [
-  { title: 'Inferno', scheme: interpolateInferno },
-  { title: 'Cividis', scheme: interpolateCividis },
-  { title: 'Viridis', scheme: interpolateViridis },
-  { title: 'Magma', scheme: interpolateMagma },
-  { title: 'Plasma', scheme: interpolatePlasma },
-  { title: 'Turbo', scheme: interpolateTurbo },
-
+  { value: 'inferno', title: 'Inferno', scheme: interpolateInferno },
+  { value: 'cividis', title: 'Cividis', scheme: interpolateCividis },
+  { value: 'viridis', title: 'Viridis', scheme: interpolateViridis },
+  { value: 'magma', title: 'Magma', scheme: interpolateMagma },
+  { value: 'plasma', title: 'Plasma', scheme: interpolatePlasma },
+  { value: 'turbo', title: 'Turbo', scheme: interpolateTurbo },
 ];
-const colorScheme: Ref<{ title: string, scheme: (input: number) => string }> = ref(colorSchemes[0]);
+const colorScheme: Ref<{ value: string, title: string, scheme: (input: number) => string }> = ref(colorSchemes[0]);
 const backgroundColor = ref('rgba(0, 0, 0, 1)');
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref('');
@@ -47,6 +53,7 @@ const configuration: Ref<Configuration> = ref({
   spectrogram_view: 'compressed',
   spectrogram_x_stretch: 2.5,
   run_inference_on_upload: true,
+  default_color_scheme: 'inferno',
   is_admin: false,
 });
 
