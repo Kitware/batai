@@ -191,7 +191,10 @@ export default defineComponent({
         loadData();
       }
     );
-    onMounted(() => loadData());
+    onMounted(() => {
+      loadData();
+      colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
+    });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
