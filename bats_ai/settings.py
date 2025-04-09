@@ -25,6 +25,9 @@ class BatsAiMixin(ConfigMixin):
         'django.core.files.uploadhandler.TemporaryFileUploadHandler',
     ]
 
+    MLFLOW_PG_DB = None
+    MLFLOW_BUCKET = None
+
     @staticmethod
     def mutate_configuration(configuration: ComposedConfiguration) -> None:
         # Install local apps first, to ensure any overridden resources are found first
@@ -77,6 +80,10 @@ class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
     MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
+
+    MLFLOW_ENDPOINT = values.Value('http://localhost:5000')
+    MLFLOW_PG_DB = 'mlflow'
+    MLFLOW_BUCKET = 'mlflow'
 
 
 class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
