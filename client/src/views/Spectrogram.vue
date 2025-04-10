@@ -44,6 +44,9 @@ export default defineComponent({
       toggleLayerVisibility,
       layerVisibility,
       colorScale,
+      colorSchemes,
+      colorScheme,
+      backgroundColor,
       setSelectedUsers,
       createColorScale,
       currentUser,
@@ -66,6 +69,7 @@ export default defineComponent({
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
     const compressed =  ref(configuration.value.spectrogram_view === 'compressed');
+    const colorpickerMenu = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
       annotations.value = response.data.sort(
@@ -187,7 +191,10 @@ export default defineComponent({
         loadData();
       }
     );
-    onMounted(() => loadData());
+    onMounted(() => {
+      loadData();
+      colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
+    });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -270,6 +277,10 @@ export default defineComponent({
       toggleCompressedOverlay,
       viewCompressedOverlay,
       sideTab,
+      colorSchemes,
+      colorScheme,
+      backgroundColor,
+      colorpickerMenu,
       // Other user selection
       otherUserAnnotations,
       temporalAnnotations,
@@ -479,6 +490,43 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
+            <v-select
+              v-model="colorScheme"
+              label="Color Scheme"
+              :items="colorSchemes"
+              item-title="title"
+              item-value="scheme"
+              variant="outlined"
+              density="compact"
+              width="75"
+              hide-details
+              return-object
+            />
+            <v-menu
+              v-model="colorpickerMenu"
+              :close-on-content-click="false"
+              offset-y
+            >
+              <template #activator="{ props: subProps }">
+                <v-tooltip text="Spectrogram background color">
+                  <template #activator="{ props: tooltipProps }">
+                    <v-btn
+                      v-bind="{ ...subProps, ...tooltipProps }"
+                      :style="{ backgroundColor: backgroundColor }"
+                      class="color-square mx-2"
+                    />
+                  </template>
+                </v-tooltip>
+              </template>
+              <v-card>
+                <v-card-text>
+                  <v-color-picker
+                    v-model="backgroundColor"
+                    elevation="0"
+                  />
+                </v-card-text>
+              </v-card>
+            </v-menu>
           </v-row>
         </v-container>
       </v-toolbar>
@@ -576,5 +624,12 @@ export default defineComponent({
 <style scoped>
 .spectro-main {
   height: calc(100vh - 21vh - 64px - 72px);
+}
+
+.color-square {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 4px;
 }
 </style>

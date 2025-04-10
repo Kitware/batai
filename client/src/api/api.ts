@@ -367,6 +367,7 @@ export interface ConfigurationSettings {
   run_inference_on_upload: boolean;
   spectrogram_x_stretch: number;
   spectrogram_view: 'compressed' | 'uncompressed';
+  default_color_scheme: string;
   is_admin: boolean;
 }
 
