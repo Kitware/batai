@@ -48,7 +48,6 @@ export default defineComponent({
       blackBackground,
       scaledVals,
       configuration,
-      colorScheme,
     } = useState();
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();

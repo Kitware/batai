@@ -14,7 +14,6 @@ import SpeciesLayer from "./layers/speciesLayer";
 import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import { cloneDeep } from "lodash";
 import useState from "../../use/useState";
-import { RGBColor } from "d3";
 export default defineComponent({
   name: "LayerManager",
   props: {
@@ -454,7 +453,7 @@ export default defineComponent({
         compressedOverlayLayer.spectroInfo = props.spectroInfo;
         compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         if (!editAnnotationLayer) {
-        editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
+          editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
         }
         editAnnotationLayer.spectroInfo = props.spectroInfo;
         editAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
@@ -503,7 +502,7 @@ export default defineComponent({
           speciesSequenceLayer.spectroInfo = props.spectroInfo;
           speciesSequenceLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!speciesLayer) {
-          speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
+            speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
           }
           speciesLayer.spectroInfo = props.spectroInfo;
           speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
@@ -626,13 +625,13 @@ export default defineComponent({
     const bValues = ref('');
 
     watchEffect(() => {
-      const backgroundRgbColor = d3.color(backgroundColor.value) as RGBColor;
+      const backgroundRgbColor = d3.color(backgroundColor.value) as d3.RGBColor;
       const redStops: number[] = [backgroundRgbColor.r / 255];
       const greenStops: number[] = [backgroundRgbColor.g / 255];
       const blueStops: number[] = [backgroundRgbColor.b / 255];
       for (let i = 0.1; i <= 1.0; i += 0.1) {
         const rgbStopString = colorScheme.value.scheme(i);
-        const color = d3.color(rgbStopString) as RGBColor;
+        const color = d3.color(rgbStopString) as d3.RGBColor;
         redStops.push(color.r / 255);
         greenStops.push(color.g / 255);
         blueStops.push(color.b / 255);
