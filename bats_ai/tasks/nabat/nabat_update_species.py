@@ -28,13 +28,12 @@ query GetAllSpeciesOptions {
 
 
 @app.task(bind=True)
-def update_nabat_species(self, api_token: str):
+def update_nabat_species(self):
     processing_task = ProcessingTask.objects.filter(celery_id=self.request.id)
     processing_task.update(status=ProcessingTask.Status.RUNNING)
 
-    headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
     try:
-        response = requests.post(BASE_URL, json={'query': QUERY}, headers=headers)
+        response = requests.post(BASE_URL, json={'query': QUERY})
         response.raise_for_status()
     except Exception as e:
         processing_task.update(

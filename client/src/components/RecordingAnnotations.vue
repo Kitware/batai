@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted, PropType, Ref } from "vue";
+import { computed, defineComponent, onMounted, PropType, Ref } from "vue";
 import { ref } from "vue";
 import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
@@ -86,6 +86,11 @@ export default defineComponent({
       detailsDialog.value = true;
     };
 
+    const disableNaBatAnnotations = computed(() => {
+      const nonAIAnnotations = annotations.value.filter((item) => item.owner);
+      return (nonAIAnnotations.length > 0 && props.type === 'nabat');
+    });
+
     return {
       selectedAnnotation,
       annotationState,
@@ -96,6 +101,7 @@ export default defineComponent({
       loadDetails,
       detailsDialog,
       detailRecordingId,
+      disableNaBatAnnotations,
     };
   },
 });
@@ -110,7 +116,7 @@ export default defineComponent({
       <v-spacer />
       <v-col>
         <v-btn
-          :disabled="annotationState === 'creating'"
+          :disabled="annotationState === 'creating' || disableNaBatAnnotations"
           @click="addAnnotation()"
         >
           Add<v-icon>mdi-plus</v-icon>

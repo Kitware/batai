@@ -44,6 +44,7 @@ export default defineComponent({
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
     const confidence: Ref<number> = ref(props.annotation?.confidence || 1.0);
+    const singleSpecies: Ref<string | null> = ref(props.annotation?.species.length ? props.annotation.species[0].species_code : null);
 
     watch(() => props.annotation, () => {
         if (props.annotation?.species) {
@@ -60,12 +61,19 @@ export default defineComponent({
         if (props.annotation) {
             // convert species names to Ids;
             const speciesIds: number[] = [];
+            if (props.type !== 'nabat') {
             speciesEdit.value.forEach((item) => {
                 const found = props.species.find((specie) => specie.species_code === item);
                 if (found) {
                     speciesIds.push(found.id);
                 }
             });
+          } else if (props.type === 'nabat') {
+            const found = props.species.find((specie) => specie.species_code === singleSpecies.value);
+            if (found) {
+              speciesIds.push(found.id);
+            }
+          }
 
             const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
               recordingId: props.recordingId,
@@ -83,6 +91,8 @@ export default defineComponent({
 
     };
 
+    
+
     const deleteAnno = async () => {
       if (props.annotation && props.recordingId) {
             props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken) : await deleteFileAnnotation(props.annotation.id,);
@@ -95,7 +105,8 @@ export default defineComponent({
         confidence,
         comments,
         updateAnnotation,
-        deleteAnno
+        deleteAnno,
+        singleSpecies,
     };
   },
 });
@@ -128,6 +139,7 @@ export default defineComponent({
       </v-row>
       <v-row>
         <v-autocomplete
+          v-if="type !== 'nabat'"
           v-model="speciesEdit"
           multiple
           closable-chips
@@ -136,8 +148,19 @@ export default defineComponent({
           label="Species"
           @update:model-value="updateAnnotation()"
         />
+        <v-autocomplete
+          v-if="type === 'nabat'"
+          v-model="singleSpecies"
+          closable-chips
+          chips
+          :items="speciesList"
+          label="Species"
+          @update:model-value="updateAnnotation()"
+        />
       </v-row>
-      <v-row>
+      <v-row
+        v-if="type !== 'nabat'"
+      >
         <v-slider
           v-model="confidence"
           min="0"
@@ -147,7 +170,9 @@ export default defineComponent({
           @end="updateAnnotation()"
         />
       </v-row>
-      <v-row>
+      <v-row
+        v-if="type !== 'nabat'"
+      >
         <v-textarea
           v-model="comments"
           label="Comments"

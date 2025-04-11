@@ -368,7 +368,7 @@ export interface ConfigurationSettings {
   run_inference_on_upload: boolean;
   spectrogram_x_stretch: number;
   spectrogram_view: 'compressed' | 'uncompressed';
-  is_admin: boolean;
+  is_admin?: boolean;
 }
 
 export type Configuration = ConfigurationSettings & { is_admin: boolean };
@@ -450,6 +450,12 @@ async function getGuanoMetadata(file: File): Promise<GuanoMetadata> {
 
 }
 
+async function adminNaBatUpdateSpecies(apiToken: string) {
+  return axiosInstance.post<{ taskId: string }>('/nabat/configuration/update-species', { params: { apiToken } });
+  
+  }
+  
+
 export {
  uploadRecordingFile,
  getRecordings,
@@ -482,4 +488,5 @@ export {
  cancelProcessingTask,
  getFilteredProcessingTasks,
  getFileAnnotationDetails,
+ adminNaBatUpdateSpecies,
 };

@@ -72,5 +72,5 @@ export {
     getNABatFileAnnotationDetails,
     putNABatFileAnnotation,
     patchNABatFileAnnotation,
-    deleteNABatFileAnnotation
+    deleteNABatFileAnnotation,
 };

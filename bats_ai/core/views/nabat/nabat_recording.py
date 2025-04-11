@@ -22,12 +22,25 @@ logger = logging.getLogger(__name__)
 
 
 router = RouterPaginated()
-
+SOFTWARE_ID = 81
 BASE_URL = 'https://api.sciencebase.gov/nabat-graphql/graphql'
 QUERY = """
 query fetchAcousticAndSurveyEventInfo {
   presignedUrlFromAcousticFile(acousticFileId: "%(acoustic_file_id)s") {
     s3PresignedUrl
+  }
+}
+"""
+
+UPDATE_QUERY = """
+query UpdateQuery{
+updateAcousticFileVet (
+    surveyEventId: %(survey_event_id)d
+    acousticFileId: %(acoustic_file_id)d
+    softwareId: %(software_id)d
+    speciesId: %(species_id)d,
+  ) {
+    acousticFileBatchId
   }
 }
 """
@@ -427,6 +440,7 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
     token_data = decode_jwt(data.apiToken)
     user_id = token_data['sub']
     user_email = token_data['email']
+
     try:
         recording = NABatRecording.objects.get(pk=data.recordingId)
 
@@ -444,6 +458,24 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
         for species_id in data.species:
             species = Species.objects.get(pk=species_id)
             annotation.species.add(species)
+        if len(data.species) > 0:
+            species_id = data.species[0]
+            headers = {
+                'Authorization': f'Bearer {data.apiToken}',
+                'Content-Type': 'application/json',
+            }
+            batch_query = UPDATE_QUERY % {
+                'survey_event_id': recording.survey_event_id,
+                'software_id': SOFTWARE_ID,
+                'acoustic_file_id': recording.recording_id,
+                'species_id': species_id,
+            }
+            try:
+                response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
+                logger.info(response.json())
+            except Exception as e:
+                logger.error(f'API Request Failed: {e}')
+                return JsonResponse({'error': 'Failed to connect to NABat API'}, status=500)
 
         return 'Recording annotation created successfully.'
     except NABatRecording.DoesNotExist:
@@ -458,6 +490,7 @@ def update_recording_annotation(
 ):
     token_data = decode_jwt(data.apiToken)
     user_email = token_data['email']
+
     try:
         annotation = NABatRecordingAnnotation.objects.get(pk=id, user_email=user_email)
         # Check permission
@@ -474,6 +507,28 @@ def update_recording_annotation(
             for species_id in data.species:
                 species = Species.objects.get(pk=species_id)
                 annotation.species.add(species)
+
+        if len(data.species) > 0:
+            species_id = data.species[0]
+            headers = {
+                'Authorization': f'Bearer {data.apiToken}',
+                'Content-Type': 'application/json',
+            }
+            batch_query = UPDATE_QUERY % {
+                'survey_event_id': annotation.nabat_recording.survey_event_id,
+                'software_id': SOFTWARE_ID,
+                'acoustic_file_id': annotation.nabat_recording.recording_id,
+                'species_id': species_id,
+            }
+            try:
+                response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
+                json_response = response.json()
+                if json_response.get('errors'):
+                    logger.error(f'API Error: {json_response["errors"]}')
+                    return JsonResponse(json_response, status=500)
+            except Exception as e:
+                logger.error(f'API Request Failed: {e}')
+                return JsonResponse({'error': 'Failed to connect to NABat API'}, status=500)
 
         annotation.save()
         return 'Recording annotation updated successfully.'

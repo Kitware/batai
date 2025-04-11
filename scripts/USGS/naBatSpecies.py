@@ -52,8 +52,7 @@ def decode_jwt(token):
 @click.command()
 def fetch_and_save():
     """Fetch data using GraphQL and save to speceis.json"""
-    headers = {'Authorization': f'Bearer {AUTH_TOKEN}', 'Content-Type': 'application/json'}
-
+    headers = {}
     # Fetch batch data
     logger.info('Fetching batch data...')
     response = requests.post(BASE_URL, json={'query': QUERY}, headers=headers)
@@ -64,7 +63,6 @@ def fetch_and_save():
     if response.status_code == 200:
         try:
             batch_data = response.json()
-            batch_data['jwt'] = decode_jwt(AUTH_TOKEN)
             with open('species.json', 'w') as f:
                 json.dump(batch_data, f, indent=2)
             logger.info('Data successfully fetched and saved to output.json')

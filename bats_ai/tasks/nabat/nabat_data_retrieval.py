@@ -197,10 +197,12 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
             recording_location=recording_location,
         )
 
-        species_list = nabat_recording_data['surveyEventById']['acousticBatchesBySurveyEventId'][
-            'nodes'
-        ]
-        for node in species_list:
+        acoustic_batches_nodes = nabat_recording_data['surveyEventById'][
+            'acousticBatchesBySurveyEventId'
+        ]['nodes']
+        if len(acoustic_batches_nodes) > 0:
+            batch_data = acoustic_batches_nodes[0]['acousticFileBatchesByBatchId']['nodes']
+        for node in batch_data:
             species_id = node.get('manualId', False)
             if species_id is not False:
                 annotation = NABatRecordingAnnotation.objects.create(
