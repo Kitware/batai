@@ -1,12 +1,17 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, PropType } from 'vue';
 import { FileAnnotationDetails, getFileAnnotationDetails } from '../api/api';
+import { getNABatFileAnnotationDetails } from '../api/NABatApi';
 
 export default defineComponent({
   props: {
     recordingId: {
       type: Number as PropType<number>,
       required: true,
+    },
+    apiToken: {
+      type: String,
+      default: () => undefined,
     },
   },
   emits: ['close'],
@@ -16,7 +21,7 @@ export default defineComponent({
 
     onMounted(async () => {
       try {
-        const response = await getFileAnnotationDetails(props.recordingId);
+        const response = props.apiToken ? await getNABatFileAnnotationDetails(props.recordingId, props.apiToken) : await getFileAnnotationDetails(props.recordingId);
         annotationData.value = response.data.details;
       } catch (error) {
         console.error('Error fetching annotation details:', error);

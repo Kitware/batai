@@ -1,10 +1,13 @@
 import io
+import math
 import tempfile
 
 from PIL import Image
 from celery import shared_task
 import cv2
 from django.core.files import File
+import librosa
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 
@@ -18,6 +21,185 @@ from bats_ai.core.models import (
     Spectrogram,
     colormap,
 )
+
+FREQ_MIN = 5e3
+FREQ_MAX = 120e3
+FREQ_PAD = 2e3
+
+COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo']
+
+
+def generate_spectrogram(recording, file, colormap=None, dpi=520):
+    try:
+        sig, sr = librosa.load(file, sr=None)
+        duration = len(sig) / sr
+    except Exception as e:
+        print(f'Error loading file: {e}')
+        return None
+
+    size_mod = 1
+    high_res = False
+
+    if colormap in ['inference']:
+        colormap = None
+        dpi = 300
+        size_mod = 0
+    if colormap in ['none', 'default', 'dark']:
+        colormap = None
+    if colormap in ['light']:
+        colormap = 'gist_yarg'
+    if colormap in ['heatmap']:
+        colormap = 'turbo'
+        high_res = True
+
+    if colormap not in COLORMAP_ALLOWED:
+        print(f'Substituted requested {colormap} colormap to default')
+        colormap = None
+
+    size = int(0.001 * sr)  # 1.0ms resolution
+    size = 2 ** (math.ceil(math.log(size, 2)) + size_mod)
+    hop_length = int(size / 4)
+
+    window = librosa.stft(sig, n_fft=size, hop_length=hop_length, window='hamming')
+    window = np.abs(window) ** 2
+    window = librosa.power_to_db(window)
+
+    window -= np.median(window, axis=1, keepdims=True)
+    window_ = window[window > 0]
+    thresh = np.median(window_)
+    window[window <= thresh] = 0
+
+    bands = librosa.fft_frequencies(sr=sr, n_fft=size)
+    for index in range(len(bands)):
+        band_min = bands[index]
+        band_max = bands[index + 1] if index < len(bands) - 1 else np.inf
+        if band_max <= FREQ_MIN or FREQ_MAX <= band_min:
+            window[index, :] = -1
+
+    window = np.clip(window, 0, None)
+
+    freq_low = int(FREQ_MIN - FREQ_PAD)
+    freq_high = int(FREQ_MAX + FREQ_PAD)
+    vmin = window.min()
+    vmax = window.max()
+
+    chunksize = int(2e3)
+    arange = np.arange(chunksize, window.shape[1], chunksize)
+    chunks = np.array_split(window, arange, axis=1)
+
+    imgs = []
+    for chunk in chunks:
+        h, w = chunk.shape
+        alpha = 3
+        figsize = (int(math.ceil(w / h)) * alpha + 1, alpha)
+        fig = plt.figure(figsize=figsize, facecolor='black', dpi=dpi)
+        ax = plt.axes()
+        plt.margins(0)
+
+        kwargs = {
+            'sr': sr,
+            'n_fft': size,
+            'hop_length': hop_length,
+            'x_axis': 's',
+            'y_axis': 'fft',
+            'ax': ax,
+            'vmin': vmin,
+            'vmax': vmax,
+        }
+
+        if colormap is None:
+            librosa.display.specshow(chunk, **kwargs)
+        else:
+            librosa.display.specshow(chunk, cmap=colormap, **kwargs)
+
+        ax.set_ylim(freq_low, freq_high)
+        ax.axis('off')
+
+        buf = io.BytesIO()
+        fig.savefig(buf, bbox_inches='tight', pad_inches=0)
+
+        fig.clf()
+        plt.close()
+
+        buf.seek(0)
+        img = Image.open(buf)
+
+        img = np.array(img)
+        mask = img[:, :, -1]
+        flags = np.where(np.sum(mask != 0, axis=0) == 0)[0]
+        index = flags.min() if len(flags) > 0 else img.shape[1]
+        img = img[:, :index, :3]
+
+        imgs.append(img)
+
+    w_ = int(8.0 * duration * 1e3)
+    h_ = 1200
+
+    img = np.hstack(imgs)
+    img = cv2.resize(img, (w_, h_), interpolation=cv2.INTER_LANCZOS4)
+
+    if high_res:
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+        noise = 0.1
+        img = img.astype(np.float32)
+        img -= img.min()
+        img /= img.max()
+        img *= 255.0
+        img /= 1.0 - noise
+        img[img < 0] = 0
+        img[img > 255] = 255
+        img = 255.0 - img
+
+        img = cv2.blur(img, (9, 9))
+        img = cv2.resize(img, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_LANCZOS4)
+        img = cv2.blur(img, (9, 9))
+
+        img -= img.min()
+        img /= img.max()
+        img *= 255.0
+
+        mask = (img > 255 * noise).astype(np.float32)
+        mask = cv2.blur(mask, (5, 5))
+
+        img[img < 0] = 0
+        img[img > 255] = 255
+        img = np.around(img).astype(np.uint8)
+        img = cv2.applyColorMap(img, cv2.COLORMAP_TURBO)
+
+        img = img.astype(np.float32)
+        img *= mask.reshape(*mask.shape, 1)
+        img[img < 0] = 0
+        img[img > 255] = 255
+        img = np.around(img).astype(np.uint8)
+
+    img = Image.fromarray(img, 'RGB')
+    w, h = img.size
+
+    # Save image to temporary file
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+    img.save(temp_file, format='JPEG', quality=80)
+    temp_file.seek(0)
+
+    # Create new NABatSpectrogram
+    image_file = File(temp_file, name=f'{recording.id}_spectrogram.jpg')
+
+    spectrogram = Spectrogram.objects.create(
+        recording=recording,
+        image_file=image_file,
+        width=w,
+        height=h,
+        duration=math.ceil(duration * 1e3),  # duration in ms
+        frequency_min=freq_low,
+        frequency_max=freq_high,
+        colormap=colormap,
+    )
+
+    spectrogram.save()
+    # Clean up temporary file
+    temp_file.close()
+
+    return spectrogram
 
 
 def generate_compressed(recording: Recording, spectrogram: Spectrogram):
@@ -183,13 +365,13 @@ def recording_compute_spectrogram(recording_id: int):
     spectrogram_id = None
     for cmap in cmaps:
         with colormap(cmap):
-            spectrogram_id_temp = Spectrogram.generate(recording, cmap)
+            spectrogram_temp = generate_spectrogram(recording, recording.audio_file, cmap)
             if cmap is None:
-                spectrogram_id = spectrogram_id_temp
+                spectrogram_id = spectrogram_temp.pk
     if spectrogram_id is not None:
         compressed_spectro = generate_compress_spectrogram(recording_id, spectrogram_id)
         config = Configuration.objects.first()
-        if not config or not config.run_inference_on_upload:
+        if config and config.run_inference_on_upload:
             predict(compressed_spectro.pk)
 
 
@@ -225,7 +407,7 @@ def generate_compress_spectrogram(recording_id: int, spectrogram_id: int):
 @shared_task
 def predict(compressed_spectrogram_id: int):
     compressed_spectrogram = CompressedSpectrogram.objects.get(pk=compressed_spectrogram_id)
-    label, score, confs = compressed_spectrogram.predict()
+    label, score, confs = predict_compressed(compressed_spectrogram.image_file)
     confidences = [{'label': key, 'value': float(value)} for key, value in confs.items()]
     sorted_confidences = sorted(confidences, key=lambda x: x['value'], reverse=True)
     output = {
@@ -245,4 +427,80 @@ def predict(compressed_spectrogram_id: int):
     )
     recording_annotation.species.set(species)
     recording_annotation.save()
+    return label, score, confs
+
+
+def predict_compressed(image_file):
+    import json
+    import os
+
+    import onnx
+    import onnxruntime as ort
+    import tqdm
+
+    img = Image.open(image_file)
+
+    relative = ('..',) * 3
+    asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
+
+    onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')
+    assert os.path.exists(onnx_filename)
+
+    session = ort.InferenceSession(
+        onnx_filename,
+        providers=[
+            (
+                'CUDAExecutionProvider',
+                {
+                    'cudnn_conv_use_max_workspace': '1',
+                    'device_id': 0,
+                    'cudnn_conv_algo_search': 'HEURISTIC',
+                },
+            ),
+            'CPUExecutionProvider',
+        ],
+    )
+
+    img = np.array(img)
+
+    h, w, c = img.shape
+    ratio_y = 224 / h
+    ratio_x = ratio_y * 0.5
+    raw = cv2.resize(img, None, fx=ratio_x, fy=ratio_y, interpolation=cv2.INTER_LANCZOS4)
+
+    h, w, c = raw.shape
+    if w <= h:
+        canvas = np.zeros((h, h + 1, 3), dtype=raw.dtype)
+        canvas[:, :w, :] = raw
+        raw = canvas
+        h, w, c = raw.shape
+
+    inputs_ = []
+    for index in range(0, w - h, 100):
+        inputs_.append(raw[:, index : index + h, :])
+    inputs_.append(raw[:, -h:, :])
+    inputs_ = np.array(inputs_)
+
+    chunksize = 1
+    chunks = np.array_split(inputs_, np.arange(chunksize, len(inputs_), chunksize))
+    outputs = []
+    for chunk in tqdm.tqdm(chunks, desc='Inference'):
+        outputs_ = session.run(
+            None,
+            {'input': chunk},
+        )
+        outputs.append(outputs_[0])
+    outputs = np.vstack(outputs)
+    outputs = outputs.mean(axis=0)
+
+    model = onnx.load(onnx_filename)
+    mapping = json.loads(model.metadata_props[0].value)
+    labels = [mapping['forward'][str(index)] for index in range(len(mapping['forward']))]
+
+    prediction = np.argmax(outputs)
+    label = labels[prediction]
+    score = outputs[prediction]
+
+    confs = dict(zip(labels, outputs))
+
     return label, score, confs
