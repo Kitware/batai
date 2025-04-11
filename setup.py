@@ -49,6 +49,7 @@ setup(
         'djangorestframework',
         'drf-yasg',
         'django-click',
+        'django-storages[s3]',
         # Production-only
         'django-composed-configuration[prod]>=0.20',
         'django-s3-file-field[boto3]<1',

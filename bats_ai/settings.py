@@ -9,6 +9,7 @@ from composed_configuration import (
     DevelopmentBaseConfiguration,
     HerokuProductionBaseConfiguration,
     ProductionBaseConfiguration,
+    S3StorageMixin,
     TestingBaseConfiguration,
 )
 from composed_configuration._configuration import _BaseConfiguration
@@ -114,4 +115,8 @@ class ProductionConfiguration(BatsAiMixin, ProductionBaseConfiguration):
 
 
 class HerokuProductionConfiguration(BatsAiMixin, HerokuProductionBaseConfiguration):
+    pass
+
+
+class AwsProductionConfiguration(BatsAiMixin, S3StorageMixin):
     pass
