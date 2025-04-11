@@ -56,7 +56,7 @@ export default defineComponent({
     const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
-    const compressed = computed(() => configuration.value.spectrogram_view === 'compressed');
+    const compressed =  ref(configuration.value.spectrogram_view === 'compressed');
     const errorMessage: Ref<string | null> = ref(null);
     const additionalErrors: Ref<string[]> = ref([]);
 
