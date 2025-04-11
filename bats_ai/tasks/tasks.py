@@ -371,7 +371,7 @@ def recording_compute_spectrogram(recording_id: int):
     if spectrogram_id is not None:
         compressed_spectro = generate_compress_spectrogram(recording_id, spectrogram_id)
         config = Configuration.objects.first()
-        if not config or not config.run_inference_on_upload:
+        if config and config.run_inference_on_upload:
             predict(compressed_spectro.pk)
 
 

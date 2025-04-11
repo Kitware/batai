@@ -14,6 +14,10 @@ function beforeEach(
   _: RouteLocationNormalized,
   next: (route?: string) => void,
 ) {
+  if (to.path.startsWith('/nabat/')) {
+    next();
+    return;
+  }
   if (!oauthClient.isLoggedIn && to.name !== 'Login') {
     next('/login');
     return;

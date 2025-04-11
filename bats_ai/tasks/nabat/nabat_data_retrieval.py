@@ -146,7 +146,7 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
 
                 try:
                     config = Configuration.objects.first()
-                    if not config or not config.run_inference_on_upload:
+                    if config and config.run_inference_on_upload:
                         predict(compressed_spectrogram.pk)
                 except Exception as e:
                     logger.error(f'Error Performing Prediction: {e}')

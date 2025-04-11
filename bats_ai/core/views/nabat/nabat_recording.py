@@ -204,7 +204,7 @@ def get_nabat_recording_spectrogram(request: HttpRequest, id: int, apiToken: str
     return spectro_data
 
 
-@router.post('/{id}/spectrogram/compressed/predict')
+@router.post('/{id}/spectrogram/compressed/predict', auth=None)
 def predict_spectrogram_compressed(request: HttpRequest, id: int):
     try:
         recording = NABatRecording.objects.get(pk=id)
@@ -228,7 +228,7 @@ def predict_spectrogram_compressed(request: HttpRequest, id: int):
     return output
 
 
-@router.get('/{id}/spectrogram')
+@router.get('/{id}/spectrogram', auth=None)
 def get_spectrogram(request: HttpRequest, id: int):
     try:
         nabat_recording = NABatRecording.objects.get(pk=id)
@@ -381,7 +381,7 @@ class NABatCreateRecordingAnnotationSchema(Schema):
     apiToken: str
 
 
-@router.get('/{nabat_recording_id}/recording-annotations')
+@router.get('/{nabat_recording_id}/recording-annotations', auth=None)
 def get_nabat_recording_annotation(
     request: HttpRequest,
     nabat_recording_id: int,
@@ -406,7 +406,7 @@ def get_nabat_recording_annotation(
     return output
 
 
-@router.get('recording-annotation/{id}', response=NABatRecordingAnnotationSchema)
+@router.get('recording-annotation/{id}', auth=None, response=NABatRecordingAnnotationSchema)
 def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
     token_data = decode_jwt(apiToken)
     user_email = token_data['email']
@@ -421,7 +421,9 @@ def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
         return JsonResponse({'error': 'Recording annotation not found.'}, 404)
 
 
-@router.get('recording-annotation/{id}/details', response=NABatRecordingAnnotationDetailsSchema)
+@router.get(
+    'recording-annotation/{id}/details', auth=None, response=NABatRecordingAnnotationDetailsSchema
+)
 def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: str):
     token_data = decode_jwt(apiToken)
     user_email = token_data['email']
@@ -435,7 +437,7 @@ def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: st
         return JsonResponse({'error': 'Recording annotation not found.'}, 404)
 
 
-@router.put('recording-annotation', response={200: str})
+@router.put('recording-annotation', auth=None, response={200: str})
 def create_recording_annotation(request: HttpRequest, data: NABatCreateRecordingAnnotationSchema):
     token_data = decode_jwt(data.apiToken)
     user_id = token_data['sub']
@@ -484,7 +486,7 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
         return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
 
 
-@router.patch('recording-annotation/{id}', response={200: str})
+@router.patch('recording-annotation/{id}', auth=None, response={200: str})
 def update_recording_annotation(
     request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
 ):
@@ -538,7 +540,7 @@ def update_recording_annotation(
         return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
 
 
-@router.delete('recording-annotation/{id}', response={200: str})
+@router.delete('recording-annotation/{id}', auth=None, response={200: str})
 def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str):
     token_data = decode_jwt(apiToken)
     user_email = token_data['email']

@@ -1,5 +1,6 @@
 from .annotations import AnnotationsAdmin
 from .compressed_spectrogram import CompressedSpectrogramAdmin
+from .configuration import ConfigurationAdmin
 from .grts_cells import GRTSCellsAdmin
 from .image import ImageAdmin
 from .nabat.admin import (
@@ -25,10 +26,11 @@ __all__ = [
     'GRTSCellsAdmin',
     'CompressedSpectrogramAdmin',
     'RecordingAnnotationAdmin',
+    'ProcessingTaskAdmin',
+    'ConfigurationAdmin',
     # NABat Models
     'NABatRecordingAnnotation',
     'NABatCompressedSpectrogram',
     'NABatSpectrogram',
     'NABatRecording',
-    'ProcessingTaskAdmin',
 ]
