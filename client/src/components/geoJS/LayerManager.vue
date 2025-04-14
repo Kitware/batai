@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch, watchEffect } from "vue";
+import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
 import * as d3 from "d3";
 import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
@@ -529,6 +529,7 @@ export default defineComponent({
     };
     onMounted(() => {
       initLayers();
+      updateColorFilter();
     });
 
     watch(() => props.spectroInfo, () => initLayers());
@@ -624,7 +625,7 @@ export default defineComponent({
     const gValues = ref('');
     const bValues = ref('');
 
-    watchEffect(() => {
+    function updateColorFilter() {
       const backgroundRgbColor = d3.color(backgroundColor.value) as d3.RGBColor;
       const redStops: number[] = [backgroundRgbColor.r / 255];
       const greenStops: number[] = [backgroundRgbColor.g / 255];
@@ -639,7 +640,10 @@ export default defineComponent({
       rValues.value = redStops.join(' ');
       gValues.value = greenStops.join(' ');
       bValues.value = blueStops.join(' ');
-    });
+
+    }
+
+    watch([backgroundColor, colorScheme], updateColorFilter);
 
     return {
       annotationState,

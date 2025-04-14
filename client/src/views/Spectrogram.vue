@@ -68,7 +68,7 @@ export default defineComponent({
     const loadedImage = ref(false);
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
-    const compressed =  ref(configuration.value.spectrogram_view === 'compressed');
+    const compressed = ref(configuration.value.spectrogram_view === 'compressed');
     const colorpickerMenu = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
