@@ -108,11 +108,19 @@ There is no email server connected up so users need to be
 individually approved and their email verified by an admin
 
 ## Using AWS S3
-In order to use AWS S3 as your storage service, you'll need to make sure to start the Django application with the correct configuration.
 
-As a starting point for configuring your environment, see [dev/.env.prod.s3.template](dev/.env.prod.s3/template) for a list of environment variables that you'll need to populate for your deployment.
+In order to use AWS S3 as your storage service, you'll need
+to make sure to start the Django application with the correct configuration.
 
-- `DJANGO_CONFIGURATION` this is used by [django_configurations](https://django-configurations.readthedocs.io/en/stable/) to read in the correct set of environment variables. The value `AwsProductionConfiguation` should be used when using S3 as storage
-- `DJANGO_DATABASE_*` these variables tell django how to connect to your postgres database. The `_URL` should be a postgres connection string, e.g. `postgres://user:password@postgres:5432/django`
-- `DJANGO_CELERY_BROKER_URL` is used to make sure django can send tasks to the `celery` service. For example, if using [RabbitMQ](https://www.rabbitmq.com/), it might look like this: `amqp://rabbitmq:5672`
+As a starting point for configuring your environment, see [dev/.env.prod.s3.template](dev/.env.prod.s3/template)
+for a list of environment variables that you'll need to populate for your deployment.
+
+- `DJANGO_CONFIGURATION` this is used by
+   [django_configurations](https://django-configurations.readthedocs.io/en/stable/)
+   to read in the correct set of environment variables. The value `AwsProductionConfiguation`
+   should be used when using S3 as storage
+- `DJANGO_DATABASE_*` these variables tell django how to connect to your postgres database.
+   The `_URL` should be a postgres connection string, e.g. `postgres://user:password@postgres:5432/django`
+- `DJANGO_CELERY_BROKER_URL` is used to make sure django can send tasks to the `celery` service.
+   For example, if using [RabbitMQ](https://www.rabbitmq.com/), it might look like this: `amqp://rabbitmq:5672`
 - `AWS_*` and `DJANGO_STORAGE_BUCKET_NAME` are used to make sure the application can connect to your S3 bucket
