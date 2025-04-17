@@ -7,10 +7,12 @@ from bats_ai.core.views import (
     ConfigurationRouter,
     GRTSCellsRouter,
     GuanoMetadataRouter,
+    ProcessingTaskRouter,
     RecordingAnnotationRouter,
     RecordingRouter,
     SpeciesRouter,
 )
+from bats_ai.core.views.nabat import NABatConfigurationRouter, NABatRecordingRouter
 
 logger = logging.getLogger(__name__)
 
@@ -37,3 +39,6 @@ api.add_router('/grts/', GRTSCellsRouter)
 api.add_router('/guano/', GuanoMetadataRouter)
 api.add_router('/recording-annotation/', RecordingAnnotationRouter)
 api.add_router('/configuration/', ConfigurationRouter)
+api.add_router('/processing-task/', ProcessingTaskRouter)
+api.add_router('/nabat/recording/', NABatRecordingRouter)
+api.add_router('/nabat/configuration/', NABatConfigurationRouter)

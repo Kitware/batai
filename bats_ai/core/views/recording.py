@@ -20,12 +20,12 @@ from bats_ai.core.models import (
     TemporalAnnotations,
     colormap,
 )
-from bats_ai.core.tasks import recording_compute_spectrogram
 from bats_ai.core.views.species import SpeciesSchema
 from bats_ai.core.views.temporal_annotations import (
     TemporalAnnotationSchema,
     UpdateTemporalAnnotationSchema,
 )
+from bats_ai.tasks.tasks import predict_compressed, recording_compute_spectrogram
 
 logger = logging.getLogger(__name__)
 
@@ -843,7 +843,7 @@ def delete_temporal_annotation(request, recording_id: int, id: int):
 
 # TODO - this may be modified to use different models in the
 @router.post('/{id}/spectrogram/compressed/predict')
-def precit_spectrogram_compressed(request: HttpRequest, id: int):
+def predict_spectrogram_compressed(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
         compressed_spectrogram = CompressedSpectrogram.objects.filter(recording=id).first()
@@ -852,7 +852,7 @@ def precit_spectrogram_compressed(request: HttpRequest, id: int):
     except recording.DoesNotExist:
         return {'error': 'Recording does not exist'}
 
-    label, score, confs = compressed_spectrogram.predict()
+    label, score, confs = predict_compressed(compressed_spectrogram.image_file)
     confidences = []
     confidences = [{'label': key, 'value': float(value)} for key, value in confs.items()]
     sorted_confidences = sorted(confidences, key=lambda x: x['value'], reverse=True)

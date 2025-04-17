@@ -12,7 +12,13 @@ CLIENT_ID = 'HSJWFZ2cIpWQOvNyCXyStV9hiOd7DfWeBOCzo4pP'
     required=True,
     help='superuser username for application creator',
 )
-@click.option('--uri', type=click.STRING, required=True, help='redirect uri for application')
+@click.option(
+    '--uri',
+    type=click.STRING,
+    default='http://localhost:3000/',
+    required=False,
+    help='redirect uri for application',
+)
 @click.command()
 def command(username, uri):
     if Application.objects.filter(client_id=CLIENT_ID).exists():

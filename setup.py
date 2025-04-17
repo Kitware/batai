@@ -70,6 +70,7 @@ setup(
         'rio-cogeo',
         # guano metadata
         'guano',
+        'django_celery_results',
     ],
     extras_require={
         'dev': [
