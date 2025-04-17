@@ -33,7 +33,7 @@ query fetchAcousticAndSurveyEventInfo {
 """
 
 UPDATE_QUERY = """
-query UpdateQuery{
+mutation UpdateQuery{
 updateAcousticFileVet (
     surveyEventId: %(survey_event_id)d
     acousticFileId: %(acoustic_file_id)d
