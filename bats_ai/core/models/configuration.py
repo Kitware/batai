@@ -29,6 +29,8 @@ class Configuration(models.Model):
         choices=AvailableColorScheme.choices,
         default=AvailableColorScheme.INFERNO,
     )
+    # 18 characters is just enough for "rgb(255, 255, 255)"
+    default_spectrogram_background_color = models.CharField(max_length=18, default='rgb(0, 0, 0)')
 
     def save(self, *args, **kwargs):
         # Ensure only one instance of Configuration exists
