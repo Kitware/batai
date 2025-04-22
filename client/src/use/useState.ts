@@ -32,7 +32,7 @@ const colorSchemes = [
   { value: 'turbo', title: 'Turbo', scheme: interpolateTurbo },
 ];
 const colorScheme: Ref<{ value: string, title: string, scheme: (input: number) => string }> = ref(colorSchemes[0]);
-const backgroundColor = ref('rgba(0, 0, 0, 1)');
+const backgroundColor = ref('rgb(0, 0, 0)');
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref('');
 const selectedId: Ref<number | null> = ref(null);
@@ -54,6 +54,7 @@ const configuration: Ref<Configuration> = ref({
   spectrogram_x_stretch: 2.5,
   run_inference_on_upload: true,
   default_color_scheme: 'inferno',
+  default_background_color: 'rgb(0, 0, 0)',
   is_admin: false,
 });
 

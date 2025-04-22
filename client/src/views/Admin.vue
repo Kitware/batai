@@ -20,6 +20,7 @@ export default defineComponent({
       spectrogramXStretch: configuration.value.spectrogram_x_stretch,
       spectrogramView: configuration.value.spectrogram_view,
       defaultColorScheme: configuration.value.default_color_scheme,
+      defaultBackgroundColor: configuration.value.default_background_color,
     });
     const spectrogramViewOptions = [
       { title: 'Compressed', value: 'compressed' },
@@ -31,6 +32,7 @@ export default defineComponent({
       settings.runInferenceOnUpload = configuration.value.run_inference_on_upload;
       settings.spectrogramXStretch = configuration.value.spectrogram_x_stretch;
       settings.defaultColorScheme = configuration.value.default_color_scheme;
+      settings.defaultBackgroundColor = configuration.value.default_background_color;
       settings.spectrogramView = configuration.value.spectrogram_view;
     });
     // Function to save the settings
@@ -42,6 +44,7 @@ export default defineComponent({
         run_inference_on_upload: settings.runInferenceOnUpload,
         spectrogram_x_stretch: settings.spectrogramXStretch,
         default_color_scheme: settings.defaultColorScheme,
+        default_background_color: settings.defaultBackgroundColor,
         spectrogram_view: settings.spectrogramView,
       });
       loadConfiguration();
@@ -154,6 +157,7 @@ export default defineComponent({
               />
             </v-col>
           </v-row>
+          <!-- v-row for background color -->
         </v-card-text>
         <v-card-actions>
           <v-row>
