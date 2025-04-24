@@ -1,5 +1,12 @@
+from enum import Enum
+
 from django.db import models
 from django_extensions.db.models import TimeStampedModel
+
+
+class ProcessingTaskType(Enum):
+    UPDATING_SPECIES = 'Updating Species'
+    NABAT_RECORDING_PROCESSING = 'NABatRecordingProcessing'
 
 
 class ProcessingTask(TimeStampedModel):

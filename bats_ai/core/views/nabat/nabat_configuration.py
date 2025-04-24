@@ -3,7 +3,7 @@ import logging
 from django.http import HttpRequest, JsonResponse
 from ninja.pagination import Router
 
-from bats_ai.core.models import ProcessingTask
+from bats_ai.core.models import ProcessingTask, ProcessingTaskType
 from bats_ai.tasks.nabat.nabat_update_species import update_nabat_species
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ def update_species_list(
     if not request.user.is_authenticated or not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
     existing_task = ProcessingTask.objects.filter(
-        metadata__type='Updating Species',
+        metadata__type=ProcessingTaskType.UPDATING_SPECIES.value,
         status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING],
     ).first()
 
@@ -38,7 +38,7 @@ def update_species_list(
         name='Updating Species List',
         status=ProcessingTask.Status.QUEUED,
         metadata={
-            'type': 'Updating Species',
+            'type': ProcessingTaskType.UPDATING_SPECIES.value,
         },
         celery_id=task.id,
     )

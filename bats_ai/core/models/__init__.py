@@ -3,7 +3,7 @@ from .compressed_spectrogram import CompressedSpectrogram
 from .configuration import Configuration
 from .grts_cells import GRTSCells
 from .image import Image
-from .processing_task import ProcessingTask
+from .processing_task import ProcessingTask, ProcessingTaskType
 from .recording import Recording, colormap
 from .recording_annotation import RecordingAnnotation
 from .recording_annotation_status import RecordingAnnotationStatus
@@ -25,4 +25,5 @@ __all__ = [
     'RecordingAnnotation',
     'Configuration',
     'ProcessingTask',
+    'ProcessingTaskType',
 ]

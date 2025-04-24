@@ -6,7 +6,7 @@ from django.contrib.gis.geos import Point
 import requests
 
 from bats_ai.celery import app
-from bats_ai.core.models import Configuration, ProcessingTask, Species
+from bats_ai.core.models import Configuration, ProcessingTask, ProcessingTaskType, Species
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
 
 from .tasks import generate_compress_spectrogram, generate_spectrogram, predict
@@ -59,7 +59,13 @@ query fetchAcousticAndSurveyEventInfo {
 
 @app.task(bind=True)
 def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, api_token: str):
-    processing_task = ProcessingTask.objects.filter(celery_id=self.request.id)
+    processing_task, _created = ProcessingTask.objects.get_or_create(
+        metadata={
+            'type': ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+            'recordingId': recording_id,
+        },
+        defaults={'celery_id': self.request.id},
+    )
     processing_task.update(status=ProcessingTask.Status.RUNNING)
     headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
     batch_query = QUERY % {

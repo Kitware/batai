@@ -29,7 +29,7 @@ __all__ = [
     'ProcessingTaskAdmin',
     'ConfigurationAdmin',
     # NABat Models
-    'NABatRecordingAnnotationAdmin ',
+    'NABatRecordingAnnotationAdmin',
     'NABatCompressedSpectrogramAdmin',
     'NABatSpectrogramAdmin',
     'NABatRecordingAdmin',

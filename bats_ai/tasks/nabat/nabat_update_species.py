@@ -3,7 +3,7 @@ import logging
 import requests
 
 from bats_ai.celery import app
-from bats_ai.core.models import ProcessingTask, Species
+from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +29,13 @@ query GetAllSpeciesOptions {
 
 @app.task(bind=True)
 def update_nabat_species(self):
-    processing_task = ProcessingTask.objects.filter(celery_id=self.request.id)
+    processing_task, _created = ProcessingTask.objects.get_or_create(
+        name='Updating Species List',
+        metadata={
+            'type': ProcessingTaskType.UPDATING_SPECIES.value,
+        },
+        defaults={'celery_id': self.request.id},
+    )
     processing_task.update(status=ProcessingTask.Status.RUNNING)
 
     try:

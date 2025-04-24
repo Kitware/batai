@@ -9,21 +9,7 @@ from bats_ai.core.models import ProcessingTask
 
 logger = logging.getLogger(__name__)
 
-# class ProcessingTaskSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ProcessingTask
-#         fields = '__all__'
-
-
 router = Router()
-
-# @router.get("/filtered", response=List[ProcessingTaskSerializer])
-# def filtered_tasks(request, status: Optional[str] = None):
-#     if status and status not in ProcessingTask.Status.values:
-#         return {"error": f"Invalid status value. Allowed values are {ProcessingTask.Status.values}."}, 400
-
-#     tasks = ProcessingTask.objects.filter(status=status) if status else ProcessingTask.objects.all()
-#     return ProcessingTaskSerializer(tasks, many=True).data
 
 
 @router.get('/{task_id}/details')
