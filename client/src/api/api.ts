@@ -36,17 +36,6 @@ export interface Recording {
   unusual_occurrences?: string;
 }
 
-export interface NATBatFiles {
-    id: number,
-    recording_time: string;
-    recording_location: string | null;
-    file_name: string | null;
-    s3_verified: boolean | null;
-    length_ms: number | null;
-    size_bytes: number | null;
-    survey_event: null;
-}
-
 export interface Species {
   species_code: string;
   family: string;

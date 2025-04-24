@@ -6,6 +6,17 @@ export interface NABatRecordingCompleteResponse {
     status?: ProcessingTask['status'];
 }
 
+export interface NATBatFiles {
+    id: number,
+    recording_time: string;
+    recording_location: string | null;
+    file_name: string | null;
+    s3_verified: boolean | null;
+    length_ms: number | null;
+    size_bytes: number | null;
+    survey_event: null;
+}
+
 export interface NABatRecordingDataResponse {
     recordingId: string;
 }
@@ -27,11 +38,11 @@ async function postNABatRecording(recordingId: number, surveyEventId: number, ap
     return response as NABatRecordingDataResponse;
 }
 
-async function getSpectrogram(id: string, apiToken: string) {
+async function getNABatSpectrogram(id: string, apiToken: string) {
     return axiosInstance.get<Spectrogram>(`/nabat/recording/${id}/spectrogram?apiToken=${apiToken}`);
 }
 
-async function getSpectrogramCompressed(id: string, apiToken: string) {
+async function getNABatSpectrogramCompressed(id: string, apiToken: string) {
     return axiosInstance.get<Spectrogram>(`/nabat/recording/${id}/spectrogram/compressed?apiToken=${apiToken}`);
 
 }
@@ -65,8 +76,8 @@ async function deleteNABatFileAnnotation(fileAnnotationId: number, apiToken?: st
 
 export {
     postNABatRecording,
-    getSpectrogram,
-    getSpectrogramCompressed,
+    getNABatSpectrogram,
+    getNABatSpectrogramCompressed,
     getNABatRecordingFileAnnotations,
     getNABatFileAnnotations,
     getNABatFileAnnotationDetails,

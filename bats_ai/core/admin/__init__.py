@@ -4,10 +4,10 @@ from .configuration import ConfigurationAdmin
 from .grts_cells import GRTSCellsAdmin
 from .image import ImageAdmin
 from .nabat.admin import (
-    NABatCompressedSpectrogram,
-    NABatRecording,
-    NABatRecordingAnnotation,
-    NABatSpectrogram,
+    NABatCompressedSpectrogramAdmin,
+    NABatRecordingAdmin,
+    NABatRecordingAnnotationAdmin,
+    NABatSpectrogramAdmin,
 )
 from .processing_task import ProcessingTaskAdmin
 from .recording import RecordingAdmin
@@ -29,8 +29,8 @@ __all__ = [
     'ProcessingTaskAdmin',
     'ConfigurationAdmin',
     # NABat Models
-    'NABatRecordingAnnotation',
-    'NABatCompressedSpectrogram',
-    'NABatSpectrogram',
-    'NABatRecording',
+    'NABatRecordingAnnotationAdmin ',
+    'NABatCompressedSpectrogramAdmin',
+    'NABatSpectrogramAdmin',
+    'NABatRecordingAdmin',
 ]

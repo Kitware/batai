@@ -65,7 +65,7 @@ export default defineComponent({
             speciesEdit.value.forEach((item) => {
                 const found = props.species.find((specie) => specie.species_code === item);
                 if (found) {
-                    speciesIds.push(found.id);
+                  speciesIds.push(found.id);
                 }
             });
           } else if (props.type === 'nabat') {
@@ -93,7 +93,7 @@ export default defineComponent({
 
     
 
-    const deleteAnno = async () => {
+    const deleteAnnotation = async () => {
       if (props.annotation && props.recordingId) {
             props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken) : await deleteFileAnnotation(props.annotation.id,);
             emit('delete:annotation');
@@ -105,7 +105,7 @@ export default defineComponent({
         confidence,
         comments,
         updateAnnotation,
-        deleteAnno,
+        deleteAnnotation,
         singleSpecies,
     };
   },
@@ -123,7 +123,7 @@ export default defineComponent({
           size="x-small"
           color="error"
           class="mt-1"
-          @click="deleteAnno()"
+          @click="deleteAnnotation()"
         >
           Delete<v-icon>mdi-delete</v-icon>
         </v-btn>

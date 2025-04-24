@@ -10,7 +10,7 @@ export default defineComponent({
       required: true,
     },
     apiToken: {
-      type: String,
+      type: String as PropType<string | undefined>,
       default: () => undefined,
     },
   },

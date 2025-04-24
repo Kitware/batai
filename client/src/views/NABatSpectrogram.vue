@@ -12,8 +12,8 @@ import {
   Species,
 } from "../api/api";
 import {
-  getSpectrogram,
-  getSpectrogramCompressed,
+  getNABatSpectrogram,
+  getNABatSpectrogramCompressed,
 } from "../api/NABatApi";
 import SpectrogramViewer from "../components/SpectrogramViewer.vue";
 import { SpectroInfo } from "../components/geoJS/geoJSUtils";
@@ -68,8 +68,8 @@ export default defineComponent({
       loadedImage.value = false;
       try {
       const response = compressed.value
-        ? await getSpectrogramCompressed(props.id, props.apiToken)
-        : await getSpectrogram(props.id, props.apiToken);
+        ? await getNABatSpectrogramCompressed(props.id, props.apiToken)
+        : await getNABatSpectrogram(props.id, props.apiToken);
       if (response.data["url"]) {
         if (import.meta.env.PROD) {
         const updateHost = `${window.location.protocol}//${window.location.hostname}/`;
