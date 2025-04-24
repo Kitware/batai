@@ -51,7 +51,7 @@ def decode_jwt(token):
 
 @click.command()
 def fetch_and_save():
-    """Fetch data using GraphQL and save to speceis.json"""
+    """Fetch data using GraphQL and save to species.json"""
     headers = {}
     # Fetch batch data
     logger.info('Fetching batch data...')
