@@ -45,9 +45,11 @@ to `.env` and change the default passwords for fields
    to collect the static files
 6. Run `docker compose -f docker-compose.prod.yml up` to start the server
    add `-d` for a silent version to run in the background
-7. Change the ID in the `./client/env.production` to a custom ID - this will
+7. **OPTIONAL** Change the ID in the `./client/env.production` to a custom ID - this will
    probably require a `docker compose -f docker-compose.prod.yml build` \
-   to build the app afterwards
+   to build the app afterwards.  This Id is used to indetify the application and
+   isn't required to be changed especially if the building of the client is done
+   outside of deployment.
 8. After creating the basic application log into the django admin `batdetectai.kitware.com/admin`
    and change the ApplicationId to the ID in the `./client.env.production`
 9. Test logging in/out and uploading data to the server.

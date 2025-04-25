@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import tempfile
 
 from django.contrib.gis.geos import Point
@@ -15,7 +16,7 @@ from .tasks import generate_compress_spectrogram, generate_spectrogram, predict
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
 
-BASE_URL = 'https://api.sciencebase.gov/nabat-graphql/graphql'
+BASE_URL = os.environ.get('NABAT_API_URL', 'https://api.sciencebase.gov/nabat-graphql/graphql')
 SOFTWARE_ID = 81
 QUERY = """
 query fetchAcousticAndSurveyEventInfo {

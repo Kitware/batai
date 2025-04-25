@@ -1,8 +1,8 @@
-FROM python:3.10-slim
+FROM python:3.10-slim-bookworm
 
-ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONDONTWRITEBYTECODE=1
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 # Install system libraries for Python packages:
 # * psycopg2
@@ -17,6 +17,7 @@ RUN set -ex \
         libgdal-dev \
         libpq-dev \
         libsndfile1-dev \
+        ca-certificates \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 

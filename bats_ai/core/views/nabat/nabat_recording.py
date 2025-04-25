@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import os
 
 from django.db.models import Q
 from django.http import HttpRequest, JsonResponse
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 router = RouterPaginated()
 SOFTWARE_ID = 81
-BASE_URL = 'https://api.sciencebase.gov/nabat-graphql/graphql'
+BASE_URL = os.environ.get('NABAT_API_URL', 'https://api.sciencebase.gov/nabat-graphql/graphql')
 QUERY = """
 query fetchAcousticAndSurveyEventInfo {
   presignedUrlFromAcousticFile(acousticFileId: "%(acoustic_file_id)s") {
