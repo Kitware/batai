@@ -359,7 +359,7 @@ export interface ConfigurationSettings {
   spectrogram_view: 'compressed' | 'uncompressed';
   is_admin?: boolean;
   default_color_scheme: string;
-  default_background_color: string;
+  default_spectrogram_background_color: string;
 }
 
 export type Configuration = ConfigurationSettings & { is_admin: boolean };

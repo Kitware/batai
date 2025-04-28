@@ -22,6 +22,7 @@ import { SpectroInfo } from "../components/geoJS/geoJSUtils";
 import AnnotationList from "../components/AnnotationList.vue";
 import ThumbnailViewer from "../components/ThumbnailViewer.vue";
 import RecordingList from "../components/RecordingList.vue";
+import ColorPickerMenu from "../components/ColorPickerMenu.vue";
 import useState from "../use/useState";
 import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
 export default defineComponent({
@@ -32,6 +33,7 @@ export default defineComponent({
     ThumbnailViewer,
     RecordingInfoDialog,
     RecordingList,
+    ColorPickerMenu,
   },
   props: {
     id: {
@@ -194,7 +196,7 @@ export default defineComponent({
     onMounted(() => {
       loadData();
       colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
-      backgroundColor.value = configuration.value.default_background_color || 'rgb(0, 0, 0)';
+      backgroundColor.value = configuration.value.default_spectrogram_background_color || 'rgb(0, 0, 0)';
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
@@ -503,32 +505,10 @@ export default defineComponent({
               hide-details
               return-object
             />
-            <v-menu
-              v-model="colorpickerMenu"
-              :close-on-content-click="false"
-              offset-y
-            >
-              <template #activator="{ props: subProps }">
-                <v-tooltip text="Spectrogram background color">
-                  <template #activator="{ props: tooltipProps }">
-                    <v-btn
-                      v-bind="{ ...subProps, ...tooltipProps }"
-                      :style="{ backgroundColor: backgroundColor }"
-                      class="color-square mx-2"
-                    />
-                  </template>
-                </v-tooltip>
-              </template>
-              <v-card>
-                <v-card-text>
-                  <v-color-picker
-                    v-model="backgroundColor"
-                    mode="rbg"
-                    elevation="0"
-                  />
-                </v-card-text>
-              </v-card>
-            </v-menu>
+            <color-picker-menu
+              v-model="backgroundColor"
+              tooltip-text="Spectrogram background color"
+            />
           </v-row>
         </v-container>
       </v-toolbar>

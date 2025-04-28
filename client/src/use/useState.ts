@@ -54,7 +54,7 @@ const configuration: Ref<Configuration> = ref({
   spectrogram_x_stretch: 2.5,
   run_inference_on_upload: true,
   default_color_scheme: 'inferno',
-  default_background_color: 'rgb(0, 0, 0)',
+  default_spectrogram_background_color: 'rgb(0, 0, 0)',
   is_admin: false,
 });
 

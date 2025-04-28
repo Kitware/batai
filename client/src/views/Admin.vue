@@ -3,11 +3,13 @@ import { reactive, defineComponent, watch, ref, Ref, } from 'vue';
 import useState from '../use/useState';
 import { patchConfiguration } from '../api/api';
 import NABatAdmin from './NABatAdmin.vue';
+import ColorPickerMenu from '../components/ColorPickerMenu.vue';
 
 export default defineComponent({
   name: 'Admin',
-  components:{
-    NABatAdmin
+  components: {
+    NABatAdmin,
+    ColorPickerMenu,
   },
   setup() {
     // Reactive state for the settings
@@ -20,7 +22,7 @@ export default defineComponent({
       spectrogramXStretch: configuration.value.spectrogram_x_stretch,
       spectrogramView: configuration.value.spectrogram_view,
       defaultColorScheme: configuration.value.default_color_scheme,
-      defaultBackgroundColor: configuration.value.default_background_color,
+      defaultBackgroundColor: configuration.value.default_spectrogram_background_color,
     });
     const spectrogramViewOptions = [
       { title: 'Compressed', value: 'compressed' },
@@ -32,7 +34,7 @@ export default defineComponent({
       settings.runInferenceOnUpload = configuration.value.run_inference_on_upload;
       settings.spectrogramXStretch = configuration.value.spectrogram_x_stretch;
       settings.defaultColorScheme = configuration.value.default_color_scheme;
-      settings.defaultBackgroundColor = configuration.value.default_background_color;
+      settings.defaultBackgroundColor = configuration.value.default_spectrogram_background_color;
       settings.spectrogramView = configuration.value.spectrogram_view;
     });
     // Function to save the settings
@@ -44,7 +46,7 @@ export default defineComponent({
         run_inference_on_upload: settings.runInferenceOnUpload,
         spectrogram_x_stretch: settings.spectrogramXStretch,
         default_color_scheme: settings.defaultColorScheme,
-        default_background_color: settings.defaultBackgroundColor,
+        default_spectrogram_background_color: settings.defaultBackgroundColor,
         spectrogram_view: settings.spectrogramView,
       });
       loadConfiguration();
@@ -157,7 +159,16 @@ export default defineComponent({
               />
             </v-col>
           </v-row>
-          <!-- v-row for background color -->
+          <v-row>
+            <v-label
+              text="Default Background Color"
+              class="px-2"
+            />
+            <ColorPickerMenu
+              v-model="settings.defaultBackgroundColor"
+              tooltip-text="Default background color for spectrograms"
+            />
+          </v-row>
         </v-card-text>
         <v-card-actions>
           <v-row>
