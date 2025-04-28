@@ -1,9 +1,11 @@
 
   <script lang="ts">
-  import { defineComponent, ref, onMounted, onUnmounted, Ref} from 'vue';
+  import { defineComponent, ref, onMounted, onUnmounted, Ref, watch} from 'vue';
 import { getProcessingTaskDetails } from '../api/api';
 import { NABatRecordingDataResponse, postNABatRecording } from '../api/NABatApi';
 import { useRouter } from 'vue-router';
+import { usePrompt } from '../use/prompt-service';
+import { useJWTToken } from '../use/useJWTToken';
   
   export default defineComponent({
     props: {
@@ -21,6 +23,12 @@ import { useRouter } from 'vue-router';
       },
     },
     setup(props) {
+
+      const { prompt } = usePrompt();
+      const { exp, shouldWarn, clear } = useJWTToken({
+        'token': props.apiToken,
+        'warningSeconds': 60,
+      });
       const errorMessage: Ref<string | null> = ref(null);
       const additionalErrors: Ref<string[]> = ref([]);
         const loading = ref(true);
@@ -88,14 +96,28 @@ import { useRouter } from 'vue-router';
         }
       };
   
-      onMounted(async () => checkNABatRecording());
+      onMounted(async () => {
+        checkNABatRecording();
+      });
   
-      onUnmounted(() => {
+      onUnmounted(async () => {
         if (timeoutId !== null) {
           clearTimeout(timeoutId);
           timeoutId = null;
         }
       });
+
+      watch(shouldWarn, async() => {
+        if (shouldWarn.value) {
+          await prompt({
+            title: 'API Token Expiration',
+            text: [
+              'The Api Token will expire in less than 60 seconds',
+              'The Refresh option will be added in the future',
+            ]
+          });
+        }
+      }, { immediate: true });
   
       return {
         errorMessage,
