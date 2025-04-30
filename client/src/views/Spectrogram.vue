@@ -23,6 +23,7 @@ import AnnotationList from "../components/AnnotationList.vue";
 import ThumbnailViewer from "../components/ThumbnailViewer.vue";
 import RecordingList from "../components/RecordingList.vue";
 import ColorPickerMenu from "../components/ColorPickerMenu.vue";
+import ColorSchemeSelect from "../components/ColorSchemeSelect.vue";
 import useState from "../use/useState";
 import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
 export default defineComponent({
@@ -34,6 +35,7 @@ export default defineComponent({
     RecordingInfoDialog,
     RecordingList,
     ColorPickerMenu,
+    ColorSchemeSelect,
   },
   props: {
     id: {
@@ -493,17 +495,10 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
-            <v-select
+            <color-scheme-select
               v-model="colorScheme"
               label="Color Scheme"
-              :items="colorSchemes"
-              item-title="title"
-              item-value="scheme"
-              variant="outlined"
-              density="compact"
-              width="75"
-              hide-details
-              return-object
+              :color-schemes="colorSchemes"
             />
             <color-picker-menu
               v-model="backgroundColor"

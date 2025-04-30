@@ -4,12 +4,14 @@ import useState from '../use/useState';
 import { patchConfiguration } from '../api/api';
 import NABatAdmin from './NABatAdmin.vue';
 import ColorPickerMenu from '../components/ColorPickerMenu.vue';
+import ColorSchemeSelect from '../components/ColorSchemeSelect.vue';
 
 export default defineComponent({
   name: 'Admin',
   components: {
     NABatAdmin,
     ColorPickerMenu,
+    ColorSchemeSelect,
   },
   setup() {
     // Reactive state for the settings
@@ -147,15 +149,11 @@ export default defineComponent({
           </v-row>
           <v-row>
             <v-col cols="3">
-              <v-select
+              <color-scheme-select
                 v-model="settings.defaultColorScheme"
+                :color-schemes="colorSchemes"
                 label="Default Color Scheme"
-                :items="colorSchemes"
-                item-title="title"
-                item-value="value"
-                variant="outlined"
-                density="compact"
-                hide-details
+                :return-object="false"
               />
             </v-col>
           </v-row>
