@@ -84,6 +84,7 @@ def get_or_create_processing_task(recording_id, request_id):
         processing_task = ProcessingTask.objects.get(
             Q(metadata__contains=metadata_filter)
             & Q(status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING])
+            & Q(celery_id=request_id)
         )
         # If task is found, return the task with False (not created)
         return processing_task, False

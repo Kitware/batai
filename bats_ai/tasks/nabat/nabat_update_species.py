@@ -2,7 +2,6 @@ import logging
 import os
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.db.models import Q
 import requests
 
 from bats_ai.celery import app
@@ -40,7 +39,9 @@ def get_or_create_processing_task(request_id):
     Returns:
         tuple: A tuple with the ProcessingTask instance and a boolean indicating if it was created.
     """
-    metadata_filter = Q(metadata__type=ProcessingTaskType.UPDATING_SPECIES.value)
+    metadata_filter = {
+        'type': ProcessingTaskType.UPDATING_SPECIES.value,
+    }
 
     # Try to get an existing task or handle the case where it's not found
     try:
