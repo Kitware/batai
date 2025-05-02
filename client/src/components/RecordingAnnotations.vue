@@ -1,8 +1,9 @@
 <script lang="ts">
-import { defineComponent, onMounted, PropType, Ref } from "vue";
+import { computed, defineComponent, onMounted, PropType, Ref } from "vue";
 import { ref } from "vue";
 import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
+import { getNABatRecordingFileAnnotations, putNABatFileAnnotation } from "../api/NABatApi";
 import RecordingAnnotationDetails from "./RecordingAnnotationDetails.vue";
 export default defineComponent({
   name: "AnnotationList",
@@ -18,7 +19,15 @@ export default defineComponent({
     recordingId: {
       type: Number,
       required: true,
-    }
+    },
+    type: {
+      type: String as PropType<'nabat' | null>,
+      default: () => null,
+    },
+    apiToken: {
+      type: String,
+      default: () => undefined,
+    },
   },
   emits: [],
   setup(props) {
@@ -33,21 +42,26 @@ export default defineComponent({
     };
 
     const loadFileAnnotations = async () => {
-      annotations.value = (await getFileAnnotations(props.recordingId)).data;
+      if (props.type === 'nabat') {
+        annotations.value = (await getNABatRecordingFileAnnotations(props.recordingId, props.apiToken)).data;
+      } else {
+        annotations.value = (await getFileAnnotations(props.recordingId)).data;
+      }
     };
 
     onMounted(() => loadFileAnnotations());
 
     const addAnnotation = async () => {
-      const newAnnotation: UpdateFileAnnotation = {
+      const newAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
         recordingId: props.recordingId,
         species: [],
         comments: '',
         model: 'User Defined',
         confidence: 1.0,
+        apiToken: props.apiToken,
 
       };
-      await putFileAnnotation(newAnnotation);
+      props.type === 'nabat' ? await putNABatFileAnnotation(newAnnotation) : putFileAnnotation(newAnnotation);
       await loadFileAnnotations();
       if (annotations.value.length) {
         setSelectedId(annotations.value[annotations.value.length - 1]);
@@ -55,7 +69,7 @@ export default defineComponent({
     };
 
     const updatedAnnotation = async (deleted = false) => {
-      annotations.value = (await getFileAnnotations(props.recordingId)).data;
+      await loadFileAnnotations();
       if (selectedAnnotation.value) {
         const found = annotations.value.find((item) => selectedAnnotation.value?.id === item.id);
         if (found) {
@@ -72,6 +86,11 @@ export default defineComponent({
       detailsDialog.value = true;
     };
 
+    const disableNaBatAnnotations = computed(() => {
+      const nonAIAnnotations = annotations.value.filter((item) => item.owner);
+      return (nonAIAnnotations.length > 0 && props.type === 'nabat');
+    });
+
     return {
       selectedAnnotation,
       annotationState,
@@ -82,6 +101,7 @@ export default defineComponent({
       loadDetails,
       detailsDialog,
       detailRecordingId,
+      disableNaBatAnnotations,
     };
   },
 });
@@ -96,7 +116,7 @@ export default defineComponent({
       <v-spacer />
       <v-col>
         <v-btn
-          :disabled="annotationState === 'creating'"
+          :disabled="annotationState === 'creating' || disableNaBatAnnotations"
           @click="addAnnotation()"
         >
           Add<v-icon>mdi-plus</v-icon>
@@ -157,6 +177,8 @@ export default defineComponent({
       :species="species"
       :recording-id="recordingId"
       :annotation="selectedAnnotation"
+      :api-token="apiToken"
+      :type="type"
       class="mt-4"
       @update:annotation="updatedAnnotation()"
       @delete:annotation="updatedAnnotation(true)"
@@ -167,6 +189,7 @@ export default defineComponent({
     >
       <RecordingAnnotationDetails
         :recording-id="detailRecordingId"
+        :api-token="apiToken"
         @close="detailsDialog = false"
       />
     </v-dialog>

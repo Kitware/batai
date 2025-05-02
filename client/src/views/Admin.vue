@@ -1,12 +1,17 @@
-<script>
-import { reactive, defineComponent, watch } from 'vue';
+<script lang="ts">
+import { reactive, defineComponent, watch, ref, Ref, } from 'vue';
 import useState from '../use/useState';
 import { patchConfiguration } from '../api/api';
+import NABatAdmin from './NABatAdmin.vue';
 
 export default defineComponent({
   name: 'Admin',
+  components:{
+    NABatAdmin
+  },
   setup() {
     // Reactive state for the settings
+    const tab: Ref<'admin' | 'nabat'> = ref('admin');
     const { configuration, loadConfiguration } = useState();
     const settings = reactive({
       displayPulseAnnotations: configuration.value.display_pulse_annotations,
@@ -43,6 +48,7 @@ export default defineComponent({
       settings,
       saveSettings,
       spectrogramViewOptions,
+      tab,
     };
   },
 });
@@ -50,79 +56,104 @@ export default defineComponent({
 
 <template>
   <v-card>
-    <v-card-title>Admin Settings</v-card-title>
-    <v-card-text>
-      <v-row>
-        <v-switch
-          v-model="settings.displayPulseAnnotations"
-          :color="settings.displayPulseAnnotations ? 'primary' : ''"
-          label="Show Pulse Annotations"
-        />
-      </v-row>
-      <v-row>
-        <v-switch
-          v-model="settings.displaySequenceAnnotations"
-          :color="settings.displaySequenceAnnotations ? 'primary' : ''"
-          label="Show Sequence Annotations"
-        />
-      </v-row>
-      <v-row>
-        <v-switch
-          v-model="settings.runInferenceOnUpload"
-          :color="settings.runInferenceOnUpload ? 'primary' : ''"
-          label="Run Inference on Upload"
-        />
-      </v-row>
-      <v-row>
-        <v-col cols="3">
-          <div class="text-caption">
-            Stretch compressed spectrogram
-          </div>
-          <v-slider
-            v-model="settings.spectrogramXStretch"
-            density="compact"
-            type="number"
-            step="0.25"
-            :min="1"
-            :max="10"
-          >
-            <template #append>
-              <v-text-field
-                :model-value="settings.spectrogramXStretch"
+    <v-tabs
+      v-model="tab"
+      class="ma-auto"
+    >
+      <v-tab
+        value="admin"
+        size="small"
+      >
+        General Admin
+      </v-tab>
+      <v-tab
+        value="nabat"
+        size="small"
+      >
+        NABat Admin
+      </v-tab>
+    </v-tabs>
+      
+    <v-window v-model="tab">
+      <v-window-item value="admin">
+        <v-card-title>Admin Settings</v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-switch
+              v-model="settings.displayPulseAnnotations"
+              :color="settings.displayPulseAnnotations ? 'primary' : ''"
+              label="Show Pulse Annotations"
+            />
+          </v-row>
+          <v-row>
+            <v-switch
+              v-model="settings.displaySequenceAnnotations"
+              :color="settings.displaySequenceAnnotations ? 'primary' : ''"
+              label="Show Sequence Annotations"
+            />
+          </v-row>
+          <v-row>
+            <v-switch
+              v-model="settings.runInferenceOnUpload"
+              :color="settings.runInferenceOnUpload ? 'primary' : ''"
+              label="Run Inference on Upload"
+            />
+          </v-row>
+          <v-row>
+            <v-col cols="3">
+              <div class="text-caption">
+                Stretch compressed spectrogram
+              </div>
+              <v-slider
+                v-model="settings.spectrogramXStretch"
                 density="compact"
-                width="70"
-                readonly
-                hide-details
+                type="number"
+                step="0.25"
+                :min="1"
+                :max="10"
+              >
+                <template #append>
+                  <v-text-field
+                    :model-value="settings.spectrogramXStretch"
+                    density="compact"
+                    width="70"
+                    readonly
+                    hide-details
+                  />
+                </template>
+              </v-slider>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="3">
+              <v-select
+                v-model="settings.spectrogramView"
+                :items="spectrogramViewOptions"
+                item-title="title"
+                item-value="value"
+                density="compact"
+                label="Default spectrogram view"
               />
-            </template>
-          </v-slider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="3">
-          <v-select
-            v-model="settings.spectrogramView"
-            :items="spectrogramViewOptions"
-            item-title="title"
-            item-value="value"
-            density="compact"
-            label="Default spectrogram view"
-          />
-        </v-col>
-      </v-row>
-    </v-card-text>
-    <v-card-actions>
-      <v-row>
-        <v-btn
-          color="primary"
-          variant="outlined"
-          class="mx-2"
-          @click="saveSettings"
-        >
-          Save
-        </v-btn>
-      </v-row>
-    </v-card-actions>
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-row>
+            <v-btn
+              color="primary"
+              variant="outlined"
+              class="mx-2"
+              @click="saveSettings"
+            >
+              Save
+            </v-btn>
+          </v-row>
+        </v-card-actions>
+      </v-window-item>
+      <v-window-item value="nabat">
+        <NABatAdmin />
+      </v-window-item>
+    </v-window>
   </v-card>
 </template>
 <style scoped>
