@@ -93,7 +93,8 @@ export default defineComponent({
         type,
         selectedType,
         updateAnnotation,
-        deleteAnnotation
+        deleteAnnotation,
+        deleteAnno,
     };
   },
 });
