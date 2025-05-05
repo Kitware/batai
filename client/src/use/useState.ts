@@ -1,13 +1,38 @@
 import { ref, Ref, watch } from "vue";
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
-import { Configuration, getConfiguration, OtherUserAnnotations, Recording, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import {
+  Configuration,
+	getConfiguration,
+	OtherUserAnnotations,
+	Recording,
+	SpectrogramAnnotation,
+	SpectrogramTemporalAnnotation,
+} from "../api/api";
+import {
+  interpolateCividis,
+  interpolateViridis,
+  interpolateInferno,
+  interpolateMagma,
+  interpolatePlasma,
+  interpolateTurbo,
+} from "d3-scale-chromatic";
 
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<'pulse' | 'sequence'> = ref("pulse");
 type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal' | 'duration';
 const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'duration', 'freq']);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
+const colorSchemes = [
+  { value: 'inferno', title: 'Inferno', scheme: interpolateInferno },
+  { value: 'cividis', title: 'Cividis', scheme: interpolateCividis },
+  { value: 'viridis', title: 'Viridis', scheme: interpolateViridis },
+  { value: 'magma', title: 'Magma', scheme: interpolateMagma },
+  { value: 'plasma', title: 'Plasma', scheme: interpolatePlasma },
+  { value: 'turbo', title: 'Turbo', scheme: interpolateTurbo },
+];
+const colorScheme: Ref<{ value: string, title: string, scheme: (input: number) => string }> = ref(colorSchemes[0]);
+const backgroundColor = ref('rgb(0, 0, 0)');
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref('');
 const selectedId: Ref<number | null> = ref(null);
@@ -28,6 +53,8 @@ const configuration: Ref<Configuration> = ref({
   spectrogram_view: 'compressed',
   spectrogram_x_stretch: 2.5,
   run_inference_on_upload: true,
+  default_color_scheme: 'inferno',
+  default_spectrogram_background_color: 'rgb(0, 0, 0)',
   is_admin: false,
 });
 
@@ -94,6 +121,9 @@ export default function useState() {
     layerVisibility,
     createColorScale,
     colorScale,
+    colorSchemes,
+    colorScheme,
+    backgroundColor,
     setSelectedUsers,
     selectedUsers,
     currentUser,

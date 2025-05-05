@@ -358,6 +358,8 @@ export interface ConfigurationSettings {
   spectrogram_x_stretch: number;
   spectrogram_view: 'compressed' | 'uncompressed';
   is_admin?: boolean;
+  default_color_scheme: string;
+  default_spectrogram_background_color: string;
 }
 
 export type Configuration = ConfigurationSettings & { is_admin: boolean };
@@ -391,7 +393,7 @@ export interface ProcessingTaskDetails {
         error:string;
     }
 
-}  
+}
 
 async function getProcessingTasks(): Promise<ProcessingTask[]> {
     return (await axiosInstance.get('/processing-task')).data;
@@ -441,9 +443,9 @@ async function getGuanoMetadata(file: File): Promise<GuanoMetadata> {
 
 async function adminNaBatUpdateSpecies(apiToken: string) {
   return axiosInstance.post<{ taskId: string }>('/nabat/configuration/update-species', { params: { apiToken } });
-  
+
   }
-  
+
 
 export {
  uploadRecordingFile,

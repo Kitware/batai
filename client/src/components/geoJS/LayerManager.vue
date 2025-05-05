@@ -1,5 +1,6 @@
 <script lang="ts">
 import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
+import * as d3 from "d3";
 import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
@@ -60,6 +61,8 @@ export default defineComponent({
       setSelectedId,
       viewCompressedOverlay,
       configuration,
+      colorScheme,
+      backgroundColor,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -450,7 +453,7 @@ export default defineComponent({
         compressedOverlayLayer.spectroInfo = props.spectroInfo;
         compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         if (!editAnnotationLayer) {
-        editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
+          editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
         }
         editAnnotationLayer.spectroInfo = props.spectroInfo;
         editAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
@@ -459,9 +462,9 @@ export default defineComponent({
         }
         rectAnnotationLayer.spectroInfo = props.spectroInfo;
         rectAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-        
+
         if (!temporalAnnotationLayer) {
-        temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
+          temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
         } {
           temporalAnnotationLayer.spectroInfo = props.spectroInfo;
         }
@@ -476,7 +479,7 @@ export default defineComponent({
         if (!props.thumbnail) {
           if (!legendLayer) {
             legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
-          } 
+          }
           legendLayer.spectroInfo = props.spectroInfo;
           legendLayer.createLabels();
           legendLayer.calcGridLines();
@@ -484,27 +487,27 @@ export default defineComponent({
           legendLayer.onPan();
           if (!timeLayer) {
             timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
-          } 
+          }
           timeLayer.spectroInfo = props.spectroInfo;
           timeLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!freqLayer) {
             freqLayer = new FreqLayer(props.geoViewerRef, event, props.spectroInfo);
-          } 
+          }
           freqLayer.spectroInfo = props.spectroInfo;
           freqLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-         
+
           if (!speciesSequenceLayer) {
             speciesSequenceLayer = new SpeciesSequenceLayer(props.geoViewerRef, event, props.spectroInfo);
           }
           speciesSequenceLayer.spectroInfo = props.spectroInfo;
           speciesSequenceLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!speciesLayer) {
-          speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
-          } 
+            speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
+          }
           speciesLayer.spectroInfo = props.spectroInfo;
           speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
 
-          timeLayer.setDisplaying({pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations});
+          timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
           timeLayer.formatData(localAnnotations.value, temporalAnnotations.value);
           freqLayer.formatData(localAnnotations.value);
           speciesLayer.formatData(localAnnotations.value);
@@ -524,7 +527,10 @@ export default defineComponent({
       }
       triggerUpdate();
     };
-    onMounted(() => initLayers());
+    onMounted(() => {
+      initLayers();
+      updateColorFilter();
+    });
 
     watch(() => props.spectroInfo, () => initLayers());
     watch(layerVisibility, () => {
@@ -614,12 +620,40 @@ export default defineComponent({
         }
       }
     );
+    // Color scheme
+    const rValues = ref('');
+    const gValues = ref('');
+    const bValues = ref('');
+
+    function updateColorFilter() {
+      const backgroundRgbColor = d3.color(backgroundColor.value) as d3.RGBColor;
+      const redStops: number[] = [backgroundRgbColor.r / 255];
+      const greenStops: number[] = [backgroundRgbColor.g / 255];
+      const blueStops: number[] = [backgroundRgbColor.b / 255];
+      for (let i = 0.1; i <= 1.0; i += 0.1) {
+        const rgbStopString = colorScheme.value.scheme(i);
+        const color = d3.color(rgbStopString) as d3.RGBColor;
+        redStops.push(color.r / 255);
+        greenStops.push(color.g / 255);
+        blueStops.push(color.b / 255);
+      }
+      rValues.value = redStops.join(' ');
+      gValues.value = greenStops.join(' ');
+      bValues.value = blueStops.join(' ');
+
+    }
+
+    watch([backgroundColor, colorScheme], updateColorFilter);
+
     return {
       annotationState,
       localAnnotations,
       displayError,
       errorMsg,
       selectedUsers,
+      rValues,
+      gValues,
+      bValues,
     };
   },
 });
@@ -647,4 +681,34 @@ export default defineComponent({
       </v-card-actions>
     </v-card>
   </v-dialog>
+  <svg
+    width="0"
+    height="0"
+    style="position: absolute; top: -1px; left: -1px;"
+  >
+    <filter id="apply-color-scheme">
+      <!-- convert to grayscale -->
+      <feColorMatrix
+        type="saturate"
+        values="0"
+        result="grayscale"
+      />
+
+      <!-- apply color scheme -->
+      <feComponentTransfer>
+        <feFuncR
+          type="table"
+          :tableValues="rValues"
+        />
+        <feFuncG
+          type="table"
+          :tableValues="gValues"
+        />
+        <feFuncB
+          type="table"
+          :tableValues="bValues"
+        />
+      </feComponentTransfer>
+    </filter>
+  </svg>
 </template>

@@ -20,6 +20,8 @@ class ConfigurationSchema(Schema):
     run_inference_on_upload: bool
     spectrogram_x_stretch: float
     spectrogram_view: Configuration.SpectrogramViewMode
+    default_color_scheme: Configuration.AvailableColorScheme
+    default_spectrogram_background_color: str
 
 
 # Endpoint to retrieve the configuration status
@@ -34,6 +36,8 @@ def get_configuration(request):
         run_inference_on_upload=config.run_inference_on_upload,
         spectrogram_x_stretch=config.spectrogram_x_stretch,
         spectrogram_view=config.spectrogram_view,
+        default_color_scheme=config.default_color_scheme,
+        default_spectrogram_background_color=config.default_spectrogram_background_color,
         is_admin=request.user.is_authenticated and request.user.is_superuser,
     )
 

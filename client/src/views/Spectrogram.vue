@@ -22,6 +22,8 @@ import { SpectroInfo } from "../components/geoJS/geoJSUtils";
 import AnnotationList from "../components/AnnotationList.vue";
 import ThumbnailViewer from "../components/ThumbnailViewer.vue";
 import RecordingList from "../components/RecordingList.vue";
+import ColorPickerMenu from "../components/ColorPickerMenu.vue";
+import ColorSchemeSelect from "../components/ColorSchemeSelect.vue";
 import useState from "../use/useState";
 import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
 export default defineComponent({
@@ -32,6 +34,8 @@ export default defineComponent({
     ThumbnailViewer,
     RecordingInfoDialog,
     RecordingList,
+    ColorPickerMenu,
+    ColorSchemeSelect,
   },
   props: {
     id: {
@@ -44,6 +48,9 @@ export default defineComponent({
       toggleLayerVisibility,
       layerVisibility,
       colorScale,
+      colorSchemes,
+      colorScheme,
+      backgroundColor,
       setSelectedUsers,
       createColorScale,
       currentUser,
@@ -65,7 +72,8 @@ export default defineComponent({
     const loadedImage = ref(false);
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
-    const compressed =  ref(configuration.value.spectrogram_view === 'compressed');
+    const compressed = ref(configuration.value.spectrogram_view === 'compressed');
+    const colorpickerMenu = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
       annotations.value = response.data.sort(
@@ -187,7 +195,11 @@ export default defineComponent({
         loadData();
       }
     );
-    onMounted(() => loadData());
+    onMounted(() => {
+      loadData();
+      colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
+      backgroundColor.value = configuration.value.default_spectrogram_background_color || 'rgb(0, 0, 0)';
+    });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -270,6 +282,10 @@ export default defineComponent({
       toggleCompressedOverlay,
       viewCompressedOverlay,
       sideTab,
+      colorSchemes,
+      colorScheme,
+      backgroundColor,
+      colorpickerMenu,
       // Other user selection
       otherUserAnnotations,
       temporalAnnotations,
@@ -479,6 +495,15 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
+            <color-scheme-select
+              v-model="colorScheme"
+              label="Color Scheme"
+              :color-schemes="colorSchemes"
+            />
+            <color-picker-menu
+              v-model="backgroundColor"
+              tooltip-text="Spectrogram background color"
+            />
           </v-row>
         </v-container>
       </v-toolbar>
@@ -576,5 +601,12 @@ export default defineComponent({
 <style scoped>
 .spectro-main {
   height: calc(100vh - 21vh - 64px - 72px);
+}
+
+.color-square {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 4px;
 }
 </style>
