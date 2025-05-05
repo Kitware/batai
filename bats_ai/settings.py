@@ -61,8 +61,18 @@ class BatsAiMixin(ConfigMixin):
             engine='django.contrib.gis.db.backends.postgis',
             conn_max_age=600,
         )
-        db_dict = db_val.value
-        return db_dict
+        # Note that MLFLOW_PG_DB must be set for this to be available
+        mlflow_db = values.DatabaseURLValue(
+            alias='mlflow',
+            environ_name='MLFLOW_PG_DB',
+            environ_required=False,
+            engine='django.db.backends.postgresql',
+            conn_max_age=600,
+        )
+        dbs = {}
+        dbs.update(db_val.value)
+        dbs.update(mlflow_db.value or {})
+        return dbs
 
 
 class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
