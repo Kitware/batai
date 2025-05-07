@@ -1,5 +1,6 @@
 import io
 import math
+import os
 import tempfile
 
 from PIL import Image
@@ -431,9 +432,8 @@ def predict(compressed_spectrogram_id: int):
     return label, score, confs
 
 
-def predict_compressed(image_file):
+def _fully_local_inference(image_file, use_mlflow_model):
     import json
-    import os
 
     import onnx
     import onnxruntime as ort
@@ -441,26 +441,48 @@ def predict_compressed(image_file):
 
     img = Image.open(image_file)
 
-    relative = ('..',) * 3
-    asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
+    if not use_mlflow_model:
+        relative = ('..',) * 3
+        asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
 
-    onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')
-    assert os.path.exists(onnx_filename)
+        onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')
+        assert os.path.exists(onnx_filename)
 
-    session = ort.InferenceSession(
-        onnx_filename,
-        providers=[
-            (
-                'CUDAExecutionProvider',
-                {
-                    'cudnn_conv_use_max_workspace': '1',
-                    'device_id': 0,
-                    'cudnn_conv_algo_search': 'HEURISTIC',
-                },
-            ),
-            'CPUExecutionProvider',
-        ],
-    )
+        session = ort.InferenceSession(
+            onnx_filename,
+            providers=[
+                (
+                    'CUDAExecutionProvider',
+                    {
+                        'cudnn_conv_use_max_workspace': '1',
+                        'device_id': 0,
+                        'cudnn_conv_algo_search': 'HEURISTIC',
+                    },
+                ),
+                'CPUExecutionProvider',
+            ],
+        )
+    else:
+        import mlflow
+        import mlflow.onnx
+
+        MODEL_URI = 'models:/prototype/1'
+        mlflow.set_tracking_uri(settings.MLFLOW_ENDPOINT)
+        model = mlflow.onnx.load_model(model_uri=MODEL_URI)
+        session = ort.InferenceSession(
+            model.SerializeToString(),
+            providers=[
+                (
+                    'CUDAExecutionProvider',
+                    {
+                        'cudnn_conv_use_max_workspace': '1',
+                        'device_id': 0,
+                        'cudnn_conv_algo_search': 'HEURISTIC',
+                    },
+                ),
+                'CPUExecutionProvider',
+            ],
+        )
 
     img = np.array(img)
 
@@ -505,6 +527,19 @@ def predict_compressed(image_file):
     confs = dict(zip(labels, outputs))
 
     return label, score, confs
+
+
+def predict_compressed(image_file):
+    # 0: use the local file and do inference with that
+    # 1: get the file from mlflow and do inference locally
+    # 2: do inference from deployed mlflow model
+    inference_mode = int(os.getenv('INFERENCE_MODE', 0))
+    if inference_mode == 1:
+        pass
+    elif inference_mode == 2:
+        pass
+    else:
+        return _fully_local_inference(image_file, False)
 
 
 def train_body(experiment_name: str):
