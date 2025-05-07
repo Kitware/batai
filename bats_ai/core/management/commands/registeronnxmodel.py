@@ -22,6 +22,7 @@ def command():
         mlflow.onnx.log_model(
             onnx_model=onnx_model,
             artifact_path='onnx_model',
+            # save_as_external_data=True,
         )
         model_uri = f'runs:/{run_id}/onnx_model'
         result = mlflow.register_model(model_uri=model_uri, name='prototype')
