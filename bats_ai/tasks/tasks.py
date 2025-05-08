@@ -147,6 +147,7 @@ def _fully_local_inference(image_file, use_mlflow_model):
                 'CPUExecutionProvider',
             ],
         )
+        model = onnx.load(onnx_filename)
     else:
         import mlflow
         import mlflow.onnx
@@ -201,7 +202,6 @@ def _fully_local_inference(image_file, use_mlflow_model):
     outputs = np.vstack(outputs)
     outputs = outputs.mean(axis=0)
 
-    model = onnx.load(onnx_filename)
     mapping = json.loads(model.metadata_props[0].value)
     labels = [mapping['forward'][str(index)] for index in range(len(mapping['forward']))]
 
@@ -221,6 +221,7 @@ def predict_compressed(image_file):
     inference_mode = int(os.getenv('INFERENCE_MODE', 0))
     if inference_mode == 1:
         print('Using inference mode 1: file from mlflow')
+        return _fully_local_inference(image_file, True)
     elif inference_mode == 2:
         print('Using inference mode 2: deployed mlflow model')
     else:
