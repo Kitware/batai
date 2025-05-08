@@ -27,13 +27,6 @@ RUN set -ex \
 # and all package modules are importable.
 COPY ./setup.py /opt/django-project/setup.py
 
-# TODO: TEMPORARY FOR SSL VERIFICATION
-COPY ./dev/sciencebase-fullchain.crt /usr/local/share/ca-certificates/sciencebase-fullchain.crt
-RUN update-ca-certificates
-
-ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-
 # Use a directory name which will never be an import name, as isort considers this as first-party.
 WORKDIR /opt/django-project
 # hadolint ignore=DL3013
