@@ -220,10 +220,11 @@ def predict_compressed(image_file):
     # 2: do inference from deployed mlflow model
     inference_mode = int(os.getenv('INFERENCE_MODE', 0))
     if inference_mode == 1:
-        pass
+        print('Using inference mode 1: file from mlflow')
     elif inference_mode == 2:
-        pass
+        print('Using inference mode 2: deployed mlflow model')
     else:
+        print('Using inference mode 0: local file')
         return _fully_local_inference(image_file, False)
 
 
@@ -255,9 +256,6 @@ def train_body(experiment_name: str):
 
     mlflow.set_tracking_uri(settings.MLFLOW_ENDPOINT)
     mlflow.set_experiment(experiment_name)
-
-    print(mlflow.get_tracking_uri())
-    print(mlflow.get_artifact_uri())
 
     mlflow.end_run()
     with mlflow.start_run():
