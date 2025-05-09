@@ -27,6 +27,9 @@ class BatsAiMixin(ConfigMixin):
     ]
     CELERY_RESULT_BACKEND = 'django-db'
 
+    MLFLOW_PG_DB = None
+    MLFLOW_BUCKET = None
+
     @staticmethod
     def mutate_configuration(configuration: ComposedConfiguration) -> None:
         # Install local apps first, to ensure any overridden resources are found first
@@ -58,8 +61,18 @@ class BatsAiMixin(ConfigMixin):
             engine='django.contrib.gis.db.backends.postgis',
             conn_max_age=600,
         )
-        db_dict = db_val.value
-        return db_dict
+        # Note that MLFLOW_PG_DB must be set for this to be available
+        mlflow_db = values.DatabaseURLValue(
+            alias='mlflow',
+            environ_name='MLFLOW_PG_DB',
+            environ_required=False,
+            engine='django.db.backends.postgresql',
+            conn_max_age=600,
+        )
+        dbs = {}
+        dbs.update(db_val.value)
+        dbs.update(mlflow_db.value or {})
+        return dbs
 
 
 class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
@@ -80,6 +93,10 @@ class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
     MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
+
+    MLFLOW_ENDPOINT = values.Value('http://localhost:5000')
+    MLFLOW_PG_DB = 'mlflow'
+    MLFLOW_BUCKET = 'mlflow'
 
 
 class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
