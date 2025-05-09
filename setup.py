@@ -23,7 +23,7 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
-        'Framework :: Django :: 3.0',
+        'Framework :: Django :: 4.1',
         'Framework :: Django',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
@@ -37,23 +37,16 @@ setup(
     include_package_data=True,
     install_requires=[
         'celery',
-        'guano',
-        'gunicorn',
         'django-ninja',
         'django>=4.1, <4.2',
         'django-allauth',
         'django-configurations[database,email]',
         'django-extensions',
-        'django-large-image',
         'django-oauth-toolkit',
         'djangorestframework',
         'drf-yasg',
         'django-click',
         'django-storages[s3]',
-        # Production-only
-        'django-composed-configuration[prod]>=0.20',
-        'django-s3-file-field[boto3]<1',
-        'gunicorn',
         # Spectrogram Generation
         'librosa',
         'matplotlib',
@@ -74,13 +67,18 @@ setup(
     ],
     extras_require={
         'dev': [
-            'django-composed-configuration[dev]>=0.18',
+            'django-composed-configuration[dev]>=0.20',
             'django-debug-toolbar',
             'django-s3-file-field[minio]',
             'django-click',
             'django-minio-storage>=0.5.2',
             'ipython',
             'tox',
-        ]
+        ],
+        'prod': [
+            'django-composed-configuration[prod]>=0.20',
+            'django-s3-file-field[boto3]',
+            'django-minio-storage>=0.5.2',
+        ],
     },
 )
