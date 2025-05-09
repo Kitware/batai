@@ -8,6 +8,7 @@ import App from './App.vue';
 import oauthClient, { maybeRestoreLogin } from './plugins/Oauth';
 import initRouter from './router';
 import { axiosInstance } from './api/api';
+import { installPrompt } from './use/prompt-service';
 
 const app = createApp(App);
 const Vuetify = createVuetify({});
@@ -33,4 +34,5 @@ maybeRestoreLogin().then(() => {
   app.provide('oauthClient', oauthClient);
   Object.assign(axiosInstance.defaults.headers.common, oauthClient.authHeaders);
   app.mount('#app');
+  installPrompt(app);
 });
