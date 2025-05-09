@@ -9,6 +9,14 @@ class Configuration(models.Model):
         COMPRESSED = 'compressed'
         UNCOMPRESSED = 'uncompressed'
 
+    class AvailableColorScheme(models.TextChoices):
+        INFERNO = 'inferno'
+        CIVIDIS = 'cividis'
+        VIRIDIS = 'viridis'
+        MAGMA = 'magma'
+        TURBO = 'turbo'
+        PLASMA = 'plasma'
+
     display_pulse_annotations = models.BooleanField(default=True)
     display_sequence_annotations = models.BooleanField(default=True)
     run_inference_on_upload = models.BooleanField(default=True)
@@ -16,6 +24,13 @@ class Configuration(models.Model):
     spectrogram_view = models.CharField(
         max_length=12, choices=SpectrogramViewMode.choices, default=SpectrogramViewMode.COMPRESSED
     )
+    default_color_scheme = models.CharField(
+        max_length=20,
+        choices=AvailableColorScheme.choices,
+        default=AvailableColorScheme.INFERNO,
+    )
+    # 18 characters is just enough for "rgb(255, 255, 255)"
+    default_spectrogram_background_color = models.CharField(max_length=18, default='rgb(0, 0, 0)')
 
     def save(self, *args, **kwargs):
         # Ensure only one instance of Configuration exists

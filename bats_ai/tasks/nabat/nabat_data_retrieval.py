@@ -4,6 +4,8 @@ import os
 import tempfile
 
 from django.contrib.gis.geos import Point
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.db.models import Q
 import requests
 
 from bats_ai.celery import app
@@ -58,16 +60,56 @@ query fetchAcousticAndSurveyEventInfo {
 """
 
 
+def get_or_create_processing_task(recording_id, request_id):
+    """
+    Fetches or creates a ProcessingTask with the given metadata and status filters.
+    Uses `get` with try-except block to handle object retrieval.
+
+    Args:
+        recording_id (int): The recording ID for the task metadata.
+        request_id (str): The Celery request ID to store in the task.
+
+    Returns:
+        tuple: A tuple with the ProcessingTask instance and a boolean indicating if it was created.
+    """
+    # Define the metadata filter with specific keys in the JSON metadata field
+    metadata_filter = {
+        'type': ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+        'recordingId': recording_id,
+    }
+
+    # Try to get an existing task or handle the case where it's not found
+    try:
+        # Attempt to get a task based on the metadata filter and status
+        processing_task = ProcessingTask.objects.get(
+            Q(metadata__contains=metadata_filter)
+            & Q(status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING])
+            & Q(celery_id=request_id)
+        )
+        # If task is found, return the task with False (not created)
+        return processing_task, False
+
+    except ObjectDoesNotExist:
+        # If task does not exist, create a new one with the given defaults
+        processing_task = ProcessingTask.objects.create(
+            metadata=metadata_filter,
+            status=ProcessingTask.Status.QUEUED,  # Default status if creating a new task
+            celery_id=request_id,
+        )
+        # Return the newly created task and True (created)
+        return processing_task, True
+
+    except MultipleObjectsReturned:
+        # If multiple tasks are found, raise an exception (shouldn't happen if data is correct)
+        raise Exception('Multiple tasks found with the same metadata and status filter.')
+
+
 @app.task(bind=True)
 def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, api_token: str):
-    processing_task, _created = ProcessingTask.objects.get_or_create(
-        metadata={
-            'type': ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
-            'recordingId': recording_id,
-        },
-        defaults={'celery_id': self.request.id},
-    )
-    processing_task.update(status=ProcessingTask.Status.RUNNING)
+    processing_task, _created = get_or_create_processing_task(recording_id, self.request.id)
+
+    processing_task.status = ProcessingTask.Status.RUNNING
+    processing_task.save()
     headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
     batch_query = QUERY % {
         'acoustic_file_id': recording_id,
@@ -79,11 +121,15 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
         meta={'description': 'Fetching NAbat Recording Data'},
     )
     try:
-        response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
-    except Exception as e:
-        processing_task.update(
-            status=ProcessingTask.Status.ERROR, error=f'Error with API Reqeust: {e}'
+        response = requests.post(
+            BASE_URL,
+            json={'query': batch_query},
+            headers=headers,
         )
+    except Exception as e:
+        processing_task.status = ProcessingTask.Status.ERROR
+        processing_task.error = f'Error with API Request: {e}'
+        processing_task.save()
         raise
     batch_data = {}
 
@@ -92,16 +138,15 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
             batch_data = response.json()
         except (KeyError, TypeError, json.JSONDecodeError) as e:
             logger.error(f'Error processing batch data: {e}')
-            processing_task.update(
-                status=ProcessingTask.Status.ERROR, error=f'Error processing batch data: {e}'
-            )
+            processing_task.status = ProcessingTask.Status.ERROR
+            processing_task.error = f'Error processing batch data: {e}'
+            processing_task.save()
             raise
     else:
         logger.error(f'Failed to fetch data: {response.status_code}, {response.text}')
-        processing_task.update(
-            status=ProcessingTask.Status.ERROR,
-            error=f'Failed to fetch data: {response.status_code}, {response.text}',
-        )
+        processing_task.status = ProcessingTask.Status.ERROR
+        processing_task.error = f'Failed to fetch data: {response.status_code}, {response.text}'
+        processing_task.save()
         return
 
     self.update_state(
@@ -157,22 +202,22 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
                         predict(compressed_spectrogram.pk)
                 except Exception as e:
                     logger.error(f'Error Performing Prediction: {e}')
-                    processing_task.update(
-                        status=ProcessingTask.Status.ERROR,
-                        error=f'Error extracting presigned URL: {e}',
-                    )
+                    processing_task.status = ProcessingTask.Status.ERROR
+                    processing_task.error = f'Error extracting presigned URL: {e}'
+                    processing_task.save()
                     raise
-                processing_task.update(status=ProcessingTask.Status.COMPLETE)
+                processing_task.status = ProcessingTask.Status.COMPLETE
+                processing_task.save()
 
             else:
-                processing_task.update(
-                    status=ProcessingTask.Status.ERROR,
-                    error=f'Failed to download file: {file_response.status_code}',
-                )
+                processing_task.status = ProcessingTask.Status.ERROR
+                processing_task.error = f'Failed to download file: {file_response.status_code}'
+                processing_task.save()
                 logger.error(f'Failed to download file: {file_response.status_code}')
     except Exception as e:
-        processing_task.update(status=ProcessingTask.Status.ERROR, error=str(e))
-        logger.error(f'Error handling file download or temporary file: {e}')
+        processing_task.status = ProcessingTask.Status.ERROR
+        processing_task.error = str(e)
+        processing_task.save()
         raise
 
 
@@ -222,8 +267,8 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
         return nabat_recording
 
     except KeyError as e:
-        print(f'Missing key: {e}')
+        logger.error(f'Missing key: {e}')
         return None
     except Exception as e:
-        print(f'Error creating NABatRecording: {e}')
+        logger.error(f'Error creating NABatRecording: {e}')
         return None

@@ -3,22 +3,28 @@ import { reactive, defineComponent, watch, ref, Ref, } from 'vue';
 import useState from '../use/useState';
 import { patchConfiguration } from '../api/api';
 import NABatAdmin from './NABatAdmin.vue';
+import ColorPickerMenu from '../components/ColorPickerMenu.vue';
+import ColorSchemeSelect from '../components/ColorSchemeSelect.vue';
 
 export default defineComponent({
   name: 'Admin',
-  components:{
-    NABatAdmin
+  components: {
+    NABatAdmin,
+    ColorPickerMenu,
+    ColorSchemeSelect,
   },
   setup() {
     // Reactive state for the settings
     const tab: Ref<'admin' | 'nabat'> = ref('admin');
-    const { configuration, loadConfiguration } = useState();
+    const { colorSchemes, configuration, loadConfiguration } = useState();
     const settings = reactive({
       displayPulseAnnotations: configuration.value.display_pulse_annotations,
       displaySequenceAnnotations: configuration.value.display_sequence_annotations,
       runInferenceOnUpload: configuration.value.run_inference_on_upload,
       spectrogramXStretch: configuration.value.spectrogram_x_stretch,
       spectrogramView: configuration.value.spectrogram_view,
+      defaultColorScheme: configuration.value.default_color_scheme,
+      defaultBackgroundColor: configuration.value.default_spectrogram_background_color,
     });
     const spectrogramViewOptions = [
       { title: 'Compressed', value: 'compressed' },
@@ -29,6 +35,8 @@ export default defineComponent({
       settings.displaySequenceAnnotations = configuration.value.display_sequence_annotations;
       settings.runInferenceOnUpload = configuration.value.run_inference_on_upload;
       settings.spectrogramXStretch = configuration.value.spectrogram_x_stretch;
+      settings.defaultColorScheme = configuration.value.default_color_scheme;
+      settings.defaultBackgroundColor = configuration.value.default_spectrogram_background_color;
       settings.spectrogramView = configuration.value.spectrogram_view;
     });
     // Function to save the settings
@@ -39,6 +47,8 @@ export default defineComponent({
         display_sequence_annotations: settings.displaySequenceAnnotations,
         run_inference_on_upload: settings.runInferenceOnUpload,
         spectrogram_x_stretch: settings.spectrogramXStretch,
+        default_color_scheme: settings.defaultColorScheme,
+        default_spectrogram_background_color: settings.defaultBackgroundColor,
         spectrogram_view: settings.spectrogramView,
       });
       loadConfiguration();
@@ -49,6 +59,7 @@ export default defineComponent({
       saveSettings,
       spectrogramViewOptions,
       tab,
+      colorSchemes,
     };
   },
 });
@@ -73,7 +84,6 @@ export default defineComponent({
         NABat Admin
       </v-tab>
     </v-tabs>
-      
     <v-window v-model="tab">
       <v-window-item value="admin">
         <v-card-title>Admin Settings</v-card-title>
@@ -135,6 +145,26 @@ export default defineComponent({
                 label="Default spectrogram view"
               />
             </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="3">
+              <color-scheme-select
+                v-model="settings.defaultColorScheme"
+                :color-schemes="colorSchemes"
+                label="Default Color Scheme"
+                :return-object="false"
+              />
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-label
+              text="Default Background Color"
+              class="px-2"
+            />
+            <ColorPickerMenu
+              v-model="settings.defaultBackgroundColor"
+              tooltip-text="Default background color for spectrograms"
+            />
           </v-row>
         </v-card-text>
         <v-card-actions>
