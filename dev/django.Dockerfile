@@ -27,17 +27,25 @@ RUN set -ex \
 # and all package modules are importable.
 COPY ./setup.py /opt/django-project/setup.py
 
-# TODO: TEMPORARY FOR SSL VERIFICATION
-COPY ./dev/sciencebase-fullchain.crt /usr/local/share/ca-certificates/sciencebase-fullchain.crt
-RUN update-ca-certificates
-
-ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-
 # Use a directory name which will never be an import name, as isort considers this as first-party.
 WORKDIR /opt/django-project
 # hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip
 
+# Handle build environment for pip install
+ARG BUILD_ENV
+# hadolint ignore=DL3013
 RUN set -ex \
- && pip install --no-cache-dir -e .[dev]
+ # Default to 'dev' if BUILD_ENV is empty
+ && BUILD_ENV="${BUILD_ENV:-dev}" \
+ # Check for valid options and warn if unexpected
+ && if [ "$BUILD_ENV" != "dev" ] && [ "$BUILD_ENV" != "prod" ]; then \
+      echo "⚠️ WARNING: BUILD_ENV is set to '$BUILD_ENV' but should be 'dev' or 'prod'. Proceeding anyway with default of dev..."; \
+    else \
+      echo "Installing with BUILD_ENV='$BUILD_ENV'"; \
+    fi \
+ && if [ "$BUILD_ENV" = "prod" ]; then \
+      pip install --no-cache-dir .["$BUILD_ENV"]; \
+    else \
+      pip install --no-cache-dir -e .["$BUILD_ENV"]; \
+    fi
