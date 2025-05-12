@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import uuid
 
 from django.contrib.gis.db.models import functions as gis_functions
 from django.contrib.gis.geos import Point, Polygon
@@ -58,11 +59,13 @@ class RecordingFilterSchema(Schema):
 
 class RecordingListItemSchema(Schema):
     id: int
-    filename: str
-    site_id: int | None
-    site_name: str | None
-    location: str | None
-    nabat_auto_species: list[str] | None  # Adjust type if needed
+    recording_id: int | None
+    survey_event_id: int | None
+    acoustic_batch_id: int | None
+    name: str
+    created: datetime | None
+    recording_location: str | None
+    annotation_count: int | None
 
 
 @router.get('/recordings', response=list[RecordingListItemSchema])
@@ -101,14 +104,13 @@ def list_recordings(request: HttpRequest, filters: Query[RecordingFilterSchema])
             'id': rec.id,
             'recording_id': rec.recording_id,
             'survey_event_id': rec.survey_event_id,
-            'computed_species': [species.name for species in rec.computed_species.all()],
-            'annotation_count': rec.annotation_count,
+            'acoustic_batch_id': rec.acoustic_batch_id,
             'name': rec.name,
             'created': rec.created,
             'recording_location': rec.recording_location.geojson
             if rec.recording_location
             else None,
-            'nabat_auto_species': rec.nabat_auto_species.name if rec.nabat_auto_species else None,
+            'annotation_count': rec.annotation_count,
         }
         for rec in recordings
     ]
@@ -119,6 +121,10 @@ class AnnotationSchema(Schema):
     comments: str | None
     confidence: float | None
     created: datetime
+    user_id: uuid.UUID | None
+    user_email: str | None
+    species: list[str] | None
+    model: str | None
 
 
 @router.get('/recordings/{recording_id}/annotations', response=list[AnnotationSchema])
@@ -128,7 +134,7 @@ def recording_annotations(request: HttpRequest, recording_id: int):
         return JsonResponse({'error': 'Permission denied'}, status=403)
 
     try:
-        recording = NABatRecording.objects.get(recording_id=recording_id)
+        recording = NABatRecording.objects.get(pk=recording_id)
     except NABatRecording.DoesNotExist:
         return JsonResponse({'error': 'Recording not found'}, status=404)
 
@@ -139,6 +145,10 @@ def recording_annotations(request: HttpRequest, recording_id: int):
             'comments': annotation.comments,
             'confidence': annotation.confidence,
             'created': annotation.created,
+            'user_id': annotation.user_id if annotation.user_id else None,
+            'user_email': annotation.user_email if annotation.user_email else None,
+            'species': [species.species_code for species in annotation.species.all()],
+            'model': annotation.model if annotation.model else None,
         }
         for annotation in annotations
     ]
