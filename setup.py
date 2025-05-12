@@ -77,7 +77,7 @@ setup(
         ],
         'prod': [
             'django-composed-configuration[prod]>=0.20',
-            'django-s3-file-field[boto3]',
+            'django-s3-file-field[boto3, minio]',
             'django-minio-storage>=0.5.2',
         ],
     },
