@@ -139,7 +139,10 @@ export default defineComponent({
         </span>
       </v-tooltip>
       <help-system />
-      <v-btn @click="logInOrOut">
+      <v-btn
+        v-if="!isNaBat"
+        @click="logInOrOut"
+      >
         {{ loginText }}
       </v-btn>
     </v-app-bar>
