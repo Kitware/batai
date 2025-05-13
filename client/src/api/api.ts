@@ -1,12 +1,5 @@
 import axios from 'axios';
-import { SpectroInfo } from '../components/geoJS/geoJSUtils';
-
-export interface PaginatedResponse<E> {
-  count: number,
-  next: string,
-  previous: string,
-  results: E[];
-}
+import { SpectroInfo } from '@components/geoJS/geoJSUtils';
 
 export interface Recording {
   id: number,

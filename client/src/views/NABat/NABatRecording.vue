@@ -1,8 +1,8 @@
 
   <script lang="ts">
   import { defineComponent, ref, onMounted, onUnmounted, Ref} from 'vue';
-import { getProcessingTaskDetails } from '../api/api';
-import { NABatRecordingDataResponse, postNABatRecording } from '../api/NABatApi';
+import { getProcessingTaskDetails } from '@api/api';
+import { NABatRecordingDataResponse, postNABatRecording } from '@api/NABatApi';
 import { useRouter } from 'vue-router';
   
   export default defineComponent({

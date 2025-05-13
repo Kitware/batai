@@ -1,7 +1,7 @@
 <script lang="ts">
 import { computed, defineComponent, PropType } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
-import useState from "../use/useState";
+import useState from "@use/useState";
 import { watch, ref } from "vue";
 import AnnotationEditor from "./AnnotationEditor.vue";
 import { Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";

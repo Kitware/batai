@@ -72,8 +72,73 @@ async function deleteNABatFileAnnotation(fileAnnotationId: number, apiToken?: st
   return axiosInstance.delete<{ message: string, id: number }>(`nabat/recording/recording-annotation/${fileAnnotationId}`, { params: { apiToken } });
 }
 
+export interface RecordingListItem {
+    id: number;
+    recording_id: number | null;
+    survey_event_id: number | null;
+    acoustic_batch_id: number | null;
+    name: string;
+    created: string | null;
+    recording_location: string | null;
+    annotation_count: number | null;
+  }
+
+  export interface PaginatedResponse<T> {
+    items: T[];
+    count: number;
+    limit: number;
+    offset: number;
+  }
+  
+  
+  export interface Annotation {
+    id: number;
+    comments: string | null;
+    confidence: number | null;
+    created: string;
+    user_id: string | null;
+    user_email: string | null;
+    species: string[] | null;
+    model: string | null;
+  }
+  
+  export interface NABatStats {
+    total_recordings: number;
+    total_annotations: number;
+  }
+  
+  // Function to get paginated recordings with filters
+  async function getNABatConfigurationRecordings(filters: {
+    survey_event_id?: number;
+    recording_id?: number;
+    bbox?: [number, number, number, number];
+    location?: [number, number];
+    radius?: number;
+    page?: number;
+    limit?: number;
+    offset?: number;
+  }) {
+    const response = await axiosInstance.get<PaginatedResponse<RecordingListItem>>('/nabat/configuration/recordings', {
+      params: filters,
+    });
+    return response.data;
+
+  }
+  
+  // Function to get paginated annotations for a recording
+  async function getNABatConfigurationAnnotations(recordingId: number, page?: number, limit?: number, offset?: number) {
+    const response = await axiosInstance.get<PaginatedResponse<Annotation>>(`/nabat/configuration/recordings/${recordingId}/annotations`, {
+      params: { page, limit, offset },
+    });
+    return response.data;
+  }
 
 
+  async function getNABatConfigurationStats(): Promise<NABatStats> {
+    const response = await axiosInstance.get<NABatStats>('/nabat/configuration/stats');
+    return response.data;
+  }
+  
 export {
     postNABatRecording,
     getNABatSpectrogram,
@@ -84,4 +149,8 @@ export {
     putNABatFileAnnotation,
     patchNABatFileAnnotation,
     deleteNABatFileAnnotation,
+    getNABatConfigurationStats,
+    getNABatConfigurationAnnotations,
+    getNABatConfigurationRecordings
+
 };

@@ -9,17 +9,17 @@ import {
 import {
   getSpecies,
   Species,
-} from "../api/api";
+} from "@api/api";
 import {
   getNABatSpectrogram,
   getNABatSpectrogramCompressed,
-} from "../api/NABatApi";
-import SpectrogramViewer from "../components/SpectrogramViewer.vue";
-import { SpectroInfo } from "../components/geoJS/geoJSUtils";
-import ThumbnailViewer from "../components/ThumbnailViewer.vue";
-import useState from "../use/useState";
-import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
-import RecordingAnnotations from "../components/RecordingAnnotations.vue";
+} from "@api/NABatApi";
+import SpectrogramViewer from "@components/SpectrogramViewer.vue";
+import { SpectroInfo } from "@components/geoJS/geoJSUtils";
+import ThumbnailViewer from "@components/ThumbnailViewer.vue";
+import useState from "@use/useState";
+import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
+import RecordingAnnotations from "@components/RecordingAnnotations.vue";
 export default defineComponent({
   name: "Spectrogram",
   components: {
