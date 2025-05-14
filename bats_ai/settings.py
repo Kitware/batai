@@ -39,7 +39,6 @@ class BatsAiMixin(ConfigMixin):
             'django.contrib.gis',
             'django_large_image',
             'django_celery_results',
-            'ninja_extra',
         ]
 
         configuration.MIDDLEWARE = [

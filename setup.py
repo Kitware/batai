@@ -42,7 +42,6 @@ setup(
         'django-allauth',
         'django-configurations[database,email]',
         'django-extensions',
-        'django-ninja-extra',
         'django-oauth-toolkit',
         'djangorestframework',
         'drf-yasg',
