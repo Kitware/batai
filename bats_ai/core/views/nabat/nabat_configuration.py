@@ -1,5 +1,7 @@
 from datetime import datetime
+import json
 import logging
+from typing import Any
 import uuid
 
 from django.contrib.gis.db.models import functions as gis_functions
@@ -64,7 +66,7 @@ class RecordingListItemSchema(Schema):
     acoustic_batch_id: int | None
     name: str
     created: datetime | None
-    recording_location: str | None
+    recording_location: dict[str, Any] | None
     annotation_count: int | None
 
 
@@ -107,7 +109,7 @@ def list_recordings(request: HttpRequest, filters: Query[RecordingFilterSchema])
             'acoustic_batch_id': rec.acoustic_batch_id,
             'name': rec.name,
             'created': rec.created,
-            'recording_location': rec.recording_location.geojson
+            'recording_location': json.loads(rec.recording_location.geojson)
             if rec.recording_location
             else None,
             'annotation_count': rec.annotation_count,

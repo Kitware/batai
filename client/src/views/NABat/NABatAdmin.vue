@@ -40,7 +40,10 @@ export default defineComponent({
       </v-tab>
     </v-tabs>
 
-    <v-window v-model="tab" id="admin-window">
+    <v-window
+      id="admin-window"
+      v-model="tab"
+    >
       <v-window-item value="browser">
         <v-card-title>Admin Recording Browser</v-card-title>
         <v-card-text>
@@ -57,9 +60,5 @@ export default defineComponent({
 /* Add optional styling */
 .v-container {
   margin-top: 20px;
-}
-.admin-window {
-  max-height: 70vh;
-  overflow-y: auto;
 }
 </style>

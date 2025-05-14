@@ -79,7 +79,7 @@ export interface RecordingListItem {
     acoustic_batch_id: number | null;
     name: string;
     created: string | null;
-    recording_location: string | null;
+    recording_location?: GeoJSON.Point | null;
     annotation_count: number | null;
   }
 

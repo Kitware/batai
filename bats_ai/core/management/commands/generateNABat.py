@@ -134,7 +134,6 @@ class Command(BaseCommand):
                             user_email=user_email,
                             model='fake_model_v1',
                             confidence=round(uniform(0.7, 1.0), 2),
-                            additional_data={'source': 'fake_script'},
                         )
                         annotation.species.set(
                             random.sample(species, k=random.randint(1, min(3, len(species))))
