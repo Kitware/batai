@@ -133,7 +133,7 @@ class Command(BaseCommand):
                             user_id=user_id,
                             user_email=user_email,
                             model='fake_model_v1',
-                            confidence=round(uniform(0.7, 1.0), 2),
+                            confidence=round(uniform(0.5, 1.0), 2),
                         )
                         annotation.species.set(
                             random.sample(species, k=random.randint(1, min(3, len(species))))
