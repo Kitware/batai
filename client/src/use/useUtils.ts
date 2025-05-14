@@ -1,6 +1,3 @@
-import * as d3 from "d3";
-import { RGBColor } from "d3";
-
 function getCurrentTime() {
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, "0");

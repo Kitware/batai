@@ -20,6 +20,9 @@ import ThumbnailViewer from "../components/ThumbnailViewer.vue";
 import useState from "../use/useState";
 import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
 import RecordingAnnotations from "../components/RecordingAnnotations.vue";
+import { usePrompt } from '../use/prompt-service';
+import { useJWTToken } from '../use/useJWTToken';
+
 export default defineComponent({
   name: "Spectrogram",
   components: {
@@ -50,6 +53,11 @@ export default defineComponent({
       sideTab,
       configuration,
     } = useState();
+    const { prompt } = usePrompt();
+    const { shouldWarn, } = useJWTToken({
+      'token': props.apiToken,
+      'warningSeconds': 60,
+    });
     const image: Ref<HTMLImageElement> = ref(new Image());
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const selectedUsers: Ref<string[]> = ref([]);
@@ -138,6 +146,19 @@ export default defineComponent({
     const toggleCompressedOverlay = () => {
       viewCompressedOverlay.value = ! viewCompressedOverlay.value;
     };
+
+    watch(shouldWarn, async() => {
+      if (shouldWarn.value) {
+        await prompt({
+          title: 'API Token Expiration',
+          text: [
+            'The Api Token will expire in less than 60 seconds',
+            'The Refresh option will be added in the future',
+          ]
+        });
+      }
+    }, { immediate: true });
+
 
     return {
       errorMessage,
