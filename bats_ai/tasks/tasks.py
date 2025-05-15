@@ -1,10 +1,12 @@
 import io
 import math
+import os
 import tempfile
 
 from PIL import Image
 from celery import shared_task
 import cv2
+from django.conf import settings
 from django.core.files import File
 import librosa
 import matplotlib.pyplot as plt
@@ -430,9 +432,8 @@ def predict(compressed_spectrogram_id: int):
     return label, score, confs
 
 
-def predict_compressed(image_file):
+def _fully_local_inference(image_file, use_mlflow_model):
     import json
-    import os
 
     import onnx
     import onnxruntime as ort
@@ -440,26 +441,49 @@ def predict_compressed(image_file):
 
     img = Image.open(image_file)
 
-    relative = ('..',) * 3
-    asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
+    if not use_mlflow_model:
+        relative = ('..',) * 3
+        asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
 
-    onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')
-    assert os.path.exists(onnx_filename)
+        onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')
+        assert os.path.exists(onnx_filename)
 
-    session = ort.InferenceSession(
-        onnx_filename,
-        providers=[
-            (
-                'CUDAExecutionProvider',
-                {
-                    'cudnn_conv_use_max_workspace': '1',
-                    'device_id': 0,
-                    'cudnn_conv_algo_search': 'HEURISTIC',
-                },
-            ),
-            'CPUExecutionProvider',
-        ],
-    )
+        session = ort.InferenceSession(
+            onnx_filename,
+            providers=[
+                (
+                    'CUDAExecutionProvider',
+                    {
+                        'cudnn_conv_use_max_workspace': '1',
+                        'device_id': 0,
+                        'cudnn_conv_algo_search': 'HEURISTIC',
+                    },
+                ),
+                'CPUExecutionProvider',
+            ],
+        )
+        model = onnx.load(onnx_filename)
+    else:
+        import mlflow
+        import mlflow.onnx
+
+        MODEL_URI = 'models:/prototype/1'
+        mlflow.set_tracking_uri(settings.MLFLOW_ENDPOINT)
+        model = mlflow.onnx.load_model(model_uri=MODEL_URI)
+        session = ort.InferenceSession(
+            model.SerializeToString(),
+            providers=[
+                (
+                    'CUDAExecutionProvider',
+                    {
+                        'cudnn_conv_use_max_workspace': '1',
+                        'device_id': 0,
+                        'cudnn_conv_algo_search': 'HEURISTIC',
+                    },
+                ),
+                'CPUExecutionProvider',
+            ],
+        )
 
     img = np.array(img)
 
@@ -493,7 +517,6 @@ def predict_compressed(image_file):
     outputs = np.vstack(outputs)
     outputs = outputs.mean(axis=0)
 
-    model = onnx.load(onnx_filename)
     mapping = json.loads(model.metadata_props[0].value)
     labels = [mapping['forward'][str(index)] for index in range(len(mapping['forward']))]
 
@@ -504,3 +527,68 @@ def predict_compressed(image_file):
     confs = dict(zip(labels, outputs))
 
     return label, score, confs
+
+
+def predict_compressed(image_file):
+    # 0: use the local file and do inference with that
+    # 1: get the file from mlflow and do inference locally
+    # 2: do inference from deployed mlflow model
+    inference_mode = int(os.getenv('INFERENCE_MODE', 0))
+    if inference_mode == 1:
+        print('Using inference mode 1: file from mlflow')
+        return _fully_local_inference(image_file, True)
+    elif inference_mode == 2:
+        print('Using inference mode 2: deployed mlflow model')
+    else:
+        print('Using inference mode 0: local file')
+        return _fully_local_inference(image_file, False)
+
+
+def train_body(experiment_name: str):
+    import mlflow
+    from mlflow.models import infer_signature
+    from sklearn import datasets
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import accuracy_score
+    from sklearn.model_selection import train_test_split
+
+    X, y = datasets.load_iris(return_X_y=True)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    params = {
+        'solver': 'lbfgs',
+        'max_iter': 1000,
+        'multi_class': 'auto',
+        'random_state': 8888,
+    }
+
+    lr = LogisticRegression(**params)
+    lr.fit(X_train, y_train)
+
+    y_pred = lr.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+
+    mlflow.set_tracking_uri(settings.MLFLOW_ENDPOINT)
+    mlflow.set_experiment(experiment_name)
+
+    mlflow.end_run()
+    with mlflow.start_run():
+        mlflow.log_params(params)
+        mlflow.log_metric('accuracy', accuracy)
+        mlflow.set_tag('Training Info', 'Basic LR model for iris data')
+
+        signature = infer_signature(X_train, lr.predict(X_train))
+        _ = mlflow.sklearn.log_model(
+            sk_model=lr,
+            artifact_path='iris_model',
+            signature=signature,
+            input_example=X_train,
+            registered_model_name='tracking-quickstart',
+        )
+
+
+@shared_task
+def example_train(experiment_name: str):
+    train_body(experiment_name)
