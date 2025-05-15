@@ -25,9 +25,10 @@ export default defineComponent({
   setup(props) {
 
     const { prompt } = usePrompt();
+    const secondsWarning = 60;
     const { shouldWarn, } = useJWTToken({
       'token': props.apiToken,
-      'warningSeconds': 60,
+      'warningSeconds': secondsWarning,
     });
     const errorMessage: Ref<string | null> = ref(null);
     const additionalErrors: Ref<string[]> = ref([]);
@@ -112,7 +113,7 @@ export default defineComponent({
         await prompt({
           title: 'API Token Expiration',
           text: [
-            'The Api Token will expire in less than 60 seconds',
+            `The Api Token will expire in less than ${secondsWarning} seconds`,
             'The Refresh option will be added in the future',
           ]
         });
