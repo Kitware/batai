@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 import logging
-from typing import Any
+from typing import Any, Literal
 import uuid
 
 from django.contrib.gis.db.models import functions as gis_functions
@@ -57,6 +57,10 @@ class RecordingFilterSchema(Schema):
     bbox: list[float] | None = None  # [minX, minY, maxX, maxY]
     location: tuple[float, float] | None = None  # (lat, lon)
     radius: float | None = None  # meters
+    sort_by: Literal[
+        'created', 'annotation_count', 'survey_event_id', 'recording_id'
+    ] | None = 'created'  # default sort field
+    sort_direction: Literal['asc', 'desc'] | None = 'desc'  # 'asc' or 'desc'
 
 
 class RecordingListItemSchema(Schema):
@@ -101,21 +105,33 @@ def list_recordings(request: HttpRequest, filters: Query[RecordingFilterSchema])
             distance=gis_functions.Distance('recording_location', point)
         ).filter(recording_location__distance_lte=(point, filters.radius))
 
+    sort_field = filters.sort_by or 'created'
+    if sort_field not in ['created', 'annotation_count', 'recording_id']:
+        sort_field = 'created'
+
+    sort_prefix = '' if filters.sort_direction == 'asc' else '-'
+    recordings = recordings.order_by(f'{sort_prefix}{sort_field}')
+
     return [
         {
             'id': rec.id,
+            'name': rec.name,
+            'annotation_count': rec.annotation_count,
+            'created': rec.created,
             'recording_id': rec.recording_id,
             'survey_event_id': rec.survey_event_id,
             'acoustic_batch_id': rec.acoustic_batch_id,
-            'name': rec.name,
-            'created': rec.created,
             'recording_location': json.loads(rec.recording_location.geojson)
             if rec.recording_location
             else None,
-            'annotation_count': rec.annotation_count,
         }
         for rec in recordings
     ]
+
+
+class AnnotationFilterSchema(Schema):
+    sort_by: Literal['created', 'user_email', 'confidence'] | None = 'created'  # default sort field
+    sort_direction: Literal['asc', 'desc'] | None = 'desc'  # 'asc' or 'desc'
 
 
 class AnnotationSchema(Schema):
@@ -131,7 +147,9 @@ class AnnotationSchema(Schema):
 
 @router.get('/recordings/{recording_id}/annotations', response=list[AnnotationSchema])
 @paginate
-def recording_annotations(request: HttpRequest, recording_id: int):
+def recording_annotations(
+    request: HttpRequest, recording_id: int, filters: Query[AnnotationFilterSchema]
+):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
 
@@ -141,6 +159,14 @@ def recording_annotations(request: HttpRequest, recording_id: int):
         return JsonResponse({'error': 'Recording not found'}, status=404)
 
     annotations = NABatRecordingAnnotation.objects.filter(nabat_recording=recording)
+
+    sort_field = filters.sort_by or 'created'
+    if sort_field not in ['created', 'user_email', 'confidence']:
+        sort_field = 'created'
+
+    sort_prefix = '' if filters.sort_direction == 'asc' else '-'
+    annotations = annotations.order_by(f'{sort_prefix}{sort_field}')
+
     return [
         {
             'id': annotation.id,

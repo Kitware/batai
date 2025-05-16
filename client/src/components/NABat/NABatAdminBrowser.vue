@@ -22,32 +22,45 @@ export default defineComponent({
     const totalAnnotations = ref<number>(0);
     const selectedRecordingId = ref<number | null>(null);
     const loading = ref(false);
+    const sortBy = ref([{ key: 'created', order: 'desc' }]);
+    const sortByAnnotations = ref([{ key: 'created', order: 'desc' }]);
 
     const filters = ref<{
       recording_id?: number;
       survey_event_id?: number;
       offset?: number;
       limit?: number;
+      sort_by?: 'created' | 'recording_id' | 'survey_event_id' | 'annotation_count';
+      sort_direction?: 'asc' | 'desc';
+    }>({});
+
+    const annotationFilters = ref<{
+      offset?: number;
+      limit?: number;
+      sort_by?: 'created' | 'user_email' | 'confidence';
+    sort_direction?: 'asc' | 'desc';
     }>({});
 
     const recordingHeaders = [
-      { title: 'Recording ID', value: 'recording_id' },
-      { title: 'Survey Event ID', value: 'survey_event_id' },
       { title: 'Name', value: 'name' },
-      { title: 'Created', value: 'created' },
-      { title: 'Location', value: 'recording_location' },
-      { title: 'Annotations', value: 'annotation_count' },
+      { title: 'Recording ID', value: 'recording_id', sortable: true },
       { title: 'View', value: 'view', sortable: false },
+      { title: 'Annotations', value: 'annotation_count', sortable: true,
+      sortRaw: (a: string, b: string) => (parseInt(a) - parseInt(b)),
+      },
+      { title: 'Created', value: 'created', sortable: true },
+      { title: 'Survey Event ID', value: 'survey_event_id' },
+      { title: 'Location', value: 'recording_location' },
     ];
 
     const annotationHeaders = [
       { title: 'ID', value: 'id' },
-      { title: 'User Email', value: 'user_email' },
+      { title: 'User Email', value: 'user_email', sortable: true },
+      { title: 'Created', value: 'created', sortable: true },
+      { title: 'Confidence', value: 'confidence', sortable: true },
       { title: 'Species', value: 'species' },
-      { title: 'Confidence', value: 'confidence' },
       { title: 'Comments', value: 'comments' },
       { title: 'Model', value: 'model' },
-      { title: 'Created', value: 'created' },
     ];
 
     function formatDate(isoString: string | null): string {
@@ -66,6 +79,10 @@ export default defineComponent({
     async function fetchRecordings({ page, itemsPerPage }: { page: number; itemsPerPage: number }) {
       filters.value.offset = (page - 1) * itemsPerPage;
       filters.value.limit = itemsPerPage;
+      if (sortBy.value?.length && ['created', 'recording_id', 'survey_event_id', 'annotation_count'].includes(sortBy.value[0].key)) {
+        filters.value.sort_by = sortBy.value[0].key as 'created' | 'recording_id' | 'survey_event_id' | 'annotation_count';
+        filters.value.sort_direction = sortBy.value[0].order === 'asc' ? 'asc' : 'desc';
+      }
       loading.value = true;
       try {
         const data = await getNABatConfigurationRecordings(filters.value);
@@ -92,12 +109,16 @@ export default defineComponent({
     }
 
     async function updateAnnotations({ page, itemsPerPage }: { page: number; itemsPerPage: number }) {
-      filters.value.offset = (page - 1) * itemsPerPage;
-      filters.value.limit = itemsPerPage;
+      annotationFilters.value.offset = (page - 1) * itemsPerPage;
+      annotationFilters.value.limit = itemsPerPage;
       loading.value = true;
       try {
         if (selectedRecordingId.value !== null) {
-          const data = await getNABatConfigurationAnnotations(selectedRecordingId.value);
+          if (sortByAnnotations.value?.length && ['created', 'user_email', 'confidence'].includes(sortByAnnotations.value[0].key)) {
+            annotationFilters.value.sort_by = sortByAnnotations.value[0].key as 'created' | 'user_email' | 'confidence';
+            annotationFilters.value.sort_direction = sortByAnnotations.value[0].order === 'asc' ? 'asc' : 'desc';
+          }
+          const data = await getNABatConfigurationAnnotations(selectedRecordingId.value, annotationFilters.value);
           annotations.value = data.items;
           totalAnnotations.value = data.count;
         }
@@ -120,7 +141,23 @@ export default defineComponent({
       annotations.value = [];
     }
 
-    onMounted(() => fetchRecordings({ page: 1, itemsPerPage: 5 }));
+    onMounted(() => fetchRecordings({ page: 1, itemsPerPage: 50 }));
+
+    const sortByUpdate = (newSort?: { key: string; order: string }[]) => {
+      if (newSort) {
+        sortBy.value = newSort;
+      } else {
+        sortBy.value = [{ key: 'created', order: 'desc' }];
+      }
+    };
+
+    const sortByUpdateAnnotations = (newSort?: { key: string; order: string }[]) => {
+      if (newSort) {
+        sortByAnnotations.value = newSort;
+      } else {
+        sortByAnnotations.value = [{ key: 'created', order: 'desc' }];
+      }
+    };
 
     return {
       filters,
@@ -138,6 +175,10 @@ export default defineComponent({
       totalAnnotations,
       formatDate,
       router,
+      sortBy,
+      sortByUpdate,
+      sortByAnnotations,
+      sortByUpdateAnnotations,
     };
   },
 });
@@ -149,18 +190,21 @@ export default defineComponent({
       <v-card class="pa-4">
         <v-card-title>Recordings</v-card-title>
         <v-data-table-server
+          v-model:sort-by="sortBy"
           :headers="recordingHeaders"
           :items="recordings"
           :loading="loading"
-          :items-per-page="5"
+          items-per-page="50"
+          :items-per-page-options="[{value: 10, title: '10'}, {value: 25, title: '25'}, {value: 50, title: '50'}, {value: 100, title: '100'}]"
           :items-length="totalRecordings"
           class="elevation-1"
           style="max-height: 50vh;"
           @update:options="fetchRecordings"
+          @update:sort-by="sortByUpdate"
         >
           <template #item.recording_id="{ item }">
             <v-btn
-              variant="text"
+              color="primary"
               @click.stop="selectRecording(item)"
             >
               {{ item.recording_id }}
@@ -197,7 +241,6 @@ export default defineComponent({
               rel="noopener"
             >
               <v-btn
-                variant="outlined"
                 size="small"
                 color="primary"
               >
@@ -223,15 +266,22 @@ export default defineComponent({
         </v-card-title>
 
         <v-data-table-server
+          v-model:sort-by="sortByAnnotations"
           :headers="annotationHeaders"
           :items="annotations"
           :loading="loading"
-          :items-per-page="5"
+          items-per-page="50"
           :items-length="totalAnnotations"
+          :items-per-page-options="[{value: 10, title: '10'}, {value: 25, title: '25'}, {value: 50, title: '50'}, {value: 100, title: '100'}]"
           class="elevation-1"
           style="max-height: 50vh;"
           @update:options="updateAnnotations"
-        />
+          @update:sort-by="sortByUpdateAnnotations"
+        >
+          <template #item.created="{ item }">
+            {{ formatDate(item.created) }}
+          </template>
+        </v-data-table-server>
       </v-card>
     </div>
   </v-container>
