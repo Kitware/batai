@@ -149,7 +149,7 @@ export default defineComponent({
     };
 
     watch(shouldWarn, async() => {
-      if (shouldWarn.value) {
+      if (shouldWarn.value && props.apiToken) {
         await prompt({
           title: 'API Token Expiration',
           text: [

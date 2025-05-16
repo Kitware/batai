@@ -97,8 +97,6 @@ def get_email_if_authorized(
     if request.user and request.user.is_authenticated:
         if request.user.is_superuser:
             return request.user.email or 'superuser@nabat.org'
-        if hasattr(request.user, 'email') and request.user.email:
-            return request.user.email
     # Decode JWT token
     try:
         payload = decode_jwt(api_token)
