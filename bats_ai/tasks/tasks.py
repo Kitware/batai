@@ -108,7 +108,7 @@ def generate_spectrogram(recording, file, colormap=None, dpi=520):
         }
 
         if colormap is None:
-            librosa.display.specshow(chunk, **kwargs)
+            librosa.display.specshow(chunk, cmap='gray', **kwargs)
         else:
             librosa.display.specshow(chunk, cmap=colormap, **kwargs)
 
