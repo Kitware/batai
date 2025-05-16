@@ -12,7 +12,7 @@ import {
 import LayerManager from "./geoJS/LayerManager.vue";
 import { GeoEvent } from "geojs";
 import geo from "geojs";
-import useState from "../use/useState";
+import useState from "@use/useState";
 
 export default defineComponent({
   name: "SpectroViewer",

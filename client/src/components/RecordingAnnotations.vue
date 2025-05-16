@@ -124,7 +124,7 @@ export default defineComponent({
       </v-col>
     </v-row>
 
-    <v-list>
+    <v-list class="annotation-list">
       <v-list-item
         v-for="annotation in annotations"
         :id="`annotation-${annotation.id}`"
@@ -232,7 +232,7 @@ export default defineComponent({
 }
 
 .annotation-list {
-  max-height: 60vh;
+  max-height: 85vh;
   overflow-y: auto;
 }
 

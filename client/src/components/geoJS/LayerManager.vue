@@ -13,7 +13,7 @@ import FreqLayer from "./layers/freqLayer";
 import SpeciesLayer from "./layers/speciesLayer";
 import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import { cloneDeep } from "lodash";
-import useState from "../../use/useState";
+import useState from "@use/useState";
 export default defineComponent({
   name: "LayerManager",
   props: {

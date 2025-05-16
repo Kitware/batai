@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, onMounted, computed } from 'vue';
 import { getRecordings } from '../api/api';
-import useState from '../use/useState';
+import useState from '@use/useState';
 import  { EditingRecording } from './UploadRecording.vue';
 
 export default defineComponent({

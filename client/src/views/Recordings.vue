@@ -1,12 +1,12 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, onMounted } from 'vue';
 import { deleteRecording, getRecordings, Recording } from '../api/api';
-import UploadRecording, { EditingRecording } from '../components/UploadRecording.vue';
-import MapLocation from '../components/MapLocation.vue';
-import useState from '../use/useState';
-import BatchUploadRecording from '../components/BatchUploadRecording.vue';
-import RecordingInfoDisplay from '../components/RecordingInfoDisplay.vue';
-import RecordingAnnotationSummary from '../components/RecordingAnnotationSummary.vue';
+import UploadRecording, { EditingRecording } from '@components/UploadRecording.vue';
+import MapLocation from '@components/MapLocation.vue';
+import useState from '@use/useState';
+import BatchUploadRecording from '@components/BatchUploadRecording.vue';
+import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
+import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
 export default defineComponent({
     components: {
         UploadRecording,

@@ -17,15 +17,15 @@ import {
   getOtherUserAnnotations,
   getTemporalAnnotations,
 } from "../api/api";
-import SpectrogramViewer from "../components/SpectrogramViewer.vue";
-import { SpectroInfo } from "../components/geoJS/geoJSUtils";
-import AnnotationList from "../components/AnnotationList.vue";
-import ThumbnailViewer from "../components/ThumbnailViewer.vue";
-import RecordingList from "../components/RecordingList.vue";
-import ColorPickerMenu from "../components/ColorPickerMenu.vue";
-import ColorSchemeSelect from "../components/ColorSchemeSelect.vue";
-import useState from "../use/useState";
-import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
+import SpectrogramViewer from "@components/SpectrogramViewer.vue";
+import { SpectroInfo } from "@components/geoJS/geoJSUtils";
+import AnnotationList from "@components/AnnotationList.vue";
+import ThumbnailViewer from "@components/ThumbnailViewer.vue";
+import RecordingList from "@components/RecordingList.vue";
+import ColorPickerMenu from "@components/ColorPickerMenu.vue";
+import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
+import useState from "@use/useState";
+import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 export default defineComponent({
   name: "Spectrogram",
   components: {

@@ -73,6 +73,7 @@ setup(
             'django-click',
             'django-minio-storage>=0.5.2',
             'ipython',
+            'faker',
             'tox',
         ],
         'prod': [
