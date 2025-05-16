@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 router = RouterPaginated()
 
 
-def open_auth(request):
+def admin_auth(request):
     if request.user.is_anonymous:
         token = request.headers.get('Authorization', '').replace('Bearer ', '')
         if len(token) > 0:
@@ -231,7 +231,7 @@ def generate_nabat_recording(
         return JsonResponse(response.json(), status=500)
 
 
-@router.get('/{id}/spectrogram', auth=open_auth)
+@router.get('/{id}/spectrogram', auth=admin_auth)
 def get_spectrogram(request: HttpRequest, id: int):
     if not request.user.is_authenticated and not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
@@ -272,7 +272,7 @@ def get_spectrogram(request: HttpRequest, id: int):
     return spectro_data
 
 
-@router.get('/{id}/spectrogram/compressed', auth=open_auth)
+@router.get('/{id}/spectrogram/compressed', auth=admin_auth)
 def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
     try:
         nabat_recording = NABatRecording.objects.get(pk=id)
@@ -365,7 +365,7 @@ class NABatCreateRecordingAnnotationSchema(Schema):
     apiToken: str
 
 
-@router.get('/{nabat_recording_id}/recording-annotations', auth=open_auth)
+@router.get('/{nabat_recording_id}/recording-annotations', auth=admin_auth)
 def get_nabat_recording_annotation(
     request: HttpRequest,
     nabat_recording_id: int,
@@ -395,7 +395,7 @@ def get_nabat_recording_annotation(
     return output
 
 
-@router.get('recording-annotation/{id}', auth=open_auth, response=NABatRecordingAnnotationSchema)
+@router.get('recording-annotation/{id}', auth=admin_auth, response=NABatRecordingAnnotationSchema)
 def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
     email_or_response = get_email_if_authorized(request, apiToken, recording_pk=id)
     if isinstance(email_or_response, JsonResponse):
@@ -414,7 +414,7 @@ def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
 
 @router.get(
     'recording-annotation/{id}/details',
-    auth=open_auth,
+    auth=admin_auth,
     response=NABatRecordingAnnotationDetailsSchema,
 )
 def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: str):
