@@ -92,7 +92,7 @@ export default defineComponent({
 
     const disableNaBatAnnotations = computed(() => {
       const nonAIAnnotations = annotations.value.filter((item) => item.owner);
-      if (isAdmin.value && props.type === 'nabat') {
+      if (isAdmin.value && props.type === 'nabat' && !props.apiToken) {
         return true;
       }
       return (nonAIAnnotations.length > 0 && props.type === 'nabat');
