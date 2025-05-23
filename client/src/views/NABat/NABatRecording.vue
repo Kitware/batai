@@ -1,11 +1,11 @@
-
 <script lang="ts">
 import { defineComponent, ref, onMounted, onUnmounted, Ref, watch} from 'vue';
-import { getProcessingTaskDetails } from '../api/api';
-import { NABatRecordingDataResponse, postNABatRecording } from '../api/NABatApi';
+import { getProcessingTaskDetails } from '@api/api';
+import { NABatRecordingDataResponse, postNABatRecording } from '@api/NABatApi';
 import { useRouter } from 'vue-router';
-import { usePrompt } from '../use/prompt-service';
-import { useJWTToken } from '../use/useJWTToken';
+import { usePrompt } from '@use/prompt-service';
+import { useJWTToken } from '@use/useJWTToken';
+import { AxiosError, AxiosResponse } from 'axios';
 
 export default defineComponent({
   props: {
@@ -23,7 +23,6 @@ export default defineComponent({
     },
   },
   setup(props) {
-
     const { prompt } = usePrompt();
     const secondsWarning = 60;
     const { shouldWarn, } = useJWTToken({
@@ -84,7 +83,8 @@ export default defineComponent({
           const id = (response as NABatRecordingDataResponse).recordingId;
           router.push(`/nabat/${id}/spectrogram?apiToken=${props.apiToken}`);
         }
-      } catch (error: AxiosError) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any | AxiosResponse | AxiosError) {
         errorMessage.value = `Failed to start processing: ${error.message}:`;
         if (error.response.data.errors?.length) {
           additionalErrors.value = error.response.data.errors.map((item) => JSON.stringify(item));

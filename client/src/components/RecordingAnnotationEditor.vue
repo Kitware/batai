@@ -28,7 +28,7 @@ export default defineComponent({
     },
     apiToken: {
       type: String,
-      default: () => undefined,
+      default: () => '',
     },
     type: {
       type: String as PropType<'nabat' | null>,

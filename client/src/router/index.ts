@@ -6,8 +6,8 @@ import Login from '../views/Login.vue';
 
 import oauthClient from '../plugins/Oauth';
 import Admin from '../views/Admin.vue';
-import NABatRecording from '../views/NABatRecording.vue';
-import NABatSpectrogram from '../views/NABatSpectrogram.vue';
+import NABatRecording from '../views/NABat/NABatRecording.vue';
+import NABatSpectrogram from '../views/NABat/NABatSpectrogram.vue';
 
 function beforeEach(
   to: RouteLocationNormalized,

@@ -2,7 +2,7 @@
 import { defineComponent, PropType } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import { SpectrogramTemporalAnnotation } from "../api/api";
-import useState from "../use/useState";
+import useState from "@use/useState";
 import { watch } from "vue";
 
 export default defineComponent({

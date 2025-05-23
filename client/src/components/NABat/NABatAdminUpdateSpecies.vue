@@ -1,9 +1,8 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import { getProcessingTaskDetails, adminNaBatUpdateSpecies } from '../api/api'; // adjust paths if needed
-
+import { getProcessingTaskDetails, adminNaBatUpdateSpecies } from '../../api/api';
 export default defineComponent({
-  name: 'NABatAdmin',
+  name: 'NaBatAdminUpdateSpecies',
   setup() {
     const apiToken = ref('');
     const taskId = ref<string | null>(null);

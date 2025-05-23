@@ -27,8 +27,12 @@ export default defineConfig({
     },
     strictPort: true,
   },
-
-  alias: {
-    '@': path.resolve(__dirname, './src'),
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@api': path.resolve(__dirname, './src/api'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@use': path.resolve(__dirname, './src/use'),
+    },
   },
 });
