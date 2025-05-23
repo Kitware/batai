@@ -199,9 +199,6 @@ export default defineComponent({
       v-if="initialized"
       :geo-viewer-ref="geoViewerRef"
       :spectro-info="spectroInfo"
-      :annotations="annotations"
-      :other-user-annotations="otherUserAnnotations"
-      :selected-id="selectedId"
       :y-scale="yScale"
       thumbnail
       @selected="$emit('selected',$event)"

@@ -62,6 +62,9 @@ export function useJWTToken(options: UseJWTTokenOptions) {
   }
 
   function initialize() {
+    if (!token) {
+      return;
+    }
     const decoded = decodeJWT(token);
     if (decoded && typeof decoded.exp === 'number') {
       exp.value = decoded.exp;

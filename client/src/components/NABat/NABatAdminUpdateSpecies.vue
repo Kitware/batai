@@ -3,8 +3,6 @@ import { defineComponent, ref } from 'vue';
 import { getProcessingTaskDetails, adminNaBatUpdateSpecies } from '../../api/api';
 export default defineComponent({
   name: 'NaBatAdminUpdateSpecies',
-  components: {
-  },
   setup() {
     const apiToken = ref('');
     const taskId = ref<string | null>(null);

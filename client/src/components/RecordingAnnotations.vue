@@ -1,10 +1,11 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, PropType, Ref } from "vue";
 import { ref } from "vue";
-import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
+import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "@api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
-import { getNABatRecordingFileAnnotations, putNABatFileAnnotation } from "../api/NABatApi";
+import { getNABatRecordingFileAnnotations, putNABatFileAnnotation } from "@api/NABatApi";
 import RecordingAnnotationDetails from "./RecordingAnnotationDetails.vue";
+import useState from "@use/useState";
 export default defineComponent({
   name: "AnnotationList",
   components: {
@@ -26,7 +27,7 @@ export default defineComponent({
     },
     apiToken: {
       type: String,
-      default: () => undefined,
+      default: () => '',
     },
   },
   emits: [],
@@ -36,6 +37,7 @@ export default defineComponent({
     const annotations: Ref<FileAnnotation[]> = ref([]);
     const detailsDialog = ref(false);
     const detailRecordingId = ref(-1);
+    const { configuration } = useState();
 
     const setSelectedId = (annotation: FileAnnotation) => {
       selectedAnnotation.value = annotation;
@@ -86,8 +88,13 @@ export default defineComponent({
       detailsDialog.value = true;
     };
 
+    const isAdmin = computed(() => configuration.value.is_admin);
+
     const disableNaBatAnnotations = computed(() => {
       const nonAIAnnotations = annotations.value.filter((item) => item.owner);
+      if (isAdmin.value && props.type === 'nabat') {
+        return true;
+      }
       return (nonAIAnnotations.length > 0 && props.type === 'nabat');
     });
 

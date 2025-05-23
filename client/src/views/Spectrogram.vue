@@ -512,8 +512,6 @@ export default defineComponent({
         :image="image"
         :spectro-info="spectroInfo"
         :recording-id="id"
-        :other-user-annotations="otherUserAnnotations"
-        :grid="gridEnabled"
         :compressed="compressed"
         class="spectro-main"
         @selected="setSelection($event)"
