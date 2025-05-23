@@ -45,8 +45,11 @@ export default defineComponent({
       { title: 'Name', value: 'name' },
       { title: 'Recording ID', value: 'recording_id', sortable: true },
       { title: 'View', value: 'view', sortable: false },
-      { title: 'Annotations', value: 'annotation_count', sortable: true,
-      sortRaw: (a: string, b: string) => (parseInt(a) - parseInt(b)),
+      {
+        title: 'Annotations',
+        value: 'annotation_count',
+        sortable: true,
+        sortRaw: (a: string, b: string) => (parseInt(a) - parseInt(b)),
       },
       { title: 'Created', value: 'created', sortable: true },
       { title: 'Survey Event ID', value: 'survey_event_id' },
