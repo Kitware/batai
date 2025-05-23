@@ -1,3 +1,82 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bats-ai"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python",
+]
+authors = [
+    { name = "Kitware, Inc.", email = "kitware@kitware.com" }
+]
+keywords = []
+dependencies = [
+    "celery",
+    "django-ninja",
+    "django>=4.1, <4.2",
+    "django-allauth",
+    "django-configurations[database,email]",
+    "django-extensions",
+    "django-oauth-toolkit",
+    "djangorestframework",
+    "drf-yasg",
+    "django-click",
+    "django-storages[s3]",
+    # Spectrogram Generation
+    "librosa",
+    "matplotlib",
+    "mercantile",
+    "numpy",
+    # "onnxruntime-gpu",
+    "onnx",
+    "onnxruntime",
+    "opencv-python-headless",
+    "tqdm",
+    # large image
+    "django-large-image>=0.10.0",
+    "large-image[rasterio,pil]>=1.22",
+    "rio-cogeo",
+    # guano metadata
+    "guano",
+    "django_celery_results",
+]
+
+[project.optional-dependencies]
+dev = [
+    "django-composed-configuration[dev]>=0.20",
+    "django-debug-toolbar",
+    "django-s3-file-field[minio]",
+    "django-click",
+    "django-minio-storage>=0.5.2",
+    "ipython",
+    "faker",
+    "tox",
+]
+prod = [
+    "django-composed-configuration[prod]>=0.20",
+    "django-s3-file-field[boto3, minio]",
+    "django-minio-storage>=0.5.2",
+    "gunicorn",
+]
+
+[tool.hatch.build]
+packages = ["batai"]
+
 [tool.black]
 line-length = 100
 skip-string-normalization = true
