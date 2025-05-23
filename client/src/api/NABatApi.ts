@@ -106,9 +106,8 @@ export interface RecordingListItem {
     total_recordings: number;
     total_annotations: number;
   }
-  
-  // Function to get paginated recordings with filters
-  async function getNABatConfigurationRecordings(filters: {
+
+  export interface NABatConfigurationRecordingParams {
     survey_event_id?: number;
     recording_id?: number;
     bbox?: [number, number, number, number];
@@ -119,26 +118,29 @@ export interface RecordingListItem {
     page?: number;
     limit?: number;
     offset?: number;
-  }) {
+  }
+  
+  // Function to get paginated recordings with filters
+  async function getNABatConfigurationRecordings(filters: NABatConfigurationRecordingParams) {
     const response = await axiosInstance.get<PaginatedResponse<RecordingListItem>>('/nabat/configuration/recordings', {
       params: filters,
     });
     return response.data;
 
   }
-  
-  // Function to get paginated annotations for a recording
-  async function getNABatConfigurationAnnotations(
-    recordingId: number,
-    filters?:
-    {
+
+  export interface NABatConfigurationAnnotationFilterParams {
     page?: number;
     limit?: number;
     offset?: number;
     sort_by?: 'created' | 'user_email' | 'confidence';
     sort_direction?: 'asc' | 'desc';
-    }
+  }
 
+  // Function to get paginated annotations for a recording
+  async function getNABatConfigurationAnnotations(
+    recordingId: number,
+    filters?: NABatConfigurationAnnotationFilterParams,
   ) {
     const response = await axiosInstance.get<PaginatedResponse<Annotation>>(`/nabat/configuration/recordings/${recordingId}/annotations`, {
       params: filters,
