@@ -11,7 +11,7 @@ export default defineComponent({
     },
     apiToken: {
       type: String as PropType<string | undefined>,
-      default: () => undefined,
+      default: () => '',
     },
   },
   emits: ['close'],

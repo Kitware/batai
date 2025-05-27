@@ -4,7 +4,7 @@ import { RecordingMimeTypes } from "../constants";
 import { getCellLocation, getCellfromLocation, getGuanoMetadata } from "../api/api";
 import MapLocation from "./MapLocation.vue";
 import { useDate } from "vuetify/lib/framework.mjs";
-import { getCurrentTime, extractDateTimeComponents } from '../use/useUtils';
+import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';
 export interface BatchRecording {
   name: string;
   file: File;

@@ -1,10 +1,10 @@
 <script lang="ts">
 import { reactive, defineComponent, watch, ref, Ref, } from 'vue';
-import useState from '../use/useState';
+import useState from '@use/useState';
 import { patchConfiguration } from '../api/api';
-import NABatAdmin from './NABatAdmin.vue';
-import ColorPickerMenu from '../components/ColorPickerMenu.vue';
-import ColorSchemeSelect from '../components/ColorSchemeSelect.vue';
+import NABatAdmin from './NABat/NABatAdmin.vue';
+import ColorPickerMenu from '@components/ColorPickerMenu.vue';
+import ColorSchemeSelect from '@components/ColorSchemeSelect.vue';
 
 export default defineComponent({
   name: 'Admin',

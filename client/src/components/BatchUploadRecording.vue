@@ -1,11 +1,11 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, watch } from 'vue';
 import { RecordingMimeTypes } from '../constants';
-import useRequest from '../use/useRequest';
+import useRequest from '@use/useRequest';
 import { UploadLocation, uploadRecordingFile, getCellLocation, RecordingFileParameters, getGuanoMetadata } from '../api/api';
 import BatchRecordingElement, { BatchRecording } from './BatchRecordingElement.vue';
 import { cloneDeep } from 'lodash';
-import { extractDateTimeComponents, getCurrentTime } from '../use/useUtils';
+import { extractDateTimeComponents, getCurrentTime } from '@use/useUtils';
 
 
 interface AutoFillResult {

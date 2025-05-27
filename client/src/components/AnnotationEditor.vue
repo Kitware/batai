@@ -2,7 +2,7 @@
 import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import { deleteAnnotation, deleteTemporalAnnotation, patchAnnotation, patchTemporalAnnotation, Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
-import useState from "../use/useState";
+import useState from "@use/useState";
 import SpeciesInfo from "./SpeciesInfo.vue";
 export default defineComponent({
   name: "AnnotationEditor",
