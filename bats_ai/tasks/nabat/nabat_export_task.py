@@ -1,6 +1,7 @@
 import csv
 from datetime import timedelta
 from io import BytesIO
+import json
 import zipfile
 
 from celery import shared_task
@@ -38,23 +39,53 @@ def export_filtered_annotations_task(filters: dict, export_id: int):
 
         buffer = BytesIO()
         with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # CSV creation
             csv_buffer = BytesIO()
             writer = csv.writer(csv_buffer)
-            writer.writerow(['id', 'user_email', 'confidence', 'comments', 'created', 'species'])
+            writer.writerow(
+                [
+                    'recording_id',
+                    'recording_name' 'user_email',
+                    'confidence',
+                    'created',
+                    'species',
+                    'comments',
+                ]
+            )
+
+            annotations_data = []
 
             for ann in queryset.prefetch_related('species'):
                 species_names = ', '.join(s.common_name for s in ann.species.all())
+
+                # Write row to CSV
                 writer.writerow(
                     [
-                        ann.id,
+                        ann.nabat_recording.recording_id,
+                        ann.nabat_recording.name,
                         ann.user_email,
                         ann.confidence,
-                        ann.comments,
                         ann.created.isoformat(),
                         species_names,
+                        ann.comments,
                     ]
                 )
+
+                # Append to JSON structure
+                annotations_data.append(
+                    {
+                        'recording_id': ann.nabat_recording.recording_id,
+                        'recording_name': ann.nabat_recording.name,
+                        'user_email': ann.user_email,
+                        'confidence': ann.confidence,
+                        'created': ann.created.isoformat(),
+                        'species': [s.common_name for s in ann.species.all()],
+                        'comments': ann.comments,
+                    }
+                )
+
             zipf.writestr('annotations.csv', csv_buffer.getvalue().decode())
+            zipf.writestr('annotations.json', json.dumps(annotations_data, indent=2))
 
         buffer.seek(0)
         filename = f'export-{export_id}.zip'

@@ -584,17 +584,3 @@ def export_annotations(request: HttpRequest, filters: AnnotationExportRequest):
     )
     export_filtered_annotations_task.delay(filters.dict(), export.id)
     return {'exportId': export.id}
-
-
-@router.get('/recording-annotations/export/{export_id}', auth=None)
-def get_export_status(request: HttpRequest, export_id: int):
-    try:
-        export = ExportedAnnotationFile.objects.get(pk=export_id)
-        return {
-            'status': export.status,
-            'downloadUrl': export.download_url if export.status == 'complete' else None,
-            'created': export.created,
-            'expiresAt': export.expires_at,
-        }
-    except ExportedAnnotationFile.DoesNotExist:
-        return JsonResponse({'error': 'Export not found'}, status=404)
