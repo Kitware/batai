@@ -142,7 +142,7 @@ export default defineComponent({
     const editRecording = (item: Recording) => {
       editingRecording.value = {
         name: item.name,
-        equipment: item.equipment || '', 
+        equipment: item.equipment || '',
         comments: item.comments || '',
         date: item.recorded_date,
         time: item.recorded_time,
@@ -160,9 +160,19 @@ export default defineComponent({
       }
       uploadDialog.value = true;
     };
-    const delRecording = async (id: number) => {
-        await deleteRecording(id);
+    const deleteDialogOpen = ref(false);
+    const recordingToDelete: Ref<Recording | null> = ref(null);
+    const openDeleteRecordingDialog = (recording: Recording) => {
+      deleteDialogOpen.value = true;
+      recordingToDelete.value = recording;
+    };
+    const deleteOneRecording = async () => {
+      if (deleteDialogOpen.value && recordingToDelete.value) {
+        deleteDialogOpen.value = false;
+        await deleteRecording(recordingToDelete.value.id);
+        recordingToDelete.value = null;
         fetchRecordings();
+      }
     };
 
     return {
@@ -175,7 +185,10 @@ export default defineComponent({
         batchUploadDialog,
         uploadDone,
         editRecording,
-        delRecording,
+        deleteOneRecording,
+        deleteDialogOpen,
+        openDeleteRecordingDialog,
+        recordingToDelete,
         editingRecording,
      };
   },
@@ -213,6 +226,31 @@ export default defineComponent({
       </v-row>
     </v-card-title>
     <v-card-text>
+      <v-dialog
+        v-model="deleteDialogOpen"
+        width="auto"
+      >
+        <v-card>
+          <v-card-title class="pa-4">
+            Delete {{ recordingToDelete?.name || 'this recording' }}?
+          </v-card-title>
+          <v-card-actions class="pa-4">
+            <v-btn
+              variant="flat"
+              @click="deleteRecordingDialog = false"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              variant="flat"
+              color="error"
+              @click="deleteOneRecording()"
+            >
+              Delete
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       <v-data-table
         v-model:items-per-page="itemsPerPage"
         :headers="headers"
@@ -226,7 +264,7 @@ export default defineComponent({
           </v-icon>
           <v-icon
             color="error"
-            @click="delRecording(item.id)"
+            @click="openDeleteRecordingDialog(item)"
           >
             mdi-delete
           </v-icon>
@@ -240,7 +278,7 @@ export default defineComponent({
             {{ item.name }}
           </router-link>
           <div v-else>
-            {{ item.name }} 
+            {{ item.name }}
             <v-tooltip bottom>
               <template #activator="{ props: subProps }">
                 <span v-bind="subProps">
