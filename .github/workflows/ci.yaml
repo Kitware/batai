@@ -87,7 +87,7 @@ jobs:
             --health-timeout 5s
             --health-retries 6
             --health-start-period 30s
-  
+
     steps:
       - name: Update Package References
         run: sudo apt-get update
@@ -108,6 +108,9 @@ jobs:
       - name: Run tests
         run: tox -e ${{ matrix.tox-env }}
         working-directory: bats_ai
+        env:
+            DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
+
   test-vue:
     name: Test [vue]
     runs-on: ubuntu-22.04
