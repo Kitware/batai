@@ -1,11 +1,11 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, Ref } from 'vue';
 import { RecordingMimeTypes } from '../constants';
-import useRequest from '../use/useRequest';
+import useRequest from '@use/useRequest';
 import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, RecordingFileParameters } from '../api/api';
 import MapLocation from './MapLocation.vue';
 import { useDate } from 'vuetify/lib/framework.mjs';
-import { getCurrentTime, extractDateTimeComponents } from '../use/useUtils';
+import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';
 export interface EditingRecording {
   id: number;
   name: string;

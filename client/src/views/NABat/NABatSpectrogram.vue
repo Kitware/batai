@@ -9,19 +9,19 @@ import {
 import {
   getSpecies,
   Species,
-} from "../api/api";
+} from "@api/api";
 import {
   getNABatSpectrogram,
   getNABatSpectrogramCompressed,
-} from "../api/NABatApi";
-import SpectrogramViewer from "../components/SpectrogramViewer.vue";
-import { SpectroInfo } from "../components/geoJS/geoJSUtils";
-import ThumbnailViewer from "../components/ThumbnailViewer.vue";
-import useState from "../use/useState";
-import RecordingInfoDialog from "../components/RecordingInfoDialog.vue";
-import RecordingAnnotations from "../components/RecordingAnnotations.vue";
-import { usePrompt } from '../use/prompt-service';
-import { useJWTToken } from '../use/useJWTToken';
+} from "@api/NABatApi";
+import SpectrogramViewer from "@components/SpectrogramViewer.vue";
+import { SpectroInfo } from "@components/geoJS/geoJSUtils";
+import ThumbnailViewer from "@components/ThumbnailViewer.vue";
+import useState from "@use/useState";
+import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
+import RecordingAnnotations from "@components/RecordingAnnotations.vue";
+import { usePrompt } from '@use/prompt-service';
+import { useJWTToken } from '@use/useJWTToken';
 
 export default defineComponent({
   name: "Spectrogram",
@@ -38,7 +38,8 @@ export default defineComponent({
     },
     apiToken: {
         type: String,
-        required: true,
+        required: false,
+        default: () => '',
       },
   },
   setup(props) {
@@ -149,7 +150,7 @@ export default defineComponent({
     };
 
     watch(shouldWarn, async() => {
-      if (shouldWarn.value) {
+      if (shouldWarn.value && props.apiToken) {
         await prompt({
           title: 'API Token Expiration',
           text: [
