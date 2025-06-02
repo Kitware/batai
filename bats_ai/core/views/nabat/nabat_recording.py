@@ -1,24 +1,16 @@
 import base64
-from datetime import date, timedelta
 import json
 import logging
 import os
 
 from django.db.models import Q
 from django.http import HttpRequest, JsonResponse
-from django.utils.timezone import now
 from ninja import Form, Schema
 from ninja.pagination import RouterPaginated
 from oauth2_provider.models import AccessToken
 import requests
 
-from bats_ai.core.models import (
-    ExportedAnnotationFile,
-    ProcessingTask,
-    ProcessingTaskType,
-    Species,
-    colormap,
-)
+from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species, colormap
 from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
     NABatRecording,
@@ -26,7 +18,6 @@ from bats_ai.core.models.nabat import (
 )
 from bats_ai.core.views.species import SpeciesSchema
 from bats_ai.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
-from bats_ai.tasks.nabat.nabat_export_task import export_filtered_annotations_task
 
 logger = logging.getLogger(__name__)
 router = RouterPaginated()
@@ -562,25 +553,3 @@ def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str):
         return 'Recording annotation deleted successfully.'
     except NABatRecordingAnnotation.DoesNotExist:
         return JsonResponse({'error': 'Recording not found for this user.'}, 404)
-
-
-class AnnotationExportRequest(Schema):
-    start_date: date | None = None
-    end_date: date | None = None
-    recording_ids: list[int] | None = None
-    usernames: list[str] | None = None
-    min_confidence: float | None = None
-    max_confidence: float | None = None
-
-
-@router.post(
-    '/recording-annotations/export',
-)
-def export_annotations(request: HttpRequest, filters: AnnotationExportRequest):
-    export = ExportedAnnotationFile.objects.create(
-        filters_applied=filters.dict(),
-        status='pending',
-        expires_at=now() + timedelta(hours=24),
-    )
-    export_filtered_annotations_task.delay(filters.dict(), export.id)
-    return {'exportId': export.id}

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 import json
 import logging
 from typing import Any, Literal
@@ -8,11 +8,13 @@ from django.contrib.gis.db.models import functions as gis_functions
 from django.contrib.gis.geos import Point, Polygon
 from django.db.models import Count
 from django.http import HttpRequest, JsonResponse
+from django.utils.timezone import now
 from ninja import Query, Router, Schema
 from ninja.pagination import paginate
 
-from bats_ai.core.models import ProcessingTask, ProcessingTaskType
+from bats_ai.core.models import ExportedAnnotationFile, ProcessingTask, ProcessingTaskType
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
+from bats_ai.tasks.nabat.nabat_export_task import export_filtered_annotations_task
 from bats_ai.tasks.nabat.nabat_update_species import update_nabat_species
 
 logger = logging.getLogger(__name__)
@@ -194,3 +196,25 @@ def get_stats(request: HttpRequest):
         'total_recordings': total_recordings,
         'total_annotations': total_annotations,
     }
+
+
+class AnnotationExportRequest(Schema):
+    start_date: date | None = None
+    end_date: date | None = None
+    recording_ids: list[int] | None = None
+    usernames: list[str] | None = None
+    min_confidence: float | None = None
+    max_confidence: float | None = None
+
+
+@router.post(
+    '/export',
+)
+def export_annotations(request: HttpRequest, filters: AnnotationExportRequest):
+    export = ExportedAnnotationFile.objects.create(
+        filters_applied=filters.dict(),
+        status='pending',
+        expires_at=now() + timedelta(hours=24),
+    )
+    export_filtered_annotations_task.delay(filters.dict(), export.id)
+    return {'exportId': export.id}

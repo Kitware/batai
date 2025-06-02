@@ -149,11 +149,29 @@ export interface RecordingListItem {
   }
 
 
-  async function getNABatConfigurationStats(): Promise<NABatStats> {
-    const response = await axiosInstance.get<NABatStats>('/nabat/configuration/stats');
-    return response.data;
-  }
+async function getNABatConfigurationStats(): Promise<NABatStats> {
+  const response = await axiosInstance.get<NABatStats>('/nabat/configuration/stats');
+  return response.data;
+}
   
+export interface AnnotationExportRequest {
+  start_date?: string; // ISO date string (e.g., "2025-05-30")
+  end_date?: string;
+  recording_ids?: number[];
+  usernames?: string[];
+  min_confidence?: number;
+  max_confidence?: number;
+}
+
+export interface AnnotationExportResponse {
+  exportId: number;
+}
+
+async function exportNABatAnnotations(filters: AnnotationExportRequest): Promise<AnnotationExportResponse> {
+  const response = await axiosInstance.post<AnnotationExportResponse>('nabat/configuration/export', filters);
+  return response.data;
+}
+
 export {
     postNABatRecording,
     getNABatSpectrogram,
@@ -166,6 +184,7 @@ export {
     deleteNABatFileAnnotation,
     getNABatConfigurationStats,
     getNABatConfigurationAnnotations,
-    getNABatConfigurationRecordings
+    getNABatConfigurationRecordings,
+    exportNABatAnnotations
 
 };
