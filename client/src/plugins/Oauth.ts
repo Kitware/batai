@@ -1,9 +1,9 @@
 import OauthClient from '@girder/oauth-client';
 import { ref } from 'vue';
 
-const redirectUrl = new URL((import.meta.env.VUE_APP_LOGIN_REDIRECT || location.origin) as string);
-const baseUrl = new URL(import.meta.env.VUE_APP_OAUTH_API_ROOT as string);
-const clientId = import.meta.env.VUE_APP_OAUTH_CLIENT_ID as string;
+const redirectUrl = new URL((import.meta.env.VITE_APP_LOGIN_REDIRECT || location.origin) as string);
+const baseUrl = new URL(import.meta.env.VITE_APP_OAUTH_API_ROOT as string);
+const clientId = import.meta.env.VITE_APP_OAUTH_CLIENT_ID as string;
 const oauthClient = new OauthClient(baseUrl, clientId, { redirectUrl });
 
 export const loggedIn = ref(oauthClient.isLoggedIn);

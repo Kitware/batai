@@ -66,11 +66,13 @@ services:
       - rabbitmq
       - minio
   celery:
+    image: ghcr.io/kitware/batai/celery-worker:latest
     build:
       context: .
       dockerfile: ./dev/django.Dockerfile
       args:
         BUILD_ENV: ${BUILD_ENV:-prod}
+        BUILD_CONTAINER: celery
     command: [
       "celery",
       "--app", "bats_ai.celery",
@@ -83,8 +85,6 @@ services:
     env_file: ./dev/.env.prod.docker-compose
     networks:
       - django-nginx
-    volumes:
-      - .:/opt/django-project
     depends_on:
       - postgres
       - rabbitmq

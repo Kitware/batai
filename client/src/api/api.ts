@@ -136,7 +136,7 @@ export type OtherUserAnnotations = Record<string, { annotations: SpectrogramAnno
 export type UploadLocation = null | { latitude?: number, longitude?: number, gridCellId?: number };
 
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VUE_APP_API_ROOT as string,
+  baseURL: import.meta.env.VITE_APP_API_ROOT as string,
 });
 
 export interface RecordingFileParameters {

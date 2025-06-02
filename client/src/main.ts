@@ -21,10 +21,10 @@ maybeRestoreLogin().then(() => {
   */
   const router = initRouter();
 
-  if (import.meta.env.VUE_APP_SENTRY_DSN && window.location.hostname !== 'localhost') {
+  if (import.meta.env.VITE_APP_SENTRY_DSN && window.location.hostname !== 'localhost') {
     Sentry.init({
       app,
-      dsn: import.meta.env.VUE_APP_SENTRY_DSN as string,
+      dsn: import.meta.env.VITE_APP_SENTRY_DSN as string,
       release: __COMMIT_HASH__,
     });
   }
