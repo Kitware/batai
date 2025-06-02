@@ -5,7 +5,7 @@ import Vuetify from 'vite-plugin-vuetify';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  envPrefix: 'VUE_APP_',
+  envPrefix: 'VITE_APP_',
   define: {
     // Populated by netlify https://docs.netlify.com/configure-builds/environment-variables/
     __COMMIT_HASH__: JSON.stringify(process.env.COMMIT_REF || ''),
