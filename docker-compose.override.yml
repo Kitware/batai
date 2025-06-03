@@ -41,3 +41,14 @@ services:
       - postgres
       - rabbitmq
       - minio
+
+  client:
+    image: node:18
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+    env_file:
+      - ./dev/.env.docker-compose
