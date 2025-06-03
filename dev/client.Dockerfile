@@ -1,5 +1,5 @@
 # Use official Node.js image as the base image for building Vue.js app
-FROM node:16 as build-stage
+FROM node:18 as build-stage
 
 # Set working directory
 WORKDIR /app

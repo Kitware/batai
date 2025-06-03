@@ -66,7 +66,7 @@ services:
       - rabbitmq
       - minio
   celery:
-    image: ghcr.io/kitware/batai/celery-worker:latest
+    image: ghcr.io/kitware/batai/server:latest
     build:
       context: .
       dockerfile: ./dev/django.Dockerfile
