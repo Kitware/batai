@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.test import Client
 import pytest
-from pytest_factoryboy import register
 
 from .factories import SuperuserFactory, UserFactory
 
@@ -9,6 +8,16 @@ from .factories import SuperuserFactory, UserFactory
 @pytest.fixture
 def client() -> Client:
     return Client()
+
+
+@pytest.fixture
+def user() -> User:
+    return UserFactory()
+
+
+@pytest.fixture
+def superuser() -> User:
+    return SuperuserFactory()
 
 
 @pytest.fixture
@@ -23,7 +32,3 @@ def authorized_client(superuser: User) -> Client:
     client = Client()
     client.force_login(user=superuser)
     return client
-
-
-register(UserFactory, 'user')
-register(SuperuserFactory, 'superuser')
