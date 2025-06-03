@@ -35,7 +35,10 @@ RUN pip install --no-cache-dir --upgrade pip
 
 # Handle build environment for pip install
 ARG BUILD_ENV
-ARG BUILD_CONTAINER
+
+# If not bind mounted we need bats_ai for celery deployment
+# The bind mount will override this directory
+COPY ./bats_ai /opt/django-project/
 
 # hadolint ignore=DL3013
 RUN set -ex \
@@ -51,12 +54,4 @@ RUN set -ex \
       pip install --no-cache-dir .["$BUILD_ENV"]; \
     else \
       pip install --no-cache-dir -e .["$BUILD_ENV"]; \
-    fi
-
-# We need all modules inside of the container to copy if the BUILD_CONTAINER is celery
-COPY . /tmp/context/
-
-# Conditionally copy bats_ai if BUILD_CONTAINER=celery
-RUN if [ "$BUILD_CONTAINER" = "celery" ]; then \
-      cp -r /tmp/context/bats_ai /opt/django-project/; \
     fi

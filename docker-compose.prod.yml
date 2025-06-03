@@ -72,7 +72,6 @@ services:
       dockerfile: ./dev/django.Dockerfile
       args:
         BUILD_ENV: ${BUILD_ENV:-prod}
-        BUILD_CONTAINER: celery
     command: [
       "celery",
       "--app", "bats_ai.celery",
