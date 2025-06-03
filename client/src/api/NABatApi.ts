@@ -167,6 +167,12 @@ export interface AnnotationExportResponse {
   exportId: number;
 }
 
+async function adminNaBatUpdateSpecies(apiToken: string) {
+  return axiosInstance.post<{ taskId: string }>('/nabat/configuration/update-species', { params: { apiToken } });
+
+  }
+
+
 async function exportNABatAnnotations(filters: AnnotationExportRequest): Promise<AnnotationExportResponse> {
   const response = await axiosInstance.post<AnnotationExportResponse>('nabat/configuration/export', filters);
   return response.data;
@@ -185,6 +191,6 @@ export {
     getNABatConfigurationStats,
     getNABatConfigurationAnnotations,
     getNABatConfigurationRecordings,
-    exportNABatAnnotations
-
+    exportNABatAnnotations,
+    adminNaBatUpdateSpecies,
 };

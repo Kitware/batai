@@ -217,4 +217,4 @@ def export_annotations(request: HttpRequest, filters: AnnotationExportRequest):
         expires_at=now() + timedelta(hours=24),
     )
     export_filtered_annotations_task.delay(filters.dict(), export.id)
-    return {'exportId': export.id}
+    return export.id

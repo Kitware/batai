@@ -4,10 +4,10 @@ from io import BytesIO
 import json
 import zipfile
 
-from celery import shared_task
 from django.core.files import File
 from django.utils.timezone import now
 
+from bats_ai.celery import app
 from bats_ai.core.models import (
     Annotations,
     ExportedAnnotationFile,
@@ -93,7 +93,7 @@ def write_csv_and_json(
     zipf.writestr(f'{name_prefix}_annotations.json', json.dumps(rows, indent=2))
 
 
-@shared_task
+@app.task(bind=True)
 def export_annotations_task(filters: dict, annotation_types: list, export_id: int):
     export_record = ExportedAnnotationFile.objects.get(pk=export_id)
 

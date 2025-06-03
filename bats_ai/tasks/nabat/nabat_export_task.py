@@ -1,15 +1,18 @@
 import csv
 from datetime import timedelta
-from io import BytesIO
+from io import BytesIO, TextIOWrapper
 import json
+import logging
 import zipfile
 
-from celery import shared_task
 from django.core.files import File
 from django.utils.timezone import now
 
+from bats_ai.celery import app
 from bats_ai.core.models import ExportedAnnotationFile
 from bats_ai.core.models.nabat import NABatRecordingAnnotation
+
+logger = logging.getLogger(__name__)
 
 
 def build_annotation_queryset(filters: dict):
@@ -31,8 +34,8 @@ def build_annotation_queryset(filters: dict):
     return qs
 
 
-@shared_task
-def export_filtered_annotations_task(filters: dict, export_id: int):
+@app.task(bind=True)
+def export_filtered_annotations_task(self, filters: dict, export_id: int):
     export_record = ExportedAnnotationFile.objects.get(pk=export_id)
     try:
         queryset = build_annotation_queryset(filters)
@@ -40,7 +43,9 @@ def export_filtered_annotations_task(filters: dict, export_id: int):
         buffer = BytesIO()
         with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
             # CSV creation
-            csv_buffer = BytesIO()
+            csv_bytes = BytesIO()
+            csv_buffer = TextIOWrapper(csv_bytes, encoding='utf-8', newline='')
+            writer = csv.writer(csv_buffer)
             writer = csv.writer(csv_buffer)
             writer.writerow(
                 [
@@ -57,7 +62,7 @@ def export_filtered_annotations_task(filters: dict, export_id: int):
 
             for ann in queryset.prefetch_related('species'):
                 species_names = ', '.join(s.common_name for s in ann.species.all())
-
+                logger.info(f'Exporting Ann: {ann} with species names: {species_names}')
                 # Write row to CSV
                 writer.writerow(
                     [
@@ -84,12 +89,17 @@ def export_filtered_annotations_task(filters: dict, export_id: int):
                     }
                 )
 
-            zipf.writestr('annotations.csv', csv_buffer.getvalue().decode())
+            csv_buffer.flush()
+            # Optional: reset cursor to the beginning (not strictly needed for getvalue())
+            csv_bytes.seek(0)
+
+            zipf.writestr('annotations.csv', csv_bytes.getvalue().decode())
             zipf.writestr('annotations.json', json.dumps(annotations_data, indent=2))
 
         buffer.seek(0)
         filename = f'export-{export_id}.zip'
         export_record.file.save(filename, File(buffer), save=False)
+        logger.info(f'Export URL: {export_record.file.url}')
         export_record.download_url = export_record.file.url
         export_record.status = 'complete'
         export_record.expires_at = now() + timedelta(hours=24)

@@ -4,8 +4,11 @@ from django_extensions.db.models import TimeStampedModel
 
 class ExportedAnnotationFile(TimeStampedModel):
     file = models.FileField(upload_to='exports/')
-    download_url = models.URLField(blank=True, null=True)
-    filters_applied = models.JSONField(blank=True, null=True)
+    download_url = models.URLField(blank=True, null=True, max_length=2048)
+    filters_applied = models.JSONField(
+        blank=True,
+        null=True,
+    )
     expires_at = models.DateTimeField()
     status = models.CharField(
         max_length=32,
