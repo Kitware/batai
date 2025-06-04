@@ -90,6 +90,8 @@ repos:
           - --ignore-init-module-imports
           - --remove-all-unused-imports
           - --remove-unused-variables
+          - --exclude
+          - bats_ai/settings/*
 
   - repo: https://github.com/PyCQA/flake8
     rev: 6.1.0
