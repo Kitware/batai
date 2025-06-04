@@ -1,20 +1,34 @@
+from django.contrib.auth.models import User
+from django.test import Client
 import pytest
-from pytest_factoryboy import register
-from rest_framework.test import APIClient
 
-from .factories import UserFactory
+from .factories import SuperuserFactory, UserFactory
 
 
 @pytest.fixture
-def api_client() -> APIClient:
-    return APIClient()
+def client() -> Client:
+    return Client()
 
 
 @pytest.fixture
-def authenticated_api_client(user) -> APIClient:
-    client = APIClient()
-    client.force_authenticate(user=user)
+def user() -> User:
+    return UserFactory()
+
+
+@pytest.fixture
+def superuser() -> User:
+    return SuperuserFactory()
+
+
+@pytest.fixture
+def authenticated_client(user: User) -> Client:
+    client = Client()
+    client.force_login(user=user)
     return client
 
 
-register(UserFactory)
+@pytest.fixture
+def authorized_client(superuser: User) -> Client:
+    client = Client()
+    client.force_login(user=superuser)
+    return client

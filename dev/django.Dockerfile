@@ -35,6 +35,11 @@ RUN pip install --no-cache-dir --upgrade pip
 
 # Handle build environment for pip install
 ARG BUILD_ENV
+
+# If not bind mounted we need bats_ai for celery deployment
+# The bind mount will override this directory
+COPY ./bats_ai /opt/django-project/
+
 # hadolint ignore=DL3013
 RUN set -ex \
  # Default to 'dev' if BUILD_ENV is empty
