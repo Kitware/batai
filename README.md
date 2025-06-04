@@ -76,8 +76,13 @@ but allows developers to run Python code on their native system.
 3. Run in a separate terminal:
    1. `source ./dev/export-env.sh`
    2. `celery --app bats_ai.celery worker --loglevel INFO --without-heartbeat`
-4. When finished, run `docker compose stop`
-5. To destroy the stack and start fresh, run `docker compose down -v`
+4. Run in a separate terminal:
+   1. `source ./dev/export-env.sh`
+   2. `cd ./client`
+   3. `npm install`
+   4. `npm run dev`
+5. When finished, run `docker compose stop`
+6. To destroy the stack and start fresh, run `docker compose down`
 
 ## Remap Service Ports (optional)
 

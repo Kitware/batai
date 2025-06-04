@@ -120,5 +120,5 @@ class HerokuProductionConfiguration(BatsAiMixin, HerokuProductionBaseConfigurati
     pass
 
 
-class AwsProductionConfiguration(BatsAiMixin, S3StorageMixin):
+class AwsProductionConfiguration(BatsAiMixin, S3StorageMixin, _BaseConfiguration):
     pass
