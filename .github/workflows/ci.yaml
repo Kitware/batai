@@ -109,7 +109,11 @@ jobs:
         run: tox -e ${{ matrix.tox-env }}
         working-directory: bats_ai
         env:
+            DJANGO_SETTINGS_MODULE: bats_ai.settings.testing
             DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
+            DJANGO_MINIO_STORAGE_URL: http://minioAccessKey:minioSecretKey@localhost:9000/django-storage
+            DJANGO_MINIO_STORAGE_MEDIA_URL: http://localhost:9000/django-storage
+
 
   test-vue:
     name: Test [vue]
