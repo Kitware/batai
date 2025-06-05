@@ -6,12 +6,14 @@ on:
     branches:
       - "main"
 env:
-  DJANGO_CONFIGURATION: DevelopmentConfiguration
-  DJANGO_DATABASE_URL: postgres://postgres:postgres@postgres:5432/django
   DJANGO_CELERY_BROKER_URL: amqp://rabbitmq:5672/
   DJANGO_MINIO_STORAGE_ACCESS_KEY: minioAccessKey
   DJANGO_MINIO_STORAGE_SECRET_KEY: minioSecretKey
   DJANGO_STORAGE_BUCKET_NAME: django-storage
+  DJANGO_SETTINGS_MODULE: bats_ai.settings.testing
+  DJANGO_MINIO_STORAGE_URL: http://minioAccessKey:minioSecretKey@localhost:9000/django-storage
+  DJANGO_MINIO_STORAGE_MEDIA_URL: http://localhost:9000/django-storage
+  DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
 jobs:
   lint-python:
     name: Lint Python
@@ -108,11 +110,6 @@ jobs:
       - name: Run tests
         run: tox -e ${{ matrix.tox-env }}
         working-directory: bats_ai
-        env:
-            DJANGO_SETTINGS_MODULE: bats_ai.settings.testing
-            DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
-            DJANGO_MINIO_STORAGE_URL: http://minioAccessKey:minioSecretKey@localhost:9000/django-storage
-            DJANGO_MINIO_STORAGE_MEDIA_URL: http://localhost:9000/django-storage
 
 
   test-vue:
