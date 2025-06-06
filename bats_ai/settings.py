@@ -63,6 +63,9 @@ class BatsAiMixin(ConfigMixin):
 
 class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
     SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
+    baseHost = 'localhost'
+    if 'SERVERHOSTNAME' in os.environ:
+        baseHost = os.environ['SERVERHOSTNAME']
 
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
     MINIO_STORAGE_ENDPOINT = values.Value(
@@ -78,7 +81,7 @@ class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
-    MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
+    MINIO_STORAGE_MEDIA_URL = f'http://{baseHost}:9000/django-storage'
 
 
 class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
@@ -105,7 +108,7 @@ class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
-    MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
+    MINIO_STORAGE_MEDIA_URL = f'http://{baseHost}:9000/django-storage'
     ALLOWED_HOSTS = [baseHost]
     CSRF_TRUSTED_ORIGINS = [f'https://{baseHost}', f'https://{baseHost}']
     CORS_ORIGIN_WHITELIST = [f'https://{baseHost}', f'https://{baseHost}']
