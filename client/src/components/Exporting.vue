@@ -19,7 +19,6 @@ export default defineComponent({
     const checkStatus = async () => {
       try {
         const status = await getExportStatus(props.exportId);
-        console.log(status);
         if (status.status === 'complete' && status.downloadUrl) {
           clearPolling();
           window.location.href = status.downloadUrl;

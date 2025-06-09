@@ -27,6 +27,13 @@ class BatsAiMixin(ConfigMixin):
     ]
     CELERY_RESULT_BACKEND = 'django-db'
 
+    CELERY_BEAT_SCHEDULE = {
+        'delete-expired-exported-files-daily': {
+            'task': 'bats_ai.tasks.periodic.delete_expired_exported_files',
+            'schedule': 86400,  # every 24 hours (in seconds)
+        },
+    }
+
     @staticmethod
     def mutate_configuration(configuration: ComposedConfiguration) -> None:
         # Install local apps first, to ensure any overridden resources are found first
