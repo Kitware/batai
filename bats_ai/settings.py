@@ -131,8 +131,8 @@ class AwsProductionConfiguration(BatsAiMixin, _BaseConfiguration):
     CSRF_TRUSTED_ORIGINS = [f'https://{baseHost}', f'https://{baseHost}']
     CORS_ORIGIN_WHITELIST = [f'https://{baseHost}', f'https://{baseHost}']
 
-    AWS_S3_REGION_NAME = 'us-west-2'
-    AWS_STORAGE_BUCKET_NAME = 'nabat-beta-batai-django'
+    AWS_S3_REGION_NAME = values.Value()
+    AWS_STORAGE_BUCKET_NAME = values.Value()
     AWS_S3_SIGNATURE_VERSION = 's3v4'
     AWS_S3_MAX_MEMORY_SIZE = 5 * 1024 * 1024
     AWS_S3_FILE_OVERWRITE = False
