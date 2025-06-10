@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 router = Router()
 
 
-@router.get('/{task_id}/details')
+# Auth is None
+@router.get('/{task_id}/details', auth=None)
 def task_details(request, task_id: str):
     task = get_object_or_404(ProcessingTask, celery_id=task_id)
     celery_task = AsyncResult(task.celery_id)
