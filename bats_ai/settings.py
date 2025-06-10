@@ -9,7 +9,6 @@ from composed_configuration import (
     DevelopmentBaseConfiguration,
     HerokuProductionBaseConfiguration,
     ProductionBaseConfiguration,
-    S3StorageMixin,
     TestingBaseConfiguration,
 )
 from composed_configuration._configuration import _BaseConfiguration
@@ -64,6 +63,9 @@ class BatsAiMixin(ConfigMixin):
 
 class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
     SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
+    baseHost = 'localhost'
+    if 'SERVERHOSTNAME' in os.environ:
+        baseHost = os.environ['SERVERHOSTNAME']
 
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
     MINIO_STORAGE_ENDPOINT = values.Value(
@@ -79,7 +81,7 @@ class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
-    MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
+    MINIO_STORAGE_MEDIA_URL = f'http://{baseHost}:9000/django-storage'
 
 
 class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
@@ -106,7 +108,7 @@ class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
-    MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/django-storage'
+    MINIO_STORAGE_MEDIA_URL = f'http://{baseHost}:9000/django-storage'
     ALLOWED_HOSTS = [baseHost]
     CSRF_TRUSTED_ORIGINS = [f'https://{baseHost}', f'https://{baseHost}']
     CORS_ORIGIN_WHITELIST = [f'https://{baseHost}', f'https://{baseHost}']
@@ -120,5 +122,18 @@ class HerokuProductionConfiguration(BatsAiMixin, HerokuProductionBaseConfigurati
     pass
 
 
-class AwsProductionConfiguration(BatsAiMixin, S3StorageMixin, _BaseConfiguration):
-    pass
+class AwsProductionConfiguration(BatsAiMixin, _BaseConfiguration):
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3.S3Storage'
+    baseHost = '[batdetectai.kitware.com](http://batdetectai.kitware.com/)'
+    if 'SERVERHOSTNAME' in os.environ:
+        baseHost = os.environ['SERVERHOSTNAME']
+    ALLOWED_HOSTS = [baseHost]
+    CSRF_TRUSTED_ORIGINS = [f'https://{baseHost}', f'https://{baseHost}']
+    CORS_ORIGIN_WHITELIST = [f'https://{baseHost}', f'https://{baseHost}']
+
+    AWS_S3_REGION_NAME = values.Value()
+    AWS_STORAGE_BUCKET_NAME = values.Value()
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_EXPIRE = 3600 * 6  # 6 hours
