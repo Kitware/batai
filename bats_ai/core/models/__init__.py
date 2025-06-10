@@ -1,6 +1,7 @@
 from .annotations import Annotations
 from .compressed_spectrogram import CompressedSpectrogram
 from .configuration import Configuration
+from .exported_file import ExportedAnnotationFile
 from .grts_cells import GRTSCells
 from .image import Image
 from .processing_task import ProcessingTask, ProcessingTaskType
@@ -26,4 +27,5 @@ __all__ = [
     'Configuration',
     'ProcessingTask',
     'ProcessingTaskType',
+    'ExportedAnnotationFile',
 ]
