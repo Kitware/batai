@@ -29,7 +29,7 @@ function updateColor(colorVal: string) {
           <v-btn
             v-bind="{ ...subProps, ...tooltipProps }"
             :style="{ backgroundColor: color }"
-            class="color-square mx-2"
+            class="color-square mx-2 mt-4"
           />
         </template>
       </v-tooltip>

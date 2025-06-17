@@ -10,6 +10,10 @@ defineProps({
       type: String,
       default: 'Color Scheme',
   },
+  width: {
+    type: Number,
+    default: 150,
+  },
   returnObject: {
     type: Boolean,
     default: true,
@@ -30,6 +34,7 @@ const colorScheme = defineModel();
     density="compact"
     :return-object="returnObject"
     hide-details
+    :style="`max-width: ${maxWidth}px; min-width: ${maxWidth}px`"
   >
     <template #item="{ item, props }">
       <div
@@ -49,7 +54,7 @@ const colorScheme = defineModel();
           no-gutters
           align="center"
           justify="center"
-          class="pb-2"
+          class="pb-2 px-2"
         >
           <div
             v-for="n in 11"
