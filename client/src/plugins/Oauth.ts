@@ -1,4 +1,4 @@
-import OauthClient from '@girder/oauth-client';
+import OauthClient from '@resonant/oauth-client';
 import { ref } from 'vue';
 
 const redirectUrl = new URL((import.meta.env.VITE_APP_LOGIN_REDIRECT || location.origin) as string);
