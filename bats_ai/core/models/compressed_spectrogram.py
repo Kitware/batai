@@ -1,108 +1,52 @@
 from PIL import Image
-import cv2
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.core.files.storage import default_storage
 from django.db import models
-from django.dispatch import receiver
 from django_extensions.db.models import TimeStampedModel
 import numpy as np
 
 from .recording import Recording
 from .spectrogram import Spectrogram
+from .spectrogram_image import SpectrogramImage
 
 
 # TimeStampedModel also provides "created" and "modified" fields
 class CompressedSpectrogram(TimeStampedModel, models.Model):
     recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
     spectrogram = models.ForeignKey(Spectrogram, on_delete=models.CASCADE)
-    image_file = models.FileField()
     length = models.IntegerField()
+    images = GenericRelation(SpectrogramImage)
     starts = ArrayField(ArrayField(models.IntegerField()))
     stops = ArrayField(ArrayField(models.IntegerField()))
     widths = ArrayField(ArrayField(models.IntegerField()))
     cache_invalidated = models.BooleanField(default=True)
 
     @property
-    def image_url(self):
-        return default_storage.url(self.image_file.name)
+    def image_url_list(self):
+        """Ordered list of image URLs for this spectrogram."""
+        images = self.images.filter(type='spectrogram').order_by('index')
+        return [default_storage.url(img.image_file.name) for img in images]
 
-    def predict(self):
-        import json
-        import os
+    @property
+    def image_pil_list(self):
+        """List of PIL images in order."""
+        images = self.images.filter(type='spectrogram').order_by('index')
+        return [Image.open(img.image_file) for img in images]
 
-        import onnx
-        import onnxruntime as ort
-        import tqdm
+    @property
+    def image_np(self):
+        """Combined image as a single numpy array by horizontal stacking."""
+        pil_images = self.image_pil_list
+        if not pil_images:
+            if self.image_file:
+                return np.array(Image.open(self.image_file))  # legacy
+            return None
 
-        img = Image.open(self.image_file)
-
-        relative = ('..',) * 4
-        asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
-
-        onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')
-        assert os.path.exists(onnx_filename)
-
-        session = ort.InferenceSession(
-            onnx_filename,
-            providers=[
-                (
-                    'CUDAExecutionProvider',
-                    {
-                        'cudnn_conv_use_max_workspace': '1',
-                        'device_id': 0,
-                        'cudnn_conv_algo_search': 'HEURISTIC',
-                    },
-                ),
-                'CPUExecutionProvider',
-            ],
-        )
-
-        img = np.array(img)
-
-        h, w, c = img.shape
-        ratio_y = 224 / h
-        ratio_x = ratio_y * 0.5
-        raw = cv2.resize(img, None, fx=ratio_x, fy=ratio_y, interpolation=cv2.INTER_LANCZOS4)
-
-        h, w, c = raw.shape
-        if w <= h:
-            canvas = np.zeros((h, h + 1, 3), dtype=raw.dtype)
-            canvas[:, :w, :] = raw
-            raw = canvas
-            h, w, c = raw.shape
-
-        inputs_ = []
-        for index in range(0, w - h, 100):
-            inputs_.append(raw[:, index : index + h, :])
-        inputs_.append(raw[:, -h:, :])
-        inputs_ = np.array(inputs_)
-
-        chunksize = 1
-        chunks = np.array_split(inputs_, np.arange(chunksize, len(inputs_), chunksize))
-        outputs = []
-        for chunk in tqdm.tqdm(chunks, desc='Inference'):
-            outputs_ = session.run(
-                None,
-                {'input': chunk},
-            )
-            outputs.append(outputs_[0])
-        outputs = np.vstack(outputs)
-        outputs = outputs.mean(axis=0)
-
-        model = onnx.load(onnx_filename)
-        mapping = json.loads(model.metadata_props[0].value)
-        labels = [mapping['forward'][str(index)] for index in range(len(mapping['forward']))]
-
-        prediction = np.argmax(outputs)
-        label = labels[prediction]
-        score = outputs[prediction]
-
-        confs = dict(zip(labels, outputs))
-
-        return label, score, confs
-
-
-@receiver(models.signals.pre_delete, sender=Spectrogram)
-def delete_content(sender, instance, **kwargs):
-    if instance.image_file:
-        instance.image_file.delete(save=False)
+        np_images = [np.array(img) for img in pil_images]
+        try:
+            combined = np.hstack(np_images)
+        except ValueError:
+            # Fallback: stack along axis=0 if shapes don't match
+            combined = np.concatenate(np_images, axis=0)
+        return combined
