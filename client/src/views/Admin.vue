@@ -148,24 +148,20 @@ export default defineComponent({
             </v-col>
           </v-row>
           <v-row>
-            <v-col cols="3">
+            <div class="color-scheme-flex px-4">
               <color-scheme-select
                 v-model="settings.defaultColorScheme"
                 :color-schemes="colorSchemes"
+                :width="300"
                 label="Default Color Scheme"
+                class="pt-3"
                 :return-object="false"
               />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-label
-              text="Default Background Color"
-              class="px-2"
-            />
-            <ColorPickerMenu
-              v-model="settings.defaultBackgroundColor"
-              tooltip-text="Default background color for spectrograms"
-            />
+              <ColorPickerMenu
+                v-model="settings.defaultBackgroundColor"
+                tooltip-text="Default background color for spectrograms"
+              />
+            </div>
           </v-row>
         </v-card-text>
         <v-card-actions>
@@ -191,5 +187,10 @@ export default defineComponent({
 /* Add optional styling */
 .v-container {
   margin-top: 20px;
+}
+
+.color-scheme-flex {
+  display: flex;
+  align-items: center;
 }
 </style>

@@ -18,6 +18,8 @@ import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import useState from "@use/useState";
+import ColorPickerMenu from "@components/ColorPickerMenu.vue";
+import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import RecordingAnnotations from "@components/RecordingAnnotations.vue";
 import { usePrompt } from '@use/prompt-service';
@@ -30,6 +32,8 @@ export default defineComponent({
     ThumbnailViewer,
     RecordingInfoDialog,
     RecordingAnnotations,
+    ColorPickerMenu,
+    ColorSchemeSelect,
   },
   props: {
     id: {
@@ -47,6 +51,9 @@ export default defineComponent({
       toggleLayerVisibility,
       layerVisibility,
       colorScale,
+      colorSchemes,
+      colorScheme,
+      backgroundColor,
       selectedId,
       selectedType,
       scaledVals,
@@ -66,6 +73,7 @@ export default defineComponent({
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const compressed =  ref(configuration.value.spectrogram_view === 'compressed');
+    const colorpickerMenu = ref(false);
     const errorMessage: Ref<string | null> = ref(null);
     const additionalErrors: Ref<string[]> = ref([]);
 
@@ -119,7 +127,12 @@ export default defineComponent({
         loadData();
       }
     );
-    onMounted(() => loadData());
+    onMounted(() => {
+      loadData();
+      colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
+      backgroundColor.value = configuration.value.default_spectrogram_background_color || 'rgb(0, 0, 0)';
+
+    });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -175,6 +188,11 @@ export default defineComponent({
       toggleCompressedOverlay,
       viewCompressedOverlay,
       sideTab,
+      // Color Scheme
+      colorSchemes,
+      colorScheme,
+      backgroundColor,
+      colorpickerMenu,
       // Other user selection
       selectedUsers,
       colorScale,
@@ -357,6 +375,18 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
+            <div class="color-scheme-flex">
+              <color-scheme-select
+                v-model="colorScheme"
+                label="Color Scheme"
+                :color-schemes="colorSchemes"
+                class="pt-3"
+              />
+              <color-picker-menu
+                v-model="backgroundColor"
+                tooltip-text="Spectrogram background color"
+              />
+            </div>
           </v-row>
         </v-container>
       </v-toolbar>
@@ -442,5 +472,9 @@ export default defineComponent({
 <style scoped>
 .spectro-main {
   height: calc(100vh - 21vh - 64px - 72px);
+}
+.color-scheme-flex {
+  display:flex;
+  align-items: center;
 }
 </style>

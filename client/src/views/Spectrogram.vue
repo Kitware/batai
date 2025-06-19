@@ -486,15 +486,18 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
-            <color-scheme-select
-              v-model="colorScheme"
-              label="Color Scheme"
-              :color-schemes="colorSchemes"
-            />
-            <color-picker-menu
-              v-model="backgroundColor"
-              tooltip-text="Spectrogram background color"
-            />
+            <div class="color-scheme-flex">
+              <color-scheme-select
+                v-model="colorScheme"
+                label="Color Scheme"
+                :color-schemes="colorSchemes"
+                class="pt-3"
+              />
+              <color-picker-menu
+                v-model="backgroundColor"
+                tooltip-text="Spectrogram background color"
+              />
+            </div>
           </v-row>
         </v-container>
       </v-toolbar>
@@ -597,5 +600,9 @@ export default defineComponent({
   height: 32px;
   min-width: 32px;
   border-radius: 4px;
+}
+.color-scheme-flex {
+  display:flex;
+  align-items: center;
 }
 </style>
