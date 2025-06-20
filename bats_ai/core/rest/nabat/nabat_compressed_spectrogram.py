@@ -15,5 +15,3 @@ class NaBatCompressedSpectrogramViewSet(
 ):
     queryset = NABatCompressedSpectrogram.objects.all()
     serializer_class = NABatCompressedSpectrogramSerializer
-
-    FILE_FIELD_NAME = 'image_file'
