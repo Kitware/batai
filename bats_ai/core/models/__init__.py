@@ -9,6 +9,7 @@ from .recording_annotation import RecordingAnnotation
 from .recording_annotation_status import RecordingAnnotationStatus
 from .species import Species
 from .spectrogram import Spectrogram
+from .spectrogram_image import SpectrogramImage
 from .temporal_annotations import TemporalAnnotations
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     'Configuration',
     'ProcessingTask',
     'ProcessingTaskType',
+    'SpectrogramImage',
 ]

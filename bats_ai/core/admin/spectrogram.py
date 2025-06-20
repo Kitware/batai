@@ -9,7 +9,7 @@ class SpectrogramAdmin(admin.ModelAdmin):
         'pk',
         'recording',
         'colormap',
-        'image_file',
+        'images',
         'width',
         'height',
         'duration',
@@ -22,7 +22,7 @@ class SpectrogramAdmin(admin.ModelAdmin):
     readonly_fields = [
         'recording',
         'colormap',
-        'image_file',
+        'images',
         'created',
         'modified',
         'width',
