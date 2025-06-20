@@ -3,9 +3,11 @@ import json
 import logging
 import math
 import os
+from typing import TypedDict
 
 from PIL import Image
 import cv2
+from django.contrib.gis.db import models
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
@@ -15,6 +17,9 @@ import onnxruntime as ort
 import scipy.signal
 import tqdm
 
+from bats_ai.core.models import CompressedSpectrogram
+from bats_ai.core.models.nabat import NABatCompressedSpectrogram
+
 logger = logging.getLogger(__name__)
 
 FREQ_MIN = 5e3
@@ -22,26 +27,50 @@ FREQ_MAX = 120e3
 FREQ_PAD = 2e3
 
 
-def predict_from_image_file(image_file):
+class SpectrogramAssetResult(TypedDict):
+    paths: list[str]
+    width: int
+    height: int
+
+
+class SpectrogramCompressedAssetResult(TypedDict):
+    paths: list[str]
+    width: int
+    height: int
+    widths: list[float]
+    starts: list[float]
+    stops: list[float]
+
+
+class SpectrogramAssets(TypedDict):
+    duration: float
+    freq_min: int
+    freq_max: int
+    normal: SpectrogramAssetResult
+    compressed: SpectrogramCompressedAssetResult
+
+
+class PredictionOutput(TypedDict):
+    label: str
+    score: float
+    confs: dict[str, float]
+
+
+def predict_from_compressed(
+    compressed_object: CompressedSpectrogram | NABatCompressedSpectrogram,
+) -> PredictionOutput:
     """
     Predict label, score, and confidences from an image file.
 
     Args:
-        image_file: Path or Django FileField-like object to an image.
+        compressed_object: Compressed Spectrogram Object
 
     Returns:
         label (str): predicted label
         score (float): confidence score of the predicted label
         confs (dict): mapping label->confidence score for all labels
     """
-    if not hasattr(image_file, 'read'):
-        # If it's a path string, open normally
-        img = Image.open(image_file)
-    else:
-        # Assume a Django FileField or file-like object
-        img = Image.open(image_file)
-
-    img = np.array(img)
+    img = compressed_object.image_np
 
     # Load model path relative to this file
     relative = ('..',) * 4
@@ -104,11 +133,13 @@ def predict_from_image_file(image_file):
 
     confs = dict(zip(labels, outputs))
 
-    return label, score, confs
+    return {'label': label, 'score': score, 'confgs': confs}
 
 
-def generate_spectrogram_assets(file_path: str, output_base: str, dpi: int = 520):
-    sig, sr = librosa.load(file_path, sr=None)
+def generate_spectrogram_assets(
+    recording_file: models.FileField, output_base: str, dpi: int = 520
+) -> SpectrogramAssets:
+    sig, sr = librosa.load(recording_file, sr=None)
     duration = len(sig) / sr
 
     size_mod = 1
@@ -203,13 +234,11 @@ def generate_spectrogram_assets(file_path: str, output_base: str, dpi: int = 520
         'freq_min': freq_low,
         'freq_max': freq_high,
         'normal': {
-            'image': normal_img_resized,
             'paths': normal_paths,
             'width': normal_img_resized.shape[1],
             'height': normal_img_resized.shape[0],
         },
         'compressed': {
-            'image': compressed_img,
             'paths': compressed_paths,
             'width': compressed_img.shape[1],
             'height': compressed_img.shape[0],

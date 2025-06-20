@@ -32,7 +32,7 @@ class NABatRecordingAnnotationAdmin(admin.ModelAdmin):
 class NABatSpectrogramAdmin(admin.ModelAdmin):
     list_display = (
         'nabat_recording',
-        'image_file',
+        'images',
         'width',
         'height',
         'duration',

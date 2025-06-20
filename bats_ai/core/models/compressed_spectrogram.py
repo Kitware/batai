@@ -38,11 +38,6 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
     def image_np(self):
         """Combined image as a single numpy array by horizontal stacking."""
         pil_images = self.image_pil_list
-        if not pil_images:
-            if self.image_file:
-                return np.array(Image.open(self.image_file))  # legacy
-            return None
-
         np_images = [np.array(img) for img in pil_images]
         try:
             combined = np.hstack(np_images)

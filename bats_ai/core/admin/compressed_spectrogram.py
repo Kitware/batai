@@ -9,7 +9,7 @@ class CompressedSpectrogramAdmin(admin.ModelAdmin):
         'pk',
         'recording',
         'spectrogram',
-        'image_file',
+        'images',
         'length',
         'widths',
         'starts',
@@ -21,7 +21,7 @@ class CompressedSpectrogramAdmin(admin.ModelAdmin):
     readonly_fields = [
         'recording',
         'spectrogram',
-        'image_file',
+        'images',
         'created',
         'modified',
         'widths',

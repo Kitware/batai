@@ -1,4 +1,3 @@
-from django_large_image.rest import LargeImageFileDetailMixin
 from rest_framework import mixins, serializers, viewsets
 
 from bats_ai.core.models.nabat import NABatCompressedSpectrogram
@@ -13,7 +12,6 @@ class NABatCompressedSpectrogramSerializer(serializers.ModelSerializer):
 class NaBatCompressedSpectrogramViewSet(
     mixins.ListModelMixin,
     viewsets.GenericViewSet,
-    LargeImageFileDetailMixin,
 ):
     queryset = NABatCompressedSpectrogram.objects.all()
     serializer_class = NABatCompressedSpectrogramSerializer
