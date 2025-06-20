@@ -35,7 +35,7 @@ def build_annotation_queryset(filters: dict):
 
 
 @app.task(bind=True)
-def export_filtered_annotations_task(self, filters: dict, export_id: int):
+def export_nabat_annotations_task(self, filters: dict, export_id: int):
     export_record = ExportedAnnotationFile.objects.get(pk=export_id)
     try:
         queryset = build_annotation_queryset(filters)
