@@ -1,18 +1,21 @@
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import MapLocation from '@components/MapLocation.vue';
 import {
   getNABatConfigurationRecordings,
   getNABatConfigurationAnnotations,
+  exportNABatAnnotations,
   type RecordingListItem,
   type Annotation,
 } from '@api/NABatApi';
+import Exporting from '../Exporting.vue';
 
 export default defineComponent({
   name: 'NABatAdminBrowser',
   components:{
     MapLocation,
+    Exporting,
   },
   setup() {
     const router = useRouter();
@@ -54,6 +57,7 @@ export default defineComponent({
       { title: 'Created', value: 'created', sortable: true },
       { title: 'Survey Event ID', value: 'survey_event_id' },
       { title: 'Location', value: 'recording_location' },
+      { title: 'Export', key: 'export' },
     ];
 
     const annotationHeaders = [
@@ -162,6 +166,17 @@ export default defineComponent({
       }
     };
 
+    const exportId: Ref<null | number> = ref(null);
+    const exportRecordingAnnotation = async (item: RecordingListItem) => {
+      const filter = { recording_ids: [item.recording_id]};
+      const result = await exportNABatAnnotations(filter);
+      exportId.value = result;
+    };
+
+    const exportComplete = () => {
+      exportId.value = null;
+    };
+
     return {
       filters,
       loading,
@@ -182,6 +197,9 @@ export default defineComponent({
       sortByUpdate,
       sortByAnnotations,
       sortByUpdateAnnotations,
+      exportId,
+      exportRecordingAnnotation,
+      exportComplete
     };
   },
 });
@@ -251,6 +269,11 @@ export default defineComponent({
               </v-btn>
             </a>
           </template>
+          <template #item.export="{ item }">
+            <v-icon @click="exportRecordingAnnotation(item)">
+              mdi-export
+            </v-icon>
+          </template>
         </v-data-table-server>
       </v-card>
     </div>
@@ -287,6 +310,12 @@ export default defineComponent({
         </v-data-table-server>
       </v-card>
     </div>
+    <Exporting
+      v-if="exportId"
+      :export-id="exportId"
+      @cancel="exportComplete"
+      @exit="exportComplete"
+    />
   </v-container>
 </template>
 

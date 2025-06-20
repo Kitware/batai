@@ -434,11 +434,19 @@ async function getGuanoMetadata(file: File): Promise<GuanoMetadata> {
 
 }
 
-async function adminNaBatUpdateSpecies(apiToken: string) {
-  return axiosInstance.post<{ taskId: string }>('/nabat/configuration/update-species', { params: { apiToken } });
+export interface ExportStatus {
+  id: number;
+  status:'pending' | 'complete' | 'failed';
+  downloadUrl?: string;
+  created: string;
+  expiresAt: string;
 
-  }
+}
 
+async function getExportStatus(exportId: number) {
+  const result = await axiosInstance.get<ExportStatus>(`/export-annotation/${exportId}`);
+  return result.data;
+}
 
 export {
  uploadRecordingFile,
@@ -472,5 +480,5 @@ export {
  cancelProcessingTask,
  getFilteredProcessingTasks,
  getFileAnnotationDetails,
- adminNaBatUpdateSpecies,
+ getExportStatus,
 };
