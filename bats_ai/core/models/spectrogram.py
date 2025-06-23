@@ -17,7 +17,6 @@ class Spectrogram(TimeStampedModel, models.Model):
     duration = models.IntegerField()  # milliseconds
     frequency_min = models.IntegerField()  # hz
     frequency_max = models.IntegerField()  # hz
-    colormap = models.CharField(max_length=20, blank=False, null=True)
 
     @property
     def image_url_list(self):

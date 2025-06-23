@@ -38,10 +38,9 @@ class NABatSpectrogramAdmin(admin.ModelAdmin):
         'duration',
         'frequency_min',
         'frequency_max',
-        'colormap',
     )
-    search_fields = ('nabat_recording__name', 'colormap')
-    list_filter = ('nabat_recording', 'colormap')
+    search_fields = ('nabat_recording__name', 'duration')
+    list_filter = ('nabat_recording', 'duration')
 
 
 @admin.register(NABatCompressedSpectrogram)

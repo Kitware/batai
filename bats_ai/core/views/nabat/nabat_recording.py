@@ -10,7 +10,7 @@ from ninja.pagination import RouterPaginated
 from oauth2_provider.models import AccessToken
 import requests
 
-from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species, colormap
+from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
 from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
     NABatRecording,
@@ -238,8 +238,7 @@ def get_spectrogram(request: HttpRequest, id: int):
     except NABatRecording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    with colormap(None):
-        spectrogram = nabat_recording.spectrogram
+    spectrogram = nabat_recording.spectrogram
 
     compressed = nabat_recording.compressed_spectrogram
 

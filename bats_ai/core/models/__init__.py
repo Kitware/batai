@@ -4,7 +4,7 @@ from .configuration import Configuration
 from .grts_cells import GRTSCells
 from .image import Image
 from .processing_task import ProcessingTask, ProcessingTaskType
-from .recording import Recording, colormap
+from .recording import Recording
 from .recording_annotation import RecordingAnnotation
 from .recording_annotation_status import RecordingAnnotationStatus
 from .species import Species
@@ -21,7 +21,6 @@ __all__ = [
     'Spectrogram',
     'TemporalAnnotations',
     'GRTSCells',
-    'colormap',
     'CompressedSpectrogram',
     'RecordingAnnotation',
     'Configuration',
