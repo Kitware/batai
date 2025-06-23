@@ -1,26 +1,20 @@
 import os
 import tempfile
 
-from PIL import Image
 from celery import shared_task
 from django.core.files import File
 
 from bats_ai.core.models import (
     CompressedSpectrogram,
     Configuration,
+    Image,
     Recording,
     RecordingAnnotation,
     Species,
     Spectrogram,
     SpectrogramImage,
 )
-from bats_ai.core.utils.spectrogram import generate_spectrogram_assets, predict_from_compressed
-
-FREQ_MIN = 5e3
-FREQ_MAX = 120e3
-FREQ_PAD = 2e3
-
-COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo']
+from bats_ai.utils.spectrogram import generate_spectrogram_assets, predict_from_compressed
 
 
 @shared_task
