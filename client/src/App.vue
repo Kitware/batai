@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, inject, ref, onMounted, computed, watch } from "vue";
-import OAuthClient from "@girder/oauth-client";
+import OAuthClient from "@resonant/oauth-client";
 import { useRoute, useRouter } from "vue-router";
 import useState from "./use/useState";
 import { getRecordings } from "./api/api";
