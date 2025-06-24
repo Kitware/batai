@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import { getProcessingTaskDetails, adminNaBatUpdateSpecies } from '../../api/api';
+import { getProcessingTaskDetails } from '../../api/api';
+import { adminNaBatUpdateSpecies } from '../../api/NABatApi';
 export default defineComponent({
   name: 'NaBatAdminUpdateSpecies',
   setup() {

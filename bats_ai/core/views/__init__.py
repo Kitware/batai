@@ -1,5 +1,6 @@
 from .annotations import router as AnnotationRouter
 from .configuration import router as ConfigurationRouter
+from .export_annotation import router as ExportAnnotationRouter
 from .grts_cells import router as GRTSCellsRouter
 from .guanometadata import router as GuanoMetadataRouter
 from .processing_tasks import router as ProcessingTaskRouter
@@ -18,4 +19,5 @@ __all__ = [
     'RecordingAnnotationRouter',
     'ConfigurationRouter',
     'ProcessingTaskRouter',
+    'ExportAnnotationRouter',
 ]
