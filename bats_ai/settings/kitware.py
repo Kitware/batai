@@ -2,6 +2,8 @@ import os
 
 from resonant_settings._env import env
 
+from .base import *
+
 # Note that this pulls a lot of information out of the environment
 # variable DJANGO_MINIO_STORAGE_URL including the scheme (http or https)
 # access key, secret, and bucket name.
