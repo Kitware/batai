@@ -115,6 +115,13 @@ FILE_UPLOAD_HANDLERS = [
 ]
 CELERY_RESULT_BACKEND = 'django-db'
 
+CELERY_BEAT_SCHEDULE = {
+    'delete-expired-files-daily': {
+        'task': 'bats_ai.tasks.periodic.delete_expired_exported_files',
+        'schedule': 86400,  # every 24 hours (in seconds)
+    },
+}
+
 # TODO once upstream releases this as a module, import this config
 SHELL_PLUS_PRINT_SQL = True
 SHELL_PLUS_PRINT_SQL_TRUNCATE = None
