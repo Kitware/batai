@@ -26,7 +26,6 @@ urlpatterns = [
     path('api/v1/', api.urls),
     path('api/docs/redoc/', schema_view.with_ui('redoc'), name='docs-redoc'),
     path('api/docs/swagger/', schema_view.with_ui('swagger'), name='docs-swagger'),
-    path('', include('django_large_image.urls')),
 ]
 
 if settings.DEBUG:

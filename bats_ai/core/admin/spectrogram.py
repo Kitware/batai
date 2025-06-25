@@ -8,8 +8,7 @@ class SpectrogramAdmin(admin.ModelAdmin):
     list_display = [
         'pk',
         'recording',
-        'colormap',
-        'image_file',
+        'images',
         'width',
         'height',
         'duration',
@@ -21,8 +20,7 @@ class SpectrogramAdmin(admin.ModelAdmin):
     autocomplete_fields = ['recording']
     readonly_fields = [
         'recording',
-        'colormap',
-        'image_file',
+        'images',
         'created',
         'modified',
         'width',
