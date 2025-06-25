@@ -29,7 +29,7 @@ dependencies = [
     "celery",
     "django-ninja",
     "django>=4.1, <4.2",
-    "django-allauth",
+    "django-allauth==0.63.6",
     "django-configurations[database,email]",
     "django-extensions",
     "django-oauth-toolkit",
@@ -71,7 +71,7 @@ prod = [
 ]
 
 [tool.hatch.build]
-packages = ["batai"]
+packages = ["bats_ai"]
 
 [tool.black]
 line-length = 100
