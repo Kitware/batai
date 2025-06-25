@@ -17,6 +17,11 @@ django_stubs_ext.monkeypatch()
 
 env = Env()
 
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 
 ROOT_URLCONF = 'bats_ai.urls'
@@ -121,8 +126,8 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 86400,  # every 24 hours (in seconds)
     },
 }
-
-# TODO once upstream releases this as a module, import this config
 SHELL_PLUS_PRINT_SQL = True
 SHELL_PLUS_PRINT_SQL_TRUNCATE = None
 RUNSERVER_PLUS_PRINT_SQL_TRUNCATE = None
+
+# TODO once upstream releases this as a module, import this config
