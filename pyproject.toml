@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bats-ai"
+name = "bats_ai"
 version = "0.1.0"
 description = ""
 readme = "README.md"
