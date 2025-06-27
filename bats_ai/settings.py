@@ -70,6 +70,7 @@ class BatsAiMixin(ConfigMixin):
 
 class DevelopmentConfiguration(BatsAiMixin, DevelopmentBaseConfiguration):
     SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
+
     baseHost = 'localhost'
     if 'SERVERHOSTNAME' in os.environ:
         baseHost = os.environ['SERVERHOSTNAME']
@@ -96,6 +97,12 @@ class TestingConfiguration(BatsAiMixin, TestingBaseConfiguration):
 
 
 class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
+    subpath = os.environ.get('SUBPATH', '').strip('/')
+
+    # If SUBPATH is non-empty, prefix URLs accordingly, else use defaults
+    STATIC_URL = f'/{subpath}/static/' if subpath else '/static/'
+    LOGIN_URL = f'/{subpath}/accounts/login/' if subpath else '/accounts/login/'
+    USE_X_FORWARDED_HOST = True  # If behind a proxy
     SECRET_KEY = values.SecretValue()
     baseHost = 'batdetectai.kitware.com'
     if 'SERVERHOSTNAME' in os.environ:
@@ -115,7 +122,7 @@ class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
-    MINIO_STORAGE_MEDIA_URL = f'http://{baseHost}:9000/django-storage'
+    MINIO_STORAGE_MEDIA_URL = f'https://{baseHost}:9000/django-storage'
     ALLOWED_HOSTS = [baseHost]
     CSRF_TRUSTED_ORIGINS = [f'https://{baseHost}', f'https://{baseHost}']
     CORS_ORIGIN_WHITELIST = [f'https://{baseHost}', f'https://{baseHost}']
@@ -130,6 +137,12 @@ class HerokuProductionConfiguration(BatsAiMixin, HerokuProductionBaseConfigurati
 
 
 class AwsProductionConfiguration(BatsAiMixin, _BaseConfiguration):
+    SUBPATH = os.environ.get('SUBPATH', '').strip('/')
+
+    # If SUBPATH is non-empty, prefix URLs accordingly, else use defaults
+    STATIC_URL = f'/{SUBPATH}/static/' if SUBPATH else '/static/'
+    LOGIN_URL = f'/{SUBPATH}/accounts/login/' if SUBPATH else '/accounts/login/'
+
     DEFAULT_FILE_STORAGE = 'storages.backends.s3.S3Storage'
     baseHost = '[batdetectai.kitware.com](http://batdetectai.kitware.com/)'
     if 'SERVERHOSTNAME' in os.environ:

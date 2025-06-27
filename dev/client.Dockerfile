@@ -1,36 +1,71 @@
-# Use official Node.js image as the base image for building Vue.js app
-FROM node:18 as build-stage
+# ========================
+# Build Stage (Vue + Env)
+# ========================
+FROM node:18 AS build-stage
 
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY client/package*.json ./
+# Build-time args
+ARG VITE_APP_API_ROOT
+ARG VITE_APP_OAUTH_API_ROOT
+ARG VITE_APP_OAUTH_CLIENT_ID
+ARG VITE_APP_LOGIN_REDIRECT
+ARG SUBPATH
 
-# Install dependencies
+# Copy and install dependencies
+COPY client/package*.json ./
 RUN npm install
 
-# Copy the rest of the application
+# Copy full client code
 COPY client .
 
-# Build the Vue.js application
+# Log and write .env.production
+RUN echo "SUBPATH=${SUBPATH}" && \
+    echo "VITE_APP_API_ROOT=${VITE_APP_API_ROOT}" >> .env.production && \
+    echo "VITE_APP_OAUTH_API_ROOT=${VITE_APP_OAUTH_API_ROOT}" >> .env.production && \
+    echo "VITE_APP_OAUTH_CLIENT_ID=${VITE_APP_OAUTH_CLIENT_ID}" >> .env.production && \
+    echo "VITE_APP_LOGIN_REDIRECT=${VITE_APP_LOGIN_REDIRECT}" >> .env.production && \
+    echo "VITE_APP_SUBPATH=${SUBPATH}" >> .env.production
+
+# Set environment for build
+ENV VITE_APP_API_ROOT=${VITE_APP_API_ROOT}
+ENV VITE_APP_OAUTH_API_ROOT=${VITE_APP_OAUTH_API_ROOT}
+ENV VITE_APP_OAUTH_CLIENT_ID=${VITE_APP_OAUTH_CLIENT_ID}
+ENV VITE_APP_LOGIN_REDIRECT=${VITE_APP_LOGIN_REDIRECT}
+ENV SUBPATH=${SUBPATH}
+
+# Run Vue build
 RUN npm run build
 
-# Use NGINX as the final base image
-FROM nginx:alpine
+# ========================
+# Nginx Stage
+# ========================
+FROM nginx:alpine AS production-stage
 
-# Remove default NGINX website
+# Build-time ARG to get SUBPATH
+ARG SUBPATH
+
+# Clean default site
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy built Vue.js app to NGINX HTML directory
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# Copy build output
+COPY --from=build-stage /app/dist /tmp/dist
 
-RUN ls
-# Copy custom NGINX configuration
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
-# Expose port 80
+# If SUBPATH is set, copy dist to subfolder and rewrite nginx config
+COPY nginx/nginx.subpath.template /nginx.subpath.template
+COPY nginx/nginx.conf /nginx.conf
+
+RUN if [ -n "$SUBPATH" ]; then \
+        echo "📦 Copying Vue build to /usr/share/nginx/html/${SUBPATH}"; \
+        mkdir -p /usr/share/nginx/html/${SUBPATH}; \
+        cp -r /tmp/dist/* /usr/share/nginx/html/${SUBPATH}/; \
+        envsubst '${SUBPATH}' < /nginx.subpath.template > /etc/nginx/nginx.conf; \
+    else \
+        echo "📦 No SUBPATH set. Using default nginx.conf"; \
+        cp /nginx.conf /etc/nginx/nginx.conf; \
+        cp -r /tmp/dist/* /usr/share/nginx/html/; \
+    fi
+
 EXPOSE 80
-
-# Start NGINX
 CMD ["nginx", "-g", "daemon off;"]
