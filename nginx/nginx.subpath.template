@@ -1,0 +1,81 @@
+worker_processes  1;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    client_max_body_size 100m;
+
+    server {
+        listen 80;
+
+        # Serve Vue.js static files
+
+        location /${SUBPATH} {
+            root /usr/share/nginx/html;
+            index index.html;
+            try_files $uri $uri/ /${SUBPATH}/index.html;
+        }
+
+        location /${SUBPATH}/api {
+            proxy_pass http://django:8000/${SUBPATH}/api;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+        }
+
+        location /${SUBPATH}/oauth {
+            proxy_pass http://django:8000/${SUBPATH}/oauth;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+        }
+
+        location /${SUBPATH}/static {
+            proxy_pass http://django:8000/${SUBPATH}/static;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+        }
+
+        location /${SUBPATH}/admin {
+            proxy_pass http://django:8000/${SUBPATH}/admin;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-SCRIPT-NAME /${SUBPATH}/;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+        }
+
+
+
+        location /${SUBPATH}/accounts {
+            proxy_pass http://django:8000/${SUBPATH}/accounts;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+        }
+
+        location /django-storage {
+            proxy_pass http://minio:9000/django-storage;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+        }
+
+    }
+}

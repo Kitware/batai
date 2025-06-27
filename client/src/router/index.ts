@@ -26,11 +26,14 @@ function beforeEach(
   }
   next();
 }
+const subpath = import.meta.env.VITE_APP_SUBPATH?.replace(/\/+$/, '');
+const routerBase = subpath ? `/${subpath}/` : '/';
 
 
 function routerInit(){
   const router  = createRouter({
-    history: createWebHistory(),
+    base: routerBase,
+    history: createWebHistory(routerBase),
     routes: [
       {
         path: '/',
