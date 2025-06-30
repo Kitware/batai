@@ -51,7 +51,8 @@ services:
     # command: ""
     # Log printing via Rich is enhanced by a TTY
     tty: true
-    env_file: ./dev/.env.prod.docker-compose
+    env_file:
+      - ./dev/.env.prod.docker-compose
     networks:
       - django-nginx
     volumes:
@@ -80,7 +81,8 @@ services:
     ]
     # Docker Compose does not set the TTY width, which causes Celery errors
     tty: false
-    env_file: ./dev/.env.prod.docker-compose
+    env_file:
+      - ./dev/.env.prod.docker-compose
     networks:
       - django-nginx
     depends_on:
@@ -94,7 +96,14 @@ services:
     build:
       context: .
       dockerfile: ./dev/client.Dockerfile
-    env_file: ./dev/.env.prod.docker-compose
+      args:
+        VITE_APP_API_ROOT: ${VITE_APP_API_ROOT}
+        VITE_APP_OAUTH_API_ROOT: ${VITE_APP_OAUTH_API_ROOT}
+        VITE_APP_OAUTH_CLIENT_ID: ${VITE_APP_OAUTH_CLIENT_ID}
+        VITE_APP_LOGIN_REDIRECT: ${VITE_APP_LOGIN_REDIRECT}
+        SUBPATH: ${SUBPATH}
+    env_file:
+     - ./dev/.env.prod.docker-compose
     networks:
       - django-nginx
     depends_on:
@@ -118,7 +127,8 @@ services:
       - postgres:/var/lib/postgresql/data
 
   rabbitmq:
-    env_file: ./dev/.env.prod.docker-compose
+    env_file:
+      - ./dev/.env.prod.docker-compose
     image: rabbitmq:management
     networks:
       - django-nginx
@@ -133,7 +143,8 @@ services:
     # When run with a TTY, minio prints credentials on startup
     tty: true
     command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9001}"]
-    env_file: ./dev/.env.prod.docker-compose
+    env_file:
+      - ./dev/.env.prod.docker-compose
     environment:
       - MINIO_ROOT_USER=${DJANGO_MINIO_STORAGE_ACCESS_KEY:-minioAccessKey}
       - MINIO_ROOT_PASSWORD=${DJANGO_MINIO_STORAGE_SECRET_KEY:-minioSecretKey}
