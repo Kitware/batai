@@ -57,6 +57,7 @@ COPY --from=build-stage /app/dist /tmp/dist
 COPY nginx/nginx.subpath.template /nginx.subpath.template
 COPY nginx/nginx.conf /nginx.conf
 
+# hadolint ignore=SC2016
 RUN if [ -n "$SUBPATH" ]; then \
         echo "Copying Vue build to /usr/share/nginx/html/${SUBPATH}"; \
         mkdir -p /usr/share/nginx/html/${SUBPATH}; \
