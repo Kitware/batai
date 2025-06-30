@@ -8,6 +8,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
 from bats_ai.core.rest import rest
+
 from .api import api
 
 # OpenAPI generation
@@ -31,9 +32,9 @@ base_urlpatterns = [
 ]
 
 # Add subpath prefix if SUBPATH is defined
-subpath = os.environ.get("SUBPATH", "").strip("/")
+subpath = os.environ.get('SUBPATH', '').strip('/')
 if subpath:
-    urlpatterns = [path(f"{subpath}/", include(base_urlpatterns))]
+    urlpatterns = [path(f'{subpath}/', include(base_urlpatterns))]
 else:
     urlpatterns = base_urlpatterns
 

@@ -122,7 +122,7 @@ class KitwareConfiguration(BatsAiMixin, _BaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
-    MINIO_STORAGE_MEDIA_URL = f'https://{baseHost}:9000/django-storage'
+    MINIO_STORAGE_MEDIA_URL = f'https://{baseHost}/django-storage'
     ALLOWED_HOSTS = [baseHost]
     CSRF_TRUSTED_ORIGINS = [f'https://{baseHost}', f'https://{baseHost}']
     CORS_ORIGIN_WHITELIST = [f'https://{baseHost}', f'https://{baseHost}']

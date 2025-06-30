@@ -51,7 +51,7 @@ services:
     # command: ""
     # Log printing via Rich is enhanced by a TTY
     tty: true
-    env_file: 
+    env_file:
       - ./dev/.env.prod.docker-compose
     networks:
       - django-nginx
