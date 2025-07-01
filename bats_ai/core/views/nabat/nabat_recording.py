@@ -231,8 +231,6 @@ def generate_nabat_recording(
 
 @router.get('/{id}/spectrogram', auth=admin_auth)
 def get_spectrogram(request: HttpRequest, id: int):
-    if not request.user.is_authenticated and not request.user.is_superuser:
-        return JsonResponse({'error': 'Permission denied'}, status=403)
     try:
         nabat_recording = NABatRecording.objects.get(pk=id)
     except NABatRecording.DoesNotExist:
@@ -432,7 +430,9 @@ def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: st
 
 @router.put('recording-annotation', auth=None, response={200: str})
 def create_recording_annotation(request: HttpRequest, data: NABatCreateRecordingAnnotationSchema):
-    email_or_response = get_email_if_authorized(request, data.apiToken, recording_pk=id)
+    email_or_response = get_email_if_authorized(
+        request, data.apiToken, recording_pk=data.recordingId
+    )
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
@@ -487,11 +487,12 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
 def update_recording_annotation(
     request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
 ):
-    email_or_response = get_email_if_authorized(request, data.apiToken, recording_pk=id)
+    email_or_response = get_email_if_authorized(
+        request, data.apiToken, recording_pk=data.recordingId
+    )
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
-
     try:
         annotation = NABatRecordingAnnotation.objects.get(pk=id, user_email=user_email)
         # Check permission
@@ -539,9 +540,10 @@ def update_recording_annotation(
         return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
 
 
+# TODO: Determine if this will be implemented for NABat
 @router.delete('recording-annotation/{id}', auth=None, response={200: str})
-def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str):
-    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=id)
+def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str, recordingId: str):
+    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=recordingId)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use

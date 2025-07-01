@@ -6,6 +6,7 @@ import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
 import { getNABatRecordingFileAnnotations, putNABatFileAnnotation } from "@api/NABatApi";
 import RecordingAnnotationDetails from "./RecordingAnnotationDetails.vue";
 import useState from "@use/useState";
+import { decodeJWT } from "../use/useJWTToken";
 export default defineComponent({
   name: "AnnotationList",
   components: {
@@ -43,6 +44,10 @@ export default defineComponent({
       selectedAnnotation.value = annotation;
     };
 
+    const currentNaBatUser: Ref<string | null> = ref(null);
+
+    
+
     const loadFileAnnotations = async () => {
       if (props.type === 'nabat') {
         annotations.value = (await getNABatRecordingFileAnnotations(props.recordingId, props.apiToken)).data;
@@ -51,7 +56,20 @@ export default defineComponent({
       }
     };
 
-    onMounted(() => loadFileAnnotations());
+    onMounted(async () => {
+      await loadFileAnnotations();
+      if (props.type  === 'nabat') {
+        const decoded = decodeJWT(props.apiToken);
+        if (decoded['email']) {
+          currentNaBatUser.value = decoded['email'];
+          const foundItem = annotations.value.find((item) => item.owner === currentNaBatUser.value);
+          if (foundItem) {
+            setSelectedId(foundItem);
+          }
+        }
+      }
+
+    });
 
     const addAnnotation = async () => {
       const newAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
@@ -91,11 +109,11 @@ export default defineComponent({
     const isAdmin = computed(() => configuration.value.is_admin);
 
     const disableNaBatAnnotations = computed(() => {
-      const nonAIAnnotations = annotations.value.filter((item) => item.owner);
+      const currentUserAnnotations = annotations.value.filter((item) => item.owner === currentNaBatUser.value);
       if (isAdmin.value && props.type === 'nabat' && !props.apiToken) {
         return true;
       }
-      return (nonAIAnnotations.length > 0 && props.type === 'nabat');
+      return ( currentUserAnnotations.length > 0 && props.type === 'nabat');
     });
 
     return {
@@ -109,6 +127,7 @@ export default defineComponent({
       detailsDialog,
       detailRecordingId,
       disableNaBatAnnotations,
+      currentNaBatUser,
     };
   },
 });
@@ -137,6 +156,7 @@ export default defineComponent({
         :id="`annotation-${annotation.id}`"
         :key="annotation.id"
         :class="{ selected: annotation.id === selectedAnnotation?.id }"
+        :disabled="type === 'nabat' && disableNaBatAnnotations && annotation.owner !== currentNaBatUser"
         class="annotation-item"
         @click="setSelectedId(annotation)"
       >

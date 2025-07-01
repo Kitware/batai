@@ -14,6 +14,10 @@ defineProps({
     type: Number,
     default: 150,
   },
+  maxWidth: {
+    type: Number,
+    default: 150,
+  },
   returnObject: {
     type: Boolean,
     default: true,
