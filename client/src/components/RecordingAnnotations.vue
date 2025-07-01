@@ -95,7 +95,7 @@ export default defineComponent({
       if (isAdmin.value && props.type === 'nabat' && !props.apiToken) {
         return true;
       }
-      return (nonAIAnnotations.length > 0 && props.type === 'nabat');
+      return (props.type !== 'nabat');
     });
 
     return {

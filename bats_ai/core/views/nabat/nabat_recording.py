@@ -432,7 +432,9 @@ def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: st
 
 @router.put('recording-annotation', auth=None, response={200: str})
 def create_recording_annotation(request: HttpRequest, data: NABatCreateRecordingAnnotationSchema):
-    email_or_response = get_email_if_authorized(request, data.apiToken, recording_pk=id)
+    email_or_response = get_email_if_authorized(
+        request, data.apiToken, recording_pk=data.recordingId
+    )
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
@@ -487,11 +489,12 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
 def update_recording_annotation(
     request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
 ):
-    email_or_response = get_email_if_authorized(request, data.apiToken, recording_pk=id)
+    email_or_response = get_email_if_authorized(
+        request, data.apiToken, recording_pk=data.recordingId
+    )
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
-
     try:
         annotation = NABatRecordingAnnotation.objects.get(pk=id, user_email=user_email)
         # Check permission
