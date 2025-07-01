@@ -540,9 +540,10 @@ def update_recording_annotation(
         return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
 
 
+# TODO: Determine if this will be implemented for NABat
 @router.delete('recording-annotation/{id}', auth=None, response={200: str})
-def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str):
-    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=id)
+def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str, recordingId: str):
+    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=recordingId)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use

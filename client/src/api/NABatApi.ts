@@ -68,8 +68,8 @@ async function patchNABatFileAnnotation(fileAnnotationId: number, fileAnnotation
   return axiosInstance.patch<{ message: string, id: number }>(`nabat/recording/recording-annotation/${fileAnnotationId}`, { ...fileAnnotation });
 }
 
-async function deleteNABatFileAnnotation(fileAnnotationId: number, apiToken?: string) {
-  return axiosInstance.delete<{ message: string, id: number }>(`nabat/recording/recording-annotation/${fileAnnotationId}`, { params: { apiToken } });
+async function deleteNABatFileAnnotation(fileAnnotationId: number, apiToken?: string, recordingId?: number) {
+  return axiosInstance.delete<{ message: string, id: number }>(`nabat/recording/recording-annotation/${fileAnnotationId}`, { params: { apiToken, recordingId } });
 }
 
 export interface RecordingListItem {
