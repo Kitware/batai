@@ -231,8 +231,6 @@ def generate_nabat_recording(
 
 @router.get('/{id}/spectrogram', auth=admin_auth)
 def get_spectrogram(request: HttpRequest, id: int):
-    if not request.user.is_authenticated and not request.user.is_superuser:
-        return JsonResponse({'error': 'Permission denied'}, status=403)
     try:
         nabat_recording = NABatRecording.objects.get(pk=id)
     except NABatRecording.DoesNotExist:
