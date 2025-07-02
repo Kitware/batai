@@ -6,6 +6,7 @@ import tempfile
 from django.contrib.gis.geos import Point
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db.models import Q
+from django.db import transaction
 import requests
 
 from bats_ai.celery import app
@@ -91,11 +92,12 @@ def get_or_create_processing_task(recording_id, request_id):
 
     except ObjectDoesNotExist:
         # If task does not exist, create a new one with the given defaults
-        processing_task = ProcessingTask.objects.create(
-            metadata=metadata_filter,
-            status=ProcessingTask.Status.QUEUED,  # Default status if creating a new task
-            celery_id=request_id,
-        )
+        with transaction.atomic():
+            processing_task = ProcessingTask.objects.create(
+                metadata=metadata_filter,
+                status=ProcessingTask.Status.QUEUED,  # Default status if creating a new task
+                celery_id=request_id,
+            )
         # Return the newly created task and True (created)
         return processing_task, True
 

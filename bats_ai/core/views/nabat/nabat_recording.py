@@ -4,6 +4,7 @@ import logging
 import os
 
 from django.db.models import Q
+from django.db import transaction
 from django.http import HttpRequest, JsonResponse
 from ninja import Form, Schema
 from ninja.pagination import RouterPaginated
@@ -190,15 +191,16 @@ def generate_nabat_recording(
         task = nabat_recording_initialize.delay(
             payload.recordingId, payload.surveyEventId, payload.apiToken
         )
-        ProcessingTask.objects.create(
-            name=f'Processing Recording {payload.recordingId}',
-            status=ProcessingTask.Status.QUEUED,
-            metadata={
-                'type': ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
-                'recordingId': payload.recordingId,
-            },
-            celery_id=task.id,
-        )
+        with transaction.atomic():
+            ProcessingTask.objects.create(
+                name=f'Processing Recording {payload.recordingId}',
+                status=ProcessingTask.Status.QUEUED,
+                metadata={
+                    'type': ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+                    'recordingId': payload.recordingId,
+                },
+                celery_id=task.id,
+            )
         return {'taskId': task.id}
     # we want to check the apiToken and make sure the user has access to the file before returning it
     api_token = payload.apiToken
