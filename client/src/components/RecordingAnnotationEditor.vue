@@ -95,7 +95,7 @@ export default defineComponent({
 
     const deleteAnnotation = async () => {
       if (props.annotation && props.recordingId) {
-            props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken) : await deleteFileAnnotation(props.annotation.id,);
+            props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken, props.recordingId) : await deleteFileAnnotation(props.annotation.id,);
             emit('delete:annotation');
         }
     };
@@ -119,7 +119,7 @@ export default defineComponent({
         Edit Annotations
         <v-spacer />
         <v-btn
-          v-if="type !== 'nabat' || (annotation?.owner && type === 'nabat')"
+          v-if="type !== 'nabat'"
           size="x-small"
           color="error"
           class="mt-1"
@@ -141,6 +141,7 @@ export default defineComponent({
         <v-autocomplete
           v-if="type !== 'nabat'"
           v-model="speciesEdit"
+          autocomplete="off"
           multiple
           closable-chips
           chips

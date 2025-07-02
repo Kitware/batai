@@ -6,6 +6,7 @@ import uuid
 
 from django.contrib.gis.db.models import functions as gis_functions
 from django.contrib.gis.geos import Point, Polygon
+from django.db import transaction
 from django.db.models import Count
 from django.http import HttpRequest, JsonResponse
 from django.utils.timezone import now
@@ -42,14 +43,15 @@ def update_species_list(request: HttpRequest):
         )
 
     task = update_nabat_species.delay()
-    ProcessingTask.objects.create(
-        name='Updating Species List',
-        status=ProcessingTask.Status.QUEUED,
-        metadata={
-            'type': ProcessingTaskType.UPDATING_SPECIES.value,
-        },
-        celery_id=task.id,
-    )
+    with transaction.atomic():
+        ProcessingTask.objects.create(
+            name='Updating Species List',
+            status=ProcessingTask.Status.QUEUED,
+            metadata={
+                'type': ProcessingTaskType.UPDATING_SPECIES.value,
+            },
+            celery_id=task.id,
+        )
     return {'taskId': task.id}
 
 
