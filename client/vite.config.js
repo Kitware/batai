@@ -2,7 +2,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import Vue from '@vitejs/plugin-vue';
 import Vuetify from 'vite-plugin-vuetify';
-const subpath = process.env.VITE_APP_SUBPATH || './';
+const subpath = process.env.VITE_APP_SUBPATH || '/';
 
 // https://vitejs.dev/config/
 export default defineConfig({
