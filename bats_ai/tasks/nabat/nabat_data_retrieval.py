@@ -5,8 +5,8 @@ import tempfile
 
 from django.contrib.gis.geos import Point
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.db.models import Q
 from django.db import transaction
+from django.db.models import Q
 import requests
 
 from bats_ai.celery import app

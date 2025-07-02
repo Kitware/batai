@@ -6,8 +6,8 @@ import uuid
 
 from django.contrib.gis.db.models import functions as gis_functions
 from django.contrib.gis.geos import Point, Polygon
-from django.db.models import Count
 from django.db import transaction
+from django.db.models import Count
 from django.http import HttpRequest, JsonResponse
 from django.utils.timezone import now
 from ninja import Query, Router, Schema
