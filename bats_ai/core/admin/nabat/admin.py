@@ -32,16 +32,15 @@ class NABatRecordingAnnotationAdmin(admin.ModelAdmin):
 class NABatSpectrogramAdmin(admin.ModelAdmin):
     list_display = (
         'nabat_recording',
-        'image_file',
+        'images',
         'width',
         'height',
         'duration',
         'frequency_min',
         'frequency_max',
-        'colormap',
     )
-    search_fields = ('nabat_recording__name', 'colormap')
-    list_filter = ('nabat_recording', 'colormap')
+    search_fields = ('nabat_recording__name', 'duration')
+    list_filter = ('nabat_recording', 'duration')
 
 
 @admin.register(NABatCompressedSpectrogram)

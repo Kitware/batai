@@ -1,7 +1,7 @@
 .DS_Store
-/**/*.shp
-/**/*.shx
 /**/*.csv
+/**/*.wav
+/**/*.jpg
 models/datasets/
 models/spectrograms/
 models/ignore/

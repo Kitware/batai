@@ -20,9 +20,9 @@ export default defineComponent({
     LayerManager,
   },
   props: {
-    image: {
-      type: Object as PropType<HTMLImageElement | undefined>,
-      default: () => undefined,
+    images: {
+      type: Array as PropType<HTMLImageElement[]>,
+      default: () => [],
     },
     spectroInfo: {
       type: Object as PropType<SpectroInfo>,
@@ -56,9 +56,6 @@ export default defineComponent({
     const scaledWidth = ref(0);
     const scaledHeight = ref(0);
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
-    const tileURL = props.spectroInfo.spectroId
-      ? `${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/v1/dynamic/spectrograms/${props.spectroInfo.spectroId}/tiles/{z}/{x}/{y}.png/`
-      : "";
     const setCursor = (newCursor: string) => {
       cursor.value = newCursor;
     };
@@ -148,8 +145,13 @@ export default defineComponent({
     watch([containerRef], () => {
       scaledWidth.value = props.spectroInfo?.width;
       scaledHeight.value = props.spectroInfo?.height;
-      if (props.image) {
-        const { naturalWidth, naturalHeight } = props.image;
+      if (props.images.length) {
+        let naturalWidth = 0;
+        let naturalHeight = 0;
+        props.images.forEach((image) => {
+          naturalWidth += image.naturalWidth;
+          naturalHeight = image.naturalHeight;
+        });
         scaledWidth.value = naturalWidth;
         scaledHeight.value = naturalHeight;
       }
@@ -160,24 +162,13 @@ export default defineComponent({
             scaledWidth.value,
             scaledHeight.value,
             false,
-            props.image ? "quad" : "tile",
-            tileURL
+            props.images.length,
           );
           geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
         }
       }
-      if (props.image) {
-        geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value);
-      } else {
-        const scaledTileWidth = (scaledWidth.value / props.spectroInfo?.width) * 256;
-        const scaledTileHeight = (scaledHeight.value / props.spectroInfo?.height) * 256;
-        geoJS.updateMapSize(
-          tileURL,
-          scaledWidth.value,
-          scaledHeight.value,
-          scaledTileWidth,
-          scaledTileHeight
-        );
+      if (props.images.length) {
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
       }
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
@@ -185,8 +176,13 @@ export default defineComponent({
         scaledVals.value = { x: configuration.value.spectrogram_x_stretch, y: 1 };
         let baseWidth = 0;
         let baseHeight = 0;
-        if (props.image) {
-          const { naturalWidth, naturalHeight } = props.image;
+        if (props.images.length) {
+          let naturalWidth = 0;
+          let naturalHeight = 0;
+          props.images.forEach((image) => {
+            naturalWidth += image.naturalWidth;
+            naturalHeight = image.naturalHeight;
+          });
           baseWidth = naturalWidth;
           baseHeight = naturalHeight;
         } else if (props.spectroInfo) {
@@ -197,18 +193,8 @@ export default defineComponent({
         if (scaledWidth.value < baseWidth) {
           scaledWidth.value = baseWidth;
         }
-        if (props.image) {
-          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
-        } else {
-          const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
-          const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
-          geoJS.updateMapSize(
-            tileURL,
-            scaledWidth.value,
-            scaledHeight.value,
-            scaledTileWidth,
-            scaledTileHeight
-          );
+        if (props.images) {
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
         }
       }
 
@@ -218,8 +204,13 @@ export default defineComponent({
       () => props.spectroInfo,
       () => {
         scaledHeight.value = props.spectroInfo?.height;
-        if (props.image) {
-          const { naturalWidth, naturalHeight } = props.image;
+        if (props.images.length) {
+          let naturalWidth = 0;
+          let naturalHeight = 0;
+          props.images.forEach((image) => {
+            naturalWidth += image.naturalWidth;
+            naturalHeight = image.naturalHeight;
+          });
           scaledWidth.value = naturalWidth;
           scaledHeight.value = naturalHeight;
         }
@@ -230,8 +221,8 @@ export default defineComponent({
           bottom: scaledHeight.value,
           right: scaledWidth.value,
         });
-        if (props.image) {
-          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value);
+        if (props.images.length) {
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
         }
       }
     );
@@ -288,8 +279,13 @@ export default defineComponent({
     const wheelEvent = (event: WheelEvent) => {
       let baseWidth = 0;
       let baseHeight = 0;
-      if (props.image) {
-        const { naturalWidth, naturalHeight } = props.image;
+      if (props.images.length) {
+        let naturalWidth = 0;
+        let naturalHeight = 0;
+        props.images.forEach((image) => {
+          naturalWidth += image.naturalWidth;
+          naturalHeight = image.naturalHeight;
+        });
         baseWidth = naturalWidth;
         baseHeight = naturalHeight;
       } else if (props.spectroInfo) {
@@ -314,18 +310,8 @@ export default defineComponent({
           scaledWidth.value = baseWidth;
         }
 
-        if (props.image) {
-          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
-        } else if (tileURL) {
-          const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
-          const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
-          geoJS.updateMapSize(
-            tileURL,
-            scaledWidth.value,
-            scaledHeight.value,
-            scaledTileWidth,
-            scaledTileHeight
-          );
+        if (props.images.length) {
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
         }
       } else if (event.shiftKey) {
         if (event.deltaY > 0) {
@@ -342,18 +328,8 @@ export default defineComponent({
         if (scaledHeight.value < baseHeight) {
           scaledHeight.value = baseHeight;
         }
-        if (props.image) {
-          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
-        } else {
-          const scaledTileWidth = (scaledWidth.value / baseWidth) * 256;
-          const scaledTileHeight = (scaledHeight.value / baseHeight) * 256;
-          geoJS.updateMapSize(
-            tileURL,
-            scaledWidth.value,
-            scaledHeight.value,
-            scaledTileWidth,
-            scaledTileHeight
-          );
+        if (props.images.length) {
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
         }
       }
     };

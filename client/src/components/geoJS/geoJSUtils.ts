@@ -6,10 +6,10 @@ const useGeoJS = () => {
   const geoViewer: Ref<any> = ref();
   const container: Ref<HTMLElement | undefined> = ref();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let quadFeature: any;
-
+  const quadFeatures: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let osmLayer: any;
+  let quadFeatureLayer: any;
+
 
   const thumbnail = ref(false);
 
@@ -37,13 +37,18 @@ const useGeoJS = () => {
     width: number,
     height: number,
     thumbnailVal = false,
-    mapType: 'quad' | 'tile' = 'quad',
-    tileUrl = ""
+    imageCount = 1,
   ) => {
     thumbnail.value = thumbnailVal;
     container.value = sourceContainer;
+    quadFeatures.forEach((feature) => {
+      if (quadFeatureLayer) {
+        quadFeatureLayer.removeFeature(feature);
+      }
+    });
+    quadFeatures.splice(0, quadFeatures.length);
     originalDimensions = { width, height };
-    const params = geo.util.pixelCoordinateParams(container.value, width, height, mapType === 'tile' ? 256 : width, mapType === 'tile' ? 256 : height);
+    const params = geo.util.pixelCoordinateParams(container.value, width, height, width, height);
     if (!container.value) {
       return;
     }
@@ -105,69 +110,40 @@ const useGeoJS = () => {
       right: width,
     });
 
-    if (mapType === 'quad') {
-      const quadFeatureLayer = geoViewer.value.createLayer("feature", {
-        features: ["quad"],
-        autoshareRenderer: false,
-        renderer: "canvas",
-      });
+    quadFeatureLayer = geoViewer.value.createLayer("feature", {
+      features: ["quad"],
+      autoshareRenderer: false,
+      renderer: "canvas",
+    });
       quadFeatureLayer.node().css('filter', 'url(#apply-color-scheme)');
-      quadFeature = quadFeatureLayer.createFeature("quad");
-    } else if (mapType === 'tile') {
-      const params = geo.util.pixelCoordinateParams(
-        container.value, width, height, 256, 256);
-      params.layer.useCredentials = true;
-      params.layer.autoshareRenderer = false;
-      params.attributes = null;
-      params.layer.maxLevel = 18;
-      params.layer.minLevel = 0;
-      params.layer.url = tileUrl;
-
-      osmLayer = geoViewer.value.createLayer('osm', params.layer);
-      resetMapDimensions(width, height);
+    for (let i = 0; i < imageCount; i += 1) {
+      quadFeatures.push(quadFeatureLayer.createFeature("quad"));
     }
   };
 
-  const updateMapSize = (url = '', width = 0, height = 0, tileWidth = 256, tileHeight = 256, resetCam = true) => {
-    const params = geo.util.pixelCoordinateParams(
-      container.value, width, height, tileWidth, tileHeight);
-    params.layer.url = url;
-    const tempLayer = osmLayer;
-    osmLayer = geoViewer.value.createLayer('osm', params.layer);
-    geoViewer.value.deleteLayer(tempLayer);
-    if (resetCam) {
-      resetMapDimensions(width, height, 0.3, resetCam);
-    }
-  };
 
-  const drawImage = (image: HTMLImageElement | string, width = 0, height = 0, resetCam = true) => {
-    let tilewidth = width;
-    let tileheight = height;
-    if (quadFeature && typeof (image) === 'object') {
-      quadFeature.data([
+  const drawImages = (images: HTMLImageElement[], width = 0, height = 0, resetCam = true) => {
+    const tilewidth = width;
+    const tileheight = height;
+    let previousWidth = 0;
+    let totalBaseWidth = 0;
+    images.forEach((image) => totalBaseWidth += image.naturalWidth);
+    images.forEach((image, index) => {
+      const scaledWidth = width / totalBaseWidth;
+      const currentWidth =  image.width * scaledWidth;
+      quadFeatures[index].data([
         {
-          ul: { x: 0, y: 0 },
-          lr: { x: width, y: height },
+          ul: { x: previousWidth, y: 0 },
+          lr: { x: currentWidth, y: height },
           image: image,
         },
       ]).draw();
-    }
+      previousWidth += currentWidth;
+    });
     if (resetCam) {
       resetMapDimensions(width, height, 0.3, resetCam);
     } else {
       const params = geo.util.pixelCoordinateParams(container.value, width, height, tilewidth, tileheight);
-      if (osmLayer && typeof (image) === 'string') {
-        osmLayer.url(image);
-        tilewidth = 256;
-        tileheight = 256;
-
-        osmLayer._options.maxLevel = params.layer.maxLevel;
-        osmLayer._options.tileWidth = params.layer.tileWidth;
-        osmLayer._options.tileHeight = params.layer.tileHeight;
-        osmLayer._options.tilesAtZoom = params.layer.tilesAtZoom;
-        osmLayer._options.tilesMaxBounds = params.layer.tilesMaxBounds;
-
-      }
       const margin = 0.3;
       const { right, bottom } = params.map.maxBounds;
       originalBounds = params.map.maxBounds;
@@ -236,10 +212,9 @@ const useGeoJS = () => {
   return {
     getGeoViewer,
     initializeViewer,
-    drawImage,
+    drawImages,
     resetMapDimensions,
     resetZoom,
-    updateMapSize,
     destroyGeoViewer,
   };
 };

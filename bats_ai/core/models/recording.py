@@ -10,26 +10,6 @@ from .species import Species
 logger = logging.getLogger(__name__)
 
 
-COLORMAP = None
-
-
-class colormap:
-    def __init__(self, colormap=None):
-        self.colormap = colormap
-        self.previous = None
-
-    def __enter__(self):
-        global COLORMAP
-
-        self.previous = COLORMAP
-        COLORMAP = self.colormap
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        global COLORMAP
-
-        COLORMAP = self.previous
-
-
 # TimeStampedModel also provides "created" and "modified" fields
 class Recording(TimeStampedModel, models.Model):
     name = models.CharField(max_length=255)
@@ -63,7 +43,7 @@ class Recording(TimeStampedModel, models.Model):
     def spectrograms(self):
         from bats_ai.core.models import Spectrogram
 
-        query = Spectrogram.objects.filter(recording=self, colormap=COLORMAP).order_by('-created')
+        query = Spectrogram.objects.filter(recording=self).order_by('-created')
         return query.all()
 
     @property

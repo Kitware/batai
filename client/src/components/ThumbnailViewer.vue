@@ -12,8 +12,8 @@ export default defineComponent({
     LayerManager
   },
   props: {
-    image: {
-      type: Object as PropType<HTMLImageElement>,
+    images: {
+      type: Array as PropType<HTMLImageElement[]>,
       required: true,
     },
     spectroInfo: {
@@ -29,8 +29,8 @@ export default defineComponent({
       default: () => ({}),
     },
     selectedId: {
-        type: Number as PropType<number | null>,
-        default: null,
+      type: Number as PropType<number | null>,
+      default: null,
     },
     recordingId: {
       type: String as PropType<string | null>,
@@ -46,134 +46,144 @@ export default defineComponent({
   setup(props) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
-    const initialized  = ref(false);
+    const initialized = ref(false);
     const clientHeight = ref(0);
     const yScale = ref(1);
-    const polyLayerCreated= ref(false);
+    const polyLayerCreated = ref(false);
     let downState: {
       state: any,
       mouse: any,
       center: any,
       rotate: any,
-      zoom:any,
+      zoom: any,
       distanceToOutline: any,
     };
 
     const createPolyLayer = () => {
       const geoViewer = geoJS.getGeoViewer();
-      const featureLayer = geoViewer.value.createLayer('feature', {feattures: ['polygon']});
+      const featureLayer = geoViewer.value.createLayer('feature', { feattures: ['polygon'] });
       const outlineFeature = featureLayer.createFeature('polygon', {});
       const outlineStyle = {
-          stroke: true,
-          strokeColor: 'yellow',
-          strokeWidth: 1,
-          fill: false,
+        stroke: true,
+        strokeColor: 'yellow',
+        strokeWidth: 1,
+        fill: false,
       };
       featureLayer.geoOff();
 
       featureLayer.geoOn(geo.event.mouseclick, (evt: GeoEvent) => {
-            props.parentGeoViewerRef.value.center(evt.geo);
+        props.parentGeoViewerRef.value.center(evt.geo);
       });
       featureLayer.geoOn(geo.event.actiondown, (evt: GeoEvent) => {
-            downState = {
-                state: evt.state,
-                mouse: evt.mouse,
-                center:  props.parentGeoViewerRef.value.center(),
-                zoom:  props.parentGeoViewerRef.value.zoom(),
-                rotate:  props.parentGeoViewerRef.value.rotation(),
-                distanceToOutline: geo.util.distanceToPolygon2d(evt.mouse.geo, outlineFeature.data()[0]) / props.parentGeoViewerRef.value.unitsPerPixel(props.parentGeoViewerRef.value.zoom())
-            };
-        });
-        featureLayer.geoOn(geo.event.actionmove, (evt: GeoEvent) => {
-            switch (evt.state.action) {
-                case 'overview_pan': {
-                    if (!downState ){ //|| downState.distanceToOutline < -this._panOutlineDistance) {
-                        return;
-                    }
-                    const delta = {
-                        x: evt.mouse.geo.x - downState.mouse.geo.x,
-                        y: evt.mouse.geo.y - downState.mouse.geo.y
-                    };
-                    const center = props.parentGeoViewerRef.value.center();
-                    delta.x -= center.x - downState.center.x;
-                    delta.y -= center.y - downState.center.y;
-                    if (delta.x || delta.y) {
-                      props.parentGeoViewerRef.value.center({
-                            x: center.x + delta.x,
-                            y: center.y + delta.y
-                        });
-                    }
-                }
-                    break;
+        downState = {
+          state: evt.state,
+          mouse: evt.mouse,
+          center: props.parentGeoViewerRef.value.center(),
+          zoom: props.parentGeoViewerRef.value.zoom(),
+          rotate: props.parentGeoViewerRef.value.rotation(),
+          distanceToOutline: geo.util.distanceToPolygon2d(evt.mouse.geo, outlineFeature.data()[0]) / props.parentGeoViewerRef.value.unitsPerPixel(props.parentGeoViewerRef.value.zoom())
+        };
+      });
+      featureLayer.geoOn(geo.event.actionmove, (evt: GeoEvent) => {
+        switch (evt.state.action) {
+          case 'overview_pan': {
+            if (!downState) { //|| downState.distanceToOutline < -this._panOutlineDistance) {
+              return;
             }
-        });
-        const onParentPan = () => {
-          const parent = props.parentGeoViewerRef.value;
+            const delta = {
+              x: evt.mouse.geo.x - downState.mouse.geo.x,
+              y: evt.mouse.geo.y - downState.mouse.geo.y
+            };
+            const center = props.parentGeoViewerRef.value.center();
+            delta.x -= center.x - downState.center.x;
+            delta.y -= center.y - downState.center.y;
+            if (delta.x || delta.y) {
+              props.parentGeoViewerRef.value.center({
+                x: center.x + delta.x,
+                y: center.y + delta.y
+              });
+            }
+          }
+            break;
+        }
+      });
+      const onParentPan = () => {
+        const parent = props.parentGeoViewerRef.value;
         if (parent.rotation() !== props.parentGeoViewerRef.value.rotation()) {
-            props.parentGeoViewerRef.value.rotation(parent.rotation());
-            props.parentGeoViewerRef.value.zoom(props.parentGeoViewerRef.value.zoom());
+          props.parentGeoViewerRef.value.rotation(parent.rotation());
+          props.parentGeoViewerRef.value.zoom(props.parentGeoViewerRef.value.zoom());
         }
         const size = parent.size();
         const { top } = parent.bounds();
         outlineFeature.style(outlineStyle);
         const polygon = [[
-            parent.displayToGcs({x: 0, y:  clientHeight.value * 0.5 + top * yScale.value}),
-            parent.displayToGcs({x: size.width, y: clientHeight.value * 0.5 +top * yScale.value}),
-            parent.displayToGcs({x: size.width, y: clientHeight.value * 0.5 +(size.height * yScale.value) + (top * yScale.value)}),
-            parent.displayToGcs({x: 0, y: clientHeight.value * 0.5 + (size.height * yScale.value) + (top * yScale.value)})
+          parent.displayToGcs({ x: 0, y: clientHeight.value * 0.5 + top * yScale.value }),
+          parent.displayToGcs({ x: size.width, y: clientHeight.value * 0.5 + top * yScale.value }),
+          parent.displayToGcs({ x: size.width, y: clientHeight.value * 0.5 + (size.height * yScale.value) + (top * yScale.value) }),
+          parent.displayToGcs({ x: 0, y: clientHeight.value * 0.5 + (size.height * yScale.value) + (top * yScale.value) })
         ]];
         outlineFeature.data(polygon).draw();
-        };
-        onParentPan();
-        // Bind parent pan to the outline feature
-        props.parentGeoViewerRef.value.geoOff(geo.event.pan, onParentPan);
-        props.parentGeoViewerRef.value.geoOn(geo.event.pan, onParentPan);
-        polyLayerCreated.value = true;
+      };
+      onParentPan();
+      // Bind parent pan to the outline feature
+      props.parentGeoViewerRef.value.geoOff(geo.event.pan, onParentPan);
+      props.parentGeoViewerRef.value.geoOn(geo.event.pan, onParentPan);
+      polyLayerCreated.value = true;
     };
 
     watch(() => props.spectroInfo, () => {
-      const { naturalWidth, naturalHeight } = props.image;
+      let naturalWidth = 0;
+      let naturalHeight = 0;
+      props.images.forEach((image) => {
+        naturalWidth += image.naturalWidth;
+        naturalHeight = image.naturalHeight;
+      });
       if (containerRef.value) {
         clientHeight.value = containerRef.value.clientHeight;
       }
       geoJS.resetMapDimensions(naturalWidth, naturalHeight);
       geoJS.getGeoViewer().value.bounds({
-      left: 0,
-      top: 0,
-      bottom: naturalHeight,
-      right: naturalWidth,
-    });
+        left: 0,
+        top: 0,
+        bottom: naturalHeight,
+        right: naturalWidth,
+      });
 
-      const coords = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:0});
-        const end = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:naturalHeight});
-        const diff = coords.y - end.y;
-        // How much space to we have to multiply the size of the image
-        yScale.value = (clientHeight.value *0.5) / diff;
-        if (props.image) {
-          geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
-        }
+      const coords = geoJS.getGeoViewer().value.camera().worldToDisplay({ x: 0, y: 0 });
+      const end = geoJS.getGeoViewer().value.camera().worldToDisplay({ x: 0, y: naturalHeight });
+      const diff = coords.y - end.y;
+      // How much space to we have to multiply the size of the image
+      yScale.value = (clientHeight.value * 0.5) / diff;
+      if (props.images.length) {
+        geoJS.drawImages(props.images, naturalWidth, naturalHeight * yScale.value);
+      }
       initialized.value = true;
       nextTick(() => createPolyLayer());
     });
 
     watch(containerRef, () => {
-      const { naturalWidth, naturalHeight } = props.image;
+      let naturalWidth = 0;
+      let naturalHeight = 0;
+      props.images.forEach((image) => {
+        naturalWidth += image.naturalWidth;
+        naturalHeight = image.naturalHeight;
+      });
       if (containerRef.value) {
         clientHeight.value = containerRef.value.clientHeight;
       }
-      if (containerRef.value && ! geoJS.getGeoViewer().value) {
-        geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true);
+      if (containerRef.value && !geoJS.getGeoViewer().value) {
+        geoJS.initializeViewer(containerRef.value, naturalWidth, naturalHeight, true, props.images.length);
       }
-      const coords = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:0});
-        const end = geoJS.getGeoViewer().value.camera().worldToDisplay({x: 0, y:naturalHeight});
-        const diff = coords.y - end.y;
-        // How much space to we have to multiply the size of the image
-        yScale.value = (clientHeight.value *0.5) / diff;
-      if (props.image) {
-        geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+      const coords = geoJS.getGeoViewer().value.camera().worldToDisplay({ x: 0, y: 0 });
+      const end = geoJS.getGeoViewer().value.camera().worldToDisplay({ x: 0, y: naturalHeight });
+      const diff = coords.y - end.y;
+      // How much space to we have to multiply the size of the image
+      yScale.value = (clientHeight.value * 0.5) / diff;
+      if (props.images.length) {
+        geoJS.drawImages(props.images, naturalWidth, naturalHeight * yScale.value);
       }
       initialized.value = true;
-        nextTick(() => createPolyLayer());
+      nextTick(() => createPolyLayer());
 
     });
 
@@ -190,19 +200,9 @@ export default defineComponent({
 
 <template>
   <div class="video-annotator">
-    <div
-      id="spectro"
-      ref="containerRef"
-      class="playback-container"
-    />
-    <layer-manager
-      v-if="initialized"
-      :geo-viewer-ref="geoViewerRef"
-      :spectro-info="spectroInfo"
-      :y-scale="yScale"
-      thumbnail
-      @selected="$emit('selected',$event)"
-    />
+    <div id="spectro" ref="containerRef" class="playback-container" />
+    <layer-manager v-if="initialized" :geo-viewer-ref="geoViewerRef" :spectro-info="spectroInfo" :y-scale="yScale"
+      thumbnail @selected="$emit('selected', $event)" />
   </div>
 </template>
 
@@ -220,16 +220,19 @@ export default defineComponent({
 
   display: flex;
   flex-direction: column;
+
   .geojs-map {
-    margin:2px;
+    margin: 2px;
+
     &.geojs-map:focus {
       outline: none;
-    }  
+    }
   }
 
   .playback-container {
     flex: 1;
   }
+
   .loadingSpinnerContainer {
     z-index: 20;
     margin: 0;
@@ -239,7 +242,9 @@ export default defineComponent({
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
   }
+
   .geojs-map.annotation-input {
     cursor: inherit;
   }
-}</style>
+}
+</style>

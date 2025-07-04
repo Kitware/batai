@@ -7,25 +7,6 @@ from bats_ai.core.models import Species
 
 logger = logging.getLogger(__name__)
 
-COLORMAP = None
-
-
-class colormap:
-    def __init__(self, colormap=None):
-        self.colormap = colormap
-        self.previous = None
-
-    def __enter__(self):
-        global COLORMAP
-
-        self.previous = COLORMAP
-        COLORMAP = self.colormap
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        global COLORMAP
-
-        COLORMAP = self.previous
-
 
 # TimeStampedModel also provides "created" and "modified" fields
 class NABatRecording(TimeStampedModel, models.Model):
@@ -70,9 +51,7 @@ class NABatRecording(TimeStampedModel, models.Model):
     def spectrograms(self):
         from bats_ai.core.models.nabat import NABatSpectrogram
 
-        query = NABatSpectrogram.objects.filter(nabat_recording=self, colormap=COLORMAP).order_by(
-            '-created'
-        )
+        query = NABatSpectrogram.objects.filter(nabat_recording=self).order_by('-created')
         return query.all()
 
     @property
