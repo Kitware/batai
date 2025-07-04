@@ -3,7 +3,7 @@
 from django.db import migrations, models
 import django.db.models.deletion
 
-import bats_ai.core.models.spectrogram_image
+import bats_ai.core.models
 
 
 def migrate_image_files(apps, schema_editor):
@@ -36,6 +36,34 @@ def migrate_image_files(apps, schema_editor):
                 )
 
 
+def reverse_migrate_image_files(apps, schema_editor):
+    Spectrogram = apps.get_model('core', 'Spectrogram')
+    CompressedSpectrogram = apps.get_model('core', 'CompressedSpectrogram')
+    NABatSpectrogram = apps.get_model('core', 'NABatSpectrogram')
+    NABatCompressedSpectrogram = apps.get_model('core', 'NABatCompressedSpectrogram')
+    SpectrogramImage = apps.get_model('core', 'SpectrogramImage')
+    ContentType = apps.get_model('contenttypes', 'ContentType')
+
+    model_mappings = [
+        (Spectrogram, 'spectrogram'),
+        (CompressedSpectrogram, 'compressed'),
+        (NABatSpectrogram, 'spectrogram'),
+        (NABatCompressedSpectrogram, 'compressed'),
+    ]
+
+    for model, image_type in model_mappings:
+        content_type = ContentType.objects.get_for_model(model)
+        for instance in model.objects.all():
+            try:
+                image = SpectrogramImage.objects.get(
+                    content_type=content_type, object_id=instance.pk, type=image_type, index=0
+                )
+                setattr(instance, 'image_file', image.image_file)  # noqa B010
+                instance.save()
+            except SpectrogramImage.DoesNotExist:
+                continue  # No image found, skip
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ('contenttypes', '0002_remove_content_type_name'),
@@ -43,31 +71,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_image_files, reverse_code=migrations.RunPython.noop),
-        migrations.RemoveField(
-            model_name='compressedspectrogram',
-            name='image_file',
-        ),
-        migrations.RemoveField(
-            model_name='nabatcompressedspectrogram',
-            name='image_file',
-        ),
-        migrations.RemoveField(
-            model_name='nabatspectrogram',
-            name='colormap',
-        ),
-        migrations.RemoveField(
-            model_name='nabatspectrogram',
-            name='image_file',
-        ),
-        migrations.RemoveField(
-            model_name='spectrogram',
-            name='colormap',
-        ),
-        migrations.RemoveField(
-            model_name='spectrogram',
-            name='image_file',
-        ),
         migrations.CreateModel(
             name='SpectrogramImage',
             fields=[
@@ -103,5 +106,30 @@ class Migration(migrations.Migration):
             options={
                 'ordering': ['index'],
             },
+        ),
+        migrations.RunPython(migrate_image_files, reverse_code=reverse_migrate_image_files),
+        migrations.RemoveField(
+            model_name='compressedspectrogram',
+            name='image_file',
+        ),
+        migrations.RemoveField(
+            model_name='nabatcompressedspectrogram',
+            name='image_file',
+        ),
+        migrations.RemoveField(
+            model_name='nabatspectrogram',
+            name='colormap',
+        ),
+        migrations.RemoveField(
+            model_name='nabatspectrogram',
+            name='image_file',
+        ),
+        migrations.RemoveField(
+            model_name='spectrogram',
+            name='colormap',
+        ),
+        migrations.RemoveField(
+            model_name='spectrogram',
+            name='image_file',
         ),
     ]

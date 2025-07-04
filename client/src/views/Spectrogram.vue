@@ -65,11 +65,12 @@ export default defineComponent({
       sideTab,
       configuration,
     } = useState();
-    const image: Ref<HTMLImageElement> = ref(new Image());
+    const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
+    const loadedImages: Ref<boolean[]> = ref([]);
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
     const compressed = ref(configuration.value.spectrogram_view === 'compressed');
@@ -113,15 +114,30 @@ export default defineComponent({
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
-      if (response.data["url"]) {
-        image.value.src = response.data['url'];
+      if (response.data.urls.length) {
+        const urls = response.data.urls;
+        images.value = [];
+        loadedImages.value = [];
+        loadedImage.value = false;
+        urls.forEach((url) => {
+          const image = new Image();
+          image.src = url;
+          images.value.push(image);
+          loadedImages.value.push(false);
+        });
+        images.value.forEach((image, index) => {
+          image.onload = () => {
+            loadedImages.value[index] = true;
+            if (loadedImages.value.every((item) => (item))) {
+              loadedImage.value = true;
+            }
+          };
+
+        });
       } else {
         // TODO Error Out if there is no URL
-        console.error("No URL found for the spectrogram");
+        console.error("No URLs found for the spectrogram");
       }
-      image.value.onload = () => {
-        loadedImage.value = true;
-      };
       spectroInfo.value = response.data["spectroInfo"];
       if (response.data['compressed'] && spectroInfo.value) {
         spectroInfo.value.start_times = response.data.compressed.start_times;
@@ -252,7 +268,7 @@ export default defineComponent({
       annotationState,
       compressed,
       loadedImage,
-      image,
+      images,
       spectroInfo,
       annotations,
       selectedId,
@@ -503,7 +519,7 @@ export default defineComponent({
       </v-toolbar>
       <spectrogram-viewer
         v-if="loadedImage && spectroInfo"
-        :image="image"
+        :images="images"
         :spectro-info="spectroInfo"
         :recording-id="id"
         :compressed="compressed"
@@ -516,7 +532,7 @@ export default defineComponent({
       />
       <thumbnail-viewer
         v-if="loadedImage && parentGeoViewerRef"
-        :image="image"
+        :images="images"
         :spectro-info="spectroInfo"
         :recording-id="id"
         :parent-geo-viewer-ref="parentGeoViewerRef"
