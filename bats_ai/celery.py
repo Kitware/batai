@@ -1,5 +1,6 @@
 from celery import Celery
 
+# Using a string config_source means the worker doesn't have to serialize
 # the configuration object to child processes.
 app = Celery(config_source='django.conf:settings', namespace='CELERY')
 

@@ -15,7 +15,7 @@ dependencies = [
     # TODO: move this pinning to the uv lock file
     "django[argon2]>=4.2, <5",
     "django-ninja",
-    "django-allauth==0.63.6",
+    "django-allauth",
     "django-auth-style",
     "django-cors-headers",
     "django-environ",
@@ -29,6 +29,7 @@ dependencies = [
     "django-storages[s3]",
     "django-stubs-ext",
     "psycopg[binary]",
+    "pydantic",
     "rich",
     "whitenoise[brotli]",
     # Spectrogram Generation
@@ -42,8 +43,8 @@ dependencies = [
     "opencv-python-headless",
     "tqdm",
     # large image
-    "django-large-image>=0.10.0",
     "large-image[rasterio,pil]>=1.22",
+    "django-large-image",
     "rio-cogeo",
     # guano metadata
     "guano",
@@ -96,7 +97,6 @@ test = [
   "factory-boy",
   "pytest",
   "pytest-django",
-  "pytest-factoryboy", # TODO: remove pytest-factoryboy, it's broken
   "pytest-mock",
   # Enable with "pytest --random-order ..."
   "pytest-random-order",
@@ -160,6 +160,8 @@ filterwarnings = [
   "error",
   # pytest often causes unclosed socket warnings
   "ignore:unclosed <socket\\.socket:ResourceWarning",
+  # https://github.com/vitalik/django-ninja/issues/1245
+  "ignore:Support for class-based `config` is deprecated:pydantic.warnings.PydanticDeprecatedSince20",
   # https://github.com/celery/kombu/issues/1339
   "ignore:SelectableGroups dict interface is deprecated:DeprecationWarning:kombu",
   "ignore::django.utils.deprecation.RemovedInDjango50Warning", # TODO: is this necessary?

@@ -195,6 +195,7 @@ dependencies = [
     { name = "onnxruntime" },
     { name = "opencv-python-headless" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "pydantic" },
     { name = "rich" },
     { name = "rio-cogeo" },
     { name = "tqdm" },
@@ -236,7 +237,6 @@ test = [
     { name = "factory-boy" },
     { name = "pytest" },
     { name = "pytest-django" },
-    { name = "pytest-factoryboy" },
     { name = "pytest-mock" },
     { name = "pytest-random-order" },
     { name = "pytest-repeat" },
@@ -251,7 +251,7 @@ type = [
 requires-dist = [
     { name = "celery" },
     { name = "django", extras = ["argon2"], specifier = ">=4.2,<5" },
-    { name = "django-allauth", specifier = "==0.63.6" },
+    { name = "django-allauth" },
     { name = "django-auth-style" },
     { name = "django-browser-reload", marker = "extra == 'development'" },
     { name = "django-celery-results" },
@@ -261,7 +261,7 @@ requires-dist = [
     { name = "django-environ" },
     { name = "django-extensions" },
     { name = "django-filter" },
-    { name = "django-large-image", specifier = ">=0.10.0" },
+    { name = "django-large-image" },
     { name = "django-minio-storage" },
     { name = "django-ninja" },
     { name = "django-oauth-toolkit" },
@@ -283,6 +283,7 @@ requires-dist = [
     { name = "onnxruntime" },
     { name = "opencv-python-headless" },
     { name = "psycopg", extras = ["binary"] },
+    { name = "pydantic" },
     { name = "rich" },
     { name = "rio-cogeo" },
     { name = "tqdm" },
@@ -315,7 +316,6 @@ test = [
     { name = "factory-boy" },
     { name = "pytest" },
     { name = "pytest-django" },
-    { name = "pytest-factoryboy" },
     { name = "pytest-mock" },
     { name = "pytest-random-order" },
     { name = "pytest-repeat" },
@@ -887,12 +887,13 @@ argon2 = [
 
 [[package]]
 name = "django-allauth"
-version = "0.63.6"
+version = "65.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "asgiref" },
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/6f/3ccc016b901d7e5a1178e78671048f889d967091586cdce2cd9d590da407/django_allauth-0.63.6.tar.gz", hash = "sha256:f15f49defb09e0604dad5214e53a69a1f723cb03176bb115c8930bcd19b91749", size = 1082450, upload-time = "2024-07-12T20:49:32.229Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9d/a3/00aa9d5bb5df4f7464495675074dc11107c08b3eea3462fb3edc059d71e1/django_allauth-65.9.0.tar.gz", hash = "sha256:a06bca9974df44321e94c33bcf770bb6f924d1a44b57defbce4d7ec54a55483e", size = 1710514, upload-time = "2025-06-01T19:21:07.771Z" }
 
 [[package]]
 name = "django-auth-style"
@@ -1005,7 +1006,7 @@ wheels = [
 
 [[package]]
 name = "django-large-image"
-version = "0.10.0"
+version = "0.10.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
@@ -1014,9 +1015,9 @@ dependencies = [
     { name = "filelock" },
     { name = "large-image" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/65/d4/2ef11c816268cff24f70658bbcad600a361e3f937b65a24404895dcf5ef1/django-large-image-0.10.0.tar.gz", hash = "sha256:97b564d8eee6adf5b8a65cf71cdd5cea5362fa794ff80583e045e028d03817bd", size = 949871, upload-time = "2023-05-29T22:30:22.895Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/92/38/cdfb2746e3388dcba5aeaef29a34ec9b70a8eaa7495224586a7f13e4d374/django_large_image-0.10.1.tar.gz", hash = "sha256:8049ce59dc1530a04488ebc713337e56c0acfedceda6956bd04d5dd60fe00012", size = 950090, upload-time = "2025-07-07T20:08:12.745Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/c7/a93f5ebfdd726dbd195210c19f1fba764352c8852f3f075abda96fb1a8c4/django_large_image-0.10.0-py3-none-any.whl", hash = "sha256:482a26893faec3856d039fc9d6926fd6baaa41477d1f7bdb23f3558ba2686d0c", size = 956532, upload-time = "2023-05-29T22:30:20.229Z" },
+    { url = "https://files.pythonhosted.org/packages/cf/5f/0a878c930f86f5e70c81fb13fdaf421d5887acf4e4c68993985fe04258ca/django_large_image-0.10.1-py3-none-any.whl", hash = "sha256:9340ca4aefb4d1dc640bf9cfce25a5c868f5fb4ea24d68556aa9335e9e033c7e", size = 956571, upload-time = "2025-07-07T20:08:10.971Z" },
 ]
 
 [[package]]
@@ -2890,22 +2891,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b1/fb/55d580352db26eb3d59ad50c64321ddfe228d3d8ac107db05387a2fadf3a/pytest_django-4.11.1.tar.gz", hash = "sha256:a949141a1ee103cb0e7a20f1451d355f83f5e4a5d07bdd4dcfdd1fd0ff227991", size = 86202, upload-time = "2025-04-03T18:56:09.338Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/ac/bd0608d229ec808e51a21044f3f2f27b9a37e7a0ebaca7247882e67876af/pytest_django-4.11.1-py3-none-any.whl", hash = "sha256:1b63773f648aa3d8541000c26929c1ea63934be1cfa674c76436966d73fe6a10", size = 25281, upload-time = "2025-04-03T18:56:07.678Z" },
-]
-
-[[package]]
-name = "pytest-factoryboy"
-version = "2.8.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "factory-boy" },
-    { name = "inflection" },
-    { name = "packaging" },
-    { name = "pytest" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/91/8a/a0f9c58bf176b0d39b630a6e29cccebec9a429dfeb62204bbb9b632fb798/pytest_factoryboy-2.8.1.tar.gz", hash = "sha256:2221d48b31b8b8ccaa739c6a162fb50a43a4de6dff6043f249d2807a3462548d", size = 16906, upload-time = "2025-07-01T04:05:38.901Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/2f/4f73a79196b4acb0f902520a805caa22f8ba0adbecdfb028a371404c2537/pytest_factoryboy-2.8.1-py3-none-any.whl", hash = "sha256:91c762cb236bf34b11efdf2e54bafae33114488235621e8b2c4bd9fd77838784", size = 16413, upload-time = "2025-07-01T04:05:37.344Z" },
 ]
 
 [[package]]
