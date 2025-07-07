@@ -41,6 +41,8 @@ ARG BUILD_ENV
 # The bind mount will override this directory
 COPY ./ /opt/django-project/
 
+RUN mv /opt/django-project/assets /opt/assets
+
 # hadolint ignore=DL3013
 RUN set -ex \
  # Default to 'dev' if BUILD_ENV is empty

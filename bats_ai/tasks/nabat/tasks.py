@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import tempfile
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 import requests
 
@@ -28,7 +29,7 @@ def generate_spectrograms(
             file_response = requests.get(presigned_url, stream=True)
             if file_response.status_code == 200:
                 audio_file = Path(f'{tmpdir}/audio_file.wav')
-                with open(audio_file, 'rb') as temp_file:
+                with open(audio_file, 'wb') as temp_file:
                     for chunk in file_response.iter_content(chunk_size=8192):
                         temp_file.write(chunk)
         except Exception as e:
@@ -63,9 +64,13 @@ def generate_spectrograms(
         for idx, img_path in enumerate(results['normal']['paths']):
             with open(img_path, 'rb') as f:
                 SpectrogramImage.objects.get_or_create(
-                    content_object=spectrogram,
+                    content_type=ContentType.objects.get_for_model(spectrogram),
+                    object_id=spectrogram.id,
                     index=idx,
-                    defaults={'image_file': File(f, name=os.path.basename(img_path))},
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(img_path)),
+                        'type': 'spectrogram',
+                    },
                 )
 
         compressed = results['compressed']
@@ -73,7 +78,7 @@ def generate_spectrograms(
             nabat_recording=nabat_recording,
             spectrogram=spectrogram,
             defaults={
-                'length': len(compressed['paths']),
+                'length': compressed['width'],
                 'widths': compressed['widths'],
                 'starts': compressed['starts'],
                 'stops': compressed['stops'],
@@ -85,9 +90,13 @@ def generate_spectrograms(
         for idx, img_path in enumerate(compressed['paths']):
             with open(img_path, 'rb') as f:
                 SpectrogramImage.objects.get_or_create(
-                    content_object=compressed_obj,
+                    content_type=ContentType.objects.get_for_model(compressed_obj),
+                    object_id=compressed_obj.id,
                     index=idx,
-                    defaults={'image_file': File(f, name=os.path.basename(img_path))},
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(img_path)),
+                        'type': 'compressed',
+                    },
                 )
 
         try:
@@ -100,7 +109,7 @@ def generate_spectrograms(
 
                 predict_results = predict_from_compressed(compressed_obj)
                 label = predict_results['label']
-                score = predict_results['label']
+                score = predict_results['score']
                 confs = predict_results['confs']
                 confidences = [
                     {'label': key, 'value': float(value)} for key, value in confs.items()

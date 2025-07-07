@@ -134,7 +134,7 @@ const useGeoJS = () => {
       quadFeatures[index].data([
         {
           ul: { x: previousWidth, y: 0 },
-          lr: { x: currentWidth, y: height },
+          lr: { x: previousWidth + currentWidth, y: height },
           image: image,
         },
       ]).draw();

@@ -2,6 +2,7 @@ import os
 import tempfile
 
 from celery import shared_task
+from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 
 from bats_ai.core.models import (
@@ -47,9 +48,13 @@ def recording_compute_spectrogram(recording_id: int):
         for idx, img_path in enumerate(results['normal']['paths']):
             with open(img_path, 'rb') as f:
                 SpectrogramImage.objects.get_or_create(
-                    content_object=spectrogram,
+                    content_type=ContentType.objects.get_for_model(spectrogram),
+                    object_id=spectrogram.id,
                     index=idx,
-                    defaults={'image_file': File(f, name=os.path.basename(img_path))},
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(img_path)),
+                        'type': 'spectrogram',
+                    },
                 )
 
         # Create or get CompressedSpectrogram
@@ -58,7 +63,7 @@ def recording_compute_spectrogram(recording_id: int):
             recording=recording,
             spectrogram=spectrogram,
             defaults={
-                'length': len(compressed['paths']),
+                'length': compressed['width'],
                 'widths': compressed['widths'],
                 'starts': compressed['starts'],
                 'stops': compressed['stops'],
@@ -70,16 +75,20 @@ def recording_compute_spectrogram(recording_id: int):
         for idx, img_path in enumerate(compressed['paths']):
             with open(img_path, 'rb') as f:
                 SpectrogramImage.objects.get_or_create(
-                    content_object=compressed_obj,
+                    content_type=ContentType.objects.get_for_model(compressed_obj),
+                    object_id=compressed_obj.id,
                     index=idx,
-                    defaults={'image_file': File(f, name=os.path.basename(img_path))},
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(img_path)),
+                        'type': 'compressed',
+                    },
                 )
 
         config = Configuration.objects.first()
         if config and config.run_inference_on_upload:
             predict_results = predict_from_compressed(compressed_obj)
             label = predict_results['label']
-            score = predict_results['label']
+            score = predict_results['score']
             confs = predict_results['confs']
             confidences = [{'label': key, 'value': float(value)} for key, value in confs.items()]
             sorted_confidences = sorted(confidences, key=lambda x: x['value'], reverse=True)

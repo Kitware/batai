@@ -40,11 +40,13 @@ class NABatSpectrogram(TimeStampedModel, models.Model):
     def image_np(self):
         """Combined image as a single numpy array by horizontal stacking."""
         pil_images = self.image_pil_list
+        if not pil_images:
+            return None  # Or raise an appropriate exception if this is unexpected
+
         np_images = [np.array(img) for img in pil_images]
         try:
             combined = np.hstack(np_images)
         except ValueError:
-            # Fallback: stack along axis=0 if shapes don't match
             combined = np.concatenate(np_images, axis=0)
         return combined
 

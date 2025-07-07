@@ -5,12 +5,15 @@ from django.dispatch import receiver
 
 
 def spectrogram_image_upload_to(instance, filename):
-    if not instance.recording_id or not instance.spectrogram_id:
-        raise ValueError('recording and spectrogram must be saved before saving the image file.')
+    related = instance.content_object
 
-    return (
-        f'recording_{instance.recording.id}/{instance.type}" f"/image_{instance.index}_{filename}'
-    )
+    recording = getattr(related, 'recording', None) or getattr(related, 'nabat_recording', None)
+    recording_id = getattr(recording, 'id', None)
+
+    if not recording_id:
+        raise ValueError('Related content must have a recording or nabat_recording.')
+
+    return f'recording_{recording_id}/{instance.type}/image_{instance.index}_{filename}'
 
 
 class SpectrogramImage(models.Model):

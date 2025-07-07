@@ -70,6 +70,8 @@ def predict_from_compressed(
         confs (dict): mapping label->confidence score for all labels
     """
     img = compressed_object.image_np
+    if img is None:
+        raise ValueError('No compressed spectrogram images found for prediction.')
 
     # Load model path relative to this file
     relative = ('..',) * 4
@@ -129,10 +131,9 @@ def predict_from_compressed(
     prediction = np.argmax(outputs)
     label = labels[prediction]
     score = outputs[prediction]
-
     confs = dict(zip(labels, outputs))
 
-    return {'label': label, 'score': score, 'confgs': confs}
+    return {'label': label, 'score': score, 'confs': confs}
 
 
 def generate_spectrogram_assets(
@@ -223,13 +224,13 @@ def generate_spectrogram_assets(
     )
     os.makedirs(os.path.dirname(normal_out_path_base), exist_ok=True)
     normal_paths = save_img(normal_img_resized, normal_out_path_base)
-
+    real_duration = math.ceil(duration * 1e3)
     compressed_img, compressed_paths, widths, starts, stops = generate_compressed(
-        normal_img_resized, duration, output_base
+        normal_img_resized, real_duration, output_base
     )
 
     result = {
-        'duration': duration,
+        'duration': real_duration,
         'freq_min': freq_low,
         'freq_max': freq_high,
         'normal': {
@@ -320,6 +321,9 @@ def generate_compressed(img: np.ndarray, duration: float, output_base: str):
             if not found:
                 break
 
+        starts = [start for start, _ in ranges]
+        stops = [stop for _, stop in ranges]
+
         segments = []
         domain = img.shape[1]
         widths = []
@@ -338,6 +342,8 @@ def generate_compressed(img: np.ndarray, duration: float, output_base: str):
         if threshold < 0:
             compressed_img = img.copy()
             widths = []
+            starts = []
+            stops = []
             break
 
     # Convert starts and stops to time values relative to duration
