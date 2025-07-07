@@ -201,8 +201,6 @@ export default class LegendLayer {
         const width = this.scaledWidth > compressedWidth ? (this.scaledWidth / compressedWidth) * widths[i] : widths[i];
         const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  50)  && leftOffset !== 0 && yOffset !== 0;
         const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  50)  && leftOffset !== 0 && topOffset !== 0;
-     
-
       if (!bottomWithinYAxisStart) {
         this.lineDataX.push({
           line: {
@@ -433,6 +431,20 @@ export default class LegendLayer {
       .draw();
     const combinedTextData = this.textDataX.concat(this.textDataY);
     this.textLayer.data(combinedTextData).style(this.createTextStyle()).draw();
+  }
+
+  findNonFiniteCoordinates(lines: LineData[]): [number, number, number][] {
+    const invalidCoords: [number, number, number][] = [];
+
+    lines.forEach((lineData, lineIndex) => {
+      lineData.line.coordinates.forEach(([lon, lat], coordIndex) => {
+        if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+          invalidCoords.push([lineIndex, coordIndex, !Number.isFinite(lon) ? lon : lat]);
+        }
+      });
+    });
+
+    return invalidCoords;
   }
 
   disable() {
