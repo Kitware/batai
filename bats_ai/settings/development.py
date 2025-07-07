@@ -1,12 +1,11 @@
 from django_extensions.utils import InternalIPS
-from resonant_settings.allauth import *
-from resonant_settings.oauth_toolkit import *
-from resonant_settings.testing.minio_storage import *
 
 from .base import *
 
 # Import these afterwards, to override
 from resonant_settings.development.celery import *  # isort: skip
+from resonant_settings.development.debug_toolbar import *  # isort: skip
+from resonant_settings.testing.minio_storage import *  # isort: skip
 
 INSTALLED_APPS += [
     'debug_toolbar',
@@ -33,15 +32,7 @@ MIDDLEWARE += [
 # to add new settings as individual feature flags.
 DEBUG = True
 
-# TODO once upsteam defines this in a module, import this config
-DEBUG_TOOLBAR_CONFIG = {
-    # The default size often is too small, causing an inability to view queries
-    'RESULTS_CACHE_SIZE': 250,
-    # If this setting is True, large sql queries can cause the page to render slowly
-    'PRETTIFY_SQL': False,
-}
-
-SECRET_KEY = 'secretkey'
+SECRET_KEY = 'insecure-secret'
 
 # This is typically only overridden when running from Docker.
 INTERNAL_IPS = InternalIPS(env.list('DJANGO_INTERNAL_IPS', cast=str, default=['127.0.0.1']))
@@ -54,7 +45,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = env.list(
 STORAGES['default'] = {
     'BACKEND': 'minio_storage.storage.MinioMediaStorage',
 }
-from resonant_settings.testing.minio_storage import *  # isort: skip
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
@@ -65,7 +55,3 @@ OAUTH2_PROVIDER['REQUEST_APPROVAL_PROMPT'] = 'force'
 SHELL_PLUS_IMPORTS = [
     'from bats_ai.tasks import tasks',
 ]
-
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False

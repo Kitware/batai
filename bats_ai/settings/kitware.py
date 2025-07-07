@@ -13,9 +13,9 @@ from .base import *
 
 SECRET_KEY: str = env.str('DJANGO_SECRET_KEY')
 
-baseHost = 'batdetectai.kitware.com'
+BASE_HOST = 'batdetectai.kitware.com'
 if 'SERVERHOSTNAME' in os.environ:
-    baseHost = os.environ['SERVERHOSTNAME']
-ALLOWED_HOSTS = [baseHost]
-CSRF_TRUSTED_ORIGINS = [f'https:/{baseHost}', f'https://{baseHost}']
-CORS_ORIGIN_WHITELIST = [f'https:/{baseHost}', f'https://{baseHost}']
+    BASE_HOST = os.environ['SERVERHOSTNAME']
+ALLOWED_HOSTS = [BASE_HOST]
+CSRF_TRUSTED_ORIGINS = [f'https:/{BASE_HOST}', f'https://{BASE_HOST}']
+CORS_ORIGIN_WHITELIST = [f'https:/{BASE_HOST}', f'https://{BASE_HOST}']

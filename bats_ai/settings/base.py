@@ -17,11 +17,6 @@ django_stubs_ext.monkeypatch()
 
 env = Env()
 
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 
 ROOT_URLCONF = 'bats_ai.urls'
@@ -48,13 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'django_filters',
-    'drf_yasg',
     'oauth2_provider',
     'resonant_utils',
     's3_file_field',
     # Bat AI
     'django.contrib.gis',
-    'django_large_image',
     'django_celery_results',
 ]
 
@@ -88,8 +81,7 @@ DATABASES = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STORAGES = {
-    # Inject the default storage in particular run configurations
-    'default': None,
+    # Inject the "default" storage in particular run configurations
     'staticfiles': {
         # CompressedManifestStaticFilesStorage does not work properly with drf-
         # https://github.com/axnsan12/drf-yasg/issues/761
@@ -114,8 +106,8 @@ CORS_ALLOWED_ORIGIN_REGEXES: list[str] = env.list(
     'DJANGO_CORS_ALLOWED_ORIGIN_REGEXES', cast=str, default=[]
 )
 
-WSGI_APPLICATION = 'bats_ai.wsgi.application'
 FILE_UPLOAD_HANDLERS = [
+    # TODO: why is this needed? It excludes "MemoryFileUploadHandler"
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 ]
 CELERY_RESULT_BACKEND = 'django-db'
@@ -126,8 +118,3 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 86400,  # every 24 hours (in seconds)
     },
 }
-SHELL_PLUS_PRINT_SQL = True
-SHELL_PLUS_PRINT_SQL_TRUNCATE = None
-RUNSERVER_PLUS_PRINT_SQL_TRUNCATE = None
-
-# TODO once upstream releases this as a module, import this config
