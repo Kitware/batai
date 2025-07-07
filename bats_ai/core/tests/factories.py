@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 import factory.django
 
 
-class UserFactory(factory.django.DjangoModelFactory):
+class UserFactory(factory.django.DjangoModelFactory[User]):
     class Meta:
         model = User
 
@@ -12,7 +12,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     last_name = factory.Faker('last_name')
 
 
-class SuperuserFactory(factory.django.DjangoModelFactory):
+class SuperuserFactory(factory.django.DjangoModelFactory[User]):
     class Meta:
         model = User
         django_get_or_create = ('email',)

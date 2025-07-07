@@ -4,7 +4,7 @@ import logging
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from ninja import Router
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from bats_ai.core.models import ExportedAnnotationFile
 
@@ -20,8 +20,7 @@ class ExportedAnnotationFileSchema(BaseModel):
     created: datetime
     expiresAt: datetime | None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.get('/', response=list[ExportedAnnotationFileSchema])

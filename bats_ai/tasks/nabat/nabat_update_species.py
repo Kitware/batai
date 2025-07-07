@@ -31,7 +31,7 @@ query GetAllSpeciesOptions {
 
 def get_or_create_processing_task(request_id):
     """
-    Fetches or creates a ProcessingTask with the given metadata and status filters.
+    Fetch or creat a ProcessingTask with the given metadata and status filters.
 
     Args:
         request_id (str): The Celery request ID to store in the task.

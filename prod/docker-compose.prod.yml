@@ -4,7 +4,7 @@ services:
     restart: always
     image: traefik
     container_name: traefik
-    env_file: ./dev/.env.prod.docker-compose
+    env_file: ./.env.kitware-production.template
     networks:
       - django-nginx
     command: >
