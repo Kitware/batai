@@ -6,7 +6,9 @@ const useGeoJS = () => {
   const geoViewer: Ref<any> = ref();
   const container: Ref<HTMLElement | undefined> = ref();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let quadFeature: any;
+  const quadFeatures: any[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let quadFeatureLayer: any;
 
   const thumbnail = ref(false);
 
@@ -33,10 +35,17 @@ const useGeoJS = () => {
     sourceContainer: HTMLElement,
     width: number,
     height: number,
-    thumbnailVal = false
+    thumbnailVal = false,
+    imageCount = 1,
   ) => {
     thumbnail.value = thumbnailVal;
     container.value = sourceContainer;
+    quadFeatures.forEach((feature) => {
+      if (quadFeatureLayer) {
+        quadFeatureLayer.removeFeature(feature);
+      }
+    });
+    quadFeatures.splice(0, quadFeatures.length);
     originalDimensions = { width, height };
     const params = geo.util.pixelCoordinateParams(container.value, width, height);
     if (!container.value) {
@@ -100,28 +109,35 @@ const useGeoJS = () => {
       right: width,
     });
 
-    const quadFeatureLayer = geoViewer.value.createLayer("feature", {
-      features: ["quad"],
-      autoshareRenderer: false,
-      renderer: "canvas",
+    quadFeatures.forEach((feature) => {
+      if (quadFeatureLayer) {
+        quadFeatureLayer.removeFeature(feature);
+      }
     });
+    quadFeatures.splice(0, quadFeatures.length);
     quadFeatureLayer.node().css("filter", "url(#apply-color-scheme)");
-    quadFeature = quadFeatureLayer.createFeature("quad");
+    for (let i = 0; i < imageCount; i += 1) {
+      quadFeatures.push(quadFeatureLayer.createFeature("quad"));
+    }
   };
 
 
-  const drawImage = (image: HTMLImageElement | string, width = 0, height = 0, resetCam = true) => {
-    if (quadFeature && typeof image === "object") {
-      quadFeature
-        .data([
-          {
-            ul: { x: 0, y: 0 },
-            lr: { x: width, y: height },
-            image: image,
-          },
-        ])
-        .draw();
-    }
+  const drawImages = (images: HTMLImageElement[], width = 0, height = 0, resetCam = true) => {
+    let previousWidth = 0;
+    let totalBaseWidth = 0;
+    images.forEach((image) => totalBaseWidth += image.naturalWidth);
+    images.forEach((image, index) => {
+      const scaledWidth = width / totalBaseWidth;
+      const currentWidth =  image.width * scaledWidth;
+      quadFeatures[index].data([
+        {
+          ul: { x: previousWidth, y: 0 },
+          lr: { x: previousWidth + currentWidth, y: height },
+          image: image,
+        },
+      ]).draw();
+      previousWidth += currentWidth;
+    });
     if (resetCam) {
       resetMapDimensions(width, height, 0.3, resetCam);
     } else {
@@ -196,10 +212,9 @@ const useGeoJS = () => {
   return {
     getGeoViewer,
     initializeViewer,
-    drawImage,
+    drawImages,
     resetMapDimensions,
     resetZoom,
-    updateMapSize,
     destroyGeoViewer,
   };
 };
