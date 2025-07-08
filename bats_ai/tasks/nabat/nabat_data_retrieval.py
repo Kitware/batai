@@ -174,6 +174,11 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
                 nabat_recording = create_nabat_recording_from_response(
                     batch_data, recording_id, survey_event_id
                 )
+                if not nabat_recording:
+                    processing_task.status = ProcessingTask.Status.ERROR
+                    processing_task.error = 'Failed to create NABatRecording from API response.'
+                    processing_task.save()
+                    raise Exception('Failed to create NABatRecording from API response.')
 
                 # Call generate_spectrogram with the nabat_recording and the temporary file
                 logger.info('Generating spectrogram...')
@@ -205,9 +210,9 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
                 except Exception as e:
                     logger.error(f'Error Performing Prediction: {e}')
                     processing_task.status = ProcessingTask.Status.ERROR
-                    processing_task.error = f'Error extracting presigned URL: {e}'
+                    processing_task.error = f'Error Performing Prediction: {e}'
                     processing_task.save()
-                    raise
+                    raise Exception(f'Error Performing Prediction: {e}')
                 processing_task.status = ProcessingTask.Status.COMPLETE
                 processing_task.save()
 
@@ -216,11 +221,12 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
                 processing_task.error = f'Failed to download file: {file_response.status_code}'
                 processing_task.save()
                 logger.error(f'Failed to download file: {file_response.status_code}')
+                raise Exception(f'Failed to download file: {file_response.status_code}')
     except Exception as e:
         processing_task.status = ProcessingTask.Status.ERROR
         processing_task.error = str(e)
         processing_task.save()
-        raise
+        raise Exception(f'Error during file processing: {e}')
 
 
 def create_nabat_recording_from_response(response_data, recording_id, survey_event_id):
@@ -256,21 +262,21 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
         ]['nodes']
         if len(acoustic_batches_nodes) > 0:
             batch_data = acoustic_batches_nodes[0]['acousticFileBatchesByBatchId']['nodes']
-        for node in batch_data:
-            species_id = node.get('manualId', False)
-            if species_id is not False:
-                annotation = NABatRecordingAnnotation.objects.create(
-                    nabat_recording=nabat_recording,
-                    user_email=node['vetter'],
-                )
-                species = Species.objects.get(pk=species_id)
-                annotation.species.add(species)
+            for node in batch_data:
+                species_id = node.get('manualId', False)
+                if species_id is not False:
+                    annotation = NABatRecordingAnnotation.objects.create(
+                        nabat_recording=nabat_recording,
+                        user_email=node['vetter'],
+                    )
+                    species = Species.objects.get(pk=species_id)
+                    annotation.species.add(species)
 
         return nabat_recording
 
     except KeyError as e:
         logger.error(f'Missing key: {e}')
-        return None
+        raise Exception(f'Missing key in response data: {e}')
     except Exception as e:
         logger.error(f'Error creating NABatRecording: {e}')
-        return None
+        raise Exception(f'Error creating NABatRecording: {e}')
