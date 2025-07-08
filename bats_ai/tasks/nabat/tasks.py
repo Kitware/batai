@@ -30,14 +30,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
 
 
-def generate_spectrogram(nabat_recording, file, colormap=None, dpi=520):
+def generate_spectrogram(nabat_recording, file_field, colormap=None, dpi=520):
     try:
-        sig, sr = librosa.load(file, sr=None)
+        # Make sure file is opened properly
+        if hasattr(file_field, 'open'):
+            file_field.open('rb')
+        with file_field as f:
+            sig, sr = librosa.load(f, sr=None)
         duration = len(sig) / sr
     except Exception as e:
         logging.error(f'Error loading file: {e}')
         raise
-
     size_mod = 1
     high_res = False
 
