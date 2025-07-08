@@ -1,8 +1,10 @@
+from PIL import Image
 from django.contrib.postgres.fields import ArrayField
 from django.core.files.storage import default_storage
 from django.db import models
 from django.dispatch import receiver
 from django_extensions.db.models import TimeStampedModel
+import numpy as np
 
 from .nabat_recording import NABatRecording
 from .nabat_spectrogram import NABatSpectrogram
@@ -22,6 +24,19 @@ class NABatCompressedSpectrogram(TimeStampedModel, models.Model):
     @property
     def image_url(self):
         return default_storage.url(self.image_file.name)
+
+    @property
+    def image_np(self):
+        return np.array(self.image)
+
+    @property
+    def image_pil(self):
+        return self.image
+
+    @property
+    def image(self):
+        img = Image.open(self.image_file)
+        return img
 
     class Meta:
         verbose_name = 'NABat Compressed Spectrogram'
