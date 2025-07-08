@@ -115,6 +115,13 @@ const useGeoJS = () => {
       }
     });
     quadFeatures.splice(0, quadFeatures.length);
+    quadFeatureLayer = geoViewer.value.createLayer("feature", {
+      features: ["quad"],
+      autoshareRenderer: false,
+      renderer: "canvas",
+    });
+
+    quadFeatures.splice(0, quadFeatures.length);
     quadFeatureLayer.node().css("filter", "url(#apply-color-scheme)");
     for (let i = 0; i < imageCount; i += 1) {
       quadFeatures.push(quadFeatureLayer.createFeature("quad"));
