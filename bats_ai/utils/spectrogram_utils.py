@@ -3,6 +3,7 @@ import json
 import logging
 import math
 import os
+from pathlib import Path
 from typing import TypedDict
 
 from PIL import Image
@@ -73,10 +74,12 @@ def predict_from_compressed(
     if img is None:
         raise ValueError('No compressed spectrogram images found for prediction.')
 
+    # TODO Eventually, this should be moved to a settings file or environment variable
     # Load model path relative to this file
-    relative = ('..',) * 4
-    asset_path = os.path.abspath(os.path.join(__file__, *relative, 'assets'))
-    onnx_filename = os.path.join(asset_path, 'model.mobilenet.onnx')
+    current_file = Path(__file__).resolve()
+
+    # Go up 3 directories to reach the project root, then append 'assets/model.mobilenet.onnx'
+    onnx_filename = current_file.parents[2] / 'assets' / 'model.mobilenet.onnx'
     assert os.path.exists(onnx_filename), f'ONNX model file not found at {onnx_filename}'
 
     session = ort.InferenceSession(

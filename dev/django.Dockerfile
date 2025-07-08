@@ -40,7 +40,6 @@ ARG BUILD_ENV
 # If not bind mounted we need bats_ai for celery deployment
 # The bind mount will override this directory
 COPY ./ /opt/django-project/
-RUN mv /opt/django-project/assets /opt/assets
 # hadolint ignore=DL3013
 RUN set -ex \
  # Default to 'dev' if BUILD_ENV is empty
