@@ -36,7 +36,7 @@ def generate_spectrogram(nabat_recording, file, colormap=None, dpi=520):
         duration = len(sig) / sr
     except Exception as e:
         logging.error(f'Error loading file: {e}')
-        raise Exception(f'Error loading file: {e}')
+        raise
 
     size_mod = 1
     high_res = False

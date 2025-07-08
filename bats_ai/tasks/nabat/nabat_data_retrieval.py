@@ -103,7 +103,7 @@ def get_or_create_processing_task(recording_id, request_id):
 
     except MultipleObjectsReturned:
         # If multiple tasks are found, raise an exception (shouldn't happen if data is correct)
-        raise Exception('Multiple tasks found with the same metadata and status filter.')
+        raise
 
 
 @app.task(bind=True)
@@ -139,17 +139,19 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
         try:
             batch_data = response.json()
         except (KeyError, TypeError, json.JSONDecodeError) as e:
-            logger.error(f'Error processing batch data: {e}')
+            error_msg = f'Error decoding JSON response: {e}'
+            logger.error(error_msg)
             processing_task.status = ProcessingTask.Status.ERROR
-            processing_task.error = f'Error processing batch data: {e}'
+            processing_task.error = error_msg
             processing_task.save()
             raise
     else:
-        logger.error(f'Failed to fetch data: {response.status_code}, {response.text}')
+        error_msg = f'Failed to fetch data: {response.status_code}, {response.text}'
+        logger.error(error_msg)
         processing_task.status = ProcessingTask.Status.ERROR
-        processing_task.error = f'Failed to fetch data: {response.status_code}, {response.text}'
+        processing_task.error = error_msg
         processing_task.save()
-        return
+        raise
 
     self.update_state(
         state='Progress',
@@ -174,12 +176,6 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
                 nabat_recording = create_nabat_recording_from_response(
                     batch_data, recording_id, survey_event_id
                 )
-                if not nabat_recording:
-                    processing_task.status = ProcessingTask.Status.ERROR
-                    processing_task.error = 'Failed to create NABatRecording from API response.'
-                    processing_task.save()
-                    raise Exception('Failed to create NABatRecording from API response.')
-
                 # Call generate_spectrogram with the nabat_recording and the temporary file
                 logger.info('Generating spectrogram...')
                 self.update_state(
@@ -208,25 +204,29 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
                     if config and config.run_inference_on_upload:
                         predict(compressed_spectrogram.pk)
                 except Exception as e:
-                    logger.error(f'Error Performing Prediction: {e}')
+                    error_msg = f'Error performing prediction: {e}'
+                    logger.error(error_msg)
                     processing_task.status = ProcessingTask.Status.ERROR
-                    processing_task.error = f'Error Performing Prediction: {e}'
+                    processing_task.error = error_msg
                     processing_task.save()
-                    raise Exception(f'Error Performing Prediction: {e}')
+                    raise
                 processing_task.status = ProcessingTask.Status.COMPLETE
                 processing_task.save()
 
             else:
+                error_msg = f'Failed to download file: {file_response.status_code}'
+                logger.error(error_msg)
                 processing_task.status = ProcessingTask.Status.ERROR
-                processing_task.error = f'Failed to download file: {file_response.status_code}'
+                processing_task.error = error_msg
                 processing_task.save()
-                logger.error(f'Failed to download file: {file_response.status_code}')
-                raise Exception(f'Failed to download file: {file_response.status_code}')
+                raise
     except Exception as e:
+        error_msg = f'Error during NABat recording initialization: {e}'
+        logger.error(error_msg)
         processing_task.status = ProcessingTask.Status.ERROR
-        processing_task.error = str(e)
+        processing_task.error = error_msg
         processing_task.save()
-        raise Exception(f'Error during file processing: {e}')
+        raise
 
 
 def create_nabat_recording_from_response(response_data, recording_id, survey_event_id):
@@ -276,7 +276,7 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
 
     except KeyError as e:
         logger.error(f'Missing key: {e}')
-        raise Exception(f'Missing key in response data: {e}')
+        raise
     except Exception as e:
         logger.error(f'Error creating NABatRecording: {e}')
-        raise Exception(f'Error creating NABatRecording: {e}')
+        raise
