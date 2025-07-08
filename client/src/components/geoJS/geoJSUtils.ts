@@ -199,7 +199,6 @@ const useGeoJS = () => {
     drawImage,
     resetMapDimensions,
     resetZoom,
-    updateMapSize,
     destroyGeoViewer,
   };
 };
