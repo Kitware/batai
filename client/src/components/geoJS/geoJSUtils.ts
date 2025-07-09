@@ -8,9 +8,6 @@ const useGeoJS = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let quadFeature: any;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let osmLayer: any;
-
   const thumbnail = ref(false);
 
   let originalBounds = {
@@ -36,14 +33,12 @@ const useGeoJS = () => {
     sourceContainer: HTMLElement,
     width: number,
     height: number,
-    thumbnailVal = false,
-    mapType: 'quad' | 'tile' = 'quad',
-    tileUrl = ""
+    thumbnailVal = false
   ) => {
     thumbnail.value = thumbnailVal;
     container.value = sourceContainer;
     originalDimensions = { width, height };
-    const params = geo.util.pixelCoordinateParams(container.value, width, height, mapType === 'tile' ? 256 : width, mapType === 'tile' ? 256 : height);
+    const params = geo.util.pixelCoordinateParams(container.value, width, height);
     if (!container.value) {
       return;
     }
@@ -105,69 +100,36 @@ const useGeoJS = () => {
       right: width,
     });
 
-    if (mapType === 'quad') {
-      const quadFeatureLayer = geoViewer.value.createLayer("feature", {
-        features: ["quad"],
-        autoshareRenderer: false,
-        renderer: "canvas",
-      });
-      quadFeatureLayer.node().css('filter', 'url(#apply-color-scheme)');
-      quadFeature = quadFeatureLayer.createFeature("quad");
-    } else if (mapType === 'tile') {
-      const params = geo.util.pixelCoordinateParams(
-        container.value, width, height, 256, 256);
-      params.layer.useCredentials = true;
-      params.layer.autoshareRenderer = false;
-      params.attributes = null;
-      params.layer.maxLevel = 18;
-      params.layer.minLevel = 0;
-      params.layer.url = tileUrl;
-
-      osmLayer = geoViewer.value.createLayer('osm', params.layer);
-      resetMapDimensions(width, height);
-    }
+    const quadFeatureLayer = geoViewer.value.createLayer("feature", {
+      features: ["quad"],
+      autoshareRenderer: false,
+      renderer: "canvas",
+    });
+    quadFeatureLayer.node().css("filter", "url(#apply-color-scheme)");
+    quadFeature = quadFeatureLayer.createFeature("quad");
   };
 
-  const updateMapSize = (url = '', width = 0, height = 0, tileWidth = 256, tileHeight = 256, resetCam = true) => {
-    const params = geo.util.pixelCoordinateParams(
-      container.value, width, height, tileWidth, tileHeight);
-    params.layer.url = url;
-    const tempLayer = osmLayer;
-    osmLayer = geoViewer.value.createLayer('osm', params.layer);
-    geoViewer.value.deleteLayer(tempLayer);
-    if (resetCam) {
-      resetMapDimensions(width, height, 0.3, resetCam);
-    }
-  };
 
   const drawImage = (image: HTMLImageElement | string, width = 0, height = 0, resetCam = true) => {
-    let tilewidth = width;
-    let tileheight = height;
-    if (quadFeature && typeof (image) === 'object') {
-      quadFeature.data([
-        {
-          ul: { x: 0, y: 0 },
-          lr: { x: width, y: height },
-          image: image,
-        },
-      ]).draw();
+    if (quadFeature && typeof image === "object") {
+      quadFeature
+        .data([
+          {
+            ul: { x: 0, y: 0 },
+            lr: { x: width, y: height },
+            image: image,
+          },
+        ])
+        .draw();
     }
     if (resetCam) {
       resetMapDimensions(width, height, 0.3, resetCam);
     } else {
-      const params = geo.util.pixelCoordinateParams(container.value, width, height, tilewidth, tileheight);
-      if (osmLayer && typeof (image) === 'string') {
-        osmLayer.url(image);
-        tilewidth = 256;
-        tileheight = 256;
-
-        osmLayer._options.maxLevel = params.layer.maxLevel;
-        osmLayer._options.tileWidth = params.layer.tileWidth;
-        osmLayer._options.tileHeight = params.layer.tileHeight;
-        osmLayer._options.tilesAtZoom = params.layer.tilesAtZoom;
-        osmLayer._options.tilesMaxBounds = params.layer.tilesMaxBounds;
-
-      }
+      const params = geo.util.pixelCoordinateParams(
+        container.value,
+        width,
+        height,
+      );
       const margin = 0.3;
       const { right, bottom } = params.map.maxBounds;
       originalBounds = params.map.maxBounds;
@@ -177,26 +139,24 @@ const useGeoJS = () => {
         right: right * (1 + margin),
         bottom: bottom * (1 + margin),
       });
-
     }
-
   };
   const resetZoom = () => {
-    const { width: mapWidth, } = geoViewer.value.camera().viewport;
+    const { width: mapWidth } = geoViewer.value.camera().viewport;
 
     const bounds = !thumbnail.value
       ? {
-        left: 0, // Making sure the legend is on the screen
-        top: -(originalBounds.bottom - originalDimensions.height) / 2.0,
-        right: mapWidth * 2,
-        bottom: originalBounds.bottom,
-      }
+          left: 0, // Making sure the legend is on the screen
+          top: -(originalBounds.bottom - originalDimensions.height) / 2.0,
+          right: mapWidth * 2,
+          bottom: originalBounds.bottom,
+        }
       : {
-        left: 0,
-        top: 0,
-        right: originalDimensions.width,
-        bottom: originalDimensions.height,
-      };
+          left: 0,
+          top: 0,
+          right: originalDimensions.width,
+          bottom: originalDimensions.height,
+        };
     const zoomAndCenter = geoViewer.value.zoomAndCenterFromBounds(bounds, 0);
     geoViewer.value.zoom(zoomAndCenter.zoom);
     geoViewer.value.center(zoomAndCenter.center);
@@ -239,7 +199,6 @@ const useGeoJS = () => {
     drawImage,
     resetMapDimensions,
     resetZoom,
-    updateMapSize,
     destroyGeoViewer,
   };
 };
@@ -254,8 +213,8 @@ export interface SpectroInfo {
   end_time: number;
   start_times?: number[];
   end_times?: number[];
-  widths?: number[], //widths of segements
-  compressedWidth?: number,
+  widths?: number[]; //widths of segements
+  compressedWidth?: number;
   low_freq: number;
   high_freq: number;
 }
@@ -269,7 +228,7 @@ function spectroTemporalToGeoJSon(
   scaledWidth = 0,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _scaledHeight = 0, // may be useful in the future
-  offsetY = 0, // used to push temporal annotations higher when viewing in compressed view
+  offsetY = 0 // used to push temporal annotations higher when viewing in compressed view
 ): GeoJSON.Polygon {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   // const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
@@ -326,8 +285,12 @@ function spectroTemporalToGeoJSon(
       }
     }
     // We need to build the length of times to pixel size for the time spaces before the annotation
-    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
-    const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time) * compressedScale;
+    const compressedScale =
+      scaledWidth > (spectroInfo.compressedWidth || 1)
+        ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width)
+        : 1;
+    const widthScale =
+      (adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) * compressedScale;
     let pixelAddStart = 0;
     let pixelAddEnd = 0;
     for (let i = 0; i < Math.max(foundStartIndex, foundEndIndex); i += 1) {
@@ -341,18 +304,22 @@ function spectroTemporalToGeoJSon(
     }
     // Now we remap our annotation to pixel coordinates
 
-    const start_time = (pixelAddStart * compressedScale) + (annotation.start_time - start_times[foundStartIndex]) * widthScale;
-    const end_time = (pixelAddEnd * compressedScale) + (annotation.end_time - start_times[foundEndIndex]) * widthScale;
+    const start_time =
+      pixelAddStart * compressedScale +
+      (annotation.start_time - start_times[foundStartIndex]) * widthScale;
+    const end_time =
+      pixelAddEnd * compressedScale +
+      (annotation.end_time - start_times[foundEndIndex]) * widthScale;
 
     return {
       type: "Polygon",
       coordinates: [
         [
-          [start_time, (ymin * yScale) + offsetY],
-          [start_time, (ymax * yScale) + offsetY],
-          [end_time, (ymax * yScale) + offsetY],
-          [end_time, (ymin * yScale) + offsetY],
-          [start_time, (ymin * yScale) + offsetY],
+          [start_time, ymin * yScale + offsetY],
+          [start_time, ymax * yScale + offsetY],
+          [end_time, ymax * yScale + offsetY],
+          [end_time, ymin * yScale + offsetY],
+          [start_time, ymin * yScale + offsetY],
         ],
       ],
     };
@@ -386,10 +353,8 @@ function spectroToGeoJSon(
     const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
-    const low_freq =
-      adjustedHeight - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
-    const high_freq =
-      adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
+    const low_freq = adjustedHeight - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
+    const high_freq = adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
     const start_time = annotation.start_time * widthScale;
     const end_time = annotation.end_time * widthScale;
     return {
@@ -414,24 +379,20 @@ function spectroToGeoJSon(
     let foundStartIndex = -1;
     let foundEndIndex = -1;
     for (let i = 0; i < lengths; i += 1) {
-      if (
-        foundStartIndex === -1 &&
-        start_times[i] < start &&
-        start < end_times[i]
-      ) {
+      if (foundStartIndex === -1 && start_times[i] < start && start < end_times[i]) {
         foundStartIndex = i;
       }
-      if (
-        foundEndIndex === -1 &&
-        start_times[i] < end &&
-        end < end_times[i]
-      ) {
+      if (foundEndIndex === -1 && start_times[i] < end && end < end_times[i]) {
         foundEndIndex = i;
       }
     }
     // We need to build the length of times to pixel size for the time spaces before the annotation
-    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
-    const widthScale = (adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) * compressedScale;
+    const compressedScale =
+      scaledWidth > (spectroInfo.compressedWidth || 1)
+        ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width)
+        : 1;
+    const widthScale =
+      (adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) * compressedScale;
     let pixelAddStart = 0;
     let pixelAddEnd = 0;
     for (let i = 0; i < Math.max(foundStartIndex, foundEndIndex); i += 1) {
@@ -445,12 +406,14 @@ function spectroToGeoJSon(
     }
     const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
-    const low_freq =
-      adjustedHeight - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
-    const high_freq =
-      adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
-    const start_time = (pixelAddStart * compressedScale) + (annotation.start_time - start_times[foundStartIndex]) * widthScale;
-    const end_time = (pixelAddEnd * compressedScale) + (annotation.end_time - start_times[foundEndIndex]) * widthScale;
+    const low_freq = adjustedHeight - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
+    const high_freq = adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
+    const start_time =
+      pixelAddStart * compressedScale +
+      (annotation.start_time - start_times[foundStartIndex]) * widthScale;
+    const end_time =
+      pixelAddEnd * compressedScale +
+      (annotation.end_time - start_times[foundEndIndex]) * widthScale;
 
     return {
       type: "Polygon",
@@ -489,13 +452,20 @@ function findPolygonCenter(polygon: GeoJSON.Polygon): number[] {
   return [avgLng, avgLat];
 }
 
-function spectroToCenter(annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation, spectroInfo: SpectroInfo, type: 'sequence' | 'pulse') {
-  if (type === 'pulse') {
+function spectroToCenter(
+  annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation,
+  spectroInfo: SpectroInfo,
+  type: "sequence" | "pulse"
+) {
+  if (type === "pulse") {
     const geoJSON = spectroToGeoJSon(annotation as SpectrogramAnnotation, spectroInfo);
     return findPolygonCenter(geoJSON);
   }
-  if (type === 'sequence') {
-    const geoJSON = spectroTemporalToGeoJSon(annotation as SpectrogramTemporalAnnotation, spectroInfo);
+  if (type === "sequence") {
+    const geoJSON = spectroTemporalToGeoJSon(
+      annotation as SpectrogramTemporalAnnotation,
+      spectroInfo
+    );
     return findPolygonCenter(geoJSON);
   }
   return [0, 0];
@@ -506,7 +476,7 @@ function geojsonToSpectro(
   geojson: GeoJSON.Feature<GeoJSON.Polygon>,
   spectroInfo: SpectroInfo,
   scaledWidth = 0,
-  scaledHeight = 0,
+  scaledHeight = 0
 ): { error?: string; start_time: number; end_time: number; low_freq: number; high_freq: number } {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
@@ -527,17 +497,20 @@ function geojsonToSpectro(
     };
   } else if (spectroInfo.start_times && spectroInfo.end_times) {
     // first need to map the X positions to times based on the start/endtimes
-    const compressedScale = scaledWidth > (spectroInfo.compressedWidth || 1) ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width) : 1;
+    const compressedScale =
+      scaledWidth > (spectroInfo.compressedWidth || 1)
+        ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width)
+        : 1;
     const start = coords[1][0] / compressedScale;
     const end = coords[3][0] / compressedScale;
     const { start_times, widths } = spectroInfo;
-    const timeToPixels = (adjustedWidth) / (spectroInfo.end_time - spectroInfo.start_time);
+    const timeToPixels = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     let additivePixels = 0;
     let start_time = -1;
     let end_time = -1;
     for (let i = 0; i < start_times.length; i += 1) {
       // convert the start/end time to a pixel
-      const nextPixels = (widths && widths[i] || 0);
+      const nextPixels = (widths && widths[i]) || 0;
       if (start_time === -1 && start > additivePixels && start < additivePixels + nextPixels) {
         // Found the location for time markers
         // We need to remap pixels back to milliseconds
@@ -545,11 +518,15 @@ function geojsonToSpectro(
         const lowTime = start_times[i] + lowPixels / timeToPixels;
         start_time = Math.round(lowTime);
       }
-      if (end_time === -1 && start_time !== -1 && end > additivePixels && end < additivePixels + nextPixels) {
+      if (
+        end_time === -1 &&
+        start_time !== -1 &&
+        end > additivePixels &&
+        end < additivePixels + nextPixels
+      ) {
         const highPixels = end - additivePixels;
         const highTime = start_times[i] + highPixels / timeToPixels;
         end_time = Math.round(highTime);
-
       }
       additivePixels += nextPixels;
     }
