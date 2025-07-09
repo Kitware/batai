@@ -104,7 +104,7 @@ def export_nabat_annotations_task(self, filters: dict, export_id: int):
         export_record.status = 'complete'
         export_record.expires_at = now() + timedelta(hours=24)
         export_record.save()
-    except Exception as e:
+    except Exception:
         export_record.status = 'failed'
         export_record.save()
-        raise e
+        raise
