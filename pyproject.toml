@@ -47,10 +47,6 @@ dependencies = [
     "onnxruntime",
     "opencv-python-headless",
     "tqdm",
-    # large image
-    "django-large-image>=0.10.0",
-    "large-image[rasterio,pil]>=1.22",
-    "rio-cogeo",
     # guano metadata
     "guano",
     "django_celery_results",

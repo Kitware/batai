@@ -12,9 +12,8 @@ RUN set -ex \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         gcc \
         g++ \
-        libc6-dev \
         libgdal32 \
-        libgdal-dev \
+        libc6-dev \
         libpq-dev \
         libsndfile1-dev \
         ca-certificates \
