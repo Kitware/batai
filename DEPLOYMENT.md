@@ -54,7 +54,7 @@ to `.env` and change the default passwords for fields
    and change the ApplicationId to the ID in the `./client.env.production`
 9. Test logging in/out and uploading data to the server.
 
-### GRTS Cell Id suppoer
+### GRTS Cell Id support
 
 Make sure that there is the grts.csv in the /opt/batai/dev/grtsCells folder
 

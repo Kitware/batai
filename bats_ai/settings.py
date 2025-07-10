@@ -43,7 +43,6 @@ class BatsAiMixin(ConfigMixin):
         # Install additional apps
         configuration.INSTALLED_APPS += [
             'django.contrib.gis',
-            'django_large_image',
             'django_celery_results',
         ]
 
