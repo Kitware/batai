@@ -116,7 +116,7 @@ export interface UpdateFileAnnotation {
 }
 
 export interface Spectrogram {
-  url: string;
+  urls: string[];
   filename?: string;
   annotations?: SpectrogramAnnotation[];
   fileAnnotations: FileAnnotation[];
