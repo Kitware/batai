@@ -5,7 +5,6 @@ import { NABatRecordingDataResponse, postNABatRecording } from '@api/NABatApi';
 import { useRouter } from 'vue-router';
 import { usePrompt } from '@use/prompt-service';
 import { useJWTToken } from '@use/useJWTToken';
-import { AxiosError, AxiosResponse } from 'axios';
 
 export default defineComponent({
   props: {
@@ -84,7 +83,7 @@ export default defineComponent({
           router.push(`/nabat/${id}/spectrogram?apiToken=${props.apiToken}`);
         }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any | AxiosResponse | AxiosError) {
+      } catch (error: any) {
         errorMessage.value = `Failed to start processing: ${error.message}:`;
         if (error.response.data.errors?.length) {
           additionalErrors.value = error.response.data.errors.map((item) => JSON.stringify(item));
