@@ -15,8 +15,8 @@ from .recording import RecordingAdmin
 from .recording_annotations import RecordingAnnotationAdmin
 from .species import SpeciesAdmin
 from .spectrogram import SpectrogramAdmin
-from .temporal_annotations import TemporalAnnotationsAdmin
 from .spectrogram_image import SpectrogramImageAdmin
+from .temporal_annotations import TemporalAnnotationsAdmin
 
 __all__ = [
     'AnnotationsAdmin',

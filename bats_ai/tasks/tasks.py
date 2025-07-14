@@ -46,7 +46,7 @@ def recording_compute_spectrogram(recording_id: int):
                 'frequency_max': results['freq_max'],
             },
         )
-                # Create SpectrogramImage objects for each normal image
+        # Create SpectrogramImage objects for each normal image
         for idx, img_path in enumerate(results['normal']['paths']):
             with open(img_path, 'rb') as f:
                 SpectrogramImage.objects.get_or_create(
@@ -58,7 +58,6 @@ def recording_compute_spectrogram(recording_id: int):
                         'type': 'spectrogram',
                     },
                 )
-
 
         # Create or get CompressedSpectrogram
         compressed = results['compressed']

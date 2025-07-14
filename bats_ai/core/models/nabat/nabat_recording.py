@@ -7,6 +7,7 @@ from bats_ai.core.models import Species
 
 logger = logging.getLogger(__name__)
 
+
 # TimeStampedModel also provides "created" and "modified" fields
 class NABatRecording(TimeStampedModel, models.Model):
     name = models.CharField(max_length=255)
@@ -50,9 +51,7 @@ class NABatRecording(TimeStampedModel, models.Model):
     def spectrograms(self):
         from bats_ai.core.models.nabat import NABatSpectrogram
 
-        query = NABatSpectrogram.objects.filter(nabat_recording=self).order_by(
-            '-created'
-        )
+        query = NABatSpectrogram.objects.filter(nabat_recording=self).order_by('-created')
         return query.all()
 
     @property

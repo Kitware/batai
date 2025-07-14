@@ -9,6 +9,7 @@ from .species import Species
 
 logger = logging.getLogger(__name__)
 
+
 # TimeStampedModel also provides "created" and "modified" fields
 class Recording(TimeStampedModel, models.Model):
     name = models.CharField(max_length=255)

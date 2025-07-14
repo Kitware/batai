@@ -104,7 +104,6 @@ def generate_spectrograms(
                     },
                 )
 
-
         try:
             config = Configuration.objects.first()
             if config and config.run_inference_on_upload:

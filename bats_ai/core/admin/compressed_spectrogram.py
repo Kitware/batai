@@ -1,7 +1,6 @@
 from django.contrib import admin
 
 from bats_ai.core.models import CompressedSpectrogram
-from django.utils.html import format_html_join
 
 
 @admin.register(CompressedSpectrogram)
