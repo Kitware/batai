@@ -57,6 +57,7 @@ services:
       - django-nginx
     volumes:
       - ./dev/grtsCells:/app/csv  # Map the host CSV directory to a directory in the container
+      - django-static:/opt/django-project/staticfiles
     environment:
       - SERVERHOSTNAME=${SERVERHOSTNAME:-batdetectai.kitware.com}
     ports:
@@ -161,6 +162,7 @@ volumes:
   sourcedb:
   minio:
   rabbitmq:
+  django-static:
 
 networks:
   django-nginx:

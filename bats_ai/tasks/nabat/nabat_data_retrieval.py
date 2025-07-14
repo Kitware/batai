@@ -102,7 +102,7 @@ def get_or_create_processing_task(recording_id, request_id):
 
     except MultipleObjectsReturned:
         # If multiple tasks are found, raise an exception (shouldn't happen if data is correct)
-        raise Exception('Multiple tasks found with the same metadata and status filter.')
+        raise
 
 
 @app.task(bind=True)
@@ -138,17 +138,19 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
         try:
             batch_data = response.json()
         except (KeyError, TypeError, json.JSONDecodeError) as e:
-            logger.error(f'Error processing batch data: {e}')
+            error_msg = f'Error decoding JSON response: {e}'
+            logger.error(error_msg)
             processing_task.status = ProcessingTask.Status.ERROR
-            processing_task.error = f'Error processing batch data: {e}'
+            processing_task.error = error_msg
             processing_task.save()
             raise
     else:
-        logger.error(f'Failed to fetch data: {response.status_code}, {response.text}')
+        error_msg = f'Failed to fetch data: {response.status_code}, {response.text}'
+        logger.error(error_msg)
         processing_task.status = ProcessingTask.Status.ERROR
-        processing_task.error = f'Failed to fetch data: {response.status_code}, {response.text}'
+        processing_task.error = error_msg
         processing_task.save()
-        return
+        raise
 
     self.update_state(
         state='Progress',
@@ -199,21 +201,21 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
         ]['nodes']
         if len(acoustic_batches_nodes) > 0:
             batch_data = acoustic_batches_nodes[0]['acousticFileBatchesByBatchId']['nodes']
-        for node in batch_data:
-            species_id = node.get('manualId', False)
-            if species_id is not False:
-                annotation = NABatRecordingAnnotation.objects.create(
-                    nabat_recording=nabat_recording,
-                    user_email=node['vetter'],
-                )
-                species = Species.objects.get(pk=species_id)
-                annotation.species.add(species)
+            for node in batch_data:
+                species_id = node.get('manualId', False)
+                if species_id is not False:
+                    annotation = NABatRecordingAnnotation.objects.create(
+                        nabat_recording=nabat_recording,
+                        user_email=node['vetter'],
+                    )
+                    species = Species.objects.get(pk=species_id)
+                    annotation.species.add(species)
 
         return nabat_recording
 
     except KeyError as e:
         logger.error(f'Missing key: {e}')
-        return None
+        raise
     except Exception as e:
         logger.error(f'Error creating NABatRecording: {e}')
-        return None
+        raise
