@@ -3,10 +3,11 @@ import os
 from pathlib import Path
 import tempfile
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 import requests
 
-from bats_ai.core.models import Configuration, ProcessingTask, Species
+from bats_ai.core.models import Configuration, ProcessingTask, Species, SpectrogramImage
 from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
     NABatRecording,
@@ -47,63 +48,62 @@ def generate_spectrograms(
 
         results = generate_spectrogram_assets(audio_file, tmpdir)
 
-        normal_img_paths = results['normal']['paths']
-        if len(normal_img_paths) != 1:
-            logger.error(
-                'Expected exactly one normal spectrogram image. Found: %d', len(normal_img_paths)
-            )
-            processing_task.status = ProcessingTask.Status.ERROR
-            processing_task.error = 'Expected exactly one normal spectrogram image.'
-            processing_task.save()
-            raise ValueError('Expected exactly one normal spectrogram image.')
-
-        normal_img_path = normal_img_paths[0]
-
         self.update_state(
             state='Progress',
             meta={'description': 'Converting Spectrograms to Models'},
         )
 
-        with open(normal_img_path, 'rb') as f:
-            spectrogram, _ = NABatSpectrogram.objects.get_or_create(
-                nabat_recording=nabat_recording,
-                defaults={
-                    'width': results['normal']['width'],
-                    'height': results['normal']['height'],
-                    'duration': results['duration'],
-                    'frequency_min': results['freq_min'],
-                    'frequency_max': results['freq_max'],
-                    'image_file': File(f, name=os.path.basename(normal_img_path)),
-                },
-            )
+        spectrogram, _ = NABatSpectrogram.objects.get_or_create(
+            nabat_recording=nabat_recording,
+            defaults={
+                'width': results['normal']['width'],
+                'height': results['normal']['height'],
+                'duration': results['duration'],
+                'frequency_min': results['freq_min'],
+                'frequency_max': results['freq_max'],
+            },
+        )
+
+        # Create SpectrogramImage objects for each normal image
+        for idx, img_path in enumerate(results['normal']['paths']):
+            with open(img_path, 'rb') as f:
+                SpectrogramImage.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(spectrogram),
+                    object_id=spectrogram.id,
+                    index=idx,
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(img_path)),
+                        'type': 'spectrogram',
+                    },
+                )
 
         compressed = results['compressed']
-        compressed_img_paths = compressed['paths']
-        if len(compressed_img_paths) != 1:
-            logger.error(
-                'Expected exactly one compressed spectrogram image. Found: %d',
-                len(compressed_img_paths),
-            )
-            processing_task.status = ProcessingTask.Status.ERROR
-            processing_task.error = 'Expected exactly one compressed spectrogram image.'
-            processing_task.save()
-            raise ValueError('Expected exactly one compressed spectrogram image.')
 
-        compressed_img_path = compressed_img_paths[0]
+        compressed_obj, _ = NABatCompressedSpectrogram.objects.get_or_create(
+            nabat_recording=nabat_recording,
+            spectrogram=spectrogram,
+            defaults={
+                'length': compressed['width'],
+                'widths': compressed['widths'],
+                'starts': compressed['starts'],
+                'stops': compressed['stops'],
+                'cache_invalidated': False,
+            },
+        )
 
-        with open(compressed_img_path, 'rb') as f:
-            compressed_obj, _ = NABatCompressedSpectrogram.objects.get_or_create(
-                nabat_recording=nabat_recording,
-                spectrogram=spectrogram,
-                defaults={
-                    'length': compressed['width'],
-                    'widths': compressed['widths'],
-                    'starts': compressed['starts'],
-                    'stops': compressed['stops'],
-                    'cache_invalidated': False,
-                    'image_file': File(f, name=os.path.basename(compressed_img_path)),
-                },
-            )
+        # Save compressed images
+        for idx, img_path in enumerate(compressed['paths']):
+            with open(img_path, 'rb') as f:
+                SpectrogramImage.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(compressed_obj),
+                    object_id=compressed_obj.id,
+                    index=idx,
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(img_path)),
+                        'type': 'compressed',
+                    },
+                )
+
 
         try:
             config = Configuration.objects.first()

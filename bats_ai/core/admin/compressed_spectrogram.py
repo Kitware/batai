@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from bats_ai.core.models import CompressedSpectrogram
+from django.utils.html import format_html_join
 
 
 @admin.register(CompressedSpectrogram)
@@ -9,11 +10,11 @@ class CompressedSpectrogramAdmin(admin.ModelAdmin):
         'pk',
         'recording',
         'spectrogram',
-        'image_file',
         'length',
         'widths',
         'starts',
         'stops',
+        'image_url_list_display',
     ]
     list_display_links = ['pk', 'recording', 'spectrogram']
     list_select_related = True
@@ -21,10 +22,10 @@ class CompressedSpectrogramAdmin(admin.ModelAdmin):
     readonly_fields = [
         'recording',
         'spectrogram',
-        'image_file',
         'created',
         'modified',
         'widths',
         'starts',
         'stops',
+        'image_url_list_display',
     ]

@@ -16,6 +16,7 @@ from .recording_annotations import RecordingAnnotationAdmin
 from .species import SpeciesAdmin
 from .spectrogram import SpectrogramAdmin
 from .temporal_annotations import TemporalAnnotationsAdmin
+from .spectrogram_image import SpectrogramImageAdmin
 
 __all__ = [
     'AnnotationsAdmin',
@@ -30,6 +31,7 @@ __all__ = [
     'ProcessingTaskAdmin',
     'ConfigurationAdmin',
     'ExportedAnnotationFileAdmin',
+    'SpectrogramImageAdmin',
     # NABat Models
     'NABatRecordingAnnotationAdmin',
     'NABatCompressedSpectrogramAdmin',
