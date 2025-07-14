@@ -70,7 +70,7 @@ export default defineComponent({
     const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
-    const loadedImages: Ref<boolean[]> = ref([]);
+    const allImagesLoaded: Ref<boolean[]> = ref([]);
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
     const compressed = ref(configuration.value.spectrogram_view === 'compressed');
@@ -117,18 +117,18 @@ export default defineComponent({
       if (response.data.urls.length) {
         const urls = response.data.urls;
         images.value = [];
-        loadedImages.value = [];
+        allImagesLoaded.value = [];
         loadedImage.value = false;
         urls.forEach((url) => {
           const image = new Image();
           image.src = url;
           images.value.push(image);
-          loadedImages.value.push(false);
+          allImagesLoaded.value.push(false);
         });
         images.value.forEach((image, index) => {
           image.onload = () => {
-            loadedImages.value[index] = true;
-            if (loadedImages.value.every((item) => (item))) {
+            allImagesLoaded.value[index] = true;
+            if (allImagesLoaded.value.every((item) => (item))) {
               loadedImage.value = true;
             }
           };

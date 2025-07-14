@@ -31,6 +31,15 @@ const useGeoJS = () => {
     }
   };
 
+  const clearQuadFeatures = () => {
+    quadFeatures.forEach((feature) => {
+      if (quadFeatureLayer) {
+        quadFeatureLayer.removeFeature(feature);
+      }
+    });
+    quadFeatures.splice(0, quadFeatures.length);
+  };
+
   const initializeViewer = (
     sourceContainer: HTMLElement,
     width: number,
@@ -40,12 +49,6 @@ const useGeoJS = () => {
   ) => {
     thumbnail.value = thumbnailVal;
     container.value = sourceContainer;
-    quadFeatures.forEach((feature) => {
-      if (quadFeatureLayer) {
-        quadFeatureLayer.removeFeature(feature);
-      }
-    });
-    quadFeatures.splice(0, quadFeatures.length);
     originalDimensions = { width, height };
     const params = geo.util.pixelCoordinateParams(container.value, width, height);
     if (!container.value) {
@@ -108,20 +111,14 @@ const useGeoJS = () => {
       bottom: height,
       right: width,
     });
-
-    quadFeatures.forEach((feature) => {
-      if (quadFeatureLayer) {
-        quadFeatureLayer.removeFeature(feature);
-      }
-    });
-    quadFeatures.splice(0, quadFeatures.length);
-    quadFeatureLayer = geoViewer.value.createLayer("feature", {
-      features: ["quad"],
-      autoshareRenderer: false,
-      renderer: "canvas",
-    });
-
-    quadFeatures.splice(0, quadFeatures.length);
+    if (!quadFeatureLayer) {
+      quadFeatureLayer = geoViewer.value.createLayer("feature", {
+        features: ["quad"],
+        autoshareRenderer: false,
+        renderer: "canvas",
+      });
+    }
+    clearQuadFeatures();
     quadFeatureLayer.node().css("filter", "url(#apply-color-scheme)");
     for (let i = 0; i < imageCount; i += 1) {
       quadFeatures.push(quadFeatureLayer.createFeature("quad"));
