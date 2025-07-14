@@ -20,9 +20,9 @@ export default defineComponent({
     LayerManager,
   },
   props: {
-    image: {
-      type: Object as PropType<HTMLImageElement | undefined>,
-      default: () => undefined,
+    images: {
+      type: Array as PropType<HTMLImageElement[]>,
+      default: () => [],
     },
     spectroInfo: {
       type: Object as PropType<SpectroInfo>,
@@ -145,8 +145,13 @@ export default defineComponent({
     watch([containerRef], () => {
       scaledWidth.value = props.spectroInfo?.width;
       scaledHeight.value = props.spectroInfo?.height;
-      if (props.image) {
-        const { naturalWidth, naturalHeight } = props.image;
+      if (props.images.length) {
+        let naturalWidth = 0;
+        let naturalHeight = 0;
+        props.images.forEach((image) => {
+          naturalWidth += image.naturalWidth;
+          naturalHeight = image.naturalHeight;
+        });
         scaledWidth.value = naturalWidth;
         scaledHeight.value = naturalHeight;
       }
@@ -157,12 +162,13 @@ export default defineComponent({
             scaledWidth.value,
             scaledHeight.value,
             false,
+            props.images.length
           );
           geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
         }
       }
-      if (props.image) {
-        geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value);
+      if (props.images.length) {
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
       }
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
@@ -170,8 +176,13 @@ export default defineComponent({
         scaledVals.value = { x: configuration.value.spectrogram_x_stretch, y: 1 };
         let baseWidth = 0;
         let baseHeight = 0;
-        if (props.image) {
-          const { naturalWidth, naturalHeight } = props.image;
+        if (props.images.length) {
+          let naturalWidth = 0;
+          let naturalHeight = 0;
+          props.images.forEach((image) => {
+            naturalWidth += image.naturalWidth;
+            naturalHeight = image.naturalHeight;
+          });
           baseWidth = naturalWidth;
           baseHeight = naturalHeight;
         } else if (props.spectroInfo) {
@@ -182,8 +193,8 @@ export default defineComponent({
         if (scaledWidth.value < baseWidth) {
           scaledWidth.value = baseWidth;
         }
-        if (props.image) {
-          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+        if (props.images) {
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
         }
       }
 
@@ -193,8 +204,13 @@ export default defineComponent({
       () => props.spectroInfo,
       () => {
         scaledHeight.value = props.spectroInfo?.height;
-        if (props.image) {
-          const { naturalWidth, naturalHeight } = props.image;
+        if (props.images.length) {
+          let naturalWidth = 0;
+          let naturalHeight = 0;
+          props.images.forEach((image) => {
+            naturalWidth += image.naturalWidth;
+            naturalHeight = image.naturalHeight;
+          });
           scaledWidth.value = naturalWidth;
           scaledHeight.value = naturalHeight;
         }
@@ -205,8 +221,8 @@ export default defineComponent({
           bottom: scaledHeight.value,
           right: scaledWidth.value,
         });
-        if (props.image) {
-          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value);
+        if (props.images.length) {
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
         }
       }
     );
@@ -263,8 +279,13 @@ export default defineComponent({
     const wheelEvent = (event: WheelEvent) => {
       let baseWidth = 0;
       let baseHeight = 0;
-      if (props.image) {
-        const { naturalWidth, naturalHeight } = props.image;
+      if (props.images.length) {
+        let naturalWidth = 0;
+        let naturalHeight = 0;
+        props.images.forEach((image) => {
+          naturalWidth += image.naturalWidth;
+          naturalHeight = image.naturalHeight;
+        });
         baseWidth = naturalWidth;
         baseHeight = naturalHeight;
       } else if (props.spectroInfo) {
@@ -289,8 +310,8 @@ export default defineComponent({
           scaledWidth.value = baseWidth;
         }
 
-        if (props.image) {
-          geoJS.drawImage(props.image, scaledWidth.value, scaledHeight.value, false);
+        if (props.images.length) {
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
         }
       } else if (event.shiftKey) {
         if (event.deltaY > 0) {
