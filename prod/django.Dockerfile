@@ -12,8 +12,6 @@ RUN set -ex \
         gcc \
         g++ \
         libc6-dev \
-        libgdal32 \
-        libgdal-dev \
         libsndfile1-dev \
         ca-certificates \
  && apt-get clean \
