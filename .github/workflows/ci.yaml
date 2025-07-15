@@ -82,20 +82,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
-      - name: Install pre-commit
-        run: pip install pre-commit
-        # TODO: install pre-commit via uv
-      - name: Cache pre-commit hooks
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pre-commit/
-          key: pre-commit-cache|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Run pre-commit checks
-        run: pre-commit run --all-files
-
       - name: Run tests
         run: uv run tox
-        # TODO: run the full tox testing suite. Fix linting/formatting and types so they pass
         env:
           DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
           DJANGO_CELERY_BROKER_URL: amqp://localhost:5672/
