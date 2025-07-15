@@ -23,8 +23,7 @@ def migrate_image_files(apps, schema_editor):
 
     for model, image_type, _verbose in model_mappings:
         content_type = ContentType.objects.get_for_model(model)
-        for instance in model.objects.all():
-            # If the image_file existed before deletion, it should still be present in DB temporarily
+        for instance in model.objects.iterator():  # Avoid memory issues on large datasets
             image_path = getattr(instance, 'image_file', None)
             if image_path:
                 SpectrogramImage.objects.create(
@@ -53,15 +52,17 @@ def reverse_migrate_image_files(apps, schema_editor):
 
     for model, image_type in model_mappings:
         content_type = ContentType.objects.get_for_model(model)
-        for instance in model.objects.all():
+        for instance in model.objects.iterator():
             try:
                 image = SpectrogramImage.objects.get(
                     content_type=content_type, object_id=instance.pk, type=image_type, index=0
                 )
-                setattr(instance, 'image_file', image.image_file)  # noqa B010
-                instance.save()
+                # Only set if field exists (e.g., if rollback hasn't removed it)
+                if 'image_file' in [f.name for f in instance._meta.fields]:
+                    instance.image_file = image.image_file
+                    instance.save()
             except SpectrogramImage.DoesNotExist:
-                continue  # No image found, skip
+                continue
 
 
 class Migration(migrations.Migration):

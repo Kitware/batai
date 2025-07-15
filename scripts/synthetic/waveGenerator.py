@@ -1,3 +1,20 @@
+#!/usr/bin/env -S uv run
+# /// script
+# dependencies = [
+#     "click",
+#     "Pillow",
+#     "opencv-python-headless",
+#     "faker",
+#     "guano",
+#     "librosa",
+#     "matplotlib",
+#     "numpy",
+#     "pandas",
+#     "scipy",
+# ]
+# ///
+
+
 import io
 import math
 import os
@@ -17,8 +34,8 @@ import scipy.signal
 
 # === Constants ===
 
-MIN_AUDIO_DURATION = 2
-MAX_AUDIO_DURATION = 6
+MIN_AUDIO_DURATION = 20
+MAX_AUDIO_DURATION = 30
 SAMPLE_RATE = 250_000
 
 CHIRP_MIN_FREQ = 23_000
@@ -199,8 +216,8 @@ def generate_compressed(img_path, duration, annotation_path, output_path):
 @click.command()
 @click.argument('num_files', type=int)
 @click.option('--outdir', default='chirp_outputs', help='Output directory')
-@click.option('--colormap', default='turbo', help='Colormap for spectrogram')
-@click.option('--spectro', default=False, is_flag=True, help='Colormap for spectrogram')
+@click.option('--colormap', default=None, help='Colormap for spectrogram')
+@click.option('--spectro', default=False, is_flag=True, help='Generate Spectrograms')
 def main(num_files, outdir, colormap, spectro):
     """Generate synthetic chirp WAVs, spectrograms, and compressed outputs."""
     os.makedirs(outdir, exist_ok=True)
