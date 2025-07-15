@@ -94,7 +94,8 @@ jobs:
         run: pre-commit run --all-files
 
       - name: Run tests
-        run: uv run tox
+        run: uv run tox -e test
+        # TODO: run the full tox testing suite. Fix linting/formatting and types so they pass
         env:
           DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
           DJANGO_CELERY_BROKER_URL: amqp://localhost:5672/

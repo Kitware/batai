@@ -1083,14 +1083,14 @@ celery = [
 
 [[package]]
 name = "django-resonant-utils"
-version = "0.15.0"
+version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9c/d4/35db41bf5b230bd438bde2ca1d4f8a8e499cd09d097300a6cdf103781da3/django_resonant_utils-0.15.0.tar.gz", hash = "sha256:403b7f59230396fe588ed395d7b932d12f07ac0fdd3d628bc16766935997dfc6", size = 11987, upload-time = "2025-06-25T22:17:09.606Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9c/44/957ba59dd6d36a63d49dc12c98ac817fd7bc840e858d7b0d48cc997f3b7a/django_resonant_utils-0.16.0.tar.gz", hash = "sha256:0eb954b262732ba5e4b5fea95ee8b5035f8b7d21191a4d05b40c5b51ca060713", size = 12502, upload-time = "2025-07-10T19:31:35.482Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/c4/78624c11f5cbd5b7664977543c5471b8ecdbd6d343526c83c314dc522fd4/django_resonant_utils-0.15.0-py3-none-any.whl", hash = "sha256:850b540c6704ddf5c825397b583a93ea67c3bd06ac714c75aa2c4b008b250bc1", size = 13377, upload-time = "2025-06-25T22:17:08.44Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/49/394af41df5f9c73cd3703374364be8ce8581c0b0390761498958410dc648/django_resonant_utils-0.16.0-py3-none-any.whl", hash = "sha256:3f7b8b7e284269cac704122ef823be415eaf777d601d51a46369250294c276c4", size = 14201, upload-time = "2025-07-10T19:31:34.29Z" },
 ]
 
 [[package]]

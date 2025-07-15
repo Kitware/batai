@@ -117,12 +117,11 @@ to make sure to start the Django application with the correct configuration.
 As a starting point for configuring your environment, see [dev/.env.prod.s3.template](dev/.env.prod.s3/template)
 for a list of environment variables that you'll need to populate for your deployment.
 
-- `DJANGO_CONFIGURATION` this is used by
-   [django_configurations](https://django-configurations.readthedocs.io/en/stable/)
-   to read in the correct set of environment variables. The value `AwsProductionConfiguation`
-   should be used when using S3 as storage
-- `DJANGO_DATABASE_*` these variables tell django how to connect to your postgres database.
-   The `_URL` should be a postgres connection string, e.g. `postgres://user:password@postgres:5432/django`
+- `DJANGO_SETTINGS_MODULE` this should be set to `bats_ai.settings.aws_production`. This tells Django which set of settings to use for the web server. The `aws_production` module  will configure S3 settings.
+- `DJANGO_DATABASE_URL` this will be a postgres connection string, e.g. `postgres://user:password@postgres:5432/django`
 - `DJANGO_CELERY_BROKER_URL` is used to make sure django can send tasks to the `celery` service.
    For example, if using [RabbitMQ](https://www.rabbitmq.com/), it might look like this: `amqp://rabbitmq:5672`
 - `AWS_*` and `DJANGO_STORAGE_BUCKET_NAME` are used to make sure the application can connect to your S3 bucket
+- `APPLICATION_CLIENT_ID`: This is used to register the front-end Vue single-page app as an Oauth application.
+- `NABAT_API_URL`: the location of the NABat GraphQL endpoint used to retrieve information about files in NABat.
+- `VITE_APP_API_ROUTE`: this tells the Vue application where the backend (Django) API can be found.

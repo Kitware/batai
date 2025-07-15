@@ -1,9 +1,7 @@
 # ========================
 # Build Stage (Vue + Env)
 # ========================
-FROM node:18 AS build-stage
-
-WORKDIR /app
+FROM node:lts-alpine AS build-stage
 
 # Build-time args
 ARG VITE_APP_API_ROOT
@@ -12,31 +10,21 @@ ARG VITE_APP_OAUTH_CLIENT_ID
 ARG VITE_APP_LOGIN_REDIRECT
 ARG SUBPATH
 
-# Copy and install dependencies
-COPY client/package*.json ./
-RUN npm install
-
-# Copy full client code
-COPY client .
-
-# Log and write .env.production
-RUN echo "SUBPATH=${SUBPATH}" && \
-    echo "VITE_APP_API_ROOT=${VITE_APP_API_ROOT}" >> .env.production && \
-    echo "VITE_APP_OAUTH_API_ROOT=${VITE_APP_OAUTH_API_ROOT}" >> .env.production && \
-    echo "VITE_APP_OAUTH_CLIENT_ID=${VITE_APP_OAUTH_CLIENT_ID}" >> .env.production && \
-    echo "VITE_APP_LOGIN_REDIRECT=${VITE_APP_LOGIN_REDIRECT}" >> .env.production && \
-    echo "VITE_APP_SUBPATH=${SUBPATH}" >> .env.production
-
 # Set environment for build
 ENV VITE_APP_API_ROOT=${VITE_APP_API_ROOT}
 ENV VITE_APP_OAUTH_API_ROOT=${VITE_APP_OAUTH_API_ROOT}
 ENV VITE_APP_OAUTH_CLIENT_ID=${VITE_APP_OAUTH_CLIENT_ID}
 ENV VITE_APP_LOGIN_REDIRECT=${VITE_APP_LOGIN_REDIRECT}
-ENV SUBPATH=${SUBPATH}
 ENV VITE_APP_SUBPATH=${SUBPATH}
 
+WORKDIR /app
+
+# Copy full client code
+COPY ./client .
+
 # Run Vue build
-RUN npm run build
+RUN npm ci \
+  && npm run build
 
 # ========================
 # Nginx Stage
@@ -52,10 +40,9 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy build output
 COPY --from=build-stage /app/dist /tmp/dist
 
-
 # If SUBPATH is set, copy dist to subfolder and rewrite nginx config
-COPY nginx/nginx.subpath.template /nginx.subpath.template
-COPY nginx/nginx.conf /nginx.conf
+COPY prod/nginx/nginx.subpath.template /nginx.subpath.template
+COPY prod/nginx/nginx.conf /nginx.conf
 
 # hadolint ignore=SC2016
 RUN if [ -n "$SUBPATH" ]; then \

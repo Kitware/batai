@@ -6,7 +6,7 @@ from bats_ai.core.rest import rest
 
 from .api import api
 
-urlpatterns = [
+base_urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('oauth/', include('oauth2_provider.urls')),
     path('admin/', admin.site.urls),
@@ -15,6 +15,9 @@ urlpatterns = [
     path('api/v1/', api.urls),
     path('', include('django_large_image.urls')),
 ]
+
+# Support mounting within a sub-path
+urlpatterns = [path(f'{settings.BATAI_URL_PATH}/', include(base_urlpatterns))]
 
 if settings.DEBUG:
     import debug_toolbar.toolbar
