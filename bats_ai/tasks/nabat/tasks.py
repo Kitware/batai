@@ -1,4 +1,5 @@
 import io
+import logging
 import math
 import tempfile
 
@@ -25,16 +26,21 @@ FREQ_MAX = 120e3
 FREQ_PAD = 2e3
 
 COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo']
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('NABatDataRetrieval')
 
 
-def generate_spectrogram(nabat_recording, file, colormap=None, dpi=520):
+def generate_spectrogram(nabat_recording, file_field, colormap=None, dpi=520):
     try:
-        sig, sr = librosa.load(file, sr=None)
+        # Make sure file is opened properly
+        if hasattr(file_field, 'open'):
+            file_field.open('rb')
+        with file_field as f:
+            sig, sr = librosa.load(f, sr=None)
         duration = len(sig) / sr
     except Exception as e:
-        print(f'Error loading file: {e}')
-        return None
-
+        logging.error(f'Error loading file: {e}')
+        raise
     size_mod = 1
     high_res = False
 
@@ -51,7 +57,7 @@ def generate_spectrogram(nabat_recording, file, colormap=None, dpi=520):
         high_res = True
 
     if colormap not in COLORMAP_ALLOWED:
-        print(f'Substituted requested {colormap} colormap to default')
+        logger.info(f'Substituted requested {colormap} colormap to default')
         colormap = None
 
     size = int(0.001 * sr)  # 1.0ms resolution

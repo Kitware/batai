@@ -13,7 +13,6 @@ base_urlpatterns = [
     path('api/v1/s3-upload/', include('s3_file_field.urls')),
     path('api/v1/dynamic/', include(rest.urls)),
     path('api/v1/', api.urls),
-    path('', include('django_large_image.urls')),
 ]
 
 # Support mounting within a sub-path

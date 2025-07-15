@@ -65,7 +65,7 @@ def get_or_create_processing_task(request_id):
 
     except MultipleObjectsReturned:
         # If multiple tasks are found, raise an exception (shouldn't happen if data is correct)
-        raise Exception('Multiple tasks found with the same metadata and status filter.')
+        raise
 
 
 @app.task(bind=True)
