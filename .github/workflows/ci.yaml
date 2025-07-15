@@ -68,6 +68,15 @@ jobs:
           - 9000:9000
 
     steps:
+      # - name: Update Package References
+      #   run: sudo apt-get update
+      # - name: Install system dependencies
+      #   run: >-
+      #     sudo apt-get install --no-install-recommends --yes
+      #       libgdal30
+      #       libproj22
+      # TODO: do we even need any system packages?
+
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install uv

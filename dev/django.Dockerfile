@@ -20,6 +20,7 @@ RUN set -ex \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         gcc \
         g++ \
+        libgdal32 \
         libc6-dev \
         libpq-dev \
         libsndfile1-dev \
