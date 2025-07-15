@@ -13,16 +13,7 @@ import LayerManager from "./geoJS/LayerManager.vue";
 import { GeoEvent } from "geojs";
 import geo from "geojs";
 import useState from "@use/useState";
-
-function getImageDimensions(images: HTMLImageElement[], fallback: { width: number, height: number }) {
-  if (!images.length) return { width: fallback.width, height: fallback.height };
-  let width = 0, height = 0;
-  images.forEach(img => {
-    width += img.naturalWidth;
-    height = img.naturalHeight;
-  });
-  return { width, height };
-}
+import { getImageDimensions } from "@use/useUtils";
 
 export default defineComponent({
   name: "SpectroViewer",
@@ -60,16 +51,24 @@ export default defineComponent({
       const { width, height } = getImageDimensions(props.images, props.spectroInfo);
       scaledWidth.value = width * scaledVals.value.x;
       scaledHeight.value = height * scaledVals.value.y;
-      if (scaledWidth.value < width) scaledWidth.value = width;
-      if (scaledHeight.value < height) scaledHeight.value = height;
+      if (scaledWidth.value < width) {
+        scaledWidth.value = width;
+      }
+      if (scaledHeight.value < height) {
+        scaledHeight.value = height;
+      }
     }
 
     const cursorHandler = {
       handleMouseLeave() {
-        if (imageCursorRef.value) imageCursorRef.value.style.display = "none";
+        if (imageCursorRef.value) {
+          imageCursorRef.value.style.display = "none";
+        }
       },
       handleMouseEnter() {
-        if (imageCursorRef.value) imageCursorRef.value.style.display = "block";
+        if (imageCursorRef.value) {
+          imageCursorRef.value.style.display = "block";
+        }
       },
       handleMouseMove(evt: MouseEvent) {
         const offsetX = evt.clientX + 10;

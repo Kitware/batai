@@ -5,15 +5,8 @@ import { SpectroInfo, useGeoJS } from './geoJS/geoJSUtils';
 import { OtherUserAnnotations, SpectrogramAnnotation } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 import geo, { GeoEvent } from "geojs";
+import { getImageDimensions } from "@use/useUtils";
 
-function getImageDimensions(images: HTMLImageElement[]) {
-  let width = 0, height = 0;
-  images.forEach(img => {
-    width += img.naturalWidth;
-    height = img.naturalHeight;
-  });
-  return { width, height };
-}
 
 export default defineComponent({
   name: "ThumbnailViewer",
@@ -39,7 +32,9 @@ export default defineComponent({
 
     function updateViewerAndImages() {
       const { width, height } = getImageDimensions(props.images);
-      if (containerRef.value) clientHeight.value = containerRef.value.clientHeight;
+      if (containerRef.value) {
+        clientHeight.value = containerRef.value.clientHeight;
+      }
 
       if (containerRef.value && !geoJS.getGeoViewer().value) {
         geoJS.initializeViewer(containerRef.value, width, height, true);
@@ -130,7 +125,6 @@ export default defineComponent({
       polyLayerCreated.value = true;
     };
 
-    // --- Watchers ---
     watch([() => props.spectroInfo, containerRef], updateViewerAndImages);
 
     return {
