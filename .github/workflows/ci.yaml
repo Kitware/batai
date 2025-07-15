@@ -72,9 +72,9 @@ jobs:
         run: sudo apt-get update
       - name: Install system dependencies
         run: >-
-          sudo apt-get install --no-install-recommends --yes
-            libgdal32
-            libproj22
+          sudo apt-get install --no-install-recommends --yes \
+            libgdal-dev \
+            libproj-dev
 
       - name: Checkout repository
         uses: actions/checkout@v4
