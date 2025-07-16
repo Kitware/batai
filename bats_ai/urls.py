@@ -15,8 +15,12 @@ base_urlpatterns = [
     path('api/v1/', api.urls),
 ]
 
+
 # Support mounting within a sub-path
-urlpatterns = [path(f'{settings.BATAI_URL_PATH}/', include(base_urlpatterns))]
+if settings.BATAI_URL_PATH:
+    urlpatterns = [path(f'{settings.BATAI_URL_PATH}/', include(base_urlpatterns))]
+else:
+    urlpatterns = base_urlpatterns
 
 if settings.DEBUG:
     import debug_toolbar.toolbar
