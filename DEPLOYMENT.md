@@ -59,7 +59,7 @@ to `.env` and change the default passwords for fields
 Make sure that there is the grts.csv in the /opt/batai/dev/grtsCells folder
 
 Then run `docker compose -f docker-compose.prod.yml run \
-   --rm django ./manage.py importGRTSCells /opt/django-project/app/csv/grts.csv`
+   --rm django ./manage.py importGRTSCells /opt/django-project/dev/csv/grts.csv`
 
 It may take a few minutes to upload because it is loading
 around 500k rows into the DB.
