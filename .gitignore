@@ -11,6 +11,7 @@ temp*.jpg
 temp*.png
 .env
 dev/.env.prod.docker-compose
+.local
 
 # Additional Celery Beat files
 celerybeat-schedule.*
