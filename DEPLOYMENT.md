@@ -125,3 +125,4 @@ for a list of environment variables that you'll need to populate for your deploy
 - `APPLICATION_CLIENT_ID`: This is used to register the front-end Vue single-page app as an Oauth application.
 - `NABAT_API_URL`: the location of the NABat GraphQL endpoint used to retrieve information about files in NABat.
 - `VITE_APP_API_ROUTE`: this tells the Vue application where the backend (Django) API can be found.
+- `DJANGO_BATAI_URL_PATH`: this allows the Django application to be mounted at a subpath in a URL. It is used by the Django application itself and the nginx configuration at nginx.subpath.template
