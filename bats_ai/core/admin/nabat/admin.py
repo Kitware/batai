@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html_join
 
 from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
@@ -32,23 +33,48 @@ class NABatRecordingAnnotationAdmin(admin.ModelAdmin):
 class NABatSpectrogramAdmin(admin.ModelAdmin):
     list_display = (
         'nabat_recording',
-        'image_file',
         'width',
         'height',
         'duration',
         'frequency_min',
         'frequency_max',
-        'colormap',
+        'image_url_list_display',
     )
-    search_fields = ('nabat_recording__name', 'colormap')
-    list_filter = ('nabat_recording', 'colormap')
+    search_fields = ('nabat_recording__name', 'duration')
+    list_filter = ('nabat_recording', 'duration')
+
+    @admin.display(description='Image URLs')
+    def image_url_list_display(self, obj):
+        """Render each image URL as a clickable link in admin detail view."""
+        urls = obj.image_url_list
+        if not urls:
+            return '(No images)'
+        return format_html_join(
+            '\n', '<div><a href="{}" target="_blank">{}</a></div>', ((url, url) for url in urls)
+        )
 
 
 @admin.register(NABatCompressedSpectrogram)
 class NABatCompressedSpectrogramAdmin(admin.ModelAdmin):
-    list_display = ('nabat_recording', 'spectrogram', 'length', 'cache_invalidated')
+    list_display = (
+        'nabat_recording',
+        'spectrogram',
+        'length',
+        'cache_invalidated',
+        'image_url_list_display',
+    )
     search_fields = ('nabat_recording__name', 'spectrogram__id')
     list_filter = ('nabat_recording', 'cache_invalidated')
+
+    @admin.display(description='Image URLs')
+    def image_url_list_display(self, obj):
+        """Render each image URL as a clickable link in admin detail view."""
+        urls = obj.image_url_list
+        if not urls:
+            return '(No images)'
+        return format_html_join(
+            '\n', '<div><a href="{}" target="_blank">{}</a></div>', ((url, url) for url in urls)
+        )
 
 
 @admin.register(NABatRecording)

@@ -4,6 +4,7 @@ import tempfile
 
 from PIL import Image
 from celery import shared_task
+from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 
 from bats_ai.core.models import (
@@ -13,6 +14,7 @@ from bats_ai.core.models import (
     RecordingAnnotation,
     Species,
     Spectrogram,
+    SpectrogramImage,
 )
 from bats_ai.utils.spectrogram_utils import generate_spectrogram_assets, predict_from_compressed
 
@@ -33,60 +35,56 @@ def recording_compute_spectrogram(recording_id: int):
 
     with tempfile.TemporaryDirectory() as tmpdir:
         results = generate_spectrogram_assets(recording.audio_file, tmpdir)
-
-        img_paths = results['normal']['paths']
-        if len(img_paths) > 1:
-            logger.error(
-                'More than one image generated for recording, currently this not supported.'
-            )
-            raise ValueError(
-                'More than one image generated for recording, currently this not supported.'
-            )
         # Create or get Spectrogram
-        image_path = img_paths[0] if img_paths else None
-        if not image_path:
-            logger.error('No image paths found in results, cannot create spectrogram.')
-            raise ValueError('No image paths found in results, cannot create spectrogram.')
-        with open(image_path, 'rb') as f:
-            spectrogram, _ = Spectrogram.objects.get_or_create(
-                recording=recording,
-                defaults={
-                    'width': results['normal']['width'],
-                    'height': results['normal']['height'],
-                    'duration': results['duration'],
-                    'frequency_min': results['freq_min'],
-                    'frequency_max': results['freq_max'],
-                    'image_file': File(f, name=os.path.basename(image_path)),
-                },
-            )
+        spectrogram, _ = Spectrogram.objects.get_or_create(
+            recording=recording,
+            defaults={
+                'width': results['normal']['width'],
+                'height': results['normal']['height'],
+                'duration': results['duration'],
+                'frequency_min': results['freq_min'],
+                'frequency_max': results['freq_max'],
+            },
+        )
+        # Create SpectrogramImage objects for each normal image
+        for idx, img_path in enumerate(results['normal']['paths']):
+            with open(img_path, 'rb') as f:
+                SpectrogramImage.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(spectrogram),
+                    object_id=spectrogram.id,
+                    index=idx,
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(img_path)),
+                        'type': 'spectrogram',
+                    },
+                )
+
         # Create or get CompressedSpectrogram
         compressed = results['compressed']
-        compressed_img_paths = compressed['paths']
-        if len(compressed_img_paths) > 1:
-            logger.error(
-                'More than one image generated for recording, currently this not supported.'
-            )
-            raise ValueError(
-                'More than one image generated for recording, currently this not supported.'
-            )
-        # Create or get Spectrogram
-        compressed_img_path = compressed_img_paths[0] if compressed_img_paths else None
-        if not compressed_img_path:
-            logger.error('No image paths found in results, cannot create spectrogram.')
-            raise ValueError('No image paths found in results, cannot create spectrogram.')
-        with open(compressed_img_path, 'rb') as f:
-            compressed_obj, _ = CompressedSpectrogram.objects.get_or_create(
-                recording=recording,
-                spectrogram=spectrogram,
-                defaults={
-                    'length': compressed['width'],
-                    'widths': compressed['widths'],
-                    'starts': compressed['starts'],
-                    'stops': compressed['stops'],
-                    'cache_invalidated': False,
-                    'image_file': File(f, name=os.path.basename(compressed_img_path)),
-                },
-            )
+        compressed_obj, _ = CompressedSpectrogram.objects.get_or_create(
+            recording=recording,
+            spectrogram=spectrogram,
+            defaults={
+                'length': compressed['width'],
+                'widths': compressed['widths'],
+                'starts': compressed['starts'],
+                'stops': compressed['stops'],
+                'cache_invalidated': False,
+            },
+        )
+
+        # Save compressed images
+        for idx, img_path in enumerate(compressed['paths']):
+            with open(img_path, 'rb') as f:
+                SpectrogramImage.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(compressed_obj),
+                    object_id=compressed_obj.id,
+                    index=idx,
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(img_path)),
+                        'type': 'compressed',
+                    },
+                )
 
         config = Configuration.objects.first()
         if config and config.run_inference_on_upload:
