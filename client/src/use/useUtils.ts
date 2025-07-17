@@ -28,7 +28,19 @@ function extractDateTimeComponents(dateTimeString: string) {
   return { date: dateString, time: timeString };
 }
 
+function getImageDimensions(images: HTMLImageElement[], fallback: { width: number, height: number } = { width: 0, height: 0 }) {
+  if (!images.length) return { width: fallback.width, height: fallback.height };
+  let width = 0, height = 0;
+  images.forEach(img => {
+    width += img.naturalWidth;
+    height = img.naturalHeight;
+  });
+  return { width, height };
+}
+
+
 export {
   getCurrentTime,
   extractDateTimeComponents,
+  getImageDimensions,
 };
