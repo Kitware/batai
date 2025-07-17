@@ -83,7 +83,8 @@ class Command(BaseCommand):
             nargs=2,
             type=int,
             metavar=('NUM', 'VARIANCE'),
-            help='Number of annotations to generate per file with variance (e.g. 5 2 for 3-7 annotations)',
+            help='Number of annotations to generate per file with variance'
+            ' (e.g. 5 2 for 3-7 annotations)',
         )
 
     def handle(self, *args, **options):
