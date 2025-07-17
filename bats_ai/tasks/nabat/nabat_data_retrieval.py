@@ -63,7 +63,8 @@ query fetchAcousticAndSurveyEventInfo {
 
 def get_or_create_processing_task(recording_id, request_id):
     """
-    Fetches or creates a ProcessingTask with the given metadata and status filters.
+    Fetch or create a ProcessingTask with the given metadata and status filters.
+
     Uses `get` with try-except block to handle object retrieval.
 
     Args:

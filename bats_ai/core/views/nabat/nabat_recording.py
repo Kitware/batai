@@ -89,10 +89,12 @@ def get_email_if_authorized(
 ) -> str | JsonResponse:
     """
     Check API token validity with NABat API and return email from JWT if authorized.
+
     If the user is a superuser, short-circuit and return their email.
     Either `recording_id` or `recording_pk` must be provided.
 
-    `recording_pk` refers to the primary key of a NABatRecording, from which the actual `recording_id` is retrieved.
+    `recording_pk` refers to the primary key of a NABatRecording, from which the actual
+    `recording_id` is retrieved.
     """
     # Superuser shortcut
     if request.user and request.user.is_authenticated:
@@ -202,7 +204,8 @@ def generate_nabat_recording(
                 celery_id=task.id,
             )
         return {'taskId': task.id}
-    # we want to check the apiToken and make sure the user has access to the file before returning it
+    # we want to check the apiToken and make sure the user has access to the file
+    # before returning it
     api_token = payload.apiToken
     recording_id = payload.recordingId
     headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}

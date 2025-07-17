@@ -47,7 +47,8 @@ class Command(BaseCommand):
                         )
                         if filtered_row[boolean_field] is None:
                             self.stderr.write(
-                                f'Invalid boolean value for field {boolean_field}: {row[boolean_field]}'
+                                'Invalid boolean value for field'
+                                f' {boolean_field}: {row[boolean_field]}'
                             )
                             continue
 

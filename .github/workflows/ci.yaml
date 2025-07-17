@@ -1,37 +1,14 @@
 name: CI
 on:
   pull_request:
-    types: [opened, synchronize]
+    # types: [opened, synchronize]
+    # TODO: why is this here?
   push:
     branches:
       - "main"
-env:
-  DJANGO_CONFIGURATION: DevelopmentConfiguration
-  DJANGO_DATABASE_URL: postgres://postgres:postgres@postgres:5432/django
-  DJANGO_CELERY_BROKER_URL: amqp://rabbitmq:5672/
-  DJANGO_MINIO_STORAGE_ACCESS_KEY: minioAccessKey
-  DJANGO_MINIO_STORAGE_SECRET_KEY: minioSecretKey
-  DJANGO_STORAGE_BUCKET_NAME: django-storage
+permissions:
+  contents: read
 jobs:
-  lint-python:
-    name: Lint Python
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Setup Python environment
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install pre-commit
-        run: pip install pre-commit
-      - name: Cache pre-commit hooks
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pre-commit/
-          key: pre-commit-cache|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Run pre-commit checks
-        run: pre-commit run --all-files
   lint-node:
     strategy:
       fail-fast: false
@@ -53,63 +30,63 @@ jobs:
       - name: Run ${{ matrix.linter }}
         run: npm run lint:${{ matrix.linter }}
         working-directory: client
-  test-django:
-    name: Test Django [${{ matrix.tox-env }}]
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        tox-env: [test, check-migrations]
+  test-python:
+    name: Test Python
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgis/postgis:latest
         env:
           POSTGRES_DB: django
-          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready --username postgres"
+          --health-start-period 30s
+          --health-start-interval 2s
         ports:
           - 5432:5432
       rabbitmq:
-        image: rabbitmq:latest
+        image: rabbitmq:management-alpine
+        options: >-
+          --health-cmd "rabbitmq-diagnostics ping"
+          --health-start-period 30s
+          --health-start-interval 2s
         ports:
           - 5672:5672
       minio:
         # This image does not require any command arguments (which GitHub Actions don't support)
-        image: bitnami/minio:latest
+        image: bitnami/minio:2025.4.22
         env:
           MINIO_ROOT_USER: minioAccessKey
           MINIO_ROOT_PASSWORD: minioSecretKey
+        options: >-
+          --health-cmd "mc ready local"
+          --health-timeout 1s
+          --health-start-period 30s
+          --health-start-interval 2s
         ports:
           - 9000:9000
-        options: >-
-            --health-cmd "curl -I http://localhost:9000/minio/health/live"
-            --health-interval 10s
-            --health-timeout 5s
-            --health-retries 6
-            --health-start-period 30s
 
     steps:
       - name: Update Package References
         run: sudo apt-get update
       - name: Install system dependencies
-        run: sudo apt-get install --no-install-recommends --yes
-          libgdal30
-          libproj22
-          python3-cachecontrol
-          python3-dev
+        run: >-
+          sudo apt-get install --no-install-recommends --yes \
+            libgdal-dev \
+            libproj-dev
+
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Setup Python environment
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install tox
-        run: pip install tox
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
       - name: Run tests
-        run: tox -e ${{ matrix.tox-env }}
-        working-directory: bats_ai
+        run: uv run tox
         env:
-            DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
+          DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
+          DJANGO_CELERY_BROKER_URL: amqp://localhost:5672/
+          DJANGO_MINIO_STORAGE_URL: http://minioAccessKey:minioSecretKey@localhost:9000/django-storage-testing
 
   test-vue:
     name: Test [vue]

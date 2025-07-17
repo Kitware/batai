@@ -521,7 +521,8 @@ def get_other_user_annotations(request: HttpRequest, id: int):
             for annotation in annotations_qs:
                 user_email = annotation.owner.email
 
-                # If user_email is not already a key in the dictionary, initialize it with an empty list
+                # If user_email is not already a key in the dictionary, initialize it with
+                # an empty list
                 annotations_by_user.setdefault(user_email, {'annotations': [], 'temporal': []})
 
                 # Append the annotation to the list for the corresponding user_email
@@ -532,7 +533,8 @@ def get_other_user_annotations(request: HttpRequest, id: int):
             for annotation in temporal_qs:
                 user_email = annotation.owner.email
 
-                # If user_email is not already a key in the dictionary, initialize it with an empty list
+                # If user_email is not already a key in the dictionary, initialize it with
+                # an empty list
                 annotations_by_user.setdefault(user_email, {'annotations': [], 'temporal': []})
 
                 # Append the annotation to the list for the corresponding user_email

@@ -9,7 +9,9 @@ This is the simplest configuration for developers to start with.
 1. Run `docker compose run --rm django ./manage.py migrate`
 2. Run `docker compose run --rm django ./manage.py createsuperuser`
    and follow the prompts to create your own user
-3. Run  `docker compose run --rm django ./manage.py makeclient \
+3. Run `docker compose run --rm django ./manage.py loaddata species` to load species
+   data into the database
+4. Run `docker compose run --rm django ./manage.py makeclient \
                             --username your.super.user@email.address \
                             --uri http://localhost:3000/`
 
@@ -25,27 +27,16 @@ This is the simplest configuration for developers to start with.
 2. Access the site, starting at <http://localhost:8000/admin/>
 3. When finished, use `Ctrl+C`
 
-### Application Maintenance
+### Maintenance
 
-Occasionally, new package dependencies or schema changes will necessitate
-maintenance. To non-destructively update your development stack at any time:
+To non-destructively update your development stack at any time:
 
-1. Run `docker compose pull`
-2. Run `docker compose build --pull --no-cache`
-3. Run `docker compose run --rm django ./manage.py migrate`
-4. Run `docker compose run --rm django ./manage.py createsuperuser`
-5. Run `docker compose run --rm django ./manage.py loaddata species` to load species
-   data into the database
-6. Run  `docker compose run --rm django ./manage.py makeclient \
-                            --username your.super.user@email.address \
-                            --uri http://localhost:3000/`
+1. Run `docker compose down`
+2. Run `docker compose pull`
+3. Run `docker compose build --pull`
+4. Run `docker compose run --rm django ./manage.py migrate`
 
-## Develop Natively (advanced)
-
-This configuration still uses Docker to run attached services in the background,
-but allows developers to run Python code on their native system.
-
-### Dev Tool Endpoints
+## Dev Tool Endpoints
 
 1. Main Site Interface [http://localhost:3000/](http://localhost:3000/)
 2. Site Administration [http://localhost:8000/admin/](http://localhost:8000/admin/)
@@ -55,88 +46,57 @@ but allows developers to run Python code on their native system.
    Username: 'minioAccessKey'
    Password: 'minioSecretKey'
 
-### Initial Setup (Natively)
+## Develop Natively (advanced)
+
+This configuration still uses Docker to run attached services in the background,
+but allows developers to run Python code on their native system.
+
+### Initial Setup for Native Development
 
 1. Run `docker compose -f ./docker-compose.yml up -d`
-2. Install Python 3.10
-3. Install
-   [`psycopg2` build prerequisites](https://www.psycopg.org/docs/install.html#build-prerequisites)
-4. Create and activate a new Python virtualenv
-5. Run `pip install -e .[dev]`
-6. Run `source ./dev/export-env.sh`
-7. Run `./manage.py migrate`
-8. Run `./manage.py createsuperuser` and follow the prompts to create your own user
+2. [Install `uv`](https://docs.astral.sh/uv/getting-started/installation/)
+3. Run `export UV_ENV_FILE=./dev/.env.docker-compose-native`
+4. Run `./manage.py migrate`
+5. Run `./manage.py createsuperuser` and follow the prompts to create your own user
 
-### Run Application (Natively)
+### Run Native Application
 
 1. Ensure `docker compose -f ./docker-compose.yml up -d` is still active
-2. Run:
-   1. `source ./dev/export-env.sh`
-   2. `./manage.py runserver`
-3. Run in a separate terminal:
-   1. `source ./dev/export-env.sh`
-   2. `celery --app bats_ai.celery worker --loglevel INFO --without-heartbeat`
-4. Run in a separate terminal:
+2. Run `export UV_ENV_FILE=./dev/.env.docker-compose-native`
+3. Run: `./manage.py runserver_plus`
+4. Run in a separate terminal: `uv run celery --app bats_ai.celery worker --loglevel INFO --without-heartbeat`
+5. Run in a separate terminal:
    1. `source ./dev/export-env.sh`
    2. `cd ./client`
    3. `npm install`
    4. `npm run dev`
-5. When finished, run `docker compose stop`
-6. To destroy the stack and start fresh, run `docker compose down`
-
-## Remap Service Ports (optional)
-
-Attached services may be exposed to the host system via alternative ports. Developers
-who work on multiple software projects concurrently may find this helpful to avoid
-port conflicts.
-
-To do so, before running any `docker compose` commands, set any of the environment
-variables:
-
-* `DOCKER_POSTGRES_PORT`
-* `DOCKER_RABBITMQ_PORT`
-* `DOCKER_MINIO_PORT`
-
-The Django server must be informed about the changes:
-
-* When running the "Develop with Docker" configuration, override the environment
-  variables:
-  * `DJANGO_MINIO_STORAGE_ENDPOINT`, using the port from `DOCKER_MINIO_PORT`.
-* When running the "Develop Natively" configuration, override the environment
-  variables:
-  * `DJANGO_DATABASE_URL`, using the port from `DOCKER_POSTGRES_PORT`
-  * `DJANGO_CELERY_BROKER_URL`, using the port from `DOCKER_RABBITMQ_PORT`
-  * `DJANGO_MINIO_STORAGE_ENDPOINT`, using the port from `DOCKER_MINIO_PORT`
-
-Since most of Django's environment variables contain additional content, use the
-values from the appropriate `dev/.env.docker-compose*` file as a baseline for
-overrides.
+6. When finished, run `docker compose stop`
 
 ## Testing
 
-### Initial Setup (Testing)
+### Initial Setup for Testing
 
-tox is used to execute all tests.
-tox is installed automatically with the `dev` package extra.
+tox is used to manage the execution of all tests.
+[Install `uv`](https://docs.astral.sh/uv/getting-started/installation/) and run tox with
+`uv run tox ...`.
 
-When running the "Develop with Docker" configuration, all tox commands must be run
-as `docker-compose run --rm django tox`; extra arguments may also be appended to
-this form.
+When running the "Develop with Docker" configuration, all tox commands must be run as
+`docker compose run --rm django uv run tox`; extra arguments may also be appended to this form.
 
 ### Running Tests
 
-Run `tox` to launch the full test suite.
+Run `uv run tox` to launch the full test suite.
 
 Individual test environments may be selectively run.
 This also allows additional options to be be added.
 Useful sub-commands include:
 
-* `tox -e lint`: Run only the style checks
-* `tox -e type`: Run only the type checks
-* `tox -e test`: Run only the pytest-driven tests
+* `uv run tox -e lint`: Run only the style checks
+* `uv run tox -e type`: Run only the type checks
+* `uv run tox -e test`: Run only the pytest-driven tests
 
 To automatically reformat all code to comply with
-some (but not all) of the style checks, run `tox -e format`.
+some (but not all) of the style checks, run `uv run tox -e format`.
 
 ## Code Formatting
 
