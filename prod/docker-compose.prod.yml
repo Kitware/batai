@@ -4,7 +4,7 @@ services:
     restart: always
     image: traefik
     container_name: traefik
-    env_file: ./dev/.env.prod.docker-compose
+    env_file: ./.env.kitware-production.template
     networks:
       - django-nginx
     command: >
@@ -37,22 +37,16 @@ services:
       - "443:443"
 
   django:
-    # Specifying both image and build without pull_policy will default to
-    # attempting to pull the image first, then build from source if that fails.
-    image: ghcr.io/kitware/batai/server:latest
     build:
-      context: .
-      dockerfile: ./dev/django.Dockerfile
-      args:
-        BUILD_ENV: ${BUILD_ENV:-prod}
+      context: ..
+      dockerfile: ./django.Dockerfile
+# Copy and install dependencies
     command: 'gunicorn bats_ai.wsgi:application --bind 0.0.0.0:8000'
-    # ./manage.py runserver 0.0.0.0:8000 --noreload
-    # entrypoint: ["/bin/bash"]
-    # command: ""
+
     # Log printing via Rich is enhanced by a TTY
     tty: true
     env_file:
-      - ./dev/.env.prod.docker-compose
+      - ./.env.kitware-production.template
     networks:
       - django-nginx
     volumes:

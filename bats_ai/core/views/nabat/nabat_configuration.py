@@ -61,9 +61,9 @@ class RecordingFilterSchema(Schema):
     bbox: list[float] | None = None  # [minX, minY, maxX, maxY]
     location: tuple[float, float] | None = None  # (lat, lon)
     radius: float | None = None  # meters
-    sort_by: Literal[
-        'created', 'annotation_count', 'survey_event_id', 'recording_id'
-    ] | None = 'created'  # default sort field
+    sort_by: Literal['created', 'annotation_count', 'survey_event_id', 'recording_id'] | None = (
+        'created'  # default sort field
+    )
     sort_direction: Literal['asc', 'desc'] | None = 'desc'  # 'asc' or 'desc'
 
 
@@ -125,9 +125,9 @@ def list_recordings(request: HttpRequest, filters: Query[RecordingFilterSchema])
             'recording_id': rec.recording_id,
             'survey_event_id': rec.survey_event_id,
             'acoustic_batch_id': rec.acoustic_batch_id,
-            'recording_location': json.loads(rec.recording_location.geojson)
-            if rec.recording_location
-            else None,
+            'recording_location': (
+                json.loads(rec.recording_location.geojson) if rec.recording_location else None
+            ),
         }
         for rec in recordings
     ]

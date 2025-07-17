@@ -3,40 +3,35 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bats_ai"
-version = "0.1.0"
-description = ""
-readme = "README.md"
+name = "bats-ai"
+version = "0.0.0"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Environment :: Web Environment",
-    "Framework :: Django :: 4.1",
-    "Framework :: Django",
-    "Intended Audience :: Developers",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python",
-]
-authors = [
-    { name = "Kitware, Inc.", email = "kitware@kitware.com" }
-]
-keywords = []
+classifiers = ["Private :: Do Not Upload"]
 dependencies = [
+    # Runtime dependendencies, always needed
     "celery",
+    # TODO: move this pinning to the uv lock file
+    "django[argon2]>=4.2, <5",
     "django-ninja",
-    "django>=4.1, <4.2",
-    "django-allauth==0.63.6",
-    "django-configurations[database,email]",
+    "django-allauth",
+    "django-auth-style",
+    "django-cors-headers",
+    "django-environ",
     "django-extensions",
+    "django-filter",
+    "django-minio-storage",
     "django-oauth-toolkit",
-    "djangorestframework",
-    "drf-yasg",
-    "django-click",
+    "django-resonant-settings[allauth,celery]",
+    "django-resonant-utils",
+    "django-s3-file-field[s3, minio]",
     "django-storages[s3]",
+    "django-stubs-ext",
+    "psycopg[binary]",
+    "pydantic",
+    "rich",
+    "whitenoise[brotli]",
     # Spectrogram Generation
     "librosa",
     "matplotlib",
@@ -50,34 +45,75 @@ dependencies = [
     # guano metadata
     "guano",
     "django_celery_results",
+    # Production-only
+    "gunicorn",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "django-composed-configuration[dev]>=0.20",
+development = [
+    "django-browser-reload",
     "django-debug-toolbar",
-    "django-s3-file-field[minio]",
     "django-click",
-    "django-minio-storage>=0.5.2",
-    "ipython",
     "faker",
-    "tox",
+    "ipython",
+    "watchdog",
+    "werkzeug",
 ]
-prod = [
-    "django-composed-configuration[prod]>=0.20",
-    "django-s3-file-field[boto3, minio]",
-    "django-minio-storage>=0.5.2",
-    "gunicorn",
+
+[dependency-groups]
+dev = [
+  # Additional developer tools
+  # The "dev" dependency group is installed by default,
+  # so use this to install "development" extras by default too
+  "bats-ai[development]",
+  "tox",
+  "tox-uv",
+]
+lint = [
+  "flake8",
+  "flake8-black",
+  "flake8-bugbear",
+  "flake8-docstrings",
+  "flake8-isort",
+  "flake8-quotes",
+  "pep8-naming",
+]
+format = [
+  "black",
+  "isort",
+]
+
+type = [
+  "mypy",
+  "celery-types",
+  "django-stubs[compatible-mypy]",
+]
+
+test = [
+  "factory-boy",
+  "pytest",
+  "pytest-django",
+  "pytest-mock",
+  # Enable with "pytest --random-order ..."
+  "pytest-random-order",
+  # Enable with "pytest --count=... ..."
+  "pytest-repeat",
 ]
 
 [tool.hatch.build]
 packages = ["bats_ai"]
 
+[tool.uv]
+constraint-dependencies = [
+  # Earlier versions of "numba" didn't specify an upper bound for
+  # its compatability with "numpy", which led to incorrect versions of "numpy".
+  "numba >= 0.61.0",
+]
+
 [tool.black]
 line-length = 100
 skip-string-normalization = true
 target-version = ["py310"]
-exclude='\.eggs|\.git|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist'
 
 [tool.isort]
 profile = "black"
@@ -86,3 +122,43 @@ line_length = 100
 force_sort_within_sections = true
 # Combines "as" imports on the same line
 combine_as_imports = true
+
+[tool.mypy]
+files = [
+  "bats_ai",
+]
+check_untyped_defs = true
+ignore_missing_imports = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
+plugins = [
+    "mypy_django_plugin.main",
+]
+
+[tool.django-stubs]
+django_settings_module = "bats_ai.settings.testing"
+
+[tool.pytest.ini_options]
+addopts = [
+  # Test utilies should be imported absolutely from the pythonpath,
+  # so use the Pytest-recommended "importlib" mode
+  "--import-mode=importlib",
+  "--strict-config",
+  "--strict-markers",
+  "--showlocals",
+  "--verbose",
+  # Specifying as "--ds" will override any value in the environment
+  "--ds=bats_ai.settings.testing",
+]
+filterwarnings = [
+  "error",
+  # pytest often causes unclosed socket warnings
+  "ignore:unclosed <socket\\.socket:ResourceWarning",
+  # https://github.com/vitalik/django-ninja/issues/1245
+  "ignore:Support for class-based `config` is deprecated:pydantic.warnings.PydanticDeprecatedSince20",
+  # https://github.com/celery/kombu/issues/1339
+  "ignore:SelectableGroups dict interface is deprecated:DeprecationWarning:kombu",
+  "ignore::django.utils.deprecation.RemovedInDjango50Warning", # TODO: is this necessary?
+]

@@ -59,7 +59,8 @@ def get_temporal_annotation(request: HttpRequest, id: int):
             return annotations_data
         else:
             return {
-                'error': 'Permission denied. You do not own this annotation, or the associated recording is not public.'
+                'error': 'Permission denied. You do not own this annotation, or the associated'
+                ' recording is not public.'
             }
 
     except Recording.DoesNotExist:

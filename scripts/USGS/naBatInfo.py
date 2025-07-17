@@ -80,7 +80,7 @@ def decode_jwt(token):
 
 @click.command()
 def fetch_and_save():
-    """Fetch data using GraphQL and save to output.json"""
+    """Fetch data using GraphQL and save to output.json."""
     headers = {'Authorization': f'Bearer {AUTH_TOKEN}', 'Content-Type': 'application/json'}
 
     # Fetch batch data
