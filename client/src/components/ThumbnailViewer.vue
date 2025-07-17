@@ -12,9 +12,9 @@ export default defineComponent({
     LayerManager
   },
   props: {
-    image: {
-      type: Object as PropType<HTMLImageElement>,
-      required: true,
+    images: {
+      type: Array as PropType<HTMLImageElement[]>,
+      default: () => [],
     },
     spectroInfo: {
       type: Object as PropType<SpectroInfo | undefined>,
@@ -46,7 +46,7 @@ export default defineComponent({
   setup(props) {
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
-    const initialized  = ref(false);
+    const initialized = ref(false);
     const clientHeight = ref(0);
     const yScale = ref(1);
     const polyLayerCreated= ref(false);
@@ -132,7 +132,12 @@ export default defineComponent({
     };
 
     watch(() => props.spectroInfo, () => {
-      const { naturalWidth, naturalHeight } = props.image;
+      let naturalWidth = 0;
+      let naturalHeight = 0;
+      props.images.forEach((image) => {
+        naturalWidth += image.naturalWidth;
+        naturalHeight = image.naturalHeight;
+      });
       if (containerRef.value) {
         clientHeight.value = containerRef.value.clientHeight;
       }
@@ -149,15 +154,20 @@ export default defineComponent({
         const diff = coords.y - end.y;
         // How much space to we have to multiply the size of the image
         yScale.value = (clientHeight.value *0.5) / diff;
-        if (props.image) {
-          geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
-        }
+      if (props.images.length) {
+        geoJS.drawImages(props.images, naturalWidth, naturalHeight * yScale.value);
+      }
       initialized.value = true;
       nextTick(() => createPolyLayer());
     });
 
     watch(containerRef, () => {
-      const { naturalWidth, naturalHeight } = props.image;
+      let naturalWidth = 0;
+      let naturalHeight = 0;
+      props.images.forEach((image) => {
+        naturalWidth += image.naturalWidth;
+        naturalHeight = image.naturalHeight;
+      });
       if (containerRef.value) {
         clientHeight.value = containerRef.value.clientHeight;
       }
@@ -169,8 +179,8 @@ export default defineComponent({
         const diff = coords.y - end.y;
         // How much space to we have to multiply the size of the image
         yScale.value = (clientHeight.value *0.5) / diff;
-      if (props.image) {
-        geoJS.drawImage(props.image, naturalWidth, naturalHeight*yScale.value);
+      if (props.images.length) {
+        geoJS.drawImages(props.images, naturalWidth, naturalHeight * yScale.value);
       }
       initialized.value = true;
         nextTick(() => createPolyLayer());

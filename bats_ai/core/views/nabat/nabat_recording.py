@@ -247,7 +247,7 @@ def get_spectrogram(request: HttpRequest, id: int):
     compressed = nabat_recording.compressed_spectrogram
 
     spectro_data = {
-        'url': spectrogram.image_url,
+        'urls': [spectrogram.image_url],
         'spectroInfo': {
             'spectroId': spectrogram.pk,
             'width': spectrogram.width,
@@ -290,7 +290,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
         return JsonResponse({'error': 'Compressed Spectrogram not found'}, status=404)
 
     spectro_data = {
-        'url': compressed_spectrogram.image_url,
+        'urls': [compressed_spectrogram.image_url],
         'spectroInfo': {
             'spectroId': compressed_spectrogram.pk,
             'width': compressed_spectrogram.spectrogram.width,
