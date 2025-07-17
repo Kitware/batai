@@ -3,29 +3,34 @@ services:
     build:
       context: .
       dockerfile: ./dev/django.Dockerfile
-    command: ["./manage.py", "runserver", "0.0.0.0:8000"]
-    # ./manage.py runserver 0.0.0.0:8000 --noreload
-    # entrypoint: ["/bin/bash"]
-    # command: ""
-    # Log printing via Rich is enhanced by a TTY
+    command: [
+      "./manage.py",
+      "runserver_plus", "0.0.0.0:8000"
+    ]
+    # Log printing is enhanced by a TTY
     tty: true
-    env_file: ./dev/.env.docker-compose
+    environment:
+      UV_ENV_FILE: ./dev/.env.docker-compose
+    working_dir: /opt/django-project
     volumes:
       - .:/opt/django-project
-      - ./dev/grtsCells:/app/csv  # Map the host CSV directory to a directory in the container
-
+      - uv_cache:/var/cache/uv
     ports:
       - 8000:8000
     depends_on:
-      - postgres
-      - rabbitmq
-      - minio
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
 
   celery:
     build:
       context: .
       dockerfile: ./dev/django.Dockerfile
     command: [
+      "uv", "run",
       "celery",
       "--app", "bats_ai.celery",
       "worker",
@@ -34,13 +39,19 @@ services:
     ]
     # Docker Compose does not set the TTY width, which causes Celery errors
     tty: false
-    env_file: ./dev/.env.docker-compose
+    environment:
+      UV_ENV_FILE: ./dev/.env.docker-compose
+    working_dir: /opt/django-project
     volumes:
       - .:/opt/django-project
+      - uv_cache:/var/cache/uv
     depends_on:
-      - postgres
-      - rabbitmq
-      - minio
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
 
   client:
     image: node:18
@@ -48,14 +59,15 @@ services:
     command: >
       sh -c "
         npm install &&
-        # If node_modules is not writable by others, make it so the host can modify and delete them
-        [ \"\$(stat -c '%A' node_modules | cut -c9)\" != 'w' ] && chmod o+w node_modules;
-        # Always run the dev server
         npm run dev
       "
     ports:
-      - "3000:3000"
+      - 3000:3000
     volumes:
       - ./client:/app
+      - /app/node_modules
     env_file:
       - ./dev/.env.docker-compose
+
+volumes:
+  uv_cache:
