@@ -27,14 +27,10 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
 
     @property
     def image_np(self):
-        return np.array(self.image)
+        return np.array(self.image_pil)
 
     @property
     def image_pil(self):
-        return self.image
-
-    @property
-    def image(self):
         img = Image.open(self.image_file)
         return img
 

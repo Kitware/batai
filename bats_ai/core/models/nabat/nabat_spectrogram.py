@@ -29,10 +29,6 @@ class NABatSpectrogram(TimeStampedModel, models.Model):
 
     @property
     def image_pil(self):
-        return self.image
-
-    @property
-    def image(self):
         img = Image.open(self.image_file)
         return img
 
