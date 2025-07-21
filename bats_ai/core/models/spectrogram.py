@@ -1,5 +1,3 @@
-import base64
-
 from PIL import Image
 from django.core.files.storage import default_storage
 from django.db import models
@@ -22,23 +20,12 @@ class Spectrogram(TimeStampedModel, models.Model):
 
     @property
     def image_np(self):
-        return np.array(self.image)
+        return np.array(self.image_pil)
 
     @property
     def image_pil(self):
-        return self.image
-
-    @property
-    def image(self):
         img = Image.open(self.image_file)
         return img
-
-    @property
-    def base64(self):
-        img = self.image_file.read()
-        img_base64 = base64.b64encode(img).decode('utf-8')
-
-        return img_base64
 
     @property
     def image_url(self):

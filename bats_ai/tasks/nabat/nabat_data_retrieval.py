@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import tempfile
 
 from django.contrib.gis.geos import Point
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -10,10 +9,10 @@ from django.db.models import Q
 import requests
 
 from bats_ai.celery import app
-from bats_ai.core.models import Configuration, ProcessingTask, ProcessingTaskType, Species
+from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
 
-from .tasks import generate_compress_spectrogram, generate_spectrogram, predict
+from .tasks import generate_spectrograms
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
@@ -163,71 +162,11 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
 
     presigned_url = batch_data['data']['presignedUrlFromAcousticFile']['s3PresignedUrl']
 
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
-            file_response = requests.get(presigned_url, stream=True)
-            if file_response.status_code == 200:
-                for chunk in file_response.iter_content(chunk_size=8192):
-                    temp_file.write(chunk)
-                temp_file_path = temp_file.name  # This gives the path of the temp file
-                logger.info(f'File downloaded to temporary file: {temp_file_path}')
-
-                # Now create the NABatRecording using the response data
-                logger.info('Creating NA Bat Recording...')
-                nabat_recording = create_nabat_recording_from_response(
-                    batch_data, recording_id, survey_event_id
-                )
-                # Call generate_spectrogram with the nabat_recording and the temporary file
-                logger.info('Generating spectrogram...')
-                self.update_state(
-                    state='Progress',
-                    meta={'description': 'Generating Spectrogram'},
-                )
-
-                spectrogram = generate_spectrogram(nabat_recording, open(temp_file_path, 'rb'))
-                logger.info('Generating compressed spectrogram...')
-                self.update_state(
-                    state='Progress',
-                    meta={'description': 'Generating Compressed Spectrogram'},
-                )
-
-                compressed_spectrogram = generate_compress_spectrogram(
-                    nabat_recording.pk, spectrogram.pk
-                )
-                logger.info('Running Prediction...')
-                self.update_state(
-                    state='Progress',
-                    meta={'description': 'Running Prediction'},
-                )
-
-                try:
-                    config = Configuration.objects.first()
-                    if config and config.run_inference_on_upload:
-                        predict(compressed_spectrogram.pk)
-                except Exception as e:
-                    error_msg = f'Error performing prediction: {e}'
-                    logger.error(error_msg)
-                    processing_task.status = ProcessingTask.Status.ERROR
-                    processing_task.error = error_msg
-                    processing_task.save()
-                    raise
-                processing_task.status = ProcessingTask.Status.COMPLETE
-                processing_task.save()
-
-            else:
-                error_msg = f'Failed to download file: {file_response.status_code}'
-                logger.error(error_msg)
-                processing_task.status = ProcessingTask.Status.ERROR
-                processing_task.error = error_msg
-                processing_task.save()
-                raise
-    except Exception as e:
-        error_msg = f'Error during NABat recording initialization: {e}'
-        logger.error(error_msg)
-        processing_task.status = ProcessingTask.Status.ERROR
-        processing_task.error = error_msg
-        processing_task.save()
-        raise
+    logger.info('Creating NA Bat Recording...')
+    nabat_recording = create_nabat_recording_from_response(
+        batch_data, recording_id, survey_event_id
+    )
+    generate_spectrograms(self, nabat_recording, presigned_url, processing_task)
 
 
 def create_nabat_recording_from_response(response_data, recording_id, survey_event_id):
