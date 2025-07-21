@@ -1,19 +1,4 @@
 [flake8]
+# https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html?highlight=flake8#flake8
 max-line-length = 100
-show-source = True
-extend-exclude =
-    .venv/,
-    client/node_modules/
-ignore =
-    E123
-    E203
-    W503
-    D10
-    N815
-    N812
-    N801
-    N802
-    N803
-    N806
-per-file-ignores =
-    bats_ai/settings/*:E402,F401,F403,F405
+extend-ignore = E203, E501, F401, F403, F405, E402
