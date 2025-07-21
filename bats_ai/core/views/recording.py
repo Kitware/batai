@@ -18,7 +18,6 @@ from bats_ai.core.models import (
     RecordingAnnotation,
     Species,
     TemporalAnnotations,
-    colormap,
 )
 from bats_ai.core.views.species import SpeciesSchema
 from bats_ai.core.views.temporal_annotations import (
@@ -340,13 +339,12 @@ def get_spectrogram(request: HttpRequest, id: int):
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 
-    with colormap(None):
-        spectrogram = recording.spectrogram
+    spectrogram = recording.spectrogram
 
     compressed = recording.compressed_spectrogram
 
     spectro_data = {
-        'urls': [spectrogram.image_url],
+        'urls': spectrogram.image_url_list,
         'spectroInfo': {
             'spectroId': spectrogram.pk,
             'width': spectrogram.width,
@@ -416,7 +414,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
         return {'error': 'Recording does not exist'}
 
     spectro_data = {
-        'urls': [compressed_spectrogram.image_url],
+        'urls': compressed_spectrogram.image_url_list,
         'spectroInfo': {
             'spectroId': compressed_spectrogram.pk,
             'width': compressed_spectrogram.spectrogram.width,
