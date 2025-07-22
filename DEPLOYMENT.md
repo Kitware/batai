@@ -27,7 +27,7 @@ The onnx model file is in the `/assets` folder and is bind mounted into the cont
 ### Copy templated environment File
 Figure out the proper template to use.  This is either
 `./prod/.env.kitware-production.template` or `./prod/.env.aws-production.template`
-Copy over the chosen .env file to `./prod/env.production`
+Copy over the chosen .env file to `./prod/.env.production`
 and change the default passwords for fields
 
 ### Initial Setup for Deployment
