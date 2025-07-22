@@ -60,6 +60,9 @@ services:
       - postgres
       - rabbitmq
       - minio
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
   celery:
     image: ghcr.io/kitware/batai/server:latest
     build:
@@ -113,8 +116,8 @@ services:
     image: postgis/postgis:latest
     env_file: ./.env.production
     environment:
-      - POSTGRES_DB=${DJANGO_DATABASE_NAME:-django}
-      - POSTGRES_PASSWORD=${DJANGO_DATABASE_PASSWORD:-postgres}
+      - POSTGRES_DB=${DEFAULT_DATABASE_NAME}
+      - POSTGRES_PASSWORD=${DEFAULT_DATABASE_PASSWORD}
     networks:
       - django-nginx
     ports:
@@ -142,8 +145,8 @@ services:
     env_file:
       - ./.env.production
     environment:
-      - MINIO_ROOT_USER=${DJANGO_MINIO_STORAGE_ACCESS_KEY:-minioAccessKey}
-      - MINIO_ROOT_PASSWORD=${DJANGO_MINIO_STORAGE_SECRET_KEY:-minioSecretKey}
+      - MINIO_ROOT_USER=${DEFAULT_MINIO_STORAGE_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${DEFAULT_MINIO_STORAGE_SECRET_KEY}
     networks:
       - django-nginx
     ports:

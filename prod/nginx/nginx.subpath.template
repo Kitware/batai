@@ -1,7 +1,7 @@
-worker_processes  1;
+worker_processes 1;
 
 events {
-    worker_connections  1024;
+    worker_connections 1024;
 }
 
 http {
@@ -13,61 +13,26 @@ http {
         listen 80;
 
         # Serve Vue.js static files
-
         location /${DJANGO_BATAI_URL_PATH} {
-            root /usr/share/nginx/html;
-            index index.html;
+            root   /usr/share/nginx/html;
+            index  index.html;
             try_files $uri $uri/ /${DJANGO_BATAI_URL_PATH}/index.html;
         }
 
-        location /${DJANGO_BATAI_URL_PATH}/api {
-            proxy_pass http://django:8000/${DJANGO_BATAI_URL_PATH}/api;
+        # Proxy Django paths with all necessary headers
+        location ~ ^/${DJANGO_BATAI_URL_PATH}/(api|oauth|static|admin|accounts) {
+            proxy_pass http://django:8000;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_redirect off;
-        }
-
-        location /${DJANGO_BATAI_URL_PATH}/oauth {
-            proxy_pass http://django:8000/${DJANGO_BATAI_URL_PATH}/oauth;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_redirect off;
-        }
-
-        location /${DJANGO_BATAI_URL_PATH}/static {
-            proxy_pass http://django:8000/${DJANGO_BATAI_URL_PATH}/static;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_redirect off;
-        }
-
-        location /${DJANGO_BATAI_URL_PATH}/admin {
-            proxy_pass http://django:8000/${DJANGO_BATAI_URL_PATH}/admin;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
+            # Required for Django subpath handling (especially admin)
             proxy_set_header X-SCRIPT-NAME /${DJANGO_BATAI_URL_PATH}/;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
+
             proxy_redirect off;
         }
 
-
-
-        location /${DJANGO_BATAI_URL_PATH}/accounts {
-            proxy_pass http://django:8000/${DJANGO_BATAI_URL_PATH}/accounts;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_redirect off;
-        }
-
+        # Proxy MinIO storage access
         location /django-storage {
             proxy_pass http://minio:9000/django-storage;
             proxy_set_header Host $host;
@@ -76,6 +41,5 @@ http {
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_redirect off;
         }
-
     }
 }
