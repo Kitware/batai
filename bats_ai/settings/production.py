@@ -1,7 +1,6 @@
 from .base import *
 
 # Import these afterwards, to override
-from resonant_settings.production.email import *  # isort: skip
 from resonant_settings.production.https import *  # isort: skip
 
 WSGI_APPLICATION = 'bats_ai.wsgi.application'

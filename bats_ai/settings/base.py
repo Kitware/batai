@@ -99,7 +99,8 @@ BATAI_URL_PATH: str = env.str('DJANGO_BATAI_URL_PATH', default='').strip('/')
 
 # Django's docs suggest that STATIC_URL should be a relative path,
 # for convenience serving a site on a subpath.
-STATIC_URL = 'static/'
+STATIC_URL = f'/{BATAI_URL_PATH}/static/' if BATAI_URL_PATH else '/static/'
+LOGIN_URL = f'/{BATAI_URL_PATH}/accounts/login/' if BATAI_URL_PATH else '/accounts/login/'
 
 # Make Django and Allauth redirects consistent, but both may be changed.
 LOGIN_REDIRECT_URL = f'/{BATAI_URL_PATH}'
