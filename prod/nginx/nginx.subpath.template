@@ -33,7 +33,7 @@ http {
         }
 
         # Proxy MinIO storage access
-        location /django-storage {
+        location /${DJANGO_BATAI_URL_PATH}/django-storage {
             proxy_pass http://minio:9000/django-storage;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;

@@ -100,7 +100,7 @@ services:
         VITE_APP_OAUTH_API_ROOT: ${VITE_APP_OAUTH_API_ROOT}
         VITE_APP_OAUTH_CLIENT_ID: ${VITE_APP_OAUTH_CLIENT_ID}
         VITE_APP_LOGIN_REDIRECT: ${VITE_APP_LOGIN_REDIRECT}
-        SUBPATH: ${SUBPATH}
+        DJANGO_BATAI_URL_PATH: ${DJANGO_BATAI_URL_PATH}
     env_file:
      - ./.env.production
     networks:
