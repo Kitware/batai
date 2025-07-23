@@ -1,8 +1,10 @@
+from environ import Env
+
 from .production import *
 
 # Import these afterwards, to override
 from resonant_settings.testing.minio_storage import *  # isort: skip
-from environ import Env
+
 
 env = Env()
 SECURE_SSL_REDIRECT = False  # disable because we are using a reverse proxy (traefik that does it)
