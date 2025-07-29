@@ -4,7 +4,7 @@ services:
     restart: always
     image: traefik
     container_name: traefik
-    env_file: ./.env.kitware-production.template
+    env_file: ./.env.production
     networks:
       - django-nginx
     command: >
@@ -39,18 +39,18 @@ services:
   django:
     build:
       context: ..
-      dockerfile: ./django.Dockerfile
+      dockerfile: ./prod/django.Dockerfile
 # Copy and install dependencies
-    command: 'gunicorn bats_ai.wsgi:application --bind 0.0.0.0:8000'
+    command: 'uv run gunicorn bats_ai.wsgi:application --bind 0.0.0.0:8000'
 
     # Log printing via Rich is enhanced by a TTY
     tty: true
     env_file:
-      - ./.env.kitware-production.template
+      - ./.env.production
     networks:
       - django-nginx
     volumes:
-      - ./dev/grtsCells:/app/csv  # Map the host CSV directory to a directory in the container
+      - ../dev/grtsCells:/app/csv  # Map the host CSV directory to a directory in the container
       - django-static:/opt/django-project/staticfiles
     environment:
       - SERVERHOSTNAME=${SERVERHOSTNAME:-batdetectai.kitware.com}
@@ -60,14 +60,18 @@ services:
       - postgres
       - rabbitmq
       - minio
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
   celery:
     image: ghcr.io/kitware/batai/server:latest
     build:
-      context: .
-      dockerfile: ./dev/django.Dockerfile
+      context: ..
+      dockerfile: ./prod/django.Dockerfile
       args:
         BUILD_ENV: ${BUILD_ENV:-prod}
     command: [
+      "uv", "run",
       "celery",
       "--app", "bats_ai.celery",
       "worker",
@@ -77,7 +81,7 @@ services:
     # Docker Compose does not set the TTY width, which causes Celery errors
     tty: false
     env_file:
-      - ./dev/.env.prod.docker-compose
+      - ./.env.production
     networks:
       - django-nginx
     depends_on:
@@ -89,16 +93,16 @@ services:
     # attempting to pull the image first, then build from source if that fails.
     image: ghcr.io/kitware/batai/client:latest
     build:
-      context: .
-      dockerfile: ./dev/client.Dockerfile
+      context: ..
+      dockerfile: ./prod/client.Dockerfile
       args:
         VITE_APP_API_ROOT: ${VITE_APP_API_ROOT}
         VITE_APP_OAUTH_API_ROOT: ${VITE_APP_OAUTH_API_ROOT}
         VITE_APP_OAUTH_CLIENT_ID: ${VITE_APP_OAUTH_CLIENT_ID}
         VITE_APP_LOGIN_REDIRECT: ${VITE_APP_LOGIN_REDIRECT}
-        SUBPATH: ${SUBPATH}
+        DJANGO_BATAI_URL_PATH: ${DJANGO_BATAI_URL_PATH}
     env_file:
-     - ./dev/.env.prod.docker-compose
+     - ./.env.production
     networks:
       - django-nginx
     depends_on:
@@ -110,10 +114,10 @@ services:
       - "traefik.http.services.client-svc.loadbalancer.server.port=80"
   postgres:
     image: postgis/postgis:latest
-    env_file: ./dev/.env.prod.docker-compose
+    env_file: ./.env.production
     environment:
-      - POSTGRES_DB=${DJANGO_DATABASE_NAME:-django}
-      - POSTGRES_PASSWORD=${DJANGO_DATABASE_PASSWORD:-postgres}
+      - POSTGRES_DB=${DEFAULT_DATABASE_NAME}
+      - POSTGRES_PASSWORD=${DEFAULT_DATABASE_PASSWORD}
     networks:
       - django-nginx
     ports:
@@ -123,13 +127,15 @@ services:
 
   rabbitmq:
     env_file:
-      - ./dev/.env.prod.docker-compose
+      - ./.env.production
     image: rabbitmq:management
     networks:
       - django-nginx
     ports:
       - ${DOCKER_RABBITMQ_PORT-5672}:5672
       - ${DOCKER_RABBITMQ_CONSOLE_PORT-15672}:15672
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-guest}
     volumes:
       - rabbitmq:/var/lib/rabbitmq/mnesia
 
@@ -139,10 +145,10 @@ services:
     tty: true
     command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9001}"]
     env_file:
-      - ./dev/.env.prod.docker-compose
+      - ./.env.production
     environment:
-      - MINIO_ROOT_USER=${DJANGO_MINIO_STORAGE_ACCESS_KEY:-minioAccessKey}
-      - MINIO_ROOT_PASSWORD=${DJANGO_MINIO_STORAGE_SECRET_KEY:-minioSecretKey}
+      - MINIO_ROOT_USER=${DEFAULT_MINIO_STORAGE_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${DEFAULT_MINIO_STORAGE_SECRET_KEY}
     networks:
       - django-nginx
     ports:
