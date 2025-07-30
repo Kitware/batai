@@ -134,8 +134,9 @@ services:
     ports:
       - ${DOCKER_RABBITMQ_PORT-5672}:5672
       - ${DOCKER_RABBITMQ_CONSOLE_PORT-15672}:15672
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-guest}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-guest}
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
     volumes:
       - rabbitmq:/var/lib/rabbitmq/mnesia
 
