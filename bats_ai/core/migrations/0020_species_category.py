@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 
 def load_species_data(apps, schema_editor):
-    Species = apps.get_model('yourappname', 'Species')
+    Species = apps.get_model('core', 'Species')
     fixture_path = os.path.join(os.path.dirname(__file__), '..', 'fixtures', 'species.json')
 
     with open(fixture_path) as f:

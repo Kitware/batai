@@ -4,10 +4,12 @@ import { SpectroInfo } from './geoJS/geoJSUtils';
 import { deleteFileAnnotation, FileAnnotation, patchFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
 import { deleteNABatFileAnnotation, patchNABatFileAnnotation } from "../api/NABatApi";
 import SpeciesInfo from "./SpeciesInfo.vue";
+import SpeciesEditor from "./SpeciesEditor.vue";
 export default defineComponent({
   name: "AnnotationEditor",
   components: {
     SpeciesInfo,
+    SpeciesEditor,
   },
   props: {
     spectroInfo: {
@@ -37,9 +39,6 @@ export default defineComponent({
   },
   emits: ['update:annotation', 'delete:annotation'],
   setup(props, { emit }) {
-    const speciesList = computed(() => {
-        return props.species.map((item) => (item.species_code || item.common_name)).sort();
-    });
 
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
@@ -100,7 +99,6 @@ export default defineComponent({
         }
     };
     return {
-        speciesList,
         speciesEdit,
         confidence,
         comments,
@@ -138,25 +136,9 @@ export default defineComponent({
         />
       </v-row>
       <v-row>
-        <v-autocomplete
-          v-if="type !== 'nabat'"
+        <SpeciesEditor
           v-model="speciesEdit"
-          autocomplete="off"
-          multiple
-          closable-chips
-          chips
-          :items="speciesList"
-          label="Species"
-          @update:model-value="updateAnnotation()"
-        />
-        <v-autocomplete
-          v-if="type === 'nabat'"
-          v-model="singleSpecies"
-          closable-chips
-          chips
-          :items="speciesList"
-          label="Species"
-          @update:model-value="updateAnnotation()"
+          :species-list="species"
         />
       </v-row>
       <v-row
