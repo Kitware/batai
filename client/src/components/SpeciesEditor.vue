@@ -110,7 +110,7 @@ export default defineComponent({
     closable-chips
     :custom-filter="customFilter"
     clearable
-    label="Select Species"
+    label="Select Labels"
     :menu-props="{ maxHeight: '300px' }"
   >
     <template #subheader="{ props }">

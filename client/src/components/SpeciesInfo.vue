@@ -30,6 +30,10 @@ export default defineComponent({
         key: "category",
       },
       {
+        title: "Species",
+        key: "species",
+      },
+      {
         title: "Common Name",
         key: "common_name",
       },
@@ -87,7 +91,7 @@ export default defineComponent({
       color="primary"
       class="ml-3"
       @click="displayDialog = true"
-    > Species Info </v-btn>
+    > Species Codes </v-btn>
     <v-dialog
       v-model="displayDialog"
       width="800"
@@ -95,7 +99,7 @@ export default defineComponent({
       <v-card>
         <v-card-title>
           <v-row class="my-2">
-            <h2>Species Info</h2>
+            <h2>Species Codes</h2>
             <v-spacer />
             <v-icon
               size="large"
@@ -120,6 +124,8 @@ export default defineComponent({
                     {{ item.category.charAt(0).toUpperCase() + item.category.slice(1) }}
                   </span>
                 </td>
+                <td>{{ item.species }}</td>
+
                 <td>{{ item.common_name }}</td>
               </tr>
             </template>
