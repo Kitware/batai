@@ -139,6 +139,7 @@ export default defineComponent({
         <SpeciesEditor
           v-model="speciesEdit"
           :species-list="species"
+          @update:model-value="updateAnnotation()"
         />
       </v-row>
       <v-row

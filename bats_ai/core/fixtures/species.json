@@ -1614,32 +1614,6 @@
   {
     "fields": {
       "category": "frequency",
-      "common_name": "Various species with pulses having a minimum frequency higher than ~30 kHz.",
-      "family": "",
-      "genus": "",
-      "species": "",
-      "species_code": "HighF or HiF",
-      "species_code_6": ""
-    },
-    "model": "core.Species",
-    "pk": "131"
-  },
-  {
-    "fields": {
-      "category": "frequency",
-      "common_name": "Various species with pulses having a minimum frequency lower than ~30 kHz.",
-      "family": "",
-      "genus": "",
-      "species": "",
-      "species_code": "LowF or LoF",
-      "species_code_6": ""
-    },
-    "model": "core.Species",
-    "pk": "132"
-  },
-  {
-    "fields": {
-      "category": "frequency",
       "common_name": "Two or more bats from distinct frequency classes vocalizing simultaneously within a recording.",
       "family": "",
       "genus": "",
