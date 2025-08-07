@@ -18,7 +18,6 @@ export default defineComponent({
 
   setup(props, { emit }) {
     const search = ref('');
-
     // Used internally to track selected species by ID
     const selectedNames = ref<string[]>(props.modelValue);
     const speciesAutocomplete: Ref<HTMLElement | null> = ref(null);
@@ -111,7 +110,7 @@ export default defineComponent({
     :custom-filter="customFilter"
     clearable
     label="Select Labels"
-    :menu-props="{ maxHeight: '300px' }"
+    :menu-props="{ maxHeight: '300px', maxWidth: '400px' }"
   >
     <template #subheader="{ props }">
       <v-list-subheader

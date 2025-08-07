@@ -795,7 +795,7 @@
   {
     "fields": {
       "category": "noid",
-      "common_name": "Bat but no grouping or user-defined category applies",
+      "common_name": "No Id can be determined",
       "family": "",
       "genus": "",
       "species": "",
@@ -1095,8 +1095,8 @@
     "fields": {
       "category": "individual",
       "common_name": "\u02bb\u014dpe\u02bbape\u02bba; Hawaiian hoary bat",
-      "family": "",
-      "genus": "",
+      "family": "Vespertilionidae",
+      "genus": "Lasiurus",
       "species": "",
       "species_code": "LACS",
       "species_code_6": "LACISE"
@@ -1108,14 +1108,14 @@
     "fields": {
       "category": "individual",
       "common_name": "desert red bat",
-      "family": "",
+      "family": "Vespertilionidae",
       "genus": "Lasiurus",
       "species": "Lasiurus frantzii",
       "species_code": "LAFR",
       "species_code_6": "LASFRA"
     },
     "model": "core.Species",
-    "pk": "92"
+    "pk": 12
   },
   {
     "fields": {
@@ -1128,7 +1128,7 @@
       "species_code_6": "MYOKEE"
     },
     "model": "core.Species",
-    "pk": "93"
+    "pk": 121
   },
   {
     "fields": {
@@ -1141,7 +1141,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "94"
+    "pk": 122
   },
   {
     "fields": {
@@ -1154,7 +1154,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "95"
+    "pk": 94
   },
   {
     "fields": {
@@ -1167,7 +1167,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "96"
+    "pk": 95
   },
   {
     "fields": {
@@ -1180,7 +1180,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "97"
+    "pk": 96
   },
   {
     "fields": {
@@ -1193,7 +1193,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "98"
+    "pk": 97
   },
   {
     "fields": {
@@ -1206,7 +1206,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "99"
+    "pk": 98
   },
   {
     "fields": {
@@ -1219,7 +1219,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "100"
+    "pk": 99
   },
   {
     "fields": {
@@ -1245,7 +1245,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "102"
+    "pk": 100
   },
   {
     "fields": {
@@ -1258,7 +1258,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "103"
+    "pk": 102
   },
   {
     "fields": {
@@ -1271,7 +1271,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "104"
+    "pk": 103
   },
   {
     "fields": {
@@ -1284,7 +1284,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "105"
+    "pk": 119
   },
   {
     "fields": {
@@ -1297,7 +1297,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "106"
+    "pk": 123
   },
   {
     "fields": {
@@ -1310,7 +1310,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "107"
+    "pk": 104
   },
   {
     "fields": {
@@ -1323,7 +1323,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "108"
+    "pk": 118
   },
   {
     "fields": {
@@ -1336,7 +1336,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "109"
+    "pk": 105
   },
   {
     "fields": {
@@ -1349,7 +1349,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "110"
+    "pk": 107
   },
   {
     "fields": {
@@ -1362,7 +1362,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "111"
+    "pk": 106
   },
   {
     "fields": {
@@ -1375,7 +1375,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "112"
+    "pk": 57
   },
   {
     "fields": {
@@ -1388,7 +1388,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "113"
+    "pk": 108
   },
   {
     "fields": {
@@ -1401,7 +1401,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "114"
+    "pk": 109
   },
   {
     "fields": {
@@ -1414,7 +1414,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "115"
+    "pk": 110
   },
   {
     "fields": {
@@ -1427,7 +1427,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "116"
+    "pk": 81
   },
   {
     "fields": {
@@ -1440,7 +1440,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "117"
+    "pk": 124
   },
   {
     "fields": {
@@ -1453,7 +1453,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "118"
+    "pk": 63
   },
   {
     "fields": {
@@ -1466,20 +1466,20 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "119"
+    "pk": 111
   },
   {
     "fields": {
       "category": "couplet",
       "common_name": "little brown bat, Indiana bat",
       "family": "",
-      "genus": "",
+      "genus": "Myotis",
       "species": "Myotis lucifugus, Myotis sodalis",
       "species_code": "MYLUMYSO",
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "120"
+    "pk": 75
   },
   {
     "fields": {
@@ -1492,7 +1492,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "121"
+    "pk": 113
   },
   {
     "fields": {
@@ -1505,7 +1505,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "122"
+    "pk": 88
   },
   {
     "fields": {
@@ -1518,7 +1518,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "123"
+    "pk": 114
   },
   {
     "fields": {
@@ -1531,7 +1531,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "124"
+    "pk": 115
   },
   {
     "fields": {
@@ -1544,7 +1544,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "125"
+    "pk": 116
   },
   {
     "fields": {
@@ -1557,7 +1557,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "126"
+    "pk": 117
   },
   {
     "fields": {
@@ -1596,7 +1596,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "129"
+    "pk": 120
   },
   {
     "fields": {
@@ -1609,7 +1609,7 @@
       "species_code_6": ""
     },
     "model": "core.Species",
-    "pk": "130"
+    "pk": 93
   },
   {
     "fields": {

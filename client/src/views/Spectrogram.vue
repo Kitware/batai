@@ -154,7 +154,9 @@ export default defineComponent({
         currentUser.value = response.data.currentUser;
       }
       const speciesResponse = await getSpecies();
-      speciesList.value = speciesResponse.data;
+      speciesList.value = speciesResponse.data.filter(
+        (item: Species) => item.species_code !== "NOISE"
+      );
       if (response.data.otherUsers && spectroInfo.value) {
         // We have other users so we should grab the other user annotations
         const otherResponse = await getOtherUserAnnotations(props.id);

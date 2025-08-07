@@ -118,7 +118,9 @@ export default defineComponent({
         viewCompressedOverlay.value = false;
       }
       const speciesResponse = await getSpecies();
-      speciesList.value = speciesResponse.data;
+      speciesList.value = speciesResponse.data.filter(
+        (item: Species) => item.species_code !== "NOISE"
+      );
     } catch (error) {
         errorMessage.value = `Failed fetch Spectrogram: ${error.message}:`;
         if (error.response.data.errors?.length) {
@@ -454,7 +456,7 @@ export default defineComponent({
           </v-row>
         </v-card-title>
         <v-card-text class="pa-0">
-          <div v-if="sideTab === 'annotations'">
+          <div v-if="sideTab === 'annotations' && speciesList.length">
             <RecordingAnnotations
               :species="speciesList"
               :recording-id="parseInt(id)"
