@@ -12,6 +12,7 @@ import TimeLayer from "./layers/timeLayer";
 import FreqLayer from "./layers/freqLayer";
 import SpeciesLayer from "./layers/speciesLayer";
 import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
+import MeasureToolLayer from "./layers/measureToolLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
 export default defineComponent({
@@ -63,6 +64,7 @@ export default defineComponent({
       configuration,
       colorScheme,
       backgroundColor,
+      measuring,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -79,6 +81,7 @@ export default defineComponent({
     let freqLayer: FreqLayer;
     let speciesLayer: SpeciesLayer;
     let speciesSequenceLayer: SpeciesSequenceLayer;
+    let measureToolLayer: MeasureToolLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -509,6 +512,20 @@ export default defineComponent({
           }
           speciesLayer.spectroInfo = props.spectroInfo;
           speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+
+          if (!measureToolLayer) {
+            measureToolLayer = new MeasureToolLayer(props.geoViewerRef, event, props.spectroInfo);
+          }
+          watch(measuring, () => {
+            if (measuring.value) {
+              console.log('enabling drawing');
+              measureToolLayer.enableDrawing();
+            } else {
+              console.log('disabling drawing');
+              measureToolLayer.disableDrawing();
+            }
+          });
+          // measureToolLater.setScaleDimensions(...);
 
           timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
           timeLayer.formatData(localAnnotations.value, sequenceAnnotations.value);

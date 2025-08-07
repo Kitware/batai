@@ -23,3 +23,26 @@ export interface LayerStyle<D> {
     [x: string]: unknown;
     visible?: (data: D) => boolean;
   }
+
+export interface RectGeoJSData {
+  id: number;
+  selected: boolean;
+  editing?: boolean;
+  polygon: GeoJSON.Polygon;
+  color?: string;
+  owned: boolean; // if the annotation is user owned
+}
+
+export interface LineData {
+  line: GeoJSON.LineString;
+  thicker?: boolean;
+  grid?: boolean;
+}
+
+export interface TextData {
+  text: string;
+  x: number;
+  y: number;
+  offsetY?: number;
+  offsetX?: number;
+}
