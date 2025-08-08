@@ -81,30 +81,7 @@ services:
       - ${DOCKER_RABBITMQ_CONSOLE_PORT-15672}:15672
     volumes:
       - rabbitmq:/var/lib/rabbitmq/mnesia
-  # Minio daemon currently needed for application
-  # connectivity to s3. S3 access controls are pulled
-  # from instance role based access.
-  minio:
-    image: minio/minio:latest
-    tty: true
-    command:
-      [
-        "server",
-        "/data",
-        "--console-address",
-        ":${DOCKER_MINIO_CONSOLE_PORT-9001}",
-      ]
-    env_file: ./.env.usgs
-    networks:
-      - django-nginx
-    ports:
-      - ${DOCKER_MINIO_PORT-9000}:9000
-      - ${DOCKER_MINIO_CONSOLE_PORT-9001}:9001
-    volumes:
-      - minio:/data
 volumes:
-  minio:
-  sourcedb:
   rabbitmq:
   django-static:
 networks:

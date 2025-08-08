@@ -99,6 +99,7 @@ services:
         VITE_APP_OAUTH_CLIENT_ID: ${VITE_APP_OAUTH_CLIENT_ID}
         VITE_APP_LOGIN_REDIRECT: ${VITE_APP_LOGIN_REDIRECT}
         DJANGO_BATAI_URL_PATH: ${DJANGO_BATAI_URL_PATH}
+        DJANGO_MINIO_STORAGE_URL: ${DJANGO_MINIO_STORAGE_URL}
     env_file:
      - ./.env.production
     networks:
