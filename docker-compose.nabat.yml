@@ -1,0 +1,112 @@
+services:
+  # Compose to bring up service from ECR resources and env files
+
+  django:
+    image: ….dkr.ecr.us-west-2.amazonaws.com/nabat/batai-django:latest
+    command: "uv run gunicorn bats_ai.wsgi:application --bind 0.0.0.0:8000"
+    restart: unless-stopped
+    tty: true
+    env_file: ./.env.usgs
+    networks:
+      - django-nginx
+    volumes:
+      - ./dev/grtsCells:/app/csv # Map the host CSV directory to a directory in the container
+      - django-static:/opt/django-project/staticfiles
+    ports:
+      - 8000:8000
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-west-2
+        awslogs-group: nabat/prod/batai
+        tag: "{{.Name}}/{{.ID}}"
+    depends_on:
+      - rabbitmq
+      - minio
+    extra_hosts:
+      - host.docker.internal:host-gateway
+  celery:
+    image: ….dkr.ecr.us-west-2.amazonaws.com/nabat/batai-django:latest
+    command:
+      [
+        "uv",
+        "run",
+        "celery",
+        "--app",
+        "bats_ai.celery",
+        "worker",
+        "--loglevel",
+        "INFO",
+        "--without-heartbeat",
+      ]
+    restart: unless-stopped
+    # Docker Compose does not set the TTY width, which causes Celery errors
+    tty: false
+    env_file: ./.env.usgs
+    networks:
+      - django-nginx
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-west-2
+        awslogs-group: nabat/prod/batai
+        tag: "{{.Name}}/{{.ID}}"
+    depends_on:
+      - rabbitmq
+      - minio
+  client:
+    image: ….dkr.ecr.us-west-2.amazonaws.com/nabat/batai-client:latest
+    restart: unless-stopped
+    env_file: ./.env.usgs
+    networks:
+      - django-nginx
+    depends_on:
+      - django
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-west-2
+        awslogs-group: nabat/prod/batai
+        tag: "{{.Name}}/{{.ID}}"
+    ports:
+      - 8080:80
+  rabbitmq:
+    env_file: ./.env.usgs
+    image: rabbitmq:management
+    restart: unless-stopped
+    networks:
+      - django-nginx
+    ports:
+      - ${DOCKER_RABBITMQ_PORT-5672}:5672
+      - ${DOCKER_RABBITMQ_CONSOLE_PORT-15672}:15672
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq/mnesia
+  # Minio daemon currently needed for application
+  # connectivity to s3. S3 access controls are pulled
+  # from instance role based access.
+  minio:
+    image: minio/minio:latest
+    tty: true
+    command:
+      [
+        "server",
+        "/data",
+        "--console-address",
+        ":${DOCKER_MINIO_CONSOLE_PORT-9001}",
+      ]
+    env_file: ./.env.usgs
+    networks:
+      - django-nginx
+    ports:
+      - ${DOCKER_MINIO_PORT-9000}:9000
+      - ${DOCKER_MINIO_CONSOLE_PORT-9001}:9001
+    volumes:
+      - minio:/data
+volumes:
+  minio:
+  sourcedb:
+  rabbitmq:
+  django-static:
+networks:
+  django-nginx:
+    driver: bridge
