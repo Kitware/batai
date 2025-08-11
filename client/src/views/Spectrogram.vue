@@ -154,8 +154,9 @@ export default defineComponent({
         currentUser.value = response.data.currentUser;
       }
       const speciesResponse = await getSpecies();
+      // Removing NOISE species from list and any duplicates
       speciesList.value = speciesResponse.data.filter(
-        (item: Species) => item.species_code !== "NOISE"
+        (value, index, self) => value.species_code !== "NOISE" && index === self.findIndex((t) => t.species_code === value.species_code)
       );
       if (response.data.otherUsers && spectroInfo.value) {
         // We have other users so we should grab the other user annotations

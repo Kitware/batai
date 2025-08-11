@@ -118,8 +118,9 @@ export default defineComponent({
         viewCompressedOverlay.value = false;
       }
       const speciesResponse = await getSpecies();
+      // Removing NOISE species from list and any duplicates
       speciesList.value = speciesResponse.data.filter(
-        (item: Species) => item.species_code !== "NOISE"
+        (value, index, self) => value.species_code !== "NOISE" && index === self.findIndex((t) => t.species_code === value.species_code)
       );
     } catch (error) {
         errorMessage.value = `Failed fetch Spectrogram: ${error.message}:`;

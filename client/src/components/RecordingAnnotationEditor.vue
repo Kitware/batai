@@ -108,7 +108,7 @@ export default defineComponent({
   <v-card>
     <v-card-title>
       <v-row class="pa-2">
-        Edit Annotations
+        Choose Labels
         <v-spacer />
         <v-btn
           v-if="type !== 'nabat'"

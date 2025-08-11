@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType, computed, ref, watch, Ref } from 'vue';
+import { defineComponent, PropType, computed, ref, watch, Ref, onMounted, onUnmounted } from 'vue';
 import { Species } from '@api/api';
 
 export default defineComponent({
@@ -83,6 +83,20 @@ export default defineComponent({
       }
     };
 
+    // using Shift+S to focus the species input
+    const speciesShortcut = (e: KeyboardEvent) => {
+      if (e.key === 'S' && e.shiftKey) {
+        e.preventDefault();
+        speciesAutocomplete.value?.focus();
+      }
+    };
+    onMounted(() => {
+      window.addEventListener('keydown', speciesShortcut);
+    });
+    onUnmounted(() => {
+      window.removeEventListener('keydown', speciesShortcut);
+    });
+
     return {
       search,
       selectedNames,
@@ -99,6 +113,7 @@ export default defineComponent({
 <template>
   <v-autocomplete
     ref="speciesAutocomplete"
+    autocomplete="off"
     v-model="selectedNames"
     v-model:search-input="search"
     :items="groupedItems"
@@ -109,6 +124,7 @@ export default defineComponent({
     closable-chips
     :custom-filter="customFilter"
     clearable
+    clear-on-select
     label="Select Labels"
     :menu-props="{ maxHeight: '300px', maxWidth: '400px' }"
   >
@@ -123,9 +139,20 @@ export default defineComponent({
     <template #item="{ props, item }">
       <v-list-item
         v-bind="props"
-        :subtitle="item.raw.species_code"
         :title="item.raw.common_name"
-      />
+      >
+      <template #subtitle="{}">
+          <span>{{ item.raw.species_code }}</span>
+          <v-chip
+            v-if="item.raw.category"
+            :color="categoryColors[item.raw.category]"
+            small
+            class="ml-2"
+          >
+            {{ item.raw.category }}
+          </v-chip>
+      </template>
+      </v-list-item>
     </template>
     <template #chip="{item}">
       <v-tooltip
