@@ -540,7 +540,7 @@ def update_recording_annotation(
         return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
 
 
-@router.patch('recording-annotation/{id}/nabat', auth=None, response={200: str})
+@router.patch('recording-annotation/{id}/push-to-nabat', auth=None, response={200: str})
 def update_nabat_recording_annotation(
     request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
 ):

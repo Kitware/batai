@@ -86,12 +86,12 @@ export default defineComponent({
 
 <template>
   <span>
-    <v-btn size="x-small" color="primary" class="ml-3" @click="displayDialog = true"> Specie Codes </v-btn>
+    <v-btn size="x-small" color="primary" class="ml-3" @click="displayDialog = true"> Species Codes </v-btn>
     <v-dialog v-model="displayDialog" width="800">
       <v-card>
         <v-card-title class="d-flex flex-column">
           <v-row class="align-center">
-            <h2 class="mr-4">Specie Codes</h2>
+            <h2 class="mr-4">Species Codes</h2>
             <v-spacer />
             <v-icon size="large" @click="displayDialog = false">mdi-close</v-icon>
           </v-row>

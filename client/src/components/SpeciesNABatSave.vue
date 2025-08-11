@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, computed } from 'vue';
 import { FileAnnotation, Species, UpdateFileAnnotation } from '@api/api';
-import { patchNABatFileAnnotationNABat } from '../api/NABatApi';
+import { pushNABatFileAnnotationToNABat } from '../api/NABatApi';
 
 export default defineComponent({
   name: 'SpeciesNABatSave',
@@ -62,7 +62,7 @@ export default defineComponent({
             apiToken: props.apiToken,
           };
 
-          await patchNABatFileAnnotationNABat(props.annotation.id, updateAnnotation);
+          await pushNABatFileAnnotationToNABat(props.annotation.id, updateAnnotation);
           dialog.value = false;
           emit('close');
         } catch (e) {
