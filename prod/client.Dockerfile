@@ -46,7 +46,7 @@ COPY --from=build-stage /app/dist /tmp/dist
 # If DJANGO_BATAI_URL_PATH is set, copy dist to subfolder and rewrite nginx config
 COPY prod/nginx/nginx.subpath.template /nginx.subpath.template
 COPY prod/nginx/nginx.subpath.nominio.template /nginx.subpath.nominio.template
-COPY prod/nginx/nginx.minio.template /nginx.minio.template
+COPY prod/nginx/nginx.nominio.template /nginx.nominio.template
 COPY prod/nginx/nginx.template /nginx.template
 
 # hadolint ignore=SC2016
