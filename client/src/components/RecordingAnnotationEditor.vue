@@ -131,6 +131,7 @@ export default defineComponent({
       </v-row>
       <v-row>
         <SpeciesEditor
+          :key="`species_${annotation?.id}`"
           v-model="speciesEdit"
           :species-list="species"
           @update:model-value="updateAnnotation()"
