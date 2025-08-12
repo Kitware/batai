@@ -86,30 +86,51 @@ export default defineComponent({
 
 <template>
   <span>
-    <v-btn size="x-small" color="primary" class="ml-3" @click="displayDialog = true"> Species Codes </v-btn>
-    <v-dialog v-model="displayDialog" width="800">
+    <v-btn
+      size="x-small"
+      color="primary"
+      class="ml-3"
+      @click="displayDialog = true"
+    > Species Codes </v-btn>
+    <v-dialog
+      v-model="displayDialog"
+      width="800"
+    >
       <v-card>
         <v-card-title class="d-flex flex-column">
           <v-row class="align-center">
             <h2 class="mr-4">Species Codes</h2>
             <v-spacer />
-            <v-icon size="large" @click="displayDialog = false">mdi-close</v-icon>
+            <v-icon
+              size="large"
+              @click="displayDialog = false"
+            >mdi-close</v-icon>
           </v-row>
           <v-row class="mt-2">
-            <v-chip color="#0000FF" class="ma-1" label
-              small>
+            <v-chip
+              color="#0000FF"
+              class="ma-1"
+              label
+              small
+            >
               Highlighted = Selected Species
             </v-chip>
           </v-row>
         </v-card-title>
         <v-card-text>
-          <v-data-table v-model:items-per-page="itemsPerPage" :headers="headers" :items="orderedSpecies"
-            hide-default-footer density="compact" class="elevation-1 my-recordings">
+          <v-data-table
+            v-model:items-per-page="itemsPerPage"
+            :headers="headers"
+            :items="orderedSpecies"
+            hide-default-footer
+            density="compact"
+            class="elevation-1 my-recordings"
+          >
             <template #item="{ item }">
               <tr :class="selectedSpecies.includes(item.species_code) ? 'selected-row' : ''">
                 <td>{{ item.species_code }}</td>
                 <td>
-                  <span :class="categoryColors[item.category] ? `text-${categoryColors[item.category]}` : ''">
+                  <span :class="categoryColors[item.categoruy] ? `text-${categoryColors[item.category]}` : ''">
                     {{ item.category.charAt(0).toUpperCase() + item.category.slice(1) }}
                   </span>
                 </td>
@@ -124,13 +145,17 @@ export default defineComponent({
         <v-card-actions>
           <v-row>
             <v-spacer />
-            <v-btn color="primary" variant="outlined" @click="displayDialog = false">
+            <v-btn
+              color="primary"
+              variant="outlined"
+              @click="displayDialog = false"
+            >
               Ok
             </v-btn>
             <v-spacer />
           </v-row>
         </v-card-actions>
-      </v-card>
+      </v-card>u
     </v-dialog>
   </span>
 </template>

@@ -113,9 +113,9 @@ export default defineComponent({
 <template>
   <v-autocomplete
     ref="speciesAutocomplete"
-    autocomplete="off"
     v-model="selectedNames"
     v-model:search-input="search"
+    autocomplete="off"
     :items="groupedItems"
     item-title="species_code"
     item-value="species_code"
@@ -141,7 +141,7 @@ export default defineComponent({
         v-bind="props"
         :title="item.raw.common_name"
       >
-      <template #subtitle="{}">
+        <template #subtitle="{}">
           <span>{{ item.raw.species_code }}</span>
           <v-chip
             v-if="item.raw.category"
@@ -151,7 +151,7 @@ export default defineComponent({
           >
             {{ item.raw.category }}
           </v-chip>
-      </template>
+        </template>
       </v-list-item>
     </template>
     <template #chip="{item}">

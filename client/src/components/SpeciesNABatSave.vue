@@ -39,7 +39,7 @@ export default defineComponent({
       props.speciesList.filter(s => props.selectedSpecies.includes(s.species_code))
     );
 
-    const categoryColors: Record<string, string> =  {
+    const categoryColors: Record<string, string> = {
       'individual': 'primary',
       'couplet': 'secondary',
       'frequency': 'warning',
@@ -110,14 +110,15 @@ export default defineComponent({
             <v-spacer />
             <v-icon
               size="large"
-              @click="dialog = false"
               class="cursor-pointer"
+              @click="dialog = false"
             >mdi-close</v-icon>
           </v-row>
         </v-card-title>
 
         <v-card-text>
-          <p>Please select one of your species to push to the NABat database. The NABat database currently only supports a single label.</p>
+          <p>Please select one of your species to push to the NABat database. The NABat database currently only supports
+            a single label.</p>
 
           <v-alert
             v-if="error"
@@ -139,16 +140,18 @@ export default defineComponent({
               :value="species.id"
               style="border: 1px solid black"
             >
-                <template #label>
-                    <div :class="['species-label', categoryColors[species.category] && `text-${categoryColors[species.category]}`]">
-                    <strong>{{ species.common_name }}</strong><br />
-                    <small>
-                        Code: {{ species.species_code }} |
-                        Scientific: {{ species.family }} |
-                        Category: {{ species.category }}
-                    </small>
-                    </div>
-                </template>
+              <template #label>
+                <div
+                  :class="['species-label', categoryColors[species.category] && `text-${categoryColors[species.category]}`]"
+                >
+                  <strong>{{ species.common_name }}</strong><br>
+                  <small>
+                    Code: {{ species.species_code }} |
+                    Scientific: {{ species.family }} |
+                    Category: {{ species.category }}
+                  </small>
+                </div>
+              </template>
             </v-radio>
           </v-radio-group>
         </v-card-text>
@@ -159,16 +162,16 @@ export default defineComponent({
             text
             color="error"
             variant="flat"
-            @click="dialog = false"
             :disabled="submitting"
+            @click="dialog = false"
           >
             Cancel
           </v-btn>
           <v-btn
             color="success"
             variant="flat"
-            @click="saveSelection"
             :disabled="!selected || submitting"
+            @click="saveSelection"
           >
             Save
           </v-btn>
