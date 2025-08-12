@@ -65,6 +65,8 @@ export default defineComponent({
 
       return result;
     });
+    // Any because the custom Filter is a bit more complicated file structure
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const customFilter = (filter: string, search: string, item: any) => {
       if (item.type === 'subheader') {
         return false;
