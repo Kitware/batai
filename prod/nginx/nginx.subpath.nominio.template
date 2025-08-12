@@ -1,0 +1,36 @@
+worker_processes 1;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    client_max_body_size 100m;
+
+    server {
+        listen 80;
+
+        # Serve Vue.js static files
+        location /${DJANGO_BATAI_URL_PATH} {
+            root   /usr/share/nginx/html;
+            index  index.html;
+            try_files $uri $uri/ /${DJANGO_BATAI_URL_PATH}/index.html;
+        }
+
+        # Proxy Django paths with all necessary headers
+        location ~ ^/${DJANGO_BATAI_URL_PATH}/(api|oauth|static|admin|accounts) {
+            proxy_pass http://django:8000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            # Required for Django subpath handling (especially admin)
+            proxy_set_header X-SCRIPT-NAME /${DJANGO_BATAI_URL_PATH}/;
+
+            proxy_redirect off;
+        }
+
+    }
+}
