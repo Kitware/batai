@@ -118,7 +118,10 @@ export default defineComponent({
         viewCompressedOverlay.value = false;
       }
       const speciesResponse = await getSpecies();
-      speciesList.value = speciesResponse.data;
+      // Removing NOISE species from list and any duplicates
+      speciesList.value = speciesResponse.data.filter(
+        (value, index, self) => value.species_code !== "NOISE" && index === self.findIndex((t) => t.species_code === value.species_code)
+      );
     } catch (error) {
         errorMessage.value = `Failed fetch Spectrogram: ${error.message}:`;
         if (error.response.data.errors?.length) {
@@ -454,7 +457,7 @@ export default defineComponent({
           </v-row>
         </v-card-title>
         <v-card-text class="pa-0">
-          <div v-if="sideTab === 'annotations'">
+          <div v-if="sideTab === 'annotations' && speciesList.length">
             <RecordingAnnotations
               :species="speciesList"
               :recording-id="parseInt(id)"

@@ -81,7 +81,7 @@ export default defineComponent({
         apiToken: props.apiToken,
 
       };
-      props.type === 'nabat' ? await putNABatFileAnnotation(newAnnotation) : putFileAnnotation(newAnnotation);
+      props.type === 'nabat' ? await putNABatFileAnnotation(newAnnotation) : await putFileAnnotation(newAnnotation);
       await loadFileAnnotations();
       if (annotations.value.length) {
         setSelectedId(annotations.value[annotations.value.length - 1]);

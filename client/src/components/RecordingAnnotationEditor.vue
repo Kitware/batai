@@ -1,13 +1,17 @@
 <script lang="ts">
-import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
+import { defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import { deleteFileAnnotation, FileAnnotation, patchFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
-import { deleteNABatFileAnnotation, patchNABatFileAnnotation } from "../api/NABatApi";
+import { deleteNABatFileAnnotation, patchNABatFileAnnotationLocal } from "../api/NABatApi";
 import SpeciesInfo from "./SpeciesInfo.vue";
+import SpeciesEditor from "./SpeciesEditor.vue";
+import SpeciesNABatSave from "./SpeciesNABatSave.vue";
 export default defineComponent({
   name: "AnnotationEditor",
   components: {
     SpeciesInfo,
+    SpeciesEditor,
+    SpeciesNABatSave,
   },
   props: {
     spectroInfo: {
@@ -37,15 +41,11 @@ export default defineComponent({
   },
   emits: ['update:annotation', 'delete:annotation'],
   setup(props, { emit }) {
-    const speciesList = computed(() => {
-        return props.species.map((item) => (item.species_code || item.common_name)).sort();
-    });
 
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
     const confidence: Ref<number> = ref(props.annotation?.confidence || 1.0);
     const singleSpecies: Ref<string | null> = ref(props.annotation?.species.length ? props.annotation.species[0].species_code : null);
-
     watch(() => props.annotation, () => {
         if (props.annotation?.species) {
             speciesEdit.value = props.annotation.species.map((item) => item.species_code || item.common_name);
@@ -61,19 +61,12 @@ export default defineComponent({
         if (props.annotation) {
             // convert species names to Ids;
             const speciesIds: number[] = [];
-            if (props.type !== 'nabat') {
             speciesEdit.value.forEach((item) => {
                 const found = props.species.find((specie) => specie.species_code === item);
                 if (found) {
                   speciesIds.push(found.id);
                 }
             });
-          } else if (props.type === 'nabat') {
-            const found = props.species.find((specie) => specie.species_code === singleSpecies.value);
-            if (found) {
-              speciesIds.push(found.id);
-            }
-          }
 
             const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
               recordingId: props.recordingId,
@@ -84,7 +77,7 @@ export default defineComponent({
               id: props.annotation.id,
               apiToken: props.apiToken,
             };
-            props.type === 'nabat' ? await patchNABatFileAnnotation(props.annotation.id, updateAnnotation) : await patchFileAnnotation(props.annotation.id, updateAnnotation);
+            props.type === 'nabat' ? await patchNABatFileAnnotationLocal(props.annotation.id, updateAnnotation) : await patchFileAnnotation(props.annotation.id, updateAnnotation);
             // Signal to redownload the updated annotation values if possible
             emit('update:annotation');
         }
@@ -100,7 +93,6 @@ export default defineComponent({
         }
     };
     return {
-        speciesList,
         speciesEdit,
         confidence,
         comments,
@@ -116,7 +108,7 @@ export default defineComponent({
   <v-card>
     <v-card-title>
       <v-row class="pa-2">
-        Edit Annotations
+        Choose Labels
         <v-spacer />
         <v-btn
           v-if="type !== 'nabat'"
@@ -138,25 +130,20 @@ export default defineComponent({
         />
       </v-row>
       <v-row>
-        <v-autocomplete
-          v-if="type !== 'nabat'"
+        <SpeciesEditor
+          :key="`species_${annotation?.id}`"
           v-model="speciesEdit"
-          autocomplete="off"
-          multiple
-          closable-chips
-          chips
-          :items="speciesList"
-          label="Species"
+          :species-list="species"
           @update:model-value="updateAnnotation()"
         />
-        <v-autocomplete
-          v-if="type === 'nabat'"
-          v-model="singleSpecies"
-          closable-chips
-          chips
-          :items="speciesList"
-          label="Species"
-          @update:model-value="updateAnnotation()"
+      </v-row>
+      <v-row v-if="type === 'nabat'">
+        <SpeciesNABatSave
+          :selected-species="speciesEdit"
+          :species-list="species"
+          :recording-id="recordingId"
+          :annotation="annotation"
+          :api-token="apiToken"
         />
       </v-row>
       <v-row

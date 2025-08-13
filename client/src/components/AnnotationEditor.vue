@@ -127,6 +127,7 @@ export default defineComponent({
       <v-row>
         <v-autocomplete
           v-model="speciesEdit"
+          autocomplete="off"
           multiple
           closable-chips
           chips
@@ -138,6 +139,7 @@ export default defineComponent({
       <v-row>
         <v-autocomplete
           v-model="type"
+          autocommplete="off"
           multiple
           closable-chips
           chips

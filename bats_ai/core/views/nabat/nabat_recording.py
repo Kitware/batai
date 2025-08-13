@@ -167,6 +167,34 @@ class NABatRecordingGenerateSchema(Schema):
     surveyEventId: int
 
 
+def update_nabat_species(species_id: int, api_token: str, recording_id: int, survey_event_id: int):
+    """
+    Update the species for a NABat recording using the NABat API.
+
+    This function is called after creating or updating a recording annotation.
+    """
+    headers = {
+        'Authorization': f'Bearer {api_token}',
+        'Content-Type': 'application/json',
+    }
+    batch_query = UPDATE_QUERY % {
+        'survey_event_id': survey_event_id,
+        'software_id': SOFTWARE_ID,
+        'acoustic_file_id': recording_id,
+        'species_id': species_id,
+    }
+    try:
+        response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
+        json_response = response.json()
+        if json_response.get('errors'):
+            logger.error(f'API Error: {json_response["errors"]}')
+            return JsonResponse(json_response, status=500)
+    except Exception as e:
+        logger.error(f'API Request Failed: {e}')
+        return JsonResponse({'error': 'Failed to connect to NABat API'}, status=500)
+    return 'NABat species updated successfully.'
+
+
 @router.post('/', auth=None)
 def generate_nabat_recording(
     request: HttpRequest,
@@ -461,25 +489,6 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
         for species_id in data.species:
             species = Species.objects.get(pk=species_id)
             annotation.species.add(species)
-        if len(data.species) > 0:
-            species_id = data.species[0]
-            headers = {
-                'Authorization': f'Bearer {data.apiToken}',
-                'Content-Type': 'application/json',
-            }
-            batch_query = UPDATE_QUERY % {
-                'survey_event_id': recording.survey_event_id,
-                'software_id': SOFTWARE_ID,
-                'acoustic_file_id': recording.recording_id,
-                'species_id': species_id,
-            }
-            try:
-                response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
-                logger.info(response.json())
-            except Exception as e:
-                logger.error(f'API Request Failed: {e}')
-                return JsonResponse({'error': 'Failed to connect to NABat API'}, status=500)
-
         return 'Recording annotation created successfully.'
     except NABatRecording.DoesNotExist:
         return JsonResponse({'error': 'Recording not found.'}, 404)
@@ -491,6 +500,15 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
 def update_recording_annotation(
     request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
 ):
+    """Update an existing recording annotation but doesn't update NABat.
+
+    It requires the user to be authenticated
+    and authorized to modify the specific recording. The user must provide an API token, which is
+    validated to ensure the user has access to the recording. The user can update comments, model,
+    confidence, and species associated with the annotation. If the species list is provided,
+    it clears the existing species and adds the new ones. The endpoint returns a
+    success message or an error message if the recording or species are not found.
+    """
     email_or_response = get_email_if_authorized(
         request, data.apiToken, recording_pk=data.recordingId
     )
@@ -514,30 +532,51 @@ def update_recording_annotation(
                 species = Species.objects.get(pk=species_id)
                 annotation.species.add(species)
 
-        if len(data.species) > 0:
-            species_id = data.species[0]
-            headers = {
-                'Authorization': f'Bearer {data.apiToken}',
-                'Content-Type': 'application/json',
-            }
-            batch_query = UPDATE_QUERY % {
-                'survey_event_id': annotation.nabat_recording.survey_event_id,
-                'software_id': SOFTWARE_ID,
-                'acoustic_file_id': annotation.nabat_recording.recording_id,
-                'species_id': species_id,
-            }
-            try:
-                response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
-                json_response = response.json()
-                if json_response.get('errors'):
-                    logger.error(f'API Error: {json_response["errors"]}')
-                    return JsonResponse(json_response, status=500)
-            except Exception as e:
-                logger.error(f'API Request Failed: {e}')
-                return JsonResponse({'error': 'Failed to connect to NABat API'}, status=500)
-
         annotation.save()
         return 'Recording annotation updated successfully.'
+    except NABatRecordingAnnotation.DoesNotExist:
+        return JsonResponse({'error': 'Recording not found.'}, 404)
+    except Species.DoesNotExist:
+        return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
+
+
+@router.patch('recording-annotation/{id}/push-to-nabat', auth=None, response={200: str})
+def update_nabat_recording_annotation(
+    request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
+):
+    """Update an existing recording annotation in NABat."""
+    email_or_response = get_email_if_authorized(
+        request, data.apiToken, recording_pk=data.recordingId
+    )
+    if isinstance(email_or_response, JsonResponse):
+        return email_or_response
+    user_email = email_or_response  # safe to use
+
+    try:
+        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_email=user_email)
+        # Check permission
+
+        # Update fields if provided
+        if data.comments is not None:
+            annotation.comments = data.comments
+        if data.model is not None:
+            annotation.model = data.model
+        if data.confidence is not None:
+            annotation.confidence = data.confidence
+        if data.species is not None:
+            if len(data.species) == 1:
+                species_id = data.species[0]
+                return update_nabat_species(
+                    species_id,
+                    data.apiToken,
+                    annotation.nabat_recording.recording_id,
+                    annotation.nabat_recording.survey_event_id,
+                )
+            elif len(data.species) > 1:
+                return JsonResponse(
+                    {'error': 'NABat only supports one species per recording annotation.'},
+                    status=400,
+                )
     except NABatRecordingAnnotation.DoesNotExist:
         return JsonResponse({'error': 'Recording not found.'}, 404)
     except Species.DoesNotExist:

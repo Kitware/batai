@@ -64,9 +64,16 @@ async function putNABatFileAnnotation(fileAnnotation: UpdateFileAnnotation & { a
   return axiosInstance.put<{ message: string, id: number }>(`nabat/recording/recording-annotation`, { ...fileAnnotation });
 }
 
-async function patchNABatFileAnnotation(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation & { apiToken?: string}) {
+// This function is used to patch a file annotation locally, without the NABat API.
+async function patchNABatFileAnnotationLocal(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation & { apiToken?: string}) {
   return axiosInstance.patch<{ message: string, id: number }>(`nabat/recording/recording-annotation/${fileAnnotationId}`, { ...fileAnnotation });
 }
+
+// This function is used to patch a file annotation with the NABat API.  Only takes a single species code in the array
+async function pushNABatFileAnnotationToNABat(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation & { apiToken?: string}) {
+  return axiosInstance.patch<{ message: string, id: number }>(`nabat/recording/recording-annotation/${fileAnnotationId}/push-to-nabat`, { ...fileAnnotation });
+}
+
 
 async function deleteNABatFileAnnotation(fileAnnotationId: number, apiToken?: string, recordingId?: number) {
   return axiosInstance.delete<{ message: string, id: number }>(`nabat/recording/recording-annotation/${fileAnnotationId}`, { params: { apiToken, recordingId } });
@@ -186,7 +193,8 @@ export {
     getNABatFileAnnotations,
     getNABatFileAnnotationDetails,
     putNABatFileAnnotation,
-    patchNABatFileAnnotation,
+    patchNABatFileAnnotationLocal,
+    pushNABatFileAnnotationToNABat,
     deleteNABatFileAnnotation,
     getNABatConfigurationStats,
     getNABatConfigurationAnnotations,
