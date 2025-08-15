@@ -10,7 +10,6 @@ services:
     networks:
       - django-nginx
     volumes:
-      - ./dev/grtsCells:/app/csv # Map the host CSV directory to a directory in the container
       - django-static:/opt/django-project/staticfiles
     ports:
       - 8000:8000
