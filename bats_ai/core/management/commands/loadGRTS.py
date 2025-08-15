@@ -17,15 +17,28 @@ SHAPEFILES = [
     (
         'https://www.sciencebase.gov/catalog/file/get/5b7753bde4b0f5d578820455?facet=conus_mastersample_10km_GRTS',  # noqa: E501
         14,
+        'CONUS',
     ),  # CONUS
     (
         'https://www.sciencebase.gov/catalog/file/get/5b7753a8e4b0f5d578820452?facet=akcan_mastersample_10km_GRTS',  # noqa: E501
         20,
+        'Alaska/Canada',
     ),  # Alaska/Canada
     (
         'https://www.sciencebase.gov/catalog/file/get/5b7753c2e4b0f5d578820457?facet=HI_mastersample_5km_GRTS',  # noqa: E501
         15,
+        'Hawaii',
     ),  # Hawaii
+    (
+        'https://www.sciencebase.gov/catalog/file/get/5b7753d3e4b0f5d578820459?facet=mex_mastersample_10km_GRTS',  # noqa: E501
+        12,
+        'Mexico',
+    ),  # Mexico
+    (
+        'https://www.sciencebase.gov/catalog/file/get/5b7753d8e4b0f5d57882045b?facet=PR_mastersample_5km_GRTS',  # noqa: E501
+        21,
+        'Puerto Rico',
+    ),  # Puerto Rico
 ]
 
 
@@ -43,8 +56,8 @@ class Command(BaseCommand):
         # Track existing IDs to avoid duplicates
         existing_ids = set(GRTSCells.objects.values_list('id', flat=True))
 
-        for url, sample_frame_id in SHAPEFILES:
-            logger.info(f'Downloading shapefile for sample frame {sample_frame_id}...')
+        for url, sample_frame_id, name in SHAPEFILES:
+            logger.info(f'Downloading shapefile for Location {name}...')
             with tempfile.TemporaryDirectory() as tmpdir:
                 zip_path = os.path.join(tmpdir, 'file.zip')
                 urlretrieve(url, zip_path)
