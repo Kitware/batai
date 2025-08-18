@@ -559,7 +559,7 @@ export default defineComponent({
         compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
         compressedOverlayLayer.redraw();
       }
-      editAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (editing.value && editingAnnotation.value) {
         setTimeout(() => {
           editAnnotationLayer.changeData(editingAnnotation.value, selectedType.value);

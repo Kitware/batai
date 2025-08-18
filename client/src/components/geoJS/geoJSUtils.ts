@@ -45,7 +45,7 @@ const useGeoJS = () => {
     width: number,
     height: number,
     thumbnailVal = false,
-    imageCount = 1,
+    imageCount = 1
   ) => {
     thumbnail.value = thumbnailVal;
     container.value = sourceContainer;
@@ -125,31 +125,31 @@ const useGeoJS = () => {
     }
   };
 
-
   const drawImages = (images: HTMLImageElement[], width = 0, height = 0, resetCam = true) => {
     let previousWidth = 0;
     let totalBaseWidth = 0;
-    images.forEach((image) => totalBaseWidth += image.naturalWidth);
+    images.forEach((image) => (totalBaseWidth += image.naturalWidth));
     images.forEach((image, index) => {
       const scaledWidth = width / totalBaseWidth;
-      const currentWidth =  image.width * scaledWidth;
-      quadFeatures[index].data([
-        {
-          ul: { x: previousWidth, y: 0 },
-          lr: { x: previousWidth + currentWidth, y: height },
-          image: image,
-        },
-      ]).draw();
+      const currentWidth = image.width * scaledWidth;
+      if (quadFeatures[index] === undefined) {
+        quadFeatures[index] = quadFeatureLayer.createFeature("quad");
+      }
+      quadFeatures[index]
+        .data([
+          {
+            ul: { x: previousWidth, y: 0 },
+            lr: { x: previousWidth + currentWidth, y: height },
+            image: image,
+          },
+        ])
+        .draw();
       previousWidth += currentWidth;
     });
     if (resetCam) {
       resetMapDimensions(width, height, 0.3, resetCam);
     } else {
-      const params = geo.util.pixelCoordinateParams(
-        container.value,
-        width,
-        height,
-      );
+      const params = geo.util.pixelCoordinateParams(container.value, width, height);
       const margin = 0.3;
       const { right, bottom } = params.map.maxBounds;
       originalBounds = params.map.maxBounds;

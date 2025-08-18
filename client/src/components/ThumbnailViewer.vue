@@ -57,7 +57,7 @@ export default defineComponent({
       yScale.value = diff ? (clientHeight.value * 0.5) / diff : 1;
 
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
+        geoJS.drawImages(props.images, scaledWidth.value || width, scaledHeight.value || height);
       }
       initialized.value = true;
       nextTick(() => createPolyLayer());
@@ -134,15 +134,16 @@ export default defineComponent({
     watch([() => props.spectroInfo, containerRef], updateViewerAndImages);
 
     watch([scaledHeight, scaledWidth], () => {
-      geoJS.resetMapDimensions(scaledWidth.value, scaledHeight.value);
+      const { width, height } = getImageDimensions(props.images);
+      geoJS.resetMapDimensions(scaledWidth.value || width, scaledHeight.value || height);
       geoJS.getGeoViewer().value.bounds({
         left: 0,
         top: 0,
-        bottom: scaledHeight.value,
-        right: scaledWidth.value,
+        bottom: scaledHeight.value || height,
+        right: scaledWidth.value || width,
       });
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
+        geoJS.drawImages(props.images, scaledWidth.value || width, scaledHeight.value | height);
       }
     });
 
