@@ -3,11 +3,11 @@ import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import {
   Configuration,
-	getConfiguration,
-	OtherUserAnnotations,
-	Recording,
-	SpectrogramAnnotation,
-	SpectrogramTemporalAnnotation,
+  getConfiguration,
+  OtherUserAnnotations,
+  Recording,
+  SpectrogramAnnotation,
+  SpectrogramTemporalAnnotation,
 } from "../api/api";
 import {
   interpolateCividis,
@@ -19,24 +19,26 @@ import {
 } from "d3-scale-chromatic";
 
 const annotationState: Ref<AnnotationState> = ref("");
-const creationType: Ref<'pulse' | 'sequence'> = ref("pulse");
-type LayersVis = "time" | "freq" | "species" | "grid" | 'temporal' | 'duration';
-const layerVisibility: Ref<LayersVis[]> = ref(['temporal', 'species', 'duration', 'freq']);
+const creationType: Ref<"pulse" | "sequence"> = ref("pulse");
+type LayersVis = "time" | "freq" | "species" | "grid" | "temporal" | "duration";
+const layerVisibility: Ref<LayersVis[]> = ref(["temporal", "species", "duration", "freq"]);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
 const colorSchemes = [
-  { value: 'inferno', title: 'Inferno', scheme: interpolateInferno },
-  { value: 'cividis', title: 'Cividis', scheme: interpolateCividis },
-  { value: 'viridis', title: 'Viridis', scheme: interpolateViridis },
-  { value: 'magma', title: 'Magma', scheme: interpolateMagma },
-  { value: 'plasma', title: 'Plasma', scheme: interpolatePlasma },
-  { value: 'turbo', title: 'Turbo', scheme: interpolateTurbo },
+  { value: "inferno", title: "Inferno", scheme: interpolateInferno },
+  { value: "cividis", title: "Cividis", scheme: interpolateCividis },
+  { value: "viridis", title: "Viridis", scheme: interpolateViridis },
+  { value: "magma", title: "Magma", scheme: interpolateMagma },
+  { value: "plasma", title: "Plasma", scheme: interpolatePlasma },
+  { value: "turbo", title: "Turbo", scheme: interpolateTurbo },
 ];
-const colorScheme: Ref<{ value: string, title: string, scheme: (input: number) => string }> = ref(colorSchemes[0]);
-const backgroundColor = ref('rgb(0, 0, 0)');
+const colorScheme: Ref<{ value: string; title: string; scheme: (input: number) => string }> = ref(
+  colorSchemes[0]
+);
+const backgroundColor = ref("rgb(0, 0, 0)");
 const selectedUsers: Ref<string[]> = ref([]);
-const currentUser: Ref<string> = ref('');
+const currentUser: Ref<string> = ref("");
 const selectedId: Ref<number | null> = ref(null);
-const selectedType: Ref<'pulse' | 'sequence'> = ref('pulse');
+const selectedType: Ref<"pulse" | "sequence"> = ref("pulse");
 const annotations: Ref<SpectrogramAnnotation[]> = ref([]);
 const temporalAnnotations: Ref<SpectrogramTemporalAnnotation[]> = ref([]);
 const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
@@ -44,19 +46,21 @@ const sharedList: Ref<Recording[]> = ref([]);
 const recordingList: Ref<Recording[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
 const blackBackground = ref(true);
-const scaledVals: Ref<{ x: number, y: number }> = ref({ x: 1, y: 1 });
+const scaledVals: Ref<{ x: number; y: number }> = ref({ x: 1, y: 1 });
 const viewCompressedOverlay = ref(false);
-const sideTab: Ref<'annotations' | 'recordings'> = ref('annotations');
+const sideTab: Ref<"annotations" | "recordings"> = ref("annotations");
 const configuration: Ref<Configuration> = ref({
   display_pulse_annotations: true,
   display_sequence_annotations: true,
-  spectrogram_view: 'compressed',
+  spectrogram_view: "compressed",
   spectrogram_x_stretch: 2.5,
   run_inference_on_upload: true,
-  default_color_scheme: 'inferno',
-  default_spectrogram_background_color: 'rgb(0, 0, 0)',
+  default_color_scheme: "inferno",
+  default_spectrogram_background_color: "rgb(0, 0, 0)",
   is_admin: false,
 });
+const scaledWidth = ref(0);
+const scaledHeight = ref(0);
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -73,12 +77,12 @@ export default function useState() {
       // If the value is present, remove it
       clone.splice(index, 1);
     }
-    if (value === 'time' && clone.includes('duration')) {
-      const durationInd = layerVisibility.value.indexOf('duration');
+    if (value === "time" && clone.includes("duration")) {
+      const durationInd = layerVisibility.value.indexOf("duration");
       clone.splice(durationInd, 1);
     }
-    if (value === 'duration' && clone.includes('time')) {
-      const timeInd = layerVisibility.value.indexOf('time');
+    if (value === "duration" && clone.includes("time")) {
+      const timeInd = layerVisibility.value.indexOf("time");
       clone.splice(timeInd, 1);
     }
     layerVisibility.value = clone;
@@ -88,13 +92,17 @@ export default function useState() {
   };
 
   function createColorScale(userEmails: string[]) {
-    colorScale.value = d3.scaleOrdinal<string>()
+    colorScale.value = d3
+      .scaleOrdinal<string>()
       .domain(userEmails)
-      .range(d3.schemeCategory10.filter(color => color !== 'red' && color !== 'cyan' && color !== 'yellow'));
-
+      .range(
+        d3.schemeCategory10.filter(
+          (color) => color !== "red" && color !== "cyan" && color !== "yellow"
+        )
+      );
   }
 
-  function setSelectedId(id: number | null, annotationType?: 'pulse' | 'sequence') {
+  function setSelectedId(id: number | null, annotationType?: "pulse" | "sequence") {
     selectedId.value = id;
     if (annotationType) {
       selectedType.value = annotationType;
@@ -143,5 +151,7 @@ export default function useState() {
     scaledVals,
     viewCompressedOverlay,
     sideTab,
+    scaledWidth,
+    scaledHeight,
   };
 }
