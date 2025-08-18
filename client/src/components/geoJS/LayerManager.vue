@@ -540,16 +540,20 @@ export default defineComponent({
     });
     watch([() => props.scaledWidth, () => props.scaledHeight], () => {
       const { annotations, temporalAnnotations } = getDataForLayers();
-      legendLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      rectAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      rectAnnotationLayer.formatData(
-        annotations,
-        selectedType.value === 'pulse' ? selectedAnnotationId.value : null,
-        currentUser.value,
-        colorScale.value,
-        props.yScale,
-      );
-      rectAnnotationLayer.redraw();
+      if (legendLayer) {
+        legendLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      }
+      if (rectAnnotationLayer) {
+        rectAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        rectAnnotationLayer.formatData(
+          annotations,
+          selectedType.value === 'pulse' ? selectedAnnotationId.value : null,
+          currentUser.value,
+          colorScale.value,
+          props.yScale,
+        );
+        rectAnnotationLayer.redraw();
+      }
       if (compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times && viewCompressedOverlay.value) {
         compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
@@ -561,31 +565,32 @@ export default defineComponent({
           editAnnotationLayer.changeData(editingAnnotation.value, selectedType.value);
         }, 0);
       }
-      timeLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      freqLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      speciesSequenceLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      temporalAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      if (layerVisibility.value.includes("time")) {
+
+      timeLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      freqLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      speciesLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      speciesSequenceLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      temporalAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      if (timeLayer && layerVisibility.value.includes("time")) {
         timeLayer.formatData(annotations, temporalAnnotations);
         timeLayer.redraw();
       } else {
-        timeLayer.disable();
+        timeLayer?.disable();
       }
-      if (layerVisibility.value.includes("freq")) {
+      if (freqLayer && layerVisibility.value.includes("freq")) {
         freqLayer.formatData(annotations);
         freqLayer.redraw();
       } else {
-        freqLayer.disable();
+        freqLayer?.disable();
       }
-      if (layerVisibility.value.includes("species")) {
+      if (speciesLayer && speciesSequenceLayer && layerVisibility.value.includes("species")) {
         speciesLayer.formatData(annotations);
         speciesLayer.redraw();
         speciesSequenceLayer.formatData(temporalAnnotations);
         speciesSequenceLayer.redraw();
       } else {
-        speciesLayer.disable();
-        speciesSequenceLayer.disable();
+        speciesLayer?.disable();
+        speciesSequenceLayer?.disable();
       }
       if (temporalAnnotationLayer && layerVisibility.value.includes('temporal')) {
         temporalAnnotationLayer.formatData(
@@ -597,7 +602,7 @@ export default defineComponent({
         );
       }
       // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
-      legendLayer.onPan();
+      legendLayer?.onPan();
     });
     watch(viewCompressedOverlay, () => {
       if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
@@ -626,6 +631,10 @@ export default defineComponent({
     const bValues = ref('');
 
     function updateColorFilter() {
+      if (!backgroundColor.value.includes(',')) {
+        // convert rgb(0 0 0) to rgb(0, 0, 0)
+        backgroundColor.value = backgroundColor.value.replace(/rgb\((\d+)\s+(\d+)\s+(\d+)\)/, 'rgb($1, $2, $3)');
+      }
       const backgroundRgbColor = d3.color(backgroundColor.value) as d3.RGBColor;
       const redStops: number[] = [backgroundRgbColor.r / 255];
       const greenStops: number[] = [backgroundRgbColor.g / 255];

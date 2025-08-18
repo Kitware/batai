@@ -6,6 +6,7 @@ import { OtherUserAnnotations, SpectrogramAnnotation } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 import geo, { GeoEvent } from "geojs";
 import { getImageDimensions } from "@use/useUtils";
+import useState from "@use/useState";
 
 
 export default defineComponent({
@@ -30,6 +31,12 @@ export default defineComponent({
     const polyLayerCreated = ref(false);
     let downState: any;
 
+    const {
+      scaledWidth,
+      scaledHeight,
+      blackBackground,
+    } = useState();
+
     function updateViewerAndImages() {
       const { width, height } = getImageDimensions(props.images);
       if (containerRef.value) {
@@ -50,7 +57,7 @@ export default defineComponent({
       yScale.value = diff ? (clientHeight.value * 0.5) / diff : 1;
 
       if (props.images.length) {
-        geoJS.drawImages(props.images, width, height * yScale.value);
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
       }
       initialized.value = true;
       nextTick(() => createPolyLayer());
@@ -111,10 +118,10 @@ export default defineComponent({
         const { top } = parent.bounds();
         outlineFeature.style(outlineStyle);
         const polygon = [[
-          parent.displayToGcs({ x: 0, y: clientHeight.value * 0.5 + top * yScale.value }),
-          parent.displayToGcs({ x: size.width, y: clientHeight.value * 0.5 + top * yScale.value }),
-          parent.displayToGcs({ x: size.width, y: clientHeight.value * 0.5 + (size.height * yScale.value) + (top * yScale.value) }),
-          parent.displayToGcs({ x: 0, y: clientHeight.value * 0.5 + (size.height * yScale.value) + (top * yScale.value) })
+          parent.displayToGcs({ x: 0, y: 0 }),
+          parent.displayToGcs({ x: size.width, y: 0 }),
+          parent.displayToGcs({ x: size.width, y: size.height }),
+          parent.displayToGcs({ x: 0, y: size.height })
         ]];
         outlineFeature.data(polygon).draw();
       };
@@ -127,11 +134,27 @@ export default defineComponent({
 
     watch([() => props.spectroInfo, containerRef], updateViewerAndImages);
 
+        watch([scaledHeight, scaledWidth], () => {
+      geoJS.resetMapDimensions(scaledWidth.value, scaledHeight.value);
+      geoJS.getGeoViewer().value.bounds({
+        left: 0,
+        top: 0,
+        bottom: scaledHeight.value,
+        right: scaledWidth.value,
+      });
+      if (props.images.length) {
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
+      }
+    });
+
     return {
       containerRef,
       geoViewerRef: geoJS.getGeoViewer(),
       initialized,
       yScale,
+      scaledWidth,
+      scaledHeight,
+      blackBackground,
     };
   },
 });
@@ -143,12 +166,15 @@ export default defineComponent({
       id="spectro"
       ref="containerRef"
       class="playback-container"
+      :class="{ 'black-background': blackBackground, 'white-background': !blackBackground }"
     />
     <layer-manager
       v-if="initialized"
       :geo-viewer-ref="geoViewerRef"
       :spectro-info="spectroInfo"
       :y-scale="yScale"
+      :scaled-width="scaledWidth"
+      :scaled-height="scaledHeight"
       thumbnail
       @selected="$emit('selected',$event)"
     />
