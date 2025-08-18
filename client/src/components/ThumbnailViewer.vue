@@ -115,7 +115,6 @@ export default defineComponent({
           props.parentGeoViewerRef.value.zoom(props.parentGeoViewerRef.value.zoom());
         }
         const size = parent.size();
-        const { top } = parent.bounds();
         outlineFeature.style(outlineStyle);
         const polygon = [[
           parent.displayToGcs({ x: 0, y: 0 }),
@@ -134,7 +133,7 @@ export default defineComponent({
 
     watch([() => props.spectroInfo, containerRef], updateViewerAndImages);
 
-        watch([scaledHeight, scaledWidth], () => {
+    watch([scaledHeight, scaledWidth], () => {
       geoJS.resetMapDimensions(scaledWidth.value, scaledHeight.value);
       geoJS.getGeoViewer().value.bounds({
         left: 0,
