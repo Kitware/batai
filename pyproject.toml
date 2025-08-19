@@ -47,6 +47,7 @@ dependencies = [
     "django_celery_results",
     # Production-only
     "gunicorn",
+    "geopandas>=1.1.1",
 ]
 
 [project.optional-dependencies]
