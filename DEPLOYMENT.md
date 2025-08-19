@@ -63,7 +63,7 @@ production docker compose file
 Then run `docker compose -f ./prod/docker-compose.prod.yml run \
    --rm django ./manage.py loadGRTS`
 
-It may take a few minutes to upload because it is download and loading a bunch of data into the database.
+It may take a few minutes to upload because it is downloading and loading a bunch of data into the database.
 This includes the CONUS GRTS cells, the Alaska/Canada GRTS Cells and the Hawaii GRTSCells.
 There will be progress bar for each shapefile it is processing and loading
 
