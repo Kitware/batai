@@ -65,7 +65,7 @@ Then run `docker compose -f ./prod/docker-compose.prod.yml run \
 
 It may take a few minutes to upload because it is downloading and loading a bunch of data into the database.
 This includes the CONUS GRTS cells, the Alaska/Canada GRTS Cells and the Hawaii GRTSCells.
-There will be progress bar for each shapefile it is processing and loading
+There will be progress bar for each shapefile it is processing and loading.
 
 ### system.d service
 
