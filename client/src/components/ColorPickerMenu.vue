@@ -10,6 +10,10 @@ defineProps({
 const colorpickerMenu = ref(false);
 const color = defineModel({ default: 'rgb(0, 0, 0)'});
 function updateColor(colorVal: string) {
+  if (!colorVal.includes(',')) {
+    // convert rgb(0 0 0) to rgb(0, 0, 0)
+    colorVal = colorVal.replace(/rgb\((\d+)\s+(\d+)\s+(\d+)\)/, 'rgb($1, $2, $3)');
+  }
   const d3Color = d3.color(colorVal);
   if (d3Color) {
     color.value = d3Color.formatRgb();

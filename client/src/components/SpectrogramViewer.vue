@@ -35,14 +35,14 @@ export default defineComponent({
       blackBackground,
       scaledVals,
       configuration,
+      scaledWidth,
+      scaledHeight
     } = useState();
 
     const containerRef: Ref<HTMLElement | undefined> = ref();
     const geoJS = useGeoJS();
     const initialized = ref(false);
     const cursor = ref("");
-    const scaledWidth = ref(0);
-    const scaledHeight = ref(0);
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
 
     const setCursor = (newCursor: string) => { cursor.value = newCursor; };
