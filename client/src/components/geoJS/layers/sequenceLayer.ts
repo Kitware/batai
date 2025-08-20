@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import geo, { GeoEvent } from "geojs";
-import { SpectroInfo, spectroTemporalToGeoJSon } from "../geoJSUtils";
-import { SpectrogramTemporalAnnotation } from "../../../api/api";
+import { SpectroInfo, spectroSequenceToGeoJSon } from "../geoJSUtils";
+import { SpectrogramSequenceAnnotation } from "../../../api/api";
 import { LayerStyle } from "./types";
 
 interface RectGeoJSData {
@@ -13,7 +13,7 @@ interface RectGeoJSData {
   owned: boolean; // if the annotation is user owned
 }
 
-export default class TemporalLayer {
+export default class SequenceLayer {
   formattedData: RectGeoJSData[];
 
   drawingOther: boolean; //drawing another type of annotation at the same time?
@@ -126,7 +126,7 @@ export default class TemporalLayer {
 
  
   formatData(
-    annotationData: SpectrogramTemporalAnnotation[],
+    annotationData: SpectrogramSequenceAnnotation[],
     selectedIndex: number | null,
     currentUser: string,
     colorScale?: d3.ScaleOrdinal<string, string, never>,
@@ -135,8 +135,8 @@ export default class TemporalLayer {
     const arr: RectGeoJSData[] = [];
     const compressedView =  !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
     const offsetY = compressedView ? -20 : 0;
-    annotationData.forEach((annotation: SpectrogramTemporalAnnotation) => {
-      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, yScale, this.scaledWidth, this.scaledHeight, offsetY);
+    annotationData.forEach((annotation: SpectrogramSequenceAnnotation) => {
+      const polygon = spectroSequenceToGeoJSon(annotation, this.spectroInfo, -10, -50, yScale, this.scaledWidth, this.scaledHeight, offsetY);
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
