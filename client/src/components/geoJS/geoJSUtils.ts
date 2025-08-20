@@ -282,16 +282,21 @@ function spectroSequenceToGeoJSon(
     if (start < start_times[0]) {
       foundStartIndex = 0;
     }
+    let totalTime = 0;
+    let startOutside = true; // if Start is outside a compressed view
+    let endOutside = true; // if end is outside a compressed view
     for (let i = 0; i < lengths; i += 1) {
       if (foundStartIndex === -1) {
         if (start < start_times[i]) {
           foundStartIndex = i; // Lock to the current index if before the interval
         } else if (start_times[i] <= start && start <= end_times[i]) {
           foundStartIndex = i; // Found within the interval
+          startOutside = false;
         } else if (i === lengths - 1 && start > end_times[i]) {
           foundStartIndex = i; // Lock to the last interval's end
         }
       }
+      totalTime += end_times[i] - start_times[i];
 
       // Check for end time
       if (foundEndIndex === -1) {
@@ -299,38 +304,42 @@ function spectroSequenceToGeoJSon(
           foundEndIndex = i; // Lock to the current index if before the interval
         } else if (start_times[i] <= end && end <= end_times[i]) {
           foundEndIndex = i; // Found within the interval
+          endOutside = false;
         } else if (i === lengths - 1 && end > end_times[i]) {
           foundEndIndex = i; // Lock to the last interval's end
         }
       }
     }
     // We need to build the length of times to pixel size for the time spaces before the annotation
-    const compressedScale =
-      scaledWidth > (spectroInfo.compressedWidth || 1)
-        ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width)
-        : 1;
-    const widthScale =
-      (adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) * compressedScale;
-    let pixelAddStart = 0;
-    let pixelAddEnd = 0;
+    let timeAddStart = 0;
+    let timeAddEnd = 0;
+    // Total width from widths
     for (let i = 0; i < Math.max(foundStartIndex, foundEndIndex); i += 1) {
       const addWidth = widths && widths[i];
       if (addWidth && i < foundStartIndex) {
-        pixelAddStart += addWidth;
+        timeAddStart += addWidth;
       }
       if (addWidth && i < foundEndIndex) {
-        pixelAddEnd += addWidth;
+        timeAddEnd += addWidth;
       }
     }
     // Now we remap our annotation to pixel coordinates
 
-    const start_time =
-      pixelAddStart * compressedScale +
-      (annotation.start_time - start_times[foundStartIndex]) * widthScale;
-    const end_time =
-      pixelAddEnd * compressedScale +
-      (annotation.end_time - start_times[foundEndIndex]) * widthScale;
+    // lets calcualte a pixels per ms for the copressed view
 
+    const compressedWidth =
+      scaledWidth > (spectroInfo.compressedWidth || 1)
+        ? scaledWidth
+        : spectroInfo.compressedWidth || spectroInfo.width;
+    const pixelPerMS = compressedWidth / totalTime;
+    const xScaling = compressedWidth / spectroInfo.compressedWidth;
+    const start_time =
+      timeAddStart * xScaling +
+      (!startOutside ? (annotation.start_time - start_times[foundStartIndex]) * pixelPerMS : 0);
+
+    let end_time =
+      timeAddEnd * xScaling +
+      (!endOutside ? (annotation.end_time - start_times[foundEndIndex]) * pixelPerMS : 0);
     return {
       type: "Polygon",
       coordinates: [
