@@ -337,7 +337,7 @@ function spectroSequenceToGeoJSon(
       timeAddStart * xScaling +
       (!startOutside ? (annotation.start_time - start_times[foundStartIndex]) * pixelPerMS : 0);
 
-    let end_time =
+    const end_time =
       timeAddEnd * xScaling +
       (!endOutside ? (annotation.end_time - start_times[foundEndIndex]) * pixelPerMS : 0);
     return {

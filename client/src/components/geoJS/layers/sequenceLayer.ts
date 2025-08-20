@@ -124,12 +124,13 @@ export default class SequenceLayer {
     }
   }
 
+ 
   formatData(
     annotationData: SpectrogramSequenceAnnotation[],
     selectedIndex: number | null,
     currentUser: string,
     colorScale?: d3.ScaleOrdinal<string, string, never>,
-    yScale = 1
+    yScale = 1,
   ) {
     const arr: RectGeoJSData[] = [];
     const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
