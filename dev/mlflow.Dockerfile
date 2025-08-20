@@ -1,4 +1,4 @@
-FROM ghcr.io/mlflow/mlflow:v2.20.3
+FROM ghcr.io/mlflow/mlflow:v3.3.0
 
 
 # hadolint ignore=DL3013

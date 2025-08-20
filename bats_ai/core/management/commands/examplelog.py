@@ -14,7 +14,6 @@ def command(experiment_name):
     if experiment:
         click.echo(f'Creating a log for experiment {experiment_name}')
         example_train.delay(experiment_name)
-        # train_body(experiment_name)
     else:
         click.echo(
             f'Could not find experiment {experiment_name}.'

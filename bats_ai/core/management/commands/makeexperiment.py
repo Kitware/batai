@@ -19,6 +19,7 @@ from mlflow import MlflowClient
 )
 @click.command()
 def command(username, name, description: str | None = None):
+    user = None
     if username:
         user = User.objects.get(username=username)
     else:

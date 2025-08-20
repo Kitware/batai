@@ -264,6 +264,10 @@ def train_body(experiment_name: str):
         mlflow.log_metric('accuracy', accuracy)
         mlflow.set_tag('Training Info', 'Basic LR model for iris data')
 
+        print("ENV AWS_ACCESS_KEY_ID =", os.getenv("AWS_ACCESS_KEY_ID"))
+        print("ENV AWS_SECRET_ACCESS_KEY =", os.getenv("AWS_SECRET_ACCESS_KEY"))
+        print("ENV MLFLOW_S3_ENDPOINT_URL =", os.getenv("MLFLOW_S3_ENDPOINT_URL"))
+
         signature = infer_signature(X_train, lr.predict(X_train))
         _ = mlflow.sklearn.log_model(
             sk_model=lr,

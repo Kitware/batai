@@ -15,6 +15,18 @@ INSTALLED_APPS += [
 staticfiles_index = INSTALLED_APPS.index('django.contrib.staticfiles')
 INSTALLED_APPS.insert(staticfiles_index, 'whitenoise.runserver_nostatic')
 
+DATABASES = {
+    **DATABASES,
+    'mlflow': {
+        **env.db_url('DJANGO_MLFLOW_DB_URL', engine='django.contrib.gis.db.backends.postgis'),
+        'CONN_MAX_AGE': timedelta(minutes=10).total_seconds(),
+    }
+}
+
+MLFLOW_BUCKET: str = env.str('DJANGO_MLFLOW_BUCKET')
+MLFLOW_DB: str = env.str('DJANGO_MLFLOW_DB')
+MLFLOW_ENDPOINT: str = env.str('DJANGO_MLFLOW_ENDPOINT')
+
 # Include Debug Toolbar middleware as early as possible in the list.
 # However, it must come after any other middleware that encodes the response's content,
 # such as GZipMiddleware.

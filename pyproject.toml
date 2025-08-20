@@ -49,6 +49,7 @@ dependencies = [
     "gunicorn",
     "geopandas>=1.1.1",
     "mlflow",
+    "psycopg2>=2.9.10",
 ]
 
 [project.optional-dependencies]

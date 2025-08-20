@@ -7,7 +7,7 @@ from psycopg2 import extensions, sql
 
 @click.command()
 def setupmlflow():
-    db_name = settings.MLFLOW_PG_DB if settings.MLFLOW_PG_DB else 'mlflow'
+    db_name = settings.MLFLOW_DB if settings.MLFLOW_DB else 'mlflow'
     bucket_name = settings.MLFLOW_BUCKET if settings.MLFLOW_BUCKET else 'mlflow'
 
     click.echo(f'Creating database {db_name} for mlflow')

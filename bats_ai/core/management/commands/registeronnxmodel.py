@@ -3,7 +3,7 @@ import os
 from django.conf import settings
 import djclick as click
 import mlflow
-import mlflow.onnx
+import mlflow.onnx as mlflow_onnx
 import onnx
 
 
@@ -19,7 +19,7 @@ def command():
     with mlflow.start_run() as run:
         run_id = run.info.run_id
         click.echo(f'Run ID: {run_id}')
-        mlflow.onnx.log_model(
+        mlflow_onnx.log_model(
             onnx_model=onnx_model,
             artifact_path='onnx_model',
             # save_as_external_data=True,
