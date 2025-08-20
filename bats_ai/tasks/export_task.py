@@ -12,7 +12,7 @@ from bats_ai.core.models import (
     Annotations,
     ExportedAnnotationFile,
     RecordingAnnotation,
-    TemporalAnnotations,
+    SequenceAnnotations,
 )
 
 
@@ -112,10 +112,10 @@ def export_annotations_task(filters: dict, annotation_types: list, export_id: in
                     include_confidence=True,
                 )
 
-            if 'temporal' in annotation_types:
-                temporal_filters = build_filters(filters, has_confidence=False)
-                qs = TemporalAnnotations.objects.filter(**temporal_filters)
-                write_csv_and_json(zipf, 'temporal', qs, include_times=True)
+            if 'sequence' in annotation_types:
+                sequence_filters = build_filters(filters, has_confidence=False)
+                qs = SequenceAnnotations.objects.filter(**sequence_filters)
+                write_csv_and_json(zipf, 'sequence', qs, include_times=True)
 
             if 'recording' in annotation_types:
                 recording_filters = build_filters(filters, has_confidence=True)

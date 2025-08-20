@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
-import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../../api/api";
-import { SpectroInfo, spectroTemporalToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
+import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
+import { SpectroInfo, spectroSequenceToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
 import { LayerStyle } from "./types";
 
 interface LineData {
@@ -92,7 +92,7 @@ export default class TimeLayer {
 
   createRange(
     annotationData: SpectrogramAnnotation[],
-    temporalData: SpectrogramTemporalAnnotation[] = []
+    sequenceData: SpectrogramSequenceAnnotation[] = []
   ) {
     this.textData = [];
     this.lineData = [];
@@ -157,8 +157,8 @@ export default class TimeLayer {
     const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
     const offsetY = compressedView ? -20 : 0;
     if (this.displaying.sequence) {
-      temporalData.forEach((annotation: SpectrogramTemporalAnnotation) => {
-        const polygon = spectroTemporalToGeoJSon(
+      sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
+        const polygon = spectroSequenceToGeoJSon(
           annotation,
           this.spectroInfo,
           -10,
@@ -219,7 +219,7 @@ export default class TimeLayer {
 
   createDuration(
     annotationData: SpectrogramAnnotation[],
-    temporalData: SpectrogramTemporalAnnotation[] = []
+    sequenceData: SpectrogramSequenceAnnotation[] = []
   ) {
     this.textData = [];
     this.lineData = [];
@@ -258,8 +258,8 @@ export default class TimeLayer {
     const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
     const offsetY = compressedView ? -20 : 0;
     if (this.displaying.sequence) {
-      temporalData.forEach((annotation: SpectrogramTemporalAnnotation) => {
-        const polygon = spectroTemporalToGeoJSon(
+      sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
+        const polygon = spectroSequenceToGeoJSon(
           annotation,
           this.spectroInfo,
           -10,
@@ -293,12 +293,12 @@ export default class TimeLayer {
 
   formatData(
     annotationData: SpectrogramAnnotation[],
-    temporalData: SpectrogramTemporalAnnotation[] = []
+    sequenceData: SpectrogramSequenceAnnotation[] = []
   ) {
     if (!this.displayDuration) {
-      this.createRange(annotationData, temporalData);
+      this.createRange(annotationData, sequenceData);
     } else {
-      this.createDuration(annotationData, temporalData);
+      this.createDuration(annotationData, sequenceData);
     }
   }
 

@@ -3,11 +3,11 @@ import { defineComponent, onMounted, onUnmounted, PropType, ref, Ref, watch } fr
 import { SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
 import {
   patchAnnotation,
-  patchTemporalAnnotation,
+  patchSequenceAnnotation,
   putAnnotation,
-  putTemporalAnnotation,
+  putSequenceAnnotation,
   SpectrogramAnnotation,
-  SpectrogramTemporalAnnotation,
+  SpectrogramSequenceAnnotation,
 } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 import { GeoEvent } from "geojs";
@@ -28,7 +28,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const {
       annotations,
-      temporalAnnotations,
+      sequenceAnnotations,
       selectedId,
       selectedType,
       creationType,
@@ -160,27 +160,27 @@ export default defineComponent({
     });
 
     const updateAnnotation = async (
-      annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation
+      annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation
     ) => {
       if (props.recordingId !== null && selectedId.value !== null) {
         if (selectedType.value === "pulse") {
           await patchAnnotation(props.recordingId, selectedId.value, annotation);
         } else if (selectedType.value === "sequence") {
-          await patchTemporalAnnotation(props.recordingId, selectedId.value, annotation);
+          await patchSequenceAnnotation(props.recordingId, selectedId.value, annotation);
         }
         emit("update:annotation", annotation);
       }
     };
 
     const createAnnotation = async (
-      annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation
+      annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation
     ) => {
       if (props.recordingId !== null) {
         if (creationType.value === "pulse") {
           const response = await putAnnotation(props.recordingId, annotation);
           emit("create:annotation", response.data.id);
         } else if (creationType.value === "sequence") {
-          const response = await putTemporalAnnotation(props.recordingId, annotation);
+          const response = await putSequenceAnnotation(props.recordingId, annotation);
           emit("create:annotation", response.data.id);
         }
       }
@@ -195,7 +195,7 @@ export default defineComponent({
       const found =
         selectedType.value === "pulse"
           ? annotations.value.find((item) => item.id === selectedId.value)
-          : temporalAnnotations.value.find((item) => item.id === selectedId.value);
+          : sequenceAnnotations.value.find((item) => item.id === selectedId.value);
       if (found && props.spectroInfo) {
         const [x, y] = spectroToCenter(found, props.spectroInfo, selectedType.value);
         const bounds = geoJS.getGeoViewer().value.bounds();

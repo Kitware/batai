@@ -13,17 +13,17 @@ from .nabat.admin import (
 from .processing_task import ProcessingTaskAdmin
 from .recording import RecordingAdmin
 from .recording_annotations import RecordingAnnotationAdmin
+from .sequence_annotations import SequenceAnnotationsAdmin
 from .species import SpeciesAdmin
 from .spectrogram import SpectrogramAdmin
 from .spectrogram_image import SpectrogramImageAdmin
-from .temporal_annotations import TemporalAnnotationsAdmin
 
 __all__ = [
     'AnnotationsAdmin',
     'ImageAdmin',
     'RecordingAdmin',
     'SpectrogramAdmin',
-    'TemporalAnnotationsAdmin',
+    'SequenceAnnotationsAdmin',
     'SpeciesAdmin',
     'GRTSCellsAdmin',
     'CompressedSpectrogramAdmin',

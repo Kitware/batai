@@ -8,10 +8,10 @@ from .processing_task import ProcessingTask, ProcessingTaskType
 from .recording import Recording
 from .recording_annotation import RecordingAnnotation
 from .recording_annotation_status import RecordingAnnotationStatus
+from .sequence_annotations import SequenceAnnotations
 from .species import Species
 from .spectrogram import Spectrogram
 from .spectrogram_image import SpectrogramImage
-from .temporal_annotations import TemporalAnnotations
 
 __all__ = [
     'Annotations',
@@ -20,7 +20,7 @@ __all__ = [
     'RecordingAnnotationStatus',
     'Species',
     'Spectrogram',
-    'TemporalAnnotations',
+    'SequenceAnnotations',
     'GRTSCells',
     'CompressedSpectrogram',
     'RecordingAnnotation',

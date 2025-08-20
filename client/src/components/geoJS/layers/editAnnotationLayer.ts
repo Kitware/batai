@@ -1,7 +1,12 @@
 /*eslint class-methods-use-this: "off"*/
 import geo, { GeoEvent } from "geojs";
-import { SpectroInfo, spectroToGeoJSon, reOrdergeoJSON, spectroTemporalToGeoJSon } from "../geoJSUtils";
-import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../../api/api";
+import {
+  SpectroInfo,
+  spectroToGeoJSon,
+  reOrdergeoJSON,
+  spectroSequenceToGeoJSon,
+} from "../geoJSUtils";
+import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
 import { LayerStyle } from "./types";
 import { GeoJSON } from "geojson";
 
@@ -13,7 +18,6 @@ interface RectGeoJSData {
   editing: boolean | string;
   polygon: GeoJSON.Polygon;
 }
-
 
 const typeMapper = new Map([
   ["LineString", "line"],
@@ -76,7 +80,7 @@ export default class EditAnnotationLayer {
   /* in-progress events only emitted for lines and polygons */
   shapeInProgress: GeoJSON.LineString | GeoJSON.Polygon | null;
 
-  mode: 'pulse' | 'sequence';
+  mode: "pulse" | "sequence";
 
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,7 +96,7 @@ export default class EditAnnotationLayer {
       strokeWidth: 1.0,
       antialiasing: 0,
     };
-    this.mode = 'pulse';
+    this.mode = "pulse";
     this.formattedData = [];
     this.spectroInfo = spectroInfo;
     this.skipNextExternalUpdate = false;
@@ -330,7 +334,10 @@ export default class EditAnnotationLayer {
   }
 
   /** overrides default function to disable and clear anotations before drawing again */
-  async changeData(frameData: SpectrogramAnnotation | null | SpectrogramTemporalAnnotation, type: 'pulse' | 'sequence') {
+  async changeData(
+    frameData: SpectrogramAnnotation | null | SpectrogramSequenceAnnotation,
+    type: "pulse" | "sequence"
+  ) {
     this.mode = type;
     if (this.skipNextExternalUpdate === false) {
       // disable resets things before we load a new/different shape or mode
@@ -356,7 +363,10 @@ export default class EditAnnotationLayer {
    *
    * @param frameData a single FrameDataTrack Array that is the editing item
    */
-  formatData(annotationData: SpectrogramAnnotation | null | SpectrogramTemporalAnnotation, type: 'pulse' | 'sequence') {
+  formatData(
+    annotationData: SpectrogramAnnotation | null | SpectrogramSequenceAnnotation,
+    type: "pulse" | "sequence"
+  ) {
     this.selectedHandleIndex = -1;
     this.hoverHandleIndex = -1;
     this.event("update:selectedIndex", {
@@ -364,10 +374,31 @@ export default class EditAnnotationLayer {
       selectedKey: this.selectedKey,
     });
     if (annotationData) {
-
-      const compressedView =  !!(this.spectroInfo.start_times && this.spectroInfo.end_times && type ==='sequence');
-      const offsetY = compressedView ? -20 : 0;  
-      const geoJSONData = type === 'pulse' ? spectroToGeoJSon(annotationData as SpectrogramAnnotation, this.spectroInfo, 1, this.scaledWidth, this.scaledHeight): spectroTemporalToGeoJSon(annotationData as SpectrogramTemporalAnnotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight, offsetY);
+      const compressedView = !!(
+        this.spectroInfo.start_times &&
+        this.spectroInfo.end_times &&
+        type === "sequence"
+      );
+      const offsetY = compressedView ? -20 : 0;
+      const geoJSONData =
+        type === "pulse"
+          ? spectroToGeoJSon(
+              annotationData as SpectrogramAnnotation,
+              this.spectroInfo,
+              1,
+              this.scaledWidth,
+              this.scaledHeight
+            )
+          : spectroSequenceToGeoJSon(
+              annotationData as SpectrogramSequenceAnnotation,
+              this.spectroInfo,
+              -10,
+              -50,
+              1,
+              this.scaledWidth,
+              this.scaledHeight,
+              offsetY
+            );
       const geojsonFeature: GeoJSON.Feature = {
         type: "Feature",
         geometry: geoJSONData,
@@ -499,10 +530,9 @@ export default class EditAnnotationLayer {
    * The base style used to represent the annotation
    */
   createStyle(): LayerStyle<GeoJSON.Feature> {
-
     return {
       ...{
-        strokeColor: 'black',
+        strokeColor: "black",
         strokeWidth: 1.0,
         antialiasing: 0,
         stroke: true,
@@ -518,43 +548,43 @@ export default class EditAnnotationLayer {
    * Styling for the handles used to drag the annotation for ediing
    */
   editHandleStyle() {
-    if (this.type === "rectangle" && this.mode === 'pulse') {
+    if (this.type === "rectangle" && this.mode === "pulse") {
       return {
         handles: {
           rotate: false,
           resize: false,
         },
-      }; 
-    } else if (this.type === 'rectangle' && this.mode === 'sequence') {
+      };
+    } else if (this.type === "rectangle" && this.mode === "sequence") {
       return {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         strokeOpacity: (d: any) => {
-          if (d.type === 'edge' && [1,3].includes(d.index)) {
+          if (d.type === "edge" && [1, 3].includes(d.index)) {
             return 0.0;
           }
           return 1.0;
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         stroke: (d: any) => {
-          if (d.type === 'edge' && [1,3].includes(d.index)) {
+          if (d.type === "edge" && [1, 3].includes(d.index)) {
             return false;
           }
           return true;
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         radius: function (d: any) {
-          if (d.type === 'edge' && [1,3].includes(d.index)) {
+          if (d.type === "edge" && [1, 3].includes(d.index)) {
             return 0;
           }
           return 8;
-        },      
+        },
         handles: {
-          rotate:false,
+          rotate: false,
           vertex: false,
           edge: true,
-          center:false,
-          resize:false
-        }
+          center: false,
+          resize: false,
+        },
       };
     }
     return {

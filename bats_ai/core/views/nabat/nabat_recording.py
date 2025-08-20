@@ -293,10 +293,10 @@ def get_spectrogram(request: HttpRequest, id: int):
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = []
-    temporal_annotations_data = []
+    sequence_annotations_data = []
 
     spectro_data['annotations'] = annotations_data
-    spectro_data['temporal'] = temporal_annotations_data
+    spectro_data['sequence'] = sequence_annotations_data
     return spectro_data
 
 
@@ -332,7 +332,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
             'compressedWidth': compressed_spectrogram.length,
         },
         'annotations': [],
-        'temporal': [],
+        'sequence': [],
     }
 
     return spectro_data

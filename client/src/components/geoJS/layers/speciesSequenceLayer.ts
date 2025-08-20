@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
-import { SpectrogramTemporalAnnotation } from "../../../api/api";
-import { SpectroInfo, spectroTemporalToGeoJSon } from "../geoJSUtils";
+import { SpectrogramSequenceAnnotation } from "../../../api/api";
+import { SpectroInfo, spectroSequenceToGeoJSon } from "../geoJSUtils";
 import { LayerStyle } from "./types";
 
 interface TextData {
@@ -9,18 +9,16 @@ interface TextData {
   y: number;
   offsetY?: number;
   offsetX?: number;
-  textType: 'species' | 'type';
+  textType: "species" | "type";
 }
 
 export default class SpeciesSequenceLayer {
-
   textData: TextData[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   textLayer: any;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   geoViewerRef: any;
-
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   event: (name: string, data: any) => void;
@@ -31,7 +29,6 @@ export default class SpeciesSequenceLayer {
 
   scaledWidth: number;
   scaledHeight: number;
-
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -56,7 +53,6 @@ export default class SpeciesSequenceLayer {
       .text((data: TextData) => data.text)
       .position((data: TextData) => ({ x: data.x, y: data.y }));
 
-
     this.textStyle = this.createTextStyle();
   }
 
@@ -68,15 +64,23 @@ export default class SpeciesSequenceLayer {
   destroy() {
     if (this.textLayer) {
       this.geoViewerRef.deleteLayer(this.textLayer);
-    }    
+    }
   }
 
-  formatData(annotationData: SpectrogramTemporalAnnotation[]) {
+  formatData(annotationData: SpectrogramSequenceAnnotation[]) {
     this.textData = [];
-    const compressedView =  !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
-    const offsetY = compressedView ? -100 : 0;  
-    annotationData.forEach((annotation: SpectrogramTemporalAnnotation) => {
-      const polygon = spectroTemporalToGeoJSon(annotation, this.spectroInfo, -10, -50, 1, this.scaledWidth, this.scaledHeight);
+    const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
+    const offsetY = compressedView ? -100 : 0;
+    annotationData.forEach((annotation: SpectrogramSequenceAnnotation) => {
+      const polygon = spectroSequenceToGeoJSon(
+        annotation,
+        this.spectroInfo,
+        -10,
+        -50,
+        1,
+        this.scaledWidth,
+        this.scaledHeight
+      );
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
@@ -90,27 +94,27 @@ export default class SpeciesSequenceLayer {
       const species = annotation.species;
       const type = annotation.type;
       if (species) {
-        for (let i =0; i< species.length; i += 1) {
+        for (let i = 0; i < species.length; i += 1) {
           const specie = species[i];
           this.textData.push({
             text: `${specie.species_code || specie.common_name}`,
-            x: xmin + (xmax-xmin) /2.0,
+            x: xmin + (xmax - xmin) / 2.0,
             y: ymax,
-            offsetX:0,
+            offsetX: 0,
             offsetY: -30 + textOffset,
-            textType: 'species',
+            textType: "species",
           });
-          textOffset -= 15;        
+          textOffset -= 15;
         }
       }
       if (type) {
         this.textData.push({
           text: `${type}`,
-          x: xmin + (xmax-xmin) /2.0,
-          y: ymin ,
-          offsetX:0,
+          x: xmin + (xmax - xmin) / 2.0,
+          y: ymin,
+          offsetX: 0,
           offsetY: 10 + offsetY,
-          textType: 'type'
+          textType: "type",
         });
       }
     });
@@ -125,7 +129,6 @@ export default class SpeciesSequenceLayer {
     this.textLayer.data([]).draw();
   }
 
-
   createTextStyle(): LayerStyle<TextData> {
     return {
       ...{
@@ -137,8 +140,8 @@ export default class SpeciesSequenceLayer {
         fill: false,
       },
       color: (d) => {
-        if (d.textType === 'type') {
-          return 'yellow';
+        if (d.textType === "type") {
+          return "yellow";
         }
         return "white";
       },
@@ -146,7 +149,7 @@ export default class SpeciesSequenceLayer {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
-      textAlign: 'center',
+      textAlign: "center",
     };
   }
 }

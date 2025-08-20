@@ -6,14 +6,14 @@ from .guanometadata import router as GuanoMetadataRouter
 from .processing_tasks import router as ProcessingTaskRouter
 from .recording import router as RecordingRouter
 from .recording_annotation import router as RecordingAnnotationRouter
+from .sequence_annotations import router as SequenceAnnotationRouter
 from .species import router as SpeciesRouter
-from .temporal_annotations import router as TemporalAnnotationRouter
 
 __all__ = [
     'RecordingRouter',
     'SpeciesRouter',
     'AnnotationRouter',
-    'TemporalAnnotationRouter',
+    'SequenceAnnotationRouter',
     'GRTSCellsRouter',
     'GuanoMetadataRouter',
     'RecordingAnnotationRouter',

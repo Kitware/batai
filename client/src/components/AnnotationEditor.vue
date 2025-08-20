@@ -1,7 +1,7 @@
 <script lang="ts">
 import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
-import { deleteAnnotation, deleteTemporalAnnotation, patchAnnotation, patchTemporalAnnotation, Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import { deleteAnnotation, deleteSequenceAnnotation, patchAnnotation, patchSequenceAnnotation, Species, SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../api/api";
 import useState from "@use/useState";
 import SpeciesInfo from "./SpeciesInfo.vue";
 export default defineComponent({
@@ -15,7 +15,7 @@ export default defineComponent({
       default: () => undefined,
     },
     annotation: {
-      type: Object as PropType<SpectrogramAnnotation | SpectrogramTemporalAnnotation | null>,
+      type: Object as PropType<SpectrogramAnnotation | SpectrogramSequenceAnnotation | null>,
       default: () => null,
     },
     species: {
@@ -39,7 +39,7 @@ export default defineComponent({
     const type: Ref<string[]> = ref([]);
     const callTypes = ref(['Search', 'Approach', 'Terminal', 'Social']);
 
-      type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [];
+      type.value = (props.annotation as SpectrogramSequenceAnnotation).type?.split('+') || [];
 
     watch(() => props.annotation, () => {
         if (props.annotation?.species) {
@@ -48,8 +48,8 @@ export default defineComponent({
         if (selectedType.value === 'pulse' && props.annotation?.comments) {
             comments.value = props.annotation.comments;
         }
-        if (selectedType.value === 'pulse' && (props.annotation as SpectrogramTemporalAnnotation).type) {
-            type.value = (props.annotation as SpectrogramTemporalAnnotation).type?.split('+') || [];
+        if (selectedType.value === 'pulse' && (props.annotation as SpectrogramSequenceAnnotation).type) {
+            type.value = (props.annotation as SpectrogramSequenceAnnotation).type?.split('+') || [];
         }
     });
     const updateAnnotation = async () => {
@@ -66,7 +66,7 @@ export default defineComponent({
             if (selectedType.value === 'pulse') {
               await patchAnnotation(props.recordingId, props.annotation?.id, { ...props.annotation, comments: comments.value, type: updateType }, speciesIds );
             } else if (selectedType.value === 'sequence') {
-              await patchTemporalAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: updateType }, speciesIds);
+              await patchSequenceAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: updateType }, speciesIds);
             }
             // Signal to redownload the updated annotation values if possible
             emit('update:annotation');
@@ -80,7 +80,7 @@ export default defineComponent({
             emit('delete:annotation');
         }
         if (props.annotation && props.recordingId && selectedType.value === 'sequence') {
-            await deleteTemporalAnnotation(props.recordingId, props.annotation.id);
+            await deleteSequenceAnnotation(props.recordingId, props.annotation.id);
             emit('delete:annotation');
         }
         

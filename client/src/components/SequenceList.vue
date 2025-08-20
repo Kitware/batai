@@ -1,12 +1,12 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
-import { SpectrogramTemporalAnnotation } from "../api/api";
+import { SpectrogramSequenceAnnotation } from "../api/api";
 import useState from "@use/useState";
 import { watch } from "vue";
 
 export default defineComponent({
-  name: "TemporalList",
+  name: "SequenceList",
   components: {
   },
   props: {
@@ -15,7 +15,7 @@ export default defineComponent({
       default: () => undefined,
     },
     annotations: {
-      type: Array as PropType<SpectrogramTemporalAnnotation[]>,
+      type: Array as PropType<SpectrogramSequenceAnnotation[]>,
       default: () => [],
     },
     selectedId: {
@@ -51,7 +51,7 @@ export default defineComponent({
   <v-card class="pa-0 ma-0">
     <v-card-title>
       <v-row class="pa-2">
-        Temporal Annotations
+        Sequence Annotations
         <v-spacer />
         <v-btn
           :disabled="annotationState === 'creating'"

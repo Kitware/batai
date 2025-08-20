@@ -2,13 +2,13 @@ from django.http import HttpRequest
 from ninja import Schema
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import Annotations, Recording, TemporalAnnotations
+from bats_ai.core.models import Annotations, Recording, SequenceAnnotations
 from bats_ai.core.views.species import SpeciesSchema
 
 router = RouterPaginated()
 
 
-class TemporalAnnotationSchema(Schema):
+class SequenceAnnotationSchema(Schema):
     id: int
     start_time: int
     end_time: int
@@ -30,7 +30,7 @@ class TemporalAnnotationSchema(Schema):
         )
 
 
-class UpdateTemporalAnnotationSchema(Schema):
+class UpdateSequenceAnnotationSchema(Schema):
     start_time: int = None
     end_time: int = None
     type: str | None = None
@@ -38,7 +38,7 @@ class UpdateTemporalAnnotationSchema(Schema):
 
 
 @router.get('/{id}')
-def get_temporal_annotation(request: HttpRequest, id: int):
+def get_sequence_annotation(request: HttpRequest, id: int):
     try:
         annotation = Annotations.objects.get(pk=id)
         recording = annotation.recording
@@ -46,13 +46,13 @@ def get_temporal_annotation(request: HttpRequest, id: int):
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             # Query annotations associated with the recording that are owned by the current user
-            annotations_qs = TemporalAnnotations.objects.filter(
+            annotations_qs = SequenceAnnotations.objects.filter(
                 recording=recording, owner=request.user
             )
 
             # Serialize the annotations using AnnotationSchema
             annotations_data = [
-                TemporalAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+                SequenceAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
                 for annotation in annotations_qs
             ]
 

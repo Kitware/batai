@@ -7,7 +7,7 @@ import {
   OtherUserAnnotations,
   Recording,
   SpectrogramAnnotation,
-  SpectrogramTemporalAnnotation,
+  SpectrogramSequenceAnnotation,
 } from "../api/api";
 import {
   interpolateCividis,
@@ -20,8 +20,8 @@ import {
 
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<"pulse" | "sequence"> = ref("pulse");
-type LayersVis = "time" | "freq" | "species" | "grid" | "temporal" | "duration";
-const layerVisibility: Ref<LayersVis[]> = ref(["temporal", "species", "duration", "freq"]);
+type LayersVis = "time" | "freq" | "species" | "grid" | "sequence" | "duration";
+const layerVisibility: Ref<LayersVis[]> = ref(["sequence", "species", "duration", "freq"]);
 const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
 const colorSchemes = [
   { value: "inferno", title: "Inferno", scheme: interpolateInferno },
@@ -40,7 +40,7 @@ const currentUser: Ref<string> = ref("");
 const selectedId: Ref<number | null> = ref(null);
 const selectedType: Ref<"pulse" | "sequence"> = ref("pulse");
 const annotations: Ref<SpectrogramAnnotation[]> = ref([]);
-const temporalAnnotations: Ref<SpectrogramTemporalAnnotation[]> = ref([]);
+const sequenceAnnotations: Ref<SpectrogramSequenceAnnotation[]> = ref([]);
 const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
 const sharedList: Ref<Recording[]> = ref([]);
 const recordingList: Ref<Recording[]> = ref([]);
@@ -140,7 +140,7 @@ export default function useState() {
     // State Passing Elements
     annotations,
     configuration,
-    temporalAnnotations,
+    sequenceAnnotations,
     otherUserAnnotations,
     selectedId,
     selectedType,
