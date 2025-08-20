@@ -124,19 +124,27 @@ export default class SequenceLayer {
     }
   }
 
- 
   formatData(
     annotationData: SpectrogramSequenceAnnotation[],
     selectedIndex: number | null,
     currentUser: string,
     colorScale?: d3.ScaleOrdinal<string, string, never>,
-    yScale = 1,
+    yScale = 1
   ) {
     const arr: RectGeoJSData[] = [];
-    const compressedView =  !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
-    const offsetY = compressedView ? -20 : 0;
+    const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
+    const offsetY = compressedView ? -80 : 0;
     annotationData.forEach((annotation: SpectrogramSequenceAnnotation) => {
-      const polygon = spectroSequenceToGeoJSon(annotation, this.spectroInfo, -10, -50, yScale, this.scaledWidth, this.scaledHeight, offsetY);
+      const polygon = spectroSequenceToGeoJSon(
+        annotation,
+        this.spectroInfo,
+        -10,
+        -50,
+        yScale,
+        this.scaledWidth,
+        this.scaledHeight,
+        offsetY
+      );
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
