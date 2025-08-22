@@ -33,7 +33,7 @@ def image_compute_checksum(image_id: int):
 
 
 @shared_task
-def recording_compute_spectrogram(recording_id: int):
+def recording_compute_spectrogram(recording_id: int, inference_mode: int = 0):
     recording = Recording.objects.get(pk=recording_id)
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -90,8 +90,16 @@ def recording_compute_spectrogram(recording_id: int):
                 )
 
         config = Configuration.objects.first()
+        inference_mode = 1 if os.getenv("USE_MLFLOW") else inference_mode
+        if inference_mode == 1:
+            logger.info("Using MLFlow model repository")
+            from mlflow.tracking import MlflowClient
+            client = MlflowClient(tracking_uri="http://localhost:5000")
+            registered_models = client.search_registered_models()
+            for model in registered_models:
+                logger.info(model.name)
         if config and config.run_inference_on_upload:
-            predict_results = predict_from_compressed(compressed_obj)
+            predict_results = predict_from_compressed(compressed_obj, inference_mode)
             label = predict_results['label']
             score = predict_results['score']
             confs = predict_results['confs']
@@ -116,6 +124,7 @@ def recording_compute_spectrogram(recording_id: int):
             recording_annotation.save()
 
         return {'spectrogram_id': spectrogram.id, 'compressed_id': compressed_obj.id}
+
 
 def _fully_local_inference(image_file, use_mlflow_model):
     import json
@@ -229,7 +238,8 @@ def predict_compressed(image_file):
         return _fully_local_inference(image_file, False)
 
 
-def train_body(experiment_name: str):
+@shared_task
+def example_train(experiment_name: str):
     import mlflow
     from mlflow.models import infer_signature
     from sklearn import datasets
@@ -258,15 +268,10 @@ def train_body(experiment_name: str):
     mlflow.set_tracking_uri(settings.MLFLOW_ENDPOINT)
     mlflow.set_experiment(experiment_name)
 
-    mlflow.end_run()
     with mlflow.start_run():
         mlflow.log_params(params)
         mlflow.log_metric('accuracy', accuracy)
         mlflow.set_tag('Training Info', 'Basic LR model for iris data')
-
-        print("ENV AWS_ACCESS_KEY_ID =", os.getenv("AWS_ACCESS_KEY_ID"))
-        print("ENV AWS_SECRET_ACCESS_KEY =", os.getenv("AWS_SECRET_ACCESS_KEY"))
-        print("ENV MLFLOW_S3_ENDPOINT_URL =", os.getenv("MLFLOW_S3_ENDPOINT_URL"))
 
         signature = infer_signature(X_train, lr.predict(X_train))
         _ = mlflow.sklearn.log_model(
@@ -276,8 +281,3 @@ def train_body(experiment_name: str):
             input_example=X_train,
             registered_model_name='tracking-quickstart',
         )
-
-
-@shared_task
-def example_train(experiment_name: str):
-    train_body(experiment_name)
