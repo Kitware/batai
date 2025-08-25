@@ -505,7 +505,7 @@ function geojsonToSpectro(
   geojson: GeoJSON.Feature<GeoJSON.Polygon>,
   spectroInfo: SpectroInfo,
   scaledWidth = 0,
-  scaledHeight = 0
+  scaledHeight = 0,
 ): { error?: string; start_time: number; end_time: number; low_freq: number; high_freq: number } {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
@@ -530,8 +530,14 @@ function geojsonToSpectro(
       scaledWidth > (spectroInfo.compressedWidth || 1)
         ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width)
         : 1;
-    const start = coords[1][0] / compressedScale;
-    const end = coords[3][0] / compressedScale;
+    let start = coords[1][0] / compressedScale;
+    let end = coords[3][0] / compressedScale;
+    if (start < 0) {
+      start = 0;
+    }
+    if (end > spectroInfo.compressedWidth) {
+      end = spectroInfo.compressedWidth;
+    }
     const { start_times, widths } = spectroInfo;
     const timeToPixels = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     let additivePixels = 0;
@@ -540,7 +546,7 @@ function geojsonToSpectro(
     for (let i = 0; i < start_times.length; i += 1) {
       // convert the start/end time to a pixel
       const nextPixels = (widths && widths[i]) || 0;
-      if (start_time === -1 && start > additivePixels && start < additivePixels + nextPixels) {
+      if (start_time === -1 && start >= additivePixels && start < additivePixels + nextPixels) {
         // Found the location for time markers
         // We need to remap pixels back to milliseconds
         const lowPixels = start - additivePixels;
