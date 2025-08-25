@@ -15,6 +15,9 @@ interface TextData {
   y: number;
   offsetY?: number;
   offsetX?: number;
+  textAlign?: 'left' | 'center' | 'right';
+  textBaseline?: 'top' | 'middle' | 'bottom';
+  textScaled?: number | undefined;
 }
 
 export default class LegendLayer {
@@ -53,6 +56,10 @@ export default class LegendLayer {
 
   scaledHeight: number;
 
+  zoomLevel: number;
+
+  textScaled: number | undefined;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,8 +95,23 @@ export default class LegendLayer {
     this.lineStyle = this.createLineStyle();
     this.gridLines = [];
     this.geoViewerRef.geoOn(geo.event.pan, () => this.onPan());
+    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
     this.createLabels();
     this.calcGridLines();
+    this.zoomLevel = this.geoViewerRef.camera().zoomLevel;
+
+  }
+
+  onZoom(event: {zoomLevel: number}) {
+    this.zoomLevel = event.zoomLevel;
+    this.textScaled = undefined;
+    if ((this.zoomLevel || 0) < -1.5 ) {
+      this.textScaled = -1.5;
+    } else if ((this.zoomLevel || 0) > 0) {
+      this.textScaled = Math.sqrt(this.zoomLevel || 1);
+    } else {
+      this.textScaled = this.zoomLevel;
+    }
 
   }
 
@@ -161,6 +183,7 @@ export default class LegendLayer {
           y: baseYPos + length,
           offsetX: 3,
           offsetY: yOffset === 0 ? 8 : -8,
+          textScaled: this.textScaled,
         });
       }
     }
@@ -199,8 +222,8 @@ export default class LegendLayer {
         const start_time = start_times[i];
         const end_time = end_times[i];
         const width = this.scaledWidth > compressedWidth ? (this.scaledWidth / compressedWidth) * widths[i] : widths[i];
-        const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  50)  && leftOffset !== 0 && yOffset !== 0;
-        const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  50)  && leftOffset !== 0 && topOffset !== 0;
+        const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  150)  && leftOffset !== 0 && yOffset !== 0;
+        const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  150)  && leftOffset !== 0 && topOffset !== 0;
      
 
       if (!bottomWithinYAxisStart) {
@@ -263,9 +286,9 @@ export default class LegendLayer {
         this.textDataX.push({
           text: `${start_time}ms`,
           x: 0 + pixelOffset,
-          y: baseYPos + length,
+          y: baseYPos + length + (yOffset === 0 ? 18 : -16),
           offsetX: 3,
-          offsetY: yOffset === 0 ? 16 : -16,
+          textScaled: this.textScaled,
         });
       }
       if (!topWithinYAxisEnd) {
@@ -273,9 +296,9 @@ export default class LegendLayer {
         this.textDataX.push({
           text: `${end_time}ms`,
           x: width + pixelOffset,
-          y: baseTopPos,
+          y: baseTopPos + (baseTopPos === 0 ? -16 : 16),
           offsetX: 3,
-          offsetY: baseTopPos === 0 ? -16 : 16,
+          textScaled: this.textScaled,
         });
       }
         pixelOffset += width;
@@ -362,12 +385,14 @@ export default class LegendLayer {
         },
         thicker: i % 10000 === 0,
       });
+
       this.textDataY.push({
         text: `${(i + this.spectroInfo.low_freq) / 1000}KHz`,
-        x: offset - xBuffer - length,
+        x: offset - xBuffer + (offset === 0 ? -45 : 10),
         y: adjustedHeight - i * hzToPixels,
-        offsetX: offset === 0 ? -25 : 25,
+        textAlign:  offset === 0 ? 'right' : 'left',
         offsetY: 0,
+        textScaled: this.textScaled,
       });
     }
   }
@@ -491,6 +516,7 @@ export default class LegendLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
+        fontSize: "20px",
       },
       color: () => {
         return "white";
@@ -499,6 +525,9 @@ export default class LegendLayer {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
+      textBaseline: (data) => data.textBaseline || 'middle',
+      textAlign: (data) => (data.textAlign || "center"),
+      textScaled: (data) => (data.textScaled),
     };
   }
 }
