@@ -76,7 +76,7 @@ export default class SpeciesSequenceLayer {
         annotation,
         this.spectroInfo,
         -10,
-        -50,
+        -120,
         1,
         this.scaledWidth,
         this.scaledHeight

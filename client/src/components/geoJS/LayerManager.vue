@@ -467,6 +467,7 @@ export default defineComponent({
           sequenceAnnotationLayer = new SequenceLayer(props.geoViewerRef, sequenceEvent, props.spectroInfo);
         } {
           sequenceAnnotationLayer.spectroInfo = props.spectroInfo;
+          sequenceAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         }
         rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
         rectAnnotationLayer.redraw();
@@ -600,6 +601,7 @@ export default defineComponent({
           colorScale.value,
           props.yScale,
         );
+        sequenceAnnotationLayer.redraw();
       }
       // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
       legendLayer?.onPan();

@@ -155,7 +155,7 @@ export default class TimeLayer {
       });
     }
     const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
-    const offsetY = compressedView ? -20 : 0;
+    const offsetY = compressedView ? -30 : 0;
     if (this.displaying.sequence) {
       sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
         const polygon = spectroSequenceToGeoJSon(
@@ -256,7 +256,7 @@ export default class TimeLayer {
       });
     }
     const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
-    const offsetY = compressedView ? -20 : 0;
+    const offsetY = compressedView ? -30 : 0;
     if (this.displaying.sequence) {
       sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
         const polygon = spectroSequenceToGeoJSon(
