@@ -635,7 +635,7 @@ def patch_annotation(
             )
 
             # Update annotation details
-            if annotation.start_time:
+            if annotation.start_time is not None:
                 annotation_instance.start_time = annotation.start_time
             if annotation.end_time:
                 annotation_instance.end_time = annotation.end_time
@@ -693,7 +693,7 @@ def patch_sequence_annotation(
             )
 
             # Update annotation details
-            if annotation.start_time:
+            if annotation.start_time is not None:
                 annotation_instance.start_time = annotation.start_time
             if annotation.end_time:
                 annotation_instance.end_time = annotation.end_time
