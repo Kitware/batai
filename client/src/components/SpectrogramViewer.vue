@@ -162,7 +162,14 @@ export default defineComponent({
     const updateAnnotation = async (
       annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation
     ) => {
+      if (props.recordingId !== null && selectedId.value !== null) {
+        if (selectedType.value === "pulse") {
+          await patchAnnotation(props.recordingId, selectedId.value, annotation);
+        } else if (selectedType.value === "sequence") {
+          await patchSequenceAnnotation(props.recordingId, selectedId.value, annotation);
+        }
         emit("update:annotation", annotation);
+      }
     };
 
     const createAnnotation = async (
