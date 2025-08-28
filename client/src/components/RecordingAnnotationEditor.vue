@@ -84,7 +84,7 @@ export default defineComponent({
 
     };
 
-    
+
 
     const deleteAnnotation = async () => {
       if (props.annotation && props.recordingId) {
@@ -108,7 +108,25 @@ export default defineComponent({
   <v-card>
     <v-card-title>
       <v-row class="pa-2">
-        Choose Labels
+        Choose Label
+        <v-tooltip
+          v-if="type === 'nabat'"
+          width="250"
+          right
+        >
+          <template #activator="{ props }">
+            <v-icon
+              v-bind="props"
+              size="x-small"
+            >
+              mdi-information
+            </v-icon>
+          </template>
+          <span>
+            Each user may only add one label per file. Once you have saved
+            your selection it may not be deleted.
+          </span>
+        </v-tooltip>
         <v-spacer />
         <v-btn
           v-if="type !== 'nabat'"
@@ -167,7 +185,7 @@ export default defineComponent({
           @change="updateAnnotation()"
         />
       </v-row>
-    </v-card-text> 
+    </v-card-text>
   </v-card>
 </template>
 

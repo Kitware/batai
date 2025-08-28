@@ -52,7 +52,7 @@ export default defineComponent({
         <v-data-table
           :headers="[
             { title: 'Label', value: 'label', sortable: true },
-            { title: 'Value', value: 'value', sortable: true }
+            { title: 'Confidence', value: 'value', sortable: true }
           ]"
           :items="annotationData.confidences"
           :items-per-page="-1"
