@@ -201,7 +201,7 @@ export default class LegendLayer {
         const width = this.scaledWidth > compressedWidth ? (this.scaledWidth / compressedWidth) * widths[i] : widths[i];
         const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  50)  && leftOffset !== 0 && yOffset !== 0;
         const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  50)  && leftOffset !== 0 && topOffset !== 0;
-     
+
 
       if (!bottomWithinYAxisStart) {
         this.lineDataX.push({
@@ -232,7 +232,7 @@ export default class LegendLayer {
           },
           thicker: true,
         });
-      
+
         this.lineDataX.push({
           line: {
             type: "LineString",
@@ -362,11 +362,20 @@ export default class LegendLayer {
         },
         thicker: i % 10000 === 0,
       });
+      const getTextXOffset = (rightOrLeft: number, frequency: number) => {
+        const multiplier = rightOrLeft === 0 ? -1 : 1;
+        if (frequency >= 100000) {
+          return 40 * multiplier;
+        } else if (frequency >= 10000) {
+          return 35 * multiplier;
+        }
+        return 30 * multiplier;
+      };
       this.textDataY.push({
         text: `${(i + this.spectroInfo.low_freq) / 1000}KHz`,
         x: offset - xBuffer - length,
         y: adjustedHeight - i * hzToPixels,
-        offsetX: offset === 0 ? -25 : 25,
+        offsetX: getTextXOffset(offset, i + this.spectroInfo.low_freq),
         offsetY: 0,
       });
     }
