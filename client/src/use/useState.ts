@@ -1,4 +1,5 @@
 import { ref, Ref, watch } from "vue";
+import { useRouter } from 'vue-router';
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import {
@@ -121,6 +122,17 @@ export default function useState() {
     configuration.value = (await getConfiguration()).data;
   }
 
+  /**
+   * Function used to determine whether or not we are currently looking
+   * at an NABat-specific view.
+   *
+   * returns `true` if looking at an NABat view, `false` otherwise
+   */
+  function isNaBat(): boolean {
+    const router = useRouter();
+    return router.currentRoute.value.fullPath.includes('nabat');
+  }
+
   return {
     annotationState,
     creationType,
@@ -137,6 +149,7 @@ export default function useState() {
     currentUser,
     setSelectedId,
     loadConfiguration,
+    isNaBat,
     // State Passing Elements
     annotations,
     configuration,

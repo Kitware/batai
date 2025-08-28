@@ -38,7 +38,7 @@ export default defineComponent({
     const annotations: Ref<FileAnnotation[]> = ref([]);
     const detailsDialog = ref(false);
     const detailRecordingId = ref(-1);
-    const { configuration } = useState();
+    const { configuration, isNaBat } = useState();
 
     const setSelectedId = (annotation: FileAnnotation) => {
       selectedAnnotation.value = annotation;
@@ -129,6 +129,7 @@ export default defineComponent({
       updatedAnnotation,
       loadDetails,
       getConfidenceLabelText,
+      isNaBat,
       detailsDialog,
       detailRecordingId,
       disableNaBatAnnotations,
@@ -140,12 +141,12 @@ export default defineComponent({
 
 <template>
   <div>
-    <v-row class="pa-2">
-      <v-col>
+    <v-row class="pa-4">
+      <v-col v-if="!isNaBat()">
         Annotations
       </v-col>
       <v-spacer />
-      <v-col>
+      <v-col v-if="!isNaBat() || !disableNaBatAnnotations">
         <v-btn
           :disabled="annotationState === 'creating' || disableNaBatAnnotations"
           @click="addAnnotation()"
