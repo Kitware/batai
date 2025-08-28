@@ -379,7 +379,7 @@ export default class EditAnnotationLayer {
         this.spectroInfo.end_times &&
         type === "sequence"
       );
-      const offsetY = compressedView ? -20 : 0;
+      const offsetY = compressedView ? -80 : 0;
       const geoJSONData =
         type === "pulse"
           ? spectroToGeoJSon(
