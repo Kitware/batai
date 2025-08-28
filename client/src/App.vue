@@ -113,7 +113,7 @@ export default defineComponent({
         v-if="isNaBat"
         class="mx-3"
       >
-        NA Bat Spectrogram Viewer
+        NABat Spectrogram Viewer
       </h3>
       <v-spacer />
       <v-tooltip
