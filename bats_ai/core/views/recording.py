@@ -16,14 +16,14 @@ from bats_ai.core.models import (
     CompressedSpectrogram,
     Recording,
     RecordingAnnotation,
+    SequenceAnnotations,
     Species,
-    TemporalAnnotations,
+)
+from bats_ai.core.views.sequence_annotations import (
+    SequenceAnnotationSchema,
+    UpdateSequenceAnnotationSchema,
 )
 from bats_ai.core.views.species import SpeciesSchema
-from bats_ai.core.views.temporal_annotations import (
-    TemporalAnnotationSchema,
-    UpdateTemporalAnnotationSchema,
-)
 from bats_ai.tasks.tasks import recording_compute_spectrogram
 from bats_ai.utils.spectrogram_utils import predict_from_compressed
 
@@ -384,7 +384,7 @@ def get_spectrogram(request: HttpRequest, id: int):
     spectro_data['currentUser'] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
-    temporal_annotations_qs = TemporalAnnotations.objects.filter(
+    sequence_annotations_qs = SequenceAnnotations.objects.filter(
         recording=recording, owner=request.user
     )
 
@@ -393,13 +393,13 @@ def get_spectrogram(request: HttpRequest, id: int):
         AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
         for annotation in annotations_qs
     ]
-    temporal_annotations_data = [
-        TemporalAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
-        for annotation in temporal_annotations_qs
+    sequence_annotations_data = [
+        SequenceAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+        for annotation in sequence_annotations_qs
     ]
 
     spectro_data['annotations'] = annotations_data
-    spectro_data['temporal'] = temporal_annotations_data
+    spectro_data['sequence'] = sequence_annotations_data
     return spectro_data
 
 
@@ -453,7 +453,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
     spectro_data['currentUser'] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
-    temporal_annotations_qs = TemporalAnnotations.objects.filter(
+    sequence_annotations_qs = SequenceAnnotations.objects.filter(
         recording=recording, owner=request.user
     )
 
@@ -462,13 +462,13 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
         AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
         for annotation in annotations_qs
     ]
-    temporal_annotations_data = [
-        TemporalAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
-        for annotation in temporal_annotations_qs
+    sequence_annotations_data = [
+        SequenceAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+        for annotation in sequence_annotations_qs
     ]
 
     spectro_data['annotations'] = annotations_data
-    spectro_data['temporal'] = temporal_annotations_data
+    spectro_data['sequence'] = sequence_annotations_data
     return spectro_data
 
 
@@ -509,7 +509,7 @@ def get_other_user_annotations(request: HttpRequest, id: int):
             annotations_qs = Annotations.objects.filter(recording=recording).exclude(
                 owner=request.user
             )
-            temporal_qs = TemporalAnnotations.objects.filter(recording=recording).exclude(
+            sequence_qs = SequenceAnnotations.objects.filter(recording=recording).exclude(
                 owner=request.user
             )
 
@@ -522,23 +522,23 @@ def get_other_user_annotations(request: HttpRequest, id: int):
 
                 # If user_email is not already a key in the dictionary, initialize it with
                 # an empty list
-                annotations_by_user.setdefault(user_email, {'annotations': [], 'temporal': []})
+                annotations_by_user.setdefault(user_email, {'annotations': [], 'sequence': []})
 
                 # Append the annotation to the list for the corresponding user_email
                 annotations_by_user[user_email]['annotations'].append(
                     AnnotationSchema.from_orm(annotation, owner_email=user_email).dict()
                 )
 
-            for annotation in temporal_qs:
+            for annotation in sequence_qs:
                 user_email = annotation.owner.email
 
                 # If user_email is not already a key in the dictionary, initialize it with
                 # an empty list
-                annotations_by_user.setdefault(user_email, {'annotations': [], 'temporal': []})
+                annotations_by_user.setdefault(user_email, {'annotations': [], 'sequence': []})
 
                 # Append the annotation to the list for the corresponding user_email
-                annotations_by_user[user_email]['temporal'].append(
-                    TemporalAnnotationSchema.from_orm(annotation, owner_email=user_email).dict()
+                annotations_by_user[user_email]['sequence'].append(
+                    SequenceAnnotationSchema.from_orm(annotation, owner_email=user_email).dict()
                 )
 
             return annotations_by_user
@@ -675,12 +675,12 @@ def patch_annotation(
         return {'error': 'Annotation not found'}
 
 
-@router.patch('/{recording_id}/temporal-annotations/{id}')
-def patch_temporal_annotation(
+@router.patch('/{recording_id}/sequence-annotations/{id}')
+def patch_sequence_annotation(
     request,
     recording_id: int,
     id: int,
-    annotation: UpdateTemporalAnnotationSchema,
+    annotation: UpdateSequenceAnnotationSchema,
     species_ids: list[int] | None,
 ):
     try:
@@ -688,7 +688,7 @@ def patch_temporal_annotation(
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
-            annotation_instance = TemporalAnnotations.objects.get(
+            annotation_instance = SequenceAnnotations.objects.get(
                 pk=id, recording=recording, owner=request.user
             )
 
@@ -755,24 +755,24 @@ def delete_annotation(request, recording_id: int, id: int):
         return {'error': 'Annotation not found'}
 
 
-# TEMPORAL ANNOTATIONS
+# SEQUENCE ANNOTATIONS
 
 
-@router.get('/{id}/temporal-annotations')
-def get_temporal_annotations(request: HttpRequest, id: int):
+@router.get('/{id}/sequence-annotations')
+def get_sequence_annotations(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             # Query annotations associated with the recording that are owned by the current user
-            annotations_qs = TemporalAnnotations.objects.filter(
+            annotations_qs = SequenceAnnotations.objects.filter(
                 recording=recording, owner=request.user
             )
 
             # Serialize the annotations using AnnotationSchema
             annotations_data = [
-                TemporalAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
+                SequenceAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
                 for annotation in annotations_qs
             ]
 
@@ -786,18 +786,18 @@ def get_temporal_annotations(request: HttpRequest, id: int):
         return {'error': 'Recording not found'}
 
 
-@router.put('/{id}/temporal-annotations')
-def put_temporal_annotation(
+@router.put('/{id}/sequence-annotations')
+def put_sequence_annotation(
     request,
     id: int,
-    annotation: TemporalAnnotationSchema,
+    annotation: SequenceAnnotationSchema,
     species_ids: list[int] | None,
 ):
     try:
         recording = Recording.objects.get(pk=id)
         if recording.owner == request.user or recording.public:
             # Create a new annotation
-            new_annotation = TemporalAnnotations.objects.create(
+            new_annotation = SequenceAnnotations.objects.create(
                 recording=recording,
                 owner=request.user,
                 start_time=annotation.start_time,
@@ -816,14 +816,14 @@ def put_temporal_annotation(
         return {'error': 'Recording not found'}
 
 
-@router.delete('/{recording_id}/temporal-annotations/{id}')
-def delete_temporal_annotation(request, recording_id: int, id: int):
+@router.delete('/{recording_id}/sequence-annotations/{id}')
+def delete_sequence_annotation(request, recording_id: int, id: int):
     try:
         recording = Recording.objects.get(pk=recording_id)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
-            annotation_instance = TemporalAnnotations.objects.get(
+            annotation_instance = SequenceAnnotations.objects.get(
                 pk=id, recording=recording, owner=request.user
             )
 

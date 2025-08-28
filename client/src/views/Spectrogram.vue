@@ -15,7 +15,7 @@ import {
   Species,
   getSpectrogramCompressed,
   getOtherUserAnnotations,
-  getTemporalAnnotations,
+  getSequenceAnnotations,
 } from "../api/api";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
@@ -56,7 +56,7 @@ export default defineComponent({
       currentUser,
       annotationState,
       annotations,
-      temporalAnnotations,
+      sequenceAnnotations,
       otherUserAnnotations,
       selectedId,
       selectedType,
@@ -80,8 +80,8 @@ export default defineComponent({
       annotations.value = response.data.sort(
         (a, b) => a.start_time - b.start_time
       );
-      const tempResp = await getTemporalAnnotations(props.id);
-      temporalAnnotations.value = tempResp.data.sort(
+      const tempResp = await getSequenceAnnotations(props.id);
+      sequenceAnnotations.value = tempResp.data.sort(
         (a, b) => a.start_time - b.start_time
       );
       if (annotationId !== undefined) {
@@ -146,8 +146,8 @@ export default defineComponent({
         response.data["annotations"]?.sort(
           (a, b) => a.start_time - b.start_time
         ) || [];
-      temporalAnnotations.value =
-        response.data["temporal"]?.sort(
+      sequenceAnnotations.value =
+        response.data["sequence"]?.sort(
           (a, b) => a.start_time - b.start_time
         ) || [];
       if (response.data.currentUser) {
@@ -184,13 +184,13 @@ export default defineComponent({
       if (
         selectedId.value !== null &&
         selectedType.value === "sequence" &&
-        temporalAnnotations.value
+        sequenceAnnotations.value
       ) {
-        const found = temporalAnnotations.value.findIndex(
+        const found = sequenceAnnotations.value.findIndex(
           (item) => item.id === selectedId.value
         );
         if (found !== -1) {
-          return temporalAnnotations.value[found];
+          return sequenceAnnotations.value[found];
         }
       }
       return null;
@@ -297,7 +297,7 @@ export default defineComponent({
       colorpickerMenu,
       // Other user selection
       otherUserAnnotations,
-      temporalAnnotations,
+      sequenceAnnotations,
       otherUsers,
       selectedUsers,
       deleteChip,
@@ -587,7 +587,7 @@ export default defineComponent({
           <div v-if="sideTab === 'annotations'">
             <annotation-list
               :annotations="annotations"
-              :temporal-annotations="temporalAnnotations"
+              :sequence-annotations="sequenceAnnotations"
               :selected-annotation="selectedAnnotation"
               :species="speciesList"
               :recording-id="id"

@@ -1,20 +1,20 @@
-import axios from 'axios';
-import { SpectroInfo } from '@components/geoJS/geoJSUtils';
+import axios from "axios";
+import { SpectroInfo } from "@components/geoJS/geoJSUtils";
 
 export interface Recording {
-  id: number,
-  created: string,
-  modified: string,
-  name: string,
-  audio_file: string,
-  audio_file_presigned_url: string,
+  id: number;
+  created: string;
+  modified: string;
+  name: string;
+  audio_file: string;
+  audio_file_presigned_url: string;
   owner_id: number;
   owner_username: string;
   recorded_date: string;
   recorded_time: string;
-  equipment?: string,
+  equipment?: string;
   comments?: string;
-  recording_location?: null | GeoJSON.Point,
+  recording_location?: null | GeoJSON.Point;
   grts_cell_id?: null | number;
   grts_cell?: null | number;
   public: boolean;
@@ -36,7 +36,7 @@ export interface Species {
   common_name: string;
   species_code_6?: string;
   id: number;
-  category: 'individual' | 'couplet' | 'frequency' | 'noid'
+  category: "individual" | "couplet" | "frequency" | "noid";
 }
 
 export interface SpectrogramAnnotation {
@@ -52,7 +52,7 @@ export interface SpectrogramAnnotation {
   owner_email?: string;
 }
 
-export interface SpectrogramTemporalAnnotation {
+export interface SpectrogramSequenceAnnotation {
   start_time: number;
   end_time: number;
   id: number;
@@ -62,7 +62,6 @@ export interface SpectrogramTemporalAnnotation {
   species?: Species[];
   owner_email?: string;
 }
-
 
 export interface UpdateSpectrogramAnnotation {
   start_time?: number;
@@ -76,7 +75,7 @@ export interface UpdateSpectrogramAnnotation {
   comments?: string;
 }
 
-export interface UpdateSpectrogramTemporalAnnotation {
+export interface UpdateSpectrogramSequenceAnnotation {
   start_time?: number;
   end_time?: number;
   id?: number;
@@ -93,19 +92,19 @@ export interface UserInfo {
 }
 
 export interface FileAnnotation {
-    species: Species[];
-    comments?: string;
-    model?: string;
-    owner: string;
-    confidence: number;
-    hasDetails: boolean;
-    id: number;
+  species: Species[];
+  comments?: string;
+  model?: string;
+  owner: string;
+  confidence: number;
+  hasDetails: boolean;
+  id: number;
 }
 
 export interface FileAnnotationDetails {
-    label: string;
-    score: number;
-    confidences: { label: string, value: string}[];
+  label: string;
+  score: number;
+  confidences: { label: string; value: string }[];
 }
 export interface UpdateFileAnnotation {
   recordingId?: number;
@@ -121,20 +120,22 @@ export interface Spectrogram {
   filename?: string;
   annotations?: SpectrogramAnnotation[];
   fileAnnotations: FileAnnotation[];
-  temporal?: SpectrogramTemporalAnnotation[];
+  sequence?: SpectrogramSequenceAnnotation[];
   spectroInfo?: SpectroInfo;
   compressed?: {
     start_times: number[];
     end_times: number[];
-  }
+  };
   currentUser?: string;
   otherUsers?: UserInfo[];
-
 }
 
-export type OtherUserAnnotations = Record<string, { annotations: SpectrogramAnnotation[], temporal: SpectrogramTemporalAnnotation[] }>;
+export type OtherUserAnnotations = Record<
+  string,
+  { annotations: SpectrogramAnnotation[]; sequence: SpectrogramSequenceAnnotation[] }
+>;
 
-export type UploadLocation = null | { latitude?: number, longitude?: number, gridCellId?: number };
+export type UploadLocation = null | { latitude?: number; longitude?: number; gridCellId?: number };
 
 export const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_APP_API_ROOT as string,
@@ -153,41 +154,40 @@ export interface RecordingFileParameters {
   detector?: string;
   species_list?: string;
   unusual_occurrences?: string;
-
 }
 
 async function uploadRecordingFile(file: File, params: RecordingFileParameters) {
   const formData = new FormData();
-  formData.append('audio_file', file);
-  formData.append('name', params.name);
-  formData.append('recorded_date', params.recorded_date);
-  formData.append('recorded_time', params.recorded_time);
-  formData.append('equipment', params.equipment);
-  formData.append('comments', params.comments);
+  formData.append("audio_file", file);
+  formData.append("name", params.name);
+  formData.append("recorded_date", params.recorded_date);
+  formData.append("recorded_time", params.recorded_time);
+  formData.append("equipment", params.equipment);
+  formData.append("comments", params.comments);
   if (params.location) {
     if (params.location.latitude && params.location.longitude) {
-      formData.append('latitude', params.location.latitude.toString());
-      formData.append('longitude', params.location.longitude.toString());
+      formData.append("latitude", params.location.latitude.toString());
+      formData.append("longitude", params.location.longitude.toString());
     }
     if (params.location.gridCellId) {
-      formData.append('gridCellId', params.location.gridCellId.toString());
+      formData.append("gridCellId", params.location.gridCellId.toString());
     }
   }
 
   if (params.software) {
-    formData.append('software', params.software);
+    formData.append("software", params.software);
   }
   if (params.detector) {
-    formData.append('detector', params.detector);
+    formData.append("detector", params.detector);
   }
   if (params.site_name) {
-    formData.append('site_name', params.site_name);
+    formData.append("site_name", params.site_name);
   }
   if (params.species_list) {
-    formData.append('species_list', params.species_list);
+    formData.append("species_list", params.species_list);
   }
   if (params.unusual_occurrences) {
-    formData.append('unusual_occurrences', params.unusual_occurrences);
+    formData.append("unusual_occurrences", params.unusual_occurrences);
   }
   const recordingParams = {
     name: params.name,
@@ -197,18 +197,16 @@ async function uploadRecordingFile(file: File, params: RecordingFileParameters) 
     software: params.software,
     detector: params.detector,
     species_list: params.species_list,
-    unusual_occurrences: params.unusual_occurrences
+    unusual_occurrences: params.unusual_occurrences,
   };
-  const payloadBlob = new Blob([JSON.stringify(recordingParams)], { type: 'application/json' });
-  formData.append('payload', payloadBlob);
-  await axiosInstance.post('/recording/',
-    formData,
-    {
-      params: { publicVal: !!params.publicVal },
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      }
-    });
+  const payloadBlob = new Blob([JSON.stringify(recordingParams)], { type: "application/json" });
+  formData.append("payload", payloadBlob);
+  await axiosInstance.post("/recording/", formData, {
+    params: { publicVal: !!params.publicVal },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 }
 
 async function patchRecording(recordingId: number, params: RecordingFileParameters) {
@@ -216,7 +214,8 @@ async function patchRecording(recordingId: number, params: RecordingFileParamete
   const longitude = params.location ? params.location.longitude : undefined;
   const gridCellId = params.location ? params.location.gridCellId : undefined;
 
-  await axiosInstance.patch(`/recording/${recordingId}`,
+  await axiosInstance.patch(
+    `/recording/${recordingId}`,
     {
       name: params.name,
       recorded_date: params.recorded_date,
@@ -235,8 +234,8 @@ async function patchRecording(recordingId: number, params: RecordingFileParamete
     },
     {
       headers: {
-        'Content-Type': 'application/json',
-      }
+        "Content-Type": "application/json",
+      },
     }
   );
 }
@@ -262,57 +261,93 @@ async function deleteRecording(id: number) {
   return axiosInstance.delete<DeletionResponse>(`/recording/${id}`);
 }
 
-
 async function getSpectrogram(id: string) {
   return axiosInstance.get<Spectrogram>(`/recording/${id}/spectrogram`);
 }
 
 async function getSpectrogramCompressed(id: string) {
   return axiosInstance.get<Spectrogram>(`/recording/${id}/spectrogram/compressed`);
-
 }
 
 async function getAnnotations(recordingId: string) {
   return axiosInstance.get<SpectrogramAnnotation[]>(`/recording/${recordingId}/annotations`);
 }
 
-async function getTemporalAnnotations(recordingId: string) {
-  return axiosInstance.get<SpectrogramTemporalAnnotation[]>(`/recording/${recordingId}/temporal-annotations`);
+async function getSequenceAnnotations(recordingId: string) {
+  return axiosInstance.get<SpectrogramSequenceAnnotation[]>(
+    `/recording/${recordingId}/sequence-annotations`
+  );
 }
 
 async function getSpecies() {
-  return axiosInstance.get<Species[]>('/species/');
+  return axiosInstance.get<Species[]>("/species/");
 }
 
-async function patchAnnotation(recordingId: string, annotationId: number, annotation: UpdateSpectrogramAnnotation, speciesList: number[] | null = null) {
-  return axiosInstance.patch(`/recording/${recordingId}/annotations/${annotationId}`, { annotation, species_ids: speciesList });
+async function patchAnnotation(
+  recordingId: string,
+  annotationId: number,
+  annotation: UpdateSpectrogramAnnotation,
+  speciesList: number[] | null = null
+) {
+  return axiosInstance.patch(`/recording/${recordingId}/annotations/${annotationId}`, {
+    annotation,
+    species_ids: speciesList,
+  });
 }
 
-async function patchTemporalAnnotation(recordingId: string, annotationId: number, annotation: UpdateSpectrogramTemporalAnnotation, speciesList: number[] | null = null) {
-  return axiosInstance.patch(`/recording/${recordingId}/temporal-annotations/${annotationId}`, { annotation, species_ids: speciesList });
+async function patchSequenceAnnotation(
+  recordingId: string,
+  annotationId: number,
+  annotation: UpdateSpectrogramSequenceAnnotation,
+  speciesList: number[] | null = null
+) {
+  return axiosInstance.patch(`/recording/${recordingId}/sequence-annotations/${annotationId}`, {
+    annotation,
+    species_ids: speciesList,
+  });
 }
 
-async function putAnnotation(recordingId: string, annotation: UpdateSpectrogramAnnotation, speciesList: number[] = []) {
-  return axiosInstance.put<{ message: string, id: number }>(`/recording/${recordingId}/annotations`, { annotation, species_ids: speciesList });
+async function putAnnotation(
+  recordingId: string,
+  annotation: UpdateSpectrogramAnnotation,
+  speciesList: number[] = []
+) {
+  return axiosInstance.put<{ message: string; id: number }>(
+    `/recording/${recordingId}/annotations`,
+    { annotation, species_ids: speciesList }
+  );
 }
 
-async function putTemporalAnnotation(recordingId: string, annotation: UpdateSpectrogramTemporalAnnotation, speciesList: number[] | null = null) {
-  return axiosInstance.put<{ message: string, id: number }>(`/recording/${recordingId}/temporal-annotations`, { annotation, species_ids: speciesList });
+async function putSequenceAnnotation(
+  recordingId: string,
+  annotation: UpdateSpectrogramSequenceAnnotation,
+  speciesList: number[] | null = null
+) {
+  return axiosInstance.put<{ message: string; id: number }>(
+    `/recording/${recordingId}/sequence-annotations`,
+    { annotation, species_ids: speciesList }
+  );
 }
 
 async function deleteAnnotation(recordingId: string, annotationId: number) {
-  return axiosInstance.delete<DeletionResponse>(`/recording/${recordingId}/annotations/${annotationId}`);
+  return axiosInstance.delete<DeletionResponse>(
+    `/recording/${recordingId}/annotations/${annotationId}`
+  );
 }
 
-async function deleteTemporalAnnotation(recordingId: string, annotationId: number) {
-  return axiosInstance.delete<DeletionResponse>(`/recording/${recordingId}/temporal-annotations/${annotationId}`);
+async function deleteSequenceAnnotation(recordingId: string, annotationId: number) {
+  return axiosInstance.delete<DeletionResponse>(
+    `/recording/${recordingId}/sequence-annotations/${annotationId}`
+  );
 }
 
 async function getOtherUserAnnotations(recordingId: string) {
-  return axiosInstance.get<OtherUserAnnotations>(`/recording/${recordingId}/annotations/other_users`);
+  return axiosInstance.get<OtherUserAnnotations>(
+    `/recording/${recordingId}/annotations/other_users`
+  );
 }
 
-async function getCellLocation(cellId: number, quadrant?: 'SW' | 'NE' | 'NW' | 'SE') {
+async function getCellLocation(cellId: number, quadrant?: "SW" | "NE" | "NW" | "SE") {
   return axiosInstance.get<GRTSCellCenter>(`/grts/${cellId}`, { params: { quadrant } });
 }
 async function getFileAnnotations(recordingId: number) {
@@ -320,37 +355,46 @@ async function getFileAnnotations(recordingId: number) {
 }
 
 async function getFileAnnotationDetails(recordingId: number) {
-    return axiosInstance.get<(FileAnnotation & {details: FileAnnotationDetails })>(`recording-annotation/${recordingId}/details`);
+  return axiosInstance.get<FileAnnotation & { details: FileAnnotationDetails }>(
+    `recording-annotation/${recordingId}/details`
+  );
 }
 
 async function putFileAnnotation(fileAnnotation: UpdateFileAnnotation) {
-  return axiosInstance.put<{ message: string, id: number }>(`/recording-annotation/`, { ...fileAnnotation });
+  return axiosInstance.put<{ message: string; id: number }>(`/recording-annotation/`, {
+    ...fileAnnotation,
+  });
 }
 
 async function patchFileAnnotation(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation) {
-  return axiosInstance.patch<{ message: string, id: number }>(`/recording-annotation/${fileAnnotationId}`, { ...fileAnnotation });
+  return axiosInstance.patch<{ message: string; id: number }>(
+    `/recording-annotation/${fileAnnotationId}`,
+    { ...fileAnnotation }
+  );
 }
 
 async function deleteFileAnnotation(fileAnnotationId: number) {
-  return axiosInstance.delete<{ message: string, id: number }>(`/recording-annotation/${fileAnnotationId}`);
+  return axiosInstance.delete<{ message: string; id: number }>(
+    `/recording-annotation/${fileAnnotationId}`
+  );
 }
-
 
 interface CellIDReponse {
   grid_cell_id?: number;
-  error?: string,
+  error?: string;
 }
 async function getCellfromLocation(latitude: number, longitude: number) {
-  return axiosInstance.get<CellIDReponse>(`/grts/grid_cell_id`, { params: { latitude, longitude } });
+  return axiosInstance.get<CellIDReponse>(`/grts/grid_cell_id`, {
+    params: { latitude, longitude },
+  });
 }
-
 
 export interface ConfigurationSettings {
   display_pulse_annotations: boolean;
   display_sequence_annotations: boolean;
   run_inference_on_upload: boolean;
   spectrogram_x_stretch: number;
-  spectrogram_view: 'compressed' | 'uncompressed';
+  spectrogram_view: "compressed" | "uncompressed";
   is_admin?: boolean;
   default_color_scheme: string;
   default_spectrogram_background_color: string;
@@ -358,90 +402,87 @@ export interface ConfigurationSettings {
 
 export type Configuration = ConfigurationSettings & { is_admin: boolean };
 async function getConfiguration() {
-  return axiosInstance.get<Configuration>('/configuration/');
+  return axiosInstance.get<Configuration>("/configuration/");
 }
 
 async function patchConfiguration(config: ConfigurationSettings) {
-  return axiosInstance.patch('/configuration/', { ...config });
+  return axiosInstance.patch("/configuration/", { ...config });
 }
 
 export interface ProcessingTask {
-    id: number;
-    created: string;
-    modified: string;
-    name: string;
-    file_items: number[];
-    error? : string;
-    info?: string;
-    status: 'Complete' | 'Running' | 'Error' | 'Queued';
-    metadata: Record<string, unknown> & { type?: 'NABatRecordingProcessing' } & { recordingId: string };
-    output_metadata: Record<string, unknown>;
+  id: number;
+  created: string;
+  modified: string;
+  name: string;
+  file_items: number[];
+  error?: string;
+  info?: string;
+  status: "Complete" | "Running" | "Error" | "Queued";
+  metadata: Record<string, unknown> & { type?: "NABatRecordingProcessing" } & {
+    recordingId: string;
+  };
+  output_metadata: Record<string, unknown>;
 }
 export interface ProcessingTaskDetails {
-    name: string;
-    celery_data: {
-        "state": 'PENDING' | 'RECEIVED' | 'STARTED' | 'SUCCESS' | 'FAILURE' | 'RETRY' | 'REVOKED',
-        "status": ProcessingTask['status'],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        info: Record<string, any>
-        error:string;
-    }
-
+  name: string;
+  celery_data: {
+    state: "PENDING" | "RECEIVED" | "STARTED" | "SUCCESS" | "FAILURE" | "RETRY" | "REVOKED";
+    status: ProcessingTask["status"];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    info: Record<string, any>;
+    error: string;
+  };
 }
 
 async function getProcessingTasks(): Promise<ProcessingTask[]> {
-    return (await axiosInstance.get('/processing-task')).data;
-  }
+  return (await axiosInstance.get("/processing-task")).data;
+}
 
-  async function getProcessingTaskDetails(taskId: string): Promise<ProcessingTaskDetails> {
-    return (await axiosInstance.get(`/processing-task/${taskId}/details`)).data;
-  }
+async function getProcessingTaskDetails(taskId: string): Promise<ProcessingTaskDetails> {
+  return (await axiosInstance.get(`/processing-task/${taskId}/details`)).data;
+}
 
-  async function getFilteredProcessingTasks(
-    status: ProcessingTask['status'],
-  ): Promise<ProcessingTask[]> {
-    return (await axiosInstance.get('/processing-task/filtered/', { params: { status } })).data;
-  }
+async function getFilteredProcessingTasks(
+  status: ProcessingTask["status"]
+): Promise<ProcessingTask[]> {
+  return (await axiosInstance.get("/processing-task/filtered/", { params: { status } })).data;
+}
 
-  async function cancelProcessingTask(taskId: number): Promise<{ detail: string }> {
-    return (await axiosInstance.post(`/processing-task/${taskId}/cancel/`)).data;
-  }
-
+async function cancelProcessingTask(taskId: number): Promise<{ detail: string }> {
+  return (await axiosInstance.post(`/processing-task/${taskId}/cancel/`)).data;
+}
 
 interface GuanoMetadata {
-  nabat_grid_cell_grts_id?: string
-  nabat_latitude?: number
-  nabat_longitude?: number
-  nabat_site_name?: string
-  nabat_activation_start_time?: string
-  nabat_activation_end_time?: string
-  nabat_software_type?: string
-  nabat_species_list?: string[]
-  nabat_comments?: string
-  nabat_detector_type?: string
-  nabat_unusual_occurrences?: string
-
+  nabat_grid_cell_grts_id?: string;
+  nabat_latitude?: number;
+  nabat_longitude?: number;
+  nabat_site_name?: string;
+  nabat_activation_start_time?: string;
+  nabat_activation_end_time?: string;
+  nabat_software_type?: string;
+  nabat_species_list?: string[];
+  nabat_comments?: string;
+  nabat_detector_type?: string;
+  nabat_unusual_occurrences?: string;
 }
 
 async function getGuanoMetadata(file: File): Promise<GuanoMetadata> {
   const formData = new FormData();
-  formData.append('audio_file', file);
-  const results = await axiosInstance.post<GuanoMetadata>('/guano/', formData, {
+  formData.append("audio_file", file);
+  const results = await axiosInstance.post<GuanoMetadata>("/guano/", formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
-    }
+      "Content-Type": "multipart/form-data",
+    },
   });
   return results.data;
-
 }
 
 export interface ExportStatus {
   id: number;
-  status:'pending' | 'complete' | 'failed';
+  status: "pending" | "complete" | "failed";
   downloadUrl?: string;
   created: string;
   expiresAt: string;
-
 }
 
 async function getExportStatus(exportId: number) {
@@ -450,36 +491,36 @@ async function getExportStatus(exportId: number) {
 }
 
 export {
- uploadRecordingFile,
- getRecordings,
- getRecording,
- patchRecording,
- deleteRecording,
- getSpectrogram,
- getSpectrogramCompressed,
- getTemporalAnnotations,
- getOtherUserAnnotations,
- getSpecies,
- getAnnotations,
- patchAnnotation,
- patchTemporalAnnotation,
- putAnnotation,
- putTemporalAnnotation,
- deleteAnnotation,
- deleteTemporalAnnotation,
- getCellLocation,
- getCellfromLocation,
- getGuanoMetadata,
- getFileAnnotations,
- putFileAnnotation,
- patchFileAnnotation,
- deleteFileAnnotation,
- getConfiguration,
- patchConfiguration,
- getProcessingTasks,
- getProcessingTaskDetails,
- cancelProcessingTask,
- getFilteredProcessingTasks,
- getFileAnnotationDetails,
- getExportStatus,
+  uploadRecordingFile,
+  getRecordings,
+  getRecording,
+  patchRecording,
+  deleteRecording,
+  getSpectrogram,
+  getSpectrogramCompressed,
+  getSequenceAnnotations,
+  getOtherUserAnnotations,
+  getSpecies,
+  getAnnotations,
+  patchAnnotation,
+  patchSequenceAnnotation,
+  putAnnotation,
+  putSequenceAnnotation,
+  deleteAnnotation,
+  deleteSequenceAnnotation,
+  getCellLocation,
+  getCellfromLocation,
+  getGuanoMetadata,
+  getFileAnnotations,
+  putFileAnnotation,
+  patchFileAnnotation,
+  deleteFileAnnotation,
+  getConfiguration,
+  patchConfiguration,
+  getProcessingTasks,
+  getProcessingTaskDetails,
+  cancelProcessingTask,
+  getFilteredProcessingTasks,
+  getFileAnnotationDetails,
+  getExportStatus,
 };

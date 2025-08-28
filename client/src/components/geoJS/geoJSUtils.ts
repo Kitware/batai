@@ -223,7 +223,7 @@ const useGeoJS = () => {
   };
 };
 
-import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
+import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
 
 export interface SpectroInfo {
   spectroId: number;
@@ -239,8 +239,8 @@ export interface SpectroInfo {
   high_freq: number;
 }
 
-function spectroTemporalToGeoJSon(
-  annotation: SpectrogramTemporalAnnotation,
+function spectroSequenceToGeoJSon(
+  annotation: SpectrogramSequenceAnnotation,
   spectroInfo: SpectroInfo,
   ymin = 0,
   ymax = 10,
@@ -248,7 +248,7 @@ function spectroTemporalToGeoJSon(
   scaledWidth = 0,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _scaledHeight = 0, // may be useful in the future
-  offsetY = 0 // used to push temporal annotations higher when viewing in compressed view
+  offsetY = 0 // used to push sequence annotations higher when viewing in compressed view
 ): GeoJSON.Polygon {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   // const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
@@ -473,7 +473,7 @@ function findPolygonCenter(polygon: GeoJSON.Polygon): number[] {
 }
 
 function spectroToCenter(
-  annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation,
+  annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation,
   spectroInfo: SpectroInfo,
   type: "sequence" | "pulse"
 ) {
@@ -482,8 +482,8 @@ function spectroToCenter(
     return findPolygonCenter(geoJSON);
   }
   if (type === "sequence") {
-    const geoJSON = spectroTemporalToGeoJSon(
-      annotation as SpectrogramTemporalAnnotation,
+    const geoJSON = spectroSequenceToGeoJSon(
+      annotation as SpectrogramSequenceAnnotation,
       spectroInfo
     );
     return findPolygonCenter(geoJSON);
@@ -611,5 +611,5 @@ export {
   reOrdergeoJSON,
   useGeoJS,
   spectroToCenter,
-  spectroTemporalToGeoJSon,
+  spectroSequenceToGeoJSon,
 };

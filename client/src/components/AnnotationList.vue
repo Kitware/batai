@@ -4,7 +4,7 @@ import { SpectroInfo } from './geoJS/geoJSUtils';
 import useState from "@use/useState";
 import { watch, ref } from "vue";
 import AnnotationEditor from "./AnnotationEditor.vue";
-import { Species, SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../api/api";
+import { Species, SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../api/api";
 import RecordingAnnotations from "./RecordingAnnotations.vue";
 export default defineComponent({
   name: "AnnotationList",
@@ -18,7 +18,7 @@ export default defineComponent({
       default: () => undefined,
     },
     selectedAnnotation: {
-      type: Object as PropType<SpectrogramAnnotation | SpectrogramTemporalAnnotation | null>,
+      type: Object as PropType<SpectrogramAnnotation | SpectrogramSequenceAnnotation | null>,
       default: () => null,
     },
     species: {
@@ -32,7 +32,7 @@ export default defineComponent({
   },
   emits: ['select', 'update:annotation', 'delete:annotation'],
   setup() {
-    const { creationType, annotationState, setAnnotationState, annotations, temporalAnnotations, selectedId, selectedType, setSelectedId, sideTab, configuration } = useState();
+    const { creationType, annotationState, setAnnotationState, annotations, sequenceAnnotations, selectedId, selectedType, setSelectedId, sideTab, configuration } = useState();
     const tab = ref('recording');
     const scrollToId = (id: number) => {
     const el = document.getElementById(`annotation-${id}`);
@@ -67,7 +67,7 @@ export default defineComponent({
         annotationState,
         annotations,
         creationType,
-        temporalAnnotations,
+        sequenceAnnotations,
         selectedId,
         selectedType,
         setAnnotationState,
@@ -217,7 +217,7 @@ export default defineComponent({
 
         <v-list>
           <v-list-item
-            v-for="annotation in temporalAnnotations"
+            v-for="annotation in sequenceAnnotations"
             :id="`annotation-${annotation.id}`"
             :key="annotation.id"
             :class="{selected: annotation.id===selectedId}"
