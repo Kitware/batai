@@ -1,8 +1,8 @@
 /* eslint-disable class-methods-use-this */
 import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroSequenceToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
+import BaseTextLayer from "./baseTextLayer";
 import { LayerStyle } from "./types";
-import geo from "geojs";
 
 interface LineData {
   line: GeoJSON.LineString;
@@ -20,37 +20,17 @@ interface TextData {
   textBaseline?: 'middle' | 'top' | 'bottom';
 }
 
-export default class TimeLayer {
+export default class TimeLayer extends BaseTextLayer<TextData> {
   lineData: LineData[];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lineLayer: any;
 
-  textData: TextData[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textLayer: any;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  geoViewerRef: any;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  event: (name: string, data: any) => void;
-
-  spectroInfo: SpectroInfo;
-
-  textStyle: LayerStyle<TextData>;
   lineStyle: LayerStyle<LineData>;
-
-  scaledWidth: number;
-  scaledHeight: number;
 
   displayDuration: boolean;
 
   displaying: { sequence: boolean; pulse: boolean };
-
-  textScaled: number | undefined;
-
-  zoomLevel: number;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -60,14 +40,11 @@ export default class TimeLayer {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo
   ) {
-    this.geoViewerRef = geoViewerRef;
+    super(geoViewerRef, event, spectroInfo);
     this.lineData = [];
-    this.spectroInfo = spectroInfo;
     this.textData = [];
-    this.scaledWidth = 0;
-    this.scaledHeight = 0;
+    this.displayDuration = true;
     this.displaying = { sequence: true, pulse: true };
-    this.event = event;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["text", "line"],
@@ -79,32 +56,8 @@ export default class TimeLayer {
 
     this.lineLayer = layer.createFeature("line");
     this.displayDuration = true;
-    this.textStyle = this.createTextStyle();
     this.lineStyle = this.createLineStyle();
-    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
-    this.zoomLevel = this.geoViewerRef.camera().zoomLevel;
-    this.onZoom({zoomLevel: this.zoomLevel });
-
   }
-
-  setScaledDimensions(newWidth: number, newHeight: number) {
-    this.scaledWidth = newWidth;
-    this.scaledHeight = newHeight;
-  }
-
-  onZoom(event: {zoomLevel: number}) {
-  this.zoomLevel = event.zoomLevel;
-  this.textScaled = undefined;
-  if ((this.zoomLevel || 0) < -1.5 ) {
-    this.textScaled = -1.5;
-  } else if ((this.zoomLevel || 0) > 0) {
-    this.textScaled = Math.sqrt(this.zoomLevel || 1);
-  } else {
-    this.textScaled = this.zoomLevel;
-  }
-  this.redraw();
-}
-
 
   destroy() {
     if (this.textLayer) {
@@ -371,7 +324,7 @@ export default class TimeLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
-        fontSize: '16px'
+        fontSize: `${this.getFontSize(16, 12, this.xScale)}px`,
       },
       color: () => {
         return "white";

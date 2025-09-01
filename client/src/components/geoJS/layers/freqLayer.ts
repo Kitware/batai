@@ -1,8 +1,8 @@
 /* eslint-disable class-methods-use-this */
 import { SpectrogramAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
+import BaseTextLayer from "./baseTextLayer";
 import { LayerStyle } from "./types";
-import geo from "geojs";
 
 interface LineData {
   line: GeoJSON.LineString;
@@ -18,35 +18,13 @@ interface TextData {
   offsetX?: number;
 }
 
-export default class FreqLayer {
+export default class FreqLayer extends BaseTextLayer<TextData> {
   lineData: LineData[];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lineLayer: any;
 
-  textData: TextData[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textLayer: any;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  geoViewerRef: any;
-
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  event: (name: string, data: any) => void;
-
-  spectroInfo: SpectroInfo;
-
-  textStyle: LayerStyle<TextData>;
   lineStyle: LayerStyle<LineData>;
-
-  scaledWidth: number;
-  scaledHeight: number;
-
-  zoomLevel: number;
-
-  textScaled: undefined | number;
-
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -56,13 +34,8 @@ export default class FreqLayer {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo
   ) {
-    this.geoViewerRef = geoViewerRef;
+    super(geoViewerRef, event, spectroInfo);
     this.lineData = [];
-    this.spectroInfo = spectroInfo;
-    this.textData = [];
-    this.scaledWidth = 0;
-    this.scaledHeight = 0;
-    this.event = event;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["text", "line"],
@@ -76,27 +49,6 @@ export default class FreqLayer {
 
     this.textStyle = this.createTextStyle();
     this.lineStyle = this.createLineStyle();
-    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
-    this.zoomLevel = this.geoViewerRef.camera().zoomLevel;
-    this.onZoom({zoomLevel: this.zoomLevel });
-  }
-
-  setScaledDimensions(newWidth: number, newHeight: number) {
-    this.scaledWidth = newWidth;
-    this.scaledHeight = newHeight;
-  }
-
-  onZoom(event: {zoomLevel: number}) {
-    this.zoomLevel = event.zoomLevel;
-    this.textScaled = undefined;
-    if ((this.zoomLevel || 0) < -1.5 ) {
-      this.textScaled = -1.5;
-    } else if ((this.zoomLevel || 0) > 0) {
-      this.textScaled = Math.sqrt(this.zoomLevel || 1);
-    } else {
-      this.textScaled = this.zoomLevel;
-    }
-    this.redraw();
   }
 
   destroy() {
