@@ -72,17 +72,17 @@ export default abstract class BaseTextLayer<D> {
   }
 
   onZoom(event: {zoomLevel: number}) {
-  this.zoomLevel = event.zoomLevel;
-  this.textScaled = undefined;
-  if ((this.zoomLevel || 0) < -1.5 ) {
-    this.textScaled = -1.5;
-  } else if ((this.zoomLevel || 0) > 0) {
-    this.textScaled = Math.sqrt(this.zoomLevel || 1);
-  } else {
-    this.textScaled = this.zoomLevel;
+    this.zoomLevel = event.zoomLevel;
+    this.textScaled = undefined;
+    if ((this.zoomLevel || 0) < -1.5 ) {
+      this.textScaled = -1.5;
+    } else if ((this.zoomLevel || 0) > 0) {
+      this.textScaled = Math.sqrt(this.zoomLevel || 1);
+    } else {
+      this.textScaled = this.zoomLevel;
+    }
+    this.redraw();
   }
-  this.redraw();
-}
 
 
   destroy() {
