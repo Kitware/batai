@@ -2,6 +2,7 @@
 import { SpectrogramAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
 import { LayerStyle } from "./types";
+import geo from "geojs";
 
 interface LineData {
   line: GeoJSON.LineString;
@@ -42,6 +43,10 @@ export default class FreqLayer {
   scaledWidth: number;
   scaledHeight: number;
 
+  zoomLevel: number;
+
+  textScaled: undefined | number;
+
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -71,11 +76,27 @@ export default class FreqLayer {
 
     this.textStyle = this.createTextStyle();
     this.lineStyle = this.createLineStyle();
+    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
+    this.zoomLevel = this.geoViewerRef.camera().zoomLevel;
+    this.onZoom({zoomLevel: this.zoomLevel });
   }
 
   setScaledDimensions(newWidth: number, newHeight: number) {
     this.scaledWidth = newWidth;
     this.scaledHeight = newHeight;
+  }
+
+  onZoom(event: {zoomLevel: number}) {
+    this.zoomLevel = event.zoomLevel;
+    this.textScaled = undefined;
+    if ((this.zoomLevel || 0) < -1.5 ) {
+      this.textScaled = -1.5;
+    } else if ((this.zoomLevel || 0) > 0) {
+      this.textScaled = Math.sqrt(this.zoomLevel || 1);
+    } else {
+      this.textScaled = this.zoomLevel;
+    }
+    this.redraw();
   }
 
   destroy() {
@@ -196,6 +217,7 @@ export default class FreqLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
+        fontSize: '16px',
       },
       color: () => {
         return "white";
@@ -204,7 +226,9 @@ export default class FreqLayer {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
-      textAlign: 'starts',
+      textAlign: 'start',
+      textScaled: this.textScaled,
+      textBaseline: 'bottom',
     };
   }
 }

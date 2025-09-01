@@ -2,6 +2,7 @@
 import { SpectrogramSequenceAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroSequenceToGeoJSon } from "../geoJSUtils";
 import { LayerStyle } from "./types";
+import geo from "geojs";
 
 interface TextData {
   text: string;
@@ -30,6 +31,10 @@ export default class SpeciesSequenceLayer {
   scaledWidth: number;
   scaledHeight: number;
 
+  textScaled: number | undefined;
+
+  zoomLevel: number;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,11 +59,28 @@ export default class SpeciesSequenceLayer {
       .position((data: TextData) => ({ x: data.x, y: data.y }));
 
     this.textStyle = this.createTextStyle();
+    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
+    this.zoomLevel = this.geoViewerRef.camera().zoomLevel;
+    this.onZoom({zoomLevel: this.zoomLevel });
+
   }
 
   setScaledDimensions(newWidth: number, newHeight: number) {
     this.scaledWidth = newWidth;
     this.scaledHeight = newHeight;
+  }
+
+  onZoom(event: {zoomLevel: number}) {
+    this.zoomLevel = event.zoomLevel;
+    this.textScaled = undefined;
+    if ((this.zoomLevel || 0) < -1.5 ) {
+      this.textScaled = -1.5;
+    } else if ((this.zoomLevel || 0) > 0) {
+      this.textScaled = Math.sqrt(this.zoomLevel || 1);
+    } else {
+      this.textScaled = this.zoomLevel;
+    }
+    this.redraw();
   }
 
   destroy() {
@@ -69,8 +91,8 @@ export default class SpeciesSequenceLayer {
 
   formatData(annotationData: SpectrogramSequenceAnnotation[]) {
     this.textData = [];
-    const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
-    const offsetY = compressedView ? -100 : 0;
+    const compressedView = !!(this.spectroInfo.compressedWidth);
+    const offsetY = compressedView ? -100 : -20;
     annotationData.forEach((annotation: SpectrogramSequenceAnnotation) => {
       const polygon = spectroSequenceToGeoJSon(
         annotation,
@@ -90,32 +112,29 @@ export default class SpeciesSequenceLayer {
       if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
         return;
       }
-      let textOffset = 0;
+      let textOffset = -40 + offsetY;
       const species = annotation.species;
       const type = annotation.type;
       if (species) {
+        if (type) {
+          this.textData.push({
+            text: `${type}`,
+            x: xmin + (xmax - xmin) / 2.0,
+            y: ymin + textOffset,
+            textType: "type",
+          });
+          textOffset -= 40;
+        }
         for (let i = 0; i < species.length; i += 1) {
           const specie = species[i];
           this.textData.push({
             text: `${specie.species_code || specie.common_name}`,
             x: xmin + (xmax - xmin) / 2.0,
-            y: ymax,
-            offsetX: 0,
-            offsetY: -30 + textOffset,
+            y: ymin + textOffset,
             textType: "species",
           });
-          textOffset -= 15;
+          textOffset -= 40;
         }
-      }
-      if (type) {
-        this.textData.push({
-          text: `${type}`,
-          x: xmin + (xmax - xmin) / 2.0,
-          y: ymin,
-          offsetX: 0,
-          offsetY: 10 + offsetY,
-          textType: "type",
-        });
       }
     });
   }
@@ -138,6 +157,7 @@ export default class SpeciesSequenceLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
+        fontSize: '18px',
       },
       color: (d) => {
         if (d.textType === "type") {
@@ -150,6 +170,7 @@ export default class SpeciesSequenceLayer {
         y: data.offsetY || 0,
       }),
       textAlign: "center",
+      textScaled: this.textScaled,
     };
   }
 }

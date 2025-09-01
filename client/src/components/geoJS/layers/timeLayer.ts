@@ -2,6 +2,7 @@
 import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroSequenceToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
 import { LayerStyle } from "./types";
+import geo from "geojs";
 
 interface LineData {
   line: GeoJSON.LineString;
@@ -15,6 +16,8 @@ interface TextData {
   y: number;
   offsetY?: number;
   offsetX?: number;
+  textScaled?: undefined | number;
+  textBaseline?: 'middle' | 'top' | 'bottom';
 }
 
 export default class TimeLayer {
@@ -45,6 +48,10 @@ export default class TimeLayer {
 
   displaying: { sequence: boolean; pulse: boolean };
 
+  textScaled: number | undefined;
+
+  zoomLevel: number;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,12 +81,30 @@ export default class TimeLayer {
     this.displayDuration = true;
     this.textStyle = this.createTextStyle();
     this.lineStyle = this.createLineStyle();
+    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
+    this.zoomLevel = this.geoViewerRef.camera().zoomLevel;
+    this.onZoom({zoomLevel: this.zoomLevel });
+
   }
 
   setScaledDimensions(newWidth: number, newHeight: number) {
     this.scaledWidth = newWidth;
     this.scaledHeight = newHeight;
   }
+
+  onZoom(event: {zoomLevel: number}) {
+  this.zoomLevel = event.zoomLevel;
+  this.textScaled = undefined;
+  if ((this.zoomLevel || 0) < -1.5 ) {
+    this.textScaled = -1.5;
+  } else if ((this.zoomLevel || 0) > 0) {
+    this.textScaled = Math.sqrt(this.zoomLevel || 1);
+  } else {
+    this.textScaled = this.zoomLevel;
+  }
+  this.redraw();
+}
+
 
   destroy() {
     if (this.textLayer) {
@@ -141,21 +166,19 @@ export default class TimeLayer {
         this.textData.push({
           text: `${start_time}ms`,
           x: xmin,
-          y: ymin + lineDist,
-          offsetX: 0,
-          offsetY: 5,
+          y: ymin + lineDist + 5,
+          textBaseline: 'top',
         });
         this.textData.push({
           text: `${end_time}ms`,
           x: xmax,
-          y: ymin + lineDist,
-          offsetX: 0,
-          offsetY: 5,
+          y: ymin + lineDist + 5,
+          textBaseline: 'top',
         });
       });
     }
-    const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
-    const offsetY = compressedView ? -30 : 0;
+    const compressedView = !!(this.spectroInfo.compressedWidth);
+    const offsetY = compressedView ? -80 : 0;
     if (this.displaying.sequence) {
       sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
         const polygon = spectroSequenceToGeoJSon(
@@ -165,7 +188,8 @@ export default class TimeLayer {
           -50,
           1,
           this.scaledWidth,
-          this.scaledHeight
+          this.scaledHeight,
+          offsetY
         );
         const { start_time, end_time } = annotation;
         const [xmin, ymin] = polygon.coordinates[0][0];
@@ -182,8 +206,8 @@ export default class TimeLayer {
           line: {
             type: "LineString",
             coordinates: [
-              [xmin, ymax + offsetY],
-              [xmin, ymax - lineDist + offsetY],
+              [xmin, ymax],
+              [xmin, ymax - lineDist],
             ],
           },
           thicker: true,
@@ -192,8 +216,8 @@ export default class TimeLayer {
           line: {
             type: "LineString",
             coordinates: [
-              [xmax, ymax + offsetY],
-              [xmax, ymax - lineDist + offsetY],
+              [xmax, ymax],
+              [xmax, ymax - lineDist],
             ],
           },
           thicker: true,
@@ -202,16 +226,12 @@ export default class TimeLayer {
         this.textData.push({
           text: `${start_time}ms`,
           x: xmin,
-          y: ymax - lineDist + offsetY,
-          offsetX: 0,
-          offsetY: -5 + offsetY,
+          y: ymax - lineDist,
         });
         this.textData.push({
           text: `${end_time}ms`,
           x: xmax,
-          y: ymax - lineDist + offsetY,
-          offsetX: 0,
-          offsetY: -5 + offsetY,
+          y: ymax - lineDist,
         });
       });
     }
@@ -250,13 +270,11 @@ export default class TimeLayer {
           text: `${end_time - start_time}ms`,
           x: xpos,
           y: ypos + lineDist,
-          offsetX: 0,
-          offsetY: 0,
         });
       });
     }
-    const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
-    const offsetY = compressedView ? -30 : 0;
+    const compressedView = !!(this.spectroInfo.compressedWidth);
+    const offsetY = compressedView ? -50 : 30;
     if (this.displaying.sequence) {
       sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
         const polygon = spectroSequenceToGeoJSon(
@@ -283,9 +301,7 @@ export default class TimeLayer {
         this.textData.push({
           text: `${end_time - start_time}ms`,
           x: xpos,
-          y: (ymax - ymin) / 2.0,
-          offsetX: 0,
-          offsetY: -5 + offsetY,
+          y: ((ymax - ymin) / 2.0) + -35 + offsetY,
         });
       });
     }
@@ -355,6 +371,7 @@ export default class TimeLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
+        fontSize: '16px'
       },
       color: () => {
         return "white";
@@ -363,6 +380,8 @@ export default class TimeLayer {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
+      textScaled: this.textScaled,
+      textBaseline: 'middle',
     };
   }
 

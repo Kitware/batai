@@ -99,6 +99,7 @@ export default class LegendLayer {
     this.createLabels();
     this.calcGridLines();
     this.zoomLevel = this.geoViewerRef.camera().zoomLevel;
+    this.onZoom({zoomLevel: this.zoomLevel });
 
   }
 
@@ -112,7 +113,6 @@ export default class LegendLayer {
     } else {
       this.textScaled = this.zoomLevel;
     }
-
   }
 
   onPan() {
@@ -208,7 +208,7 @@ export default class LegendLayer {
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
     const baseYPos = yOffset === 0 ? adjustedHeight : yOffset;
     const baseTopPos = topOffset === 0 ? 0 : -topOffset;
-    const topBuffer = topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -0.5;
+    const topBuffer = topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -3;
 
     const { start_times, end_times, widths, compressedWidth } = this.spectroInfo;
     if (!compressedWidth) {
@@ -286,8 +286,7 @@ export default class LegendLayer {
         this.textDataX.push({
           text: `${start_time}ms`,
           x: 0 + pixelOffset,
-          y: baseYPos + length + (yOffset === 0 ? 18 : -16),
-          offsetX: 3,
+          y: baseYPos + length + (yOffset === 0 ? 18 : -12),
           textScaled: this.textScaled,
         });
       }
@@ -297,7 +296,7 @@ export default class LegendLayer {
           text: `${end_time}ms`,
           x: width + pixelOffset,
           y: baseTopPos + (baseTopPos === 0 ? -16 : 16),
-          offsetX: 3,
+          textBaseline: baseTopPos === 0 ? 'bottom' : 'top',
           textScaled: this.textScaled,
         });
       }

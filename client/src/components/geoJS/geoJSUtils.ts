@@ -203,7 +203,7 @@ const useGeoJS = () => {
       // do not set a min limit so that bounds clamping determines min
       min: -Infinity,
       // 4x zoom max
-      max: 20,
+      max: 15,
     });
     geoViewer.value.clampBoundsX(true);
     geoViewer.value.clampBoundsY(true);

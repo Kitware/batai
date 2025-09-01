@@ -133,7 +133,7 @@ export default class SequenceLayer {
     yScale = 1,
   ) {
     const arr: RectGeoJSData[] = [];
-    const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
+    const compressedView = !!(this.spectroInfo.compressedWidth);
     const offsetY = compressedView ? -80 : 0;
     annotationData.forEach((annotation: SpectrogramSequenceAnnotation) => {
       const polygon = spectroSequenceToGeoJSon(

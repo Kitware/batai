@@ -2,6 +2,7 @@
 import { SpectrogramAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
 import { LayerStyle } from "./types";
+import geo from "geojs";
 
 interface TextData {
   text: string;
@@ -31,6 +32,10 @@ export default class SpeciesLayer {
   scaledWidth: number;
   scaledHeight: number;
 
+  textScaled: number | undefined;
+
+  zoomLevel: number;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,11 +61,28 @@ export default class SpeciesLayer {
 
 
     this.textStyle = this.createTextStyle();
+    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
+    this.zoomLevel = this.geoViewerRef.camera().zoomLevel;
+    this.onZoom({zoomLevel: this.zoomLevel });
+
   }
 
   setScaledDimensions(newWidth: number, newHeight: number) {
     this.scaledWidth = newWidth;
     this.scaledHeight = newHeight;
+  }
+
+  onZoom(event: {zoomLevel: number}) {
+    this.zoomLevel = event.zoomLevel;
+    this.textScaled = undefined;
+    if ((this.zoomLevel || 0) < -1.5 ) {
+      this.textScaled = -1.5;
+    } else if ((this.zoomLevel || 0) > 0) {
+      this.textScaled = Math.sqrt(this.zoomLevel || 1);
+    } else {
+      this.textScaled = this.zoomLevel;
+    }
+    this.redraw();
   }
 
   destroy() {
@@ -91,12 +113,10 @@ export default class SpeciesLayer {
           const specie = species[i];
           this.textData.push({
             text: `${specie.species_code || specie.common_name}`,
-            x: xmin + (xmax-xmin) /2.0,
-            y: ymax ,
-            offsetX:0,
-            offsetY: -5 + textOffset,
+            x: xmin + (xmax - xmin) / 2.0,
+            y: ymax + textOffset,
           });
-          textOffset -= 15;
+          textOffset -= 40;
     
         }
       }
@@ -122,6 +142,7 @@ export default class SpeciesLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
+        fontSize: '18px',
       },
       color: () => {
         return "white";
@@ -131,6 +152,8 @@ export default class SpeciesLayer {
         y: data.offsetY || 0,
       }),
       textAlign: 'center',
+      textBaseline: 'bottom',
+      textScaled: this.textScaled
     };
   }
 }
