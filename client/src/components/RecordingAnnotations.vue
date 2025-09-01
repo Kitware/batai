@@ -38,7 +38,7 @@ export default defineComponent({
     const annotations: Ref<FileAnnotation[]> = ref([]);
     const detailsDialog = ref(false);
     const detailRecordingId = ref(-1);
-    const { configuration } = useState();
+    const { configuration, isNaBat } = useState();
 
     const setSelectedId = (annotation: FileAnnotation) => {
       selectedAnnotation.value = annotation;
@@ -46,7 +46,7 @@ export default defineComponent({
 
     const currentNaBatUser: Ref<string | null> = ref(null);
 
-    
+
 
     const loadFileAnnotations = async () => {
       if (props.type === 'nabat') {
@@ -116,6 +116,10 @@ export default defineComponent({
       return ( currentUserAnnotations.length > 0 && props.type === 'nabat');
     });
 
+    function getConfidenceLabelText(confidence: number) {
+      return `Confidence: ${confidence.toFixed(2)}`;
+    }
+
     return {
       selectedAnnotation,
       annotationState,
@@ -124,6 +128,8 @@ export default defineComponent({
       addAnnotation,
       updatedAnnotation,
       loadDetails,
+      getConfidenceLabelText,
+      isNaBat,
       detailsDialog,
       detailRecordingId,
       disableNaBatAnnotations,
@@ -135,12 +141,12 @@ export default defineComponent({
 
 <template>
   <div>
-    <v-row class="pa-2">
-      <v-col>
+    <v-row class="pa-4">
+      <v-col v-if="!isNaBat()">
         Annotations
       </v-col>
       <v-spacer />
-      <v-col>
+      <v-col v-if="!isNaBat() || !disableNaBatAnnotations">
         <v-btn
           :disabled="annotationState === 'creating' || disableNaBatAnnotations"
           @click="addAnnotation()"
@@ -172,7 +178,7 @@ export default defineComponent({
             </v-btn>
           </v-col>
           <v-col class="annotation-confidence">
-            <span>{{ annotation.confidence }} </span>
+            <span>{{ getConfidenceLabelText(annotation.confidence) }} </span>
           </v-col>
           <v-col class="annotation-model">
             <span>{{ annotation.model }} </span>
