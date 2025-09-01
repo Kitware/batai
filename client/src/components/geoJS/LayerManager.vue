@@ -1,12 +1,12 @@
 <script lang="ts">
 import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
 import * as d3 from "d3";
-import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
+import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
 import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
 import CompressedOverlayLayer from "./layers/compressedOverlayLayer";
-import TemporalLayer from "./layers/temporalLayer";
+import SequenceLayer from "./layers/sequenceLayer";
 import LegendLayer from "./layers/legendLayer";
 import TimeLayer from "./layers/timeLayer";
 import FreqLayer from "./layers/freqLayer";
@@ -54,7 +54,7 @@ export default defineComponent({
       colorScale,
       currentUser,
       annotations,
-      temporalAnnotations,
+      sequenceAnnotations,
       otherUserAnnotations,
       selectedId,
       selectedType,
@@ -67,12 +67,12 @@ export default defineComponent({
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
     const localAnnotations: Ref<SpectrogramAnnotation[]> = ref(cloneDeep(annotations.value));
-    const localTemporalAnnotations: Ref<SpectrogramTemporalAnnotation[]> = ref(cloneDeep(temporalAnnotations.value));
+    const localSequenceAnnotations: Ref<SpectrogramSequenceAnnotation[]> = ref(cloneDeep(sequenceAnnotations.value));
     const editing = ref(false);
-    const editingAnnotation: Ref<null | SpectrogramAnnotation | SpectrogramTemporalAnnotation> = ref(null);
+    const editingAnnotation: Ref<null | SpectrogramAnnotation | SpectrogramSequenceAnnotation> = ref(null);
     let rectAnnotationLayer: RectangleLayer;
     let compressedOverlayLayer: CompressedOverlayLayer;
-    let temporalAnnotationLayer: TemporalLayer;
+    let sequenceAnnotationLayer: SequenceLayer;
     let editAnnotationLayer: EditAnnotationLayer;
     let legendLayer: LegendLayer;
     let timeLayer: TimeLayer;
@@ -83,18 +83,18 @@ export default defineComponent({
     const errorMsg = ref("");
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-    const temporalEvent = (type: string, data: any) => {
+    const sequenceEvent = (type: string, data: any) => {
       if (type === "annotation-clicked") {
-        // click temporal annotation
+        // click sequence annotation
         if (selectedAnnotationId.value !== null) {
-          const foundIndex = temporalAnnotations.value.findIndex(
+          const foundIndex = sequenceAnnotations.value.findIndex(
             (item) => item.id === selectedAnnotationId.value
           );
           if (foundIndex !== -1) {
-            editingAnnotation.value = temporalAnnotations.value[foundIndex];
-            const copy: SpectrogramTemporalAnnotation[] = cloneDeep(localTemporalAnnotations.value);
+            editingAnnotation.value = sequenceAnnotations.value[foundIndex];
+            const copy: SpectrogramSequenceAnnotation[] = cloneDeep(localSequenceAnnotations.value);
             copy[foundIndex].editing = true;
-            localTemporalAnnotations.value = copy;
+            localSequenceAnnotations.value = copy;
           }
         }
         selectedAnnotationId.value = data.id;
@@ -110,17 +110,17 @@ export default defineComponent({
       if (type === "annotation-right-clicked") {
         selectedAnnotationId.value = data.id;
         editing.value = data.edit;
-        const foundIndex = localTemporalAnnotations.value.findIndex(
+        const foundIndex = localSequenceAnnotations.value.findIndex(
           (item) => item.id === selectedAnnotationId.value
         );
         if (editing.value && foundIndex !== -1) {
-          editingAnnotation.value = localTemporalAnnotations.value[foundIndex];
-          const copy: SpectrogramTemporalAnnotation[] = cloneDeep(localTemporalAnnotations.value);
+          editingAnnotation.value = localSequenceAnnotations.value[foundIndex];
+          const copy: SpectrogramSequenceAnnotation[] = cloneDeep(localSequenceAnnotations.value);
           copy[foundIndex].editing = true;
-          localTemporalAnnotations.value = copy;
+          localSequenceAnnotations.value = copy;
         } else if (!editing.value && foundIndex !== -1) {
           editingAnnotation.value = null;
-          localTemporalAnnotations.value[foundIndex].editing = undefined;
+          localSequenceAnnotations.value[foundIndex].editing = undefined;
         }
         if (data.id !== null) {
           setSelectedId(selectedAnnotationId.value, 'sequence');
@@ -206,7 +206,7 @@ export default defineComponent({
           if (annotationState.value !== "creating") {
             const index = selectedType.value === 'pulse' ? localAnnotations.value.findIndex(
               (item) => item.id === selectedAnnotationId.value
-            ) : localTemporalAnnotations.value.findIndex((item) => item.id === selectedAnnotationId.value);
+            ) : localSequenceAnnotations.value.findIndex((item) => item.id === selectedAnnotationId.value);
             if (index !== -1 && props.spectroInfo && selectedType.value === 'pulse') {
               // update bounds for the localAnnotation
               const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
@@ -234,12 +234,12 @@ export default defineComponent({
                 return;
               }
               const { start_time, end_time } = conversionResult;
-              localTemporalAnnotations.value[index] = {
-                ...localTemporalAnnotations.value[index],
+              localSequenceAnnotations.value[index] = {
+                ...localSequenceAnnotations.value[index],
                 start_time,
                 end_time,
               };
-              editingAnnotation.value = localTemporalAnnotations.value[index];
+              editingAnnotation.value = localSequenceAnnotations.value[index];
             }
 
             triggerUpdate();
@@ -267,7 +267,7 @@ export default defineComponent({
               };
               emit("create:annotation", newAnnotation);
             } else if (creationType.value === 'sequence') {
-              const newAnnotation: SpectrogramTemporalAnnotation = {
+              const newAnnotation: SpectrogramSequenceAnnotation = {
                 start_time,
                 end_time,
                 species: [],
@@ -290,24 +290,24 @@ export default defineComponent({
       if (selectedUsers.value.length) {
         // We add more annotations to the system
         let additionalAnnotations: SpectrogramAnnotation[] = [];
-        let additionalTemporalAnnotations: SpectrogramTemporalAnnotation[] = [];
+        let additionalSequenceAnnotations: SpectrogramSequenceAnnotation[] = [];
         for (let i = 0; i < selectedUsers.value.length; i += 1) {
           const newAnnotations = otherUserAnnotations.value[selectedUsers.value[i]]['annotations'];
           additionalAnnotations = additionalAnnotations.concat(newAnnotations);
-          const newTemporalAnnotations = otherUserAnnotations.value[selectedUsers.value[i]]['temporal'];
-          additionalTemporalAnnotations = additionalTemporalAnnotations.concat(newTemporalAnnotations);
+          const newSequenceAnnotations = otherUserAnnotations.value[selectedUsers.value[i]]['sequence'];
+          additionalSequenceAnnotations = additionalSequenceAnnotations.concat(newSequenceAnnotations);
 
         }
         additionalAnnotations = additionalAnnotations.concat(localAnnotations.value);
-        additionalTemporalAnnotations = additionalTemporalAnnotations.concat(localTemporalAnnotations.value);
-        return { annotations: additionalAnnotations, temporalAnnotations: additionalTemporalAnnotations, colorScale };
+        additionalSequenceAnnotations = additionalSequenceAnnotations.concat(localSequenceAnnotations.value);
+        return { annotations: additionalAnnotations, sequenceAnnotations: additionalSequenceAnnotations, colorScale };
       } else {
-        return { annotations: localAnnotations.value, temporalAnnotations: localTemporalAnnotations.value };
+        return { annotations: localAnnotations.value, sequenceAnnotations: localSequenceAnnotations.value };
       }
     };
     const triggerUpdate = () => {
       // Check for selected and editing annotations;
-      const { annotations, temporalAnnotations } = getDataForLayers();
+      const { annotations, sequenceAnnotations } = getDataForLayers();
       if (rectAnnotationLayer) {
         rectAnnotationLayer.formatData(
           annotations,
@@ -322,15 +322,15 @@ export default defineComponent({
         compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
         compressedOverlayLayer.redraw();
       }
-      if (temporalAnnotationLayer && layerVisibility.value.includes('temporal')) {
-        temporalAnnotationLayer.formatData(
-          temporalAnnotations,
+      if (sequenceAnnotationLayer && layerVisibility.value.includes('sequence')) {
+        sequenceAnnotationLayer.formatData(
+          sequenceAnnotations,
           selectedType.value === 'sequence' ? selectedAnnotationId.value : null,
           currentUser.value,
           colorScale.value,
           props.yScale,
         );
-        temporalAnnotationLayer.redraw();
+        sequenceAnnotationLayer.redraw();
       }
       if (!props.thumbnail) {
         if (layerVisibility.value.includes("grid")) {
@@ -345,7 +345,7 @@ export default defineComponent({
           } else {
             timeLayer.displayDuration = true;
           }
-          timeLayer.formatData(annotations, temporalAnnotations);
+          timeLayer.formatData(annotations, sequenceAnnotations);
           timeLayer.redraw();
         } else {
           timeLayer.disable();
@@ -359,7 +359,7 @@ export default defineComponent({
         if (layerVisibility.value.includes("species")) {
           speciesLayer.formatData(annotations);
           speciesLayer.redraw();
-          speciesSequenceLayer.formatData(temporalAnnotations);
+          speciesSequenceLayer.formatData(sequenceAnnotations);
           speciesSequenceLayer.redraw();
         } else {
           speciesLayer.disable();
@@ -378,7 +378,7 @@ export default defineComponent({
         freqLayer?.disable();
       }
       if (!configuration.value.display_sequence_annotations) {
-        temporalAnnotationLayer?.disable();
+        sequenceAnnotationLayer?.disable();
         speciesSequenceLayer?.disable();
       }
     };
@@ -389,8 +389,8 @@ export default defineComponent({
         triggerUpdate();
       }
     );
-    watch(temporalAnnotations, () => {
-      localTemporalAnnotations.value = temporalAnnotations.value;
+    watch(sequenceAnnotations, () => {
+      localSequenceAnnotations.value = sequenceAnnotations.value;
       triggerUpdate();
     });
     watch(selectedUsers, () => triggerUpdate());
@@ -429,8 +429,8 @@ export default defineComponent({
       if (compressedOverlayLayer) {
         compressedOverlayLayer.destroy();
       }
-      if (temporalAnnotationLayer) {
-        temporalAnnotationLayer.destroy();
+      if (sequenceAnnotationLayer) {
+        sequenceAnnotationLayer.destroy();
       }
       if (timeLayer) {
         timeLayer.destroy();
@@ -463,10 +463,11 @@ export default defineComponent({
         rectAnnotationLayer.spectroInfo = props.spectroInfo;
         rectAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
 
-        if (!temporalAnnotationLayer) {
-          temporalAnnotationLayer = new TemporalLayer(props.geoViewerRef, temporalEvent, props.spectroInfo);
+        if (!sequenceAnnotationLayer) {
+          sequenceAnnotationLayer = new SequenceLayer(props.geoViewerRef, sequenceEvent, props.spectroInfo);
         } {
-          temporalAnnotationLayer.spectroInfo = props.spectroInfo;
+          sequenceAnnotationLayer.spectroInfo = props.spectroInfo;
+          sequenceAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         }
         rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
         rectAnnotationLayer.redraw();
@@ -474,8 +475,8 @@ export default defineComponent({
           compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
           compressedOverlayLayer.redraw();
         }
-        temporalAnnotationLayer.formatData(localTemporalAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
-        temporalAnnotationLayer.redraw();
+        sequenceAnnotationLayer.formatData(localSequenceAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
+        sequenceAnnotationLayer.redraw();
         if (!props.thumbnail) {
           if (!legendLayer) {
             legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
@@ -508,10 +509,10 @@ export default defineComponent({
           speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
 
           timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
-          timeLayer.formatData(localAnnotations.value, temporalAnnotations.value);
+          timeLayer.formatData(localAnnotations.value, sequenceAnnotations.value);
           freqLayer.formatData(localAnnotations.value);
           speciesLayer.formatData(localAnnotations.value);
-          speciesSequenceLayer.formatData(localTemporalAnnotations.value);
+          speciesSequenceLayer.formatData(localSequenceAnnotations.value);
 
           legendLayer.redraw();
           if (layerVisibility.value.includes('species')) {
@@ -539,7 +540,7 @@ export default defineComponent({
       }
     });
     watch([() => props.scaledWidth, () => props.scaledHeight], () => {
-      const { annotations, temporalAnnotations } = getDataForLayers();
+      const { annotations, sequenceAnnotations } = getDataForLayers();
       if (legendLayer) {
         legendLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       }
@@ -570,9 +571,9 @@ export default defineComponent({
       freqLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       speciesLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       speciesSequenceLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      temporalAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      sequenceAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (timeLayer && layerVisibility.value.includes("time")) {
-        timeLayer.formatData(annotations, temporalAnnotations);
+        timeLayer.formatData(annotations, sequenceAnnotations);
         timeLayer.redraw();
       } else {
         timeLayer?.disable();
@@ -586,20 +587,21 @@ export default defineComponent({
       if (speciesLayer && speciesSequenceLayer && layerVisibility.value.includes("species")) {
         speciesLayer.formatData(annotations);
         speciesLayer.redraw();
-        speciesSequenceLayer.formatData(temporalAnnotations);
+        speciesSequenceLayer.formatData(sequenceAnnotations);
         speciesSequenceLayer.redraw();
       } else {
         speciesLayer?.disable();
         speciesSequenceLayer?.disable();
       }
-      if (temporalAnnotationLayer && layerVisibility.value.includes('temporal')) {
-        temporalAnnotationLayer.formatData(
-          temporalAnnotations,
+      if (sequenceAnnotationLayer && layerVisibility.value.includes('sequence')) {
+        sequenceAnnotationLayer.formatData(
+          sequenceAnnotations,
           selectedAnnotationId.value,
           currentUser.value,
           colorScale.value,
           props.yScale,
         );
+        sequenceAnnotationLayer.redraw();
       }
       // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
       legendLayer?.onPan();

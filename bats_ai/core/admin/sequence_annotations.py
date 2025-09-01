@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from bats_ai.core.models import TemporalAnnotations
+from bats_ai.core.models import SequenceAnnotations
 
 
-@admin.register(TemporalAnnotations)
-class TemporalAnnotationsAdmin(admin.ModelAdmin):
+@admin.register(SequenceAnnotations)
+class SequenceAnnotationsAdmin(admin.ModelAdmin):
     list_display = [
         'pk',
         'recording',

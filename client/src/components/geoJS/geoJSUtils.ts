@@ -223,7 +223,7 @@ const useGeoJS = () => {
   };
 };
 
-import { SpectrogramAnnotation, SpectrogramTemporalAnnotation } from "../../api/api";
+import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
 
 export interface SpectroInfo {
   spectroId: number;
@@ -239,8 +239,8 @@ export interface SpectroInfo {
   high_freq: number;
 }
 
-function spectroTemporalToGeoJSon(
-  annotation: SpectrogramTemporalAnnotation,
+function spectroSequenceToGeoJSon(
+  annotation: SpectrogramSequenceAnnotation,
   spectroInfo: SpectroInfo,
   ymin = 0,
   ymax = 10,
@@ -248,7 +248,7 @@ function spectroTemporalToGeoJSon(
   scaledWidth = 0,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _scaledHeight = 0, // may be useful in the future
-  offsetY = 0 // used to push temporal annotations higher when viewing in compressed view
+  offsetY = 0 // used to push sequence annotations higher when viewing in compressed view
 ): GeoJSON.Polygon {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   // const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
@@ -282,16 +282,21 @@ function spectroTemporalToGeoJSon(
     if (start < start_times[0]) {
       foundStartIndex = 0;
     }
+    let totalTime = 0;
+    let startOutside = true; // if Start is outside a compressed view
+    let endOutside = true; // if end is outside a compressed view
     for (let i = 0; i < lengths; i += 1) {
       if (foundStartIndex === -1) {
         if (start < start_times[i]) {
           foundStartIndex = i; // Lock to the current index if before the interval
         } else if (start_times[i] <= start && start <= end_times[i]) {
           foundStartIndex = i; // Found within the interval
+          startOutside = false;
         } else if (i === lengths - 1 && start > end_times[i]) {
           foundStartIndex = i; // Lock to the last interval's end
         }
       }
+      totalTime += end_times[i] - start_times[i];
 
       // Check for end time
       if (foundEndIndex === -1) {
@@ -299,38 +304,42 @@ function spectroTemporalToGeoJSon(
           foundEndIndex = i; // Lock to the current index if before the interval
         } else if (start_times[i] <= end && end <= end_times[i]) {
           foundEndIndex = i; // Found within the interval
+          endOutside = false;
         } else if (i === lengths - 1 && end > end_times[i]) {
           foundEndIndex = i; // Lock to the last interval's end
         }
       }
     }
     // We need to build the length of times to pixel size for the time spaces before the annotation
-    const compressedScale =
-      scaledWidth > (spectroInfo.compressedWidth || 1)
-        ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width)
-        : 1;
-    const widthScale =
-      (adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) * compressedScale;
-    let pixelAddStart = 0;
-    let pixelAddEnd = 0;
+    let timeAddStart = 0;
+    let timeAddEnd = 0;
+    // Total width from widths
     for (let i = 0; i < Math.max(foundStartIndex, foundEndIndex); i += 1) {
       const addWidth = widths && widths[i];
       if (addWidth && i < foundStartIndex) {
-        pixelAddStart += addWidth;
+        timeAddStart += addWidth;
       }
       if (addWidth && i < foundEndIndex) {
-        pixelAddEnd += addWidth;
+        timeAddEnd += addWidth;
       }
     }
     // Now we remap our annotation to pixel coordinates
 
-    const start_time =
-      pixelAddStart * compressedScale +
-      (annotation.start_time - start_times[foundStartIndex]) * widthScale;
-    const end_time =
-      pixelAddEnd * compressedScale +
-      (annotation.end_time - start_times[foundEndIndex]) * widthScale;
+    // lets calcualte a pixels per ms for the copressed view
 
+    const compressedWidth =
+      scaledWidth > (spectroInfo.compressedWidth || 1)
+        ? scaledWidth
+        : spectroInfo.compressedWidth || spectroInfo.width;
+    const pixelPerMS = compressedWidth / totalTime;
+    const xScaling = compressedWidth / spectroInfo.compressedWidth;
+    const start_time =
+      timeAddStart * xScaling +
+      (!startOutside ? (annotation.start_time - start_times[foundStartIndex]) * pixelPerMS : 0);
+
+    const end_time =
+      timeAddEnd * xScaling +
+      (!endOutside ? (annotation.end_time - start_times[foundEndIndex]) * pixelPerMS : 0);
     return {
       type: "Polygon",
       coordinates: [
@@ -473,7 +482,7 @@ function findPolygonCenter(polygon: GeoJSON.Polygon): number[] {
 }
 
 function spectroToCenter(
-  annotation: SpectrogramAnnotation | SpectrogramTemporalAnnotation,
+  annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation,
   spectroInfo: SpectroInfo,
   type: "sequence" | "pulse"
 ) {
@@ -482,8 +491,8 @@ function spectroToCenter(
     return findPolygonCenter(geoJSON);
   }
   if (type === "sequence") {
-    const geoJSON = spectroTemporalToGeoJSon(
-      annotation as SpectrogramTemporalAnnotation,
+    const geoJSON = spectroSequenceToGeoJSon(
+      annotation as SpectrogramSequenceAnnotation,
       spectroInfo
     );
     return findPolygonCenter(geoJSON);
@@ -496,7 +505,7 @@ function geojsonToSpectro(
   geojson: GeoJSON.Feature<GeoJSON.Polygon>,
   spectroInfo: SpectroInfo,
   scaledWidth = 0,
-  scaledHeight = 0
+  scaledHeight = 0,
 ): { error?: string; start_time: number; end_time: number; low_freq: number; high_freq: number } {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
@@ -521,8 +530,14 @@ function geojsonToSpectro(
       scaledWidth > (spectroInfo.compressedWidth || 1)
         ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width)
         : 1;
-    const start = coords[1][0] / compressedScale;
-    const end = coords[3][0] / compressedScale;
+    let start = coords[1][0] / compressedScale;
+    let end = coords[3][0] / compressedScale;
+    if (start < 0) {
+      start = 0;
+    }
+    if (end > spectroInfo.compressedWidth) {
+      end = spectroInfo.compressedWidth;
+    }
     const { start_times, widths } = spectroInfo;
     const timeToPixels = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     let additivePixels = 0;
@@ -531,7 +546,7 @@ function geojsonToSpectro(
     for (let i = 0; i < start_times.length; i += 1) {
       // convert the start/end time to a pixel
       const nextPixels = (widths && widths[i]) || 0;
-      if (start_time === -1 && start > additivePixels && start < additivePixels + nextPixels) {
+      if (start_time === -1 && start >= additivePixels && start < additivePixels + nextPixels) {
         // Found the location for time markers
         // We need to remap pixels back to milliseconds
         const lowPixels = start - additivePixels;
@@ -611,5 +626,5 @@ export {
   reOrdergeoJSON,
   useGeoJS,
   spectroToCenter,
-  spectroTemporalToGeoJSon,
+  spectroSequenceToGeoJSon,
 };
