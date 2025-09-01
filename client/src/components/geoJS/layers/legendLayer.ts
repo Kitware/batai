@@ -505,7 +505,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
       textBaseline: (data) => data.textBaseline || 'middle',
       textAlign: (data) => (data.textAlign || "center"),
       textScaled: (data) => (data.textScaled),
-      fontSize: (data) => data.type === 'time' ? `${this.getFontSize(16, 10, this.xScale)}px` : `20px`,
+      fontSize: (data) => data.type === 'time' && this.compressedView ? `${this.getFontSize(16, 10, this.xScale)}px` : `20px`,
     };
   }
 }

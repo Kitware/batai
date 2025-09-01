@@ -34,6 +34,8 @@ export default abstract class BaseTextLayer<D> {
 
   xScale: number;
 
+  compressedView: boolean;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,6 +51,7 @@ export default abstract class BaseTextLayer<D> {
     this.scaledHeight = 0;
     this.event = event;
     this.xScale = 0;
+    this.compressedView = false;
     //Only initialize once, prevents recreating Layer each edit
     this.textStyle = this.createTextStyle();
     this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
@@ -61,8 +64,10 @@ export default abstract class BaseTextLayer<D> {
     this.scaledHeight = newHeight;
     if (this.spectroInfo.compressedWidth) {
       this.xScale = newWidth / this.spectroInfo.compressedWidth;
+      this.compressedView = true;
     } else {
       this.xScale = newWidth / this.spectroInfo.width;
+      this.compressedView = false;
     }
   }
 
