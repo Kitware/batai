@@ -1,5 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import { SpectroInfo } from "../geoJSUtils";
+import BaseTextLayer from "./baseTextLayer";
 import { LayerStyle } from "./types";
 import geo from "geojs";
 
@@ -15,9 +16,13 @@ interface TextData {
   y: number;
   offsetY?: number;
   offsetX?: number;
+  type: 'time' | 'freq',
+  textAlign?: 'left' | 'center' | 'right';
+  textBaseline?: 'top' | 'middle' | 'bottom';
+  textScaled?: number | undefined;
 }
 
-export default class LegendLayer {
+export default class LegendLayer extends BaseTextLayer<TextData> {
   lineDataX: LineData[];
   lineDataY: LineData[];
 
@@ -32,13 +37,7 @@ export default class LegendLayer {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   textLayer: any;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  geoViewerRef: any;
-
   gridLines: LineData[];
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  event: (name: string, data: any) => void;
 
   spectroInfo: SpectroInfo;
 
@@ -49,9 +48,6 @@ export default class LegendLayer {
 
   gridEnabled: boolean;
 
-  scaledWidth: number;
-
-  scaledHeight: number;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -61,7 +57,8 @@ export default class LegendLayer {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo
   ) {
-    this.geoViewerRef = geoViewerRef;
+
+    super(geoViewerRef, event, spectroInfo);
     this.lineDataX = [];
     this.lineDataY = [];
     this.spectroInfo = spectroInfo;
@@ -70,7 +67,6 @@ export default class LegendLayer {
     this.axisBuffer = 5;
     this.scaledHeight = -1;
     this.scaledWidth  = -1;
-    this.event = event;
     this.gridEnabled = false;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
@@ -88,10 +84,12 @@ export default class LegendLayer {
     this.lineStyle = this.createLineStyle();
     this.gridLines = [];
     this.geoViewerRef.geoOn(geo.event.pan, () => this.onPan());
+    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
     this.createLabels();
     this.calcGridLines();
 
   }
+
 
   onPan() {
     const bounds = this.geoViewerRef.camera().bounds;
@@ -109,8 +107,7 @@ export default class LegendLayer {
   }
 
   setScaledDimensions( width: number, height: number) {
-    this.scaledWidth = width;
-    this.scaledHeight = height;
+    super.setScaledDimensions(width, height);
     this.createLabels();
     this.calcGridLines();
     if (this.gridEnabled) {
@@ -157,10 +154,12 @@ export default class LegendLayer {
         });
         this.textDataX.push({
           text: `${i}ms`,
+          type: 'time',
           x: i * timeToPixels,
           y: baseYPos + length,
           offsetX: 3,
           offsetY: yOffset === 0 ? 8 : -8,
+          textScaled: this.textScaled,
         });
       }
     }
@@ -185,7 +184,7 @@ export default class LegendLayer {
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
     const baseYPos = yOffset === 0 ? adjustedHeight : yOffset;
     const baseTopPos = topOffset === 0 ? 0 : -topOffset;
-    const topBuffer = topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -0.5;
+    const topBuffer = topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -3;
 
     const { start_times, end_times, widths, compressedWidth } = this.spectroInfo;
     if (!compressedWidth) {
@@ -199,8 +198,8 @@ export default class LegendLayer {
         const start_time = start_times[i];
         const end_time = end_times[i];
         const width = this.scaledWidth > compressedWidth ? (this.scaledWidth / compressedWidth) * widths[i] : widths[i];
-        const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  50)  && leftOffset !== 0 && yOffset !== 0;
-        const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  50)  && leftOffset !== 0 && topOffset !== 0;
+        const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  150)  && leftOffset !== 0 && yOffset !== 0;
+        const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  150)  && leftOffset !== 0 && topOffset !== 0;
      
 
       if (!bottomWithinYAxisStart) {
@@ -262,20 +261,21 @@ export default class LegendLayer {
         if (!bottomWithinYAxisStart) {
         this.textDataX.push({
           text: `${start_time}ms`,
+          type: 'time',
           x: 0 + pixelOffset,
-          y: baseYPos + length,
-          offsetX: 3,
-          offsetY: yOffset === 0 ? 16 : -16,
+          y: baseYPos + length + (yOffset === 0 ? 18 : -12),
+          textScaled: this.textScaled,
         });
       }
       if (!topWithinYAxisEnd) {
 
         this.textDataX.push({
           text: `${end_time}ms`,
+          type: 'time',
           x: width + pixelOffset,
-          y: baseTopPos,
-          offsetX: 3,
-          offsetY: baseTopPos === 0 ? -16 : 16,
+          y: baseTopPos + (baseTopPos === 0 ? -16 : 16),
+          textBaseline: baseTopPos === 0 ? 'bottom' : 'top',
+          textScaled: this.textScaled,
         });
       }
         pixelOffset += width;
@@ -362,12 +362,15 @@ export default class LegendLayer {
         },
         thicker: i % 10000 === 0,
       });
+
       this.textDataY.push({
         text: `${(i + this.spectroInfo.low_freq) / 1000}KHz`,
-        x: offset - xBuffer - length,
+        x: offset - xBuffer + (offset === 0 ? -45 : 10),
         y: adjustedHeight - i * hzToPixels,
-        offsetX: offset === 0 ? -25 : 25,
+        textAlign:  offset === 0 ? 'right' : 'left',
         offsetY: 0,
+        type: 'freq',
+        textScaled: this.textScaled,
       });
     }
   }
@@ -424,7 +427,6 @@ export default class LegendLayer {
   }
 
   redraw() {
-    // add some styles
     const combinedLineData = this.lineDataX.concat(this.lineDataY);
     this.lineLayer
       .data(combinedLineData)
@@ -491,6 +493,7 @@ export default class LegendLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
+        fontSize: `${this.getFontSize(20, 12, this.xScale)}px`
       },
       color: () => {
         return "white";
@@ -499,6 +502,10 @@ export default class LegendLayer {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
+      textBaseline: (data) => data.textBaseline || 'middle',
+      textAlign: (data) => (data.textAlign || "center"),
+      textScaled: (data) => (data.textScaled),
+      fontSize: (data) => data.type === 'time' && this.compressedView ? `${this.getFontSize(16, 10, this.xScale)}px` : `20px`,
     };
   }
 }

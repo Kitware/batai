@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroSequenceToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
+import BaseTextLayer from "./baseTextLayer";
 import { LayerStyle } from "./types";
 
 interface LineData {
@@ -15,31 +16,17 @@ interface TextData {
   y: number;
   offsetY?: number;
   offsetX?: number;
+  textScaled?: undefined | number;
+  textBaseline?: 'middle' | 'top' | 'bottom';
 }
 
-export default class TimeLayer {
+export default class TimeLayer extends BaseTextLayer<TextData> {
   lineData: LineData[];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lineLayer: any;
 
-  textData: TextData[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textLayer: any;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  geoViewerRef: any;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  event: (name: string, data: any) => void;
-
-  spectroInfo: SpectroInfo;
-
-  textStyle: LayerStyle<TextData>;
   lineStyle: LayerStyle<LineData>;
-
-  scaledWidth: number;
-  scaledHeight: number;
 
   displayDuration: boolean;
 
@@ -53,14 +40,11 @@ export default class TimeLayer {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo
   ) {
-    this.geoViewerRef = geoViewerRef;
+    super(geoViewerRef, event, spectroInfo);
     this.lineData = [];
-    this.spectroInfo = spectroInfo;
     this.textData = [];
-    this.scaledWidth = 0;
-    this.scaledHeight = 0;
+    this.displayDuration = true;
     this.displaying = { sequence: true, pulse: true };
-    this.event = event;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["text", "line"],
@@ -72,13 +56,7 @@ export default class TimeLayer {
 
     this.lineLayer = layer.createFeature("line");
     this.displayDuration = true;
-    this.textStyle = this.createTextStyle();
     this.lineStyle = this.createLineStyle();
-  }
-
-  setScaledDimensions(newWidth: number, newHeight: number) {
-    this.scaledWidth = newWidth;
-    this.scaledHeight = newHeight;
   }
 
   destroy() {
@@ -141,21 +119,19 @@ export default class TimeLayer {
         this.textData.push({
           text: `${start_time}ms`,
           x: xmin,
-          y: ymin + lineDist,
-          offsetX: 0,
-          offsetY: 5,
+          y: ymin + lineDist + 5,
+          textBaseline: 'top',
         });
         this.textData.push({
           text: `${end_time}ms`,
           x: xmax,
-          y: ymin + lineDist,
-          offsetX: 0,
-          offsetY: 5,
+          y: ymin + lineDist + 5,
+          textBaseline: 'top',
         });
       });
     }
-    const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
-    const offsetY = compressedView ? -30 : 0;
+    const compressedView = !!(this.spectroInfo.compressedWidth);
+    const offsetY = compressedView ? -80 : 0;
     if (this.displaying.sequence) {
       sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
         const polygon = spectroSequenceToGeoJSon(
@@ -165,7 +141,8 @@ export default class TimeLayer {
           -50,
           1,
           this.scaledWidth,
-          this.scaledHeight
+          this.scaledHeight,
+          offsetY
         );
         const { start_time, end_time } = annotation;
         const [xmin, ymin] = polygon.coordinates[0][0];
@@ -182,8 +159,8 @@ export default class TimeLayer {
           line: {
             type: "LineString",
             coordinates: [
-              [xmin, ymax + offsetY],
-              [xmin, ymax - lineDist + offsetY],
+              [xmin, ymax],
+              [xmin, ymax - lineDist],
             ],
           },
           thicker: true,
@@ -192,8 +169,8 @@ export default class TimeLayer {
           line: {
             type: "LineString",
             coordinates: [
-              [xmax, ymax + offsetY],
-              [xmax, ymax - lineDist + offsetY],
+              [xmax, ymax],
+              [xmax, ymax - lineDist],
             ],
           },
           thicker: true,
@@ -202,16 +179,12 @@ export default class TimeLayer {
         this.textData.push({
           text: `${start_time}ms`,
           x: xmin,
-          y: ymax - lineDist + offsetY,
-          offsetX: 0,
-          offsetY: -5 + offsetY,
+          y: ymax - lineDist,
         });
         this.textData.push({
           text: `${end_time}ms`,
           x: xmax,
-          y: ymax - lineDist + offsetY,
-          offsetX: 0,
-          offsetY: -5 + offsetY,
+          y: ymax - lineDist,
         });
       });
     }
@@ -250,13 +223,11 @@ export default class TimeLayer {
           text: `${end_time - start_time}ms`,
           x: xpos,
           y: ypos + lineDist,
-          offsetX: 0,
-          offsetY: 0,
         });
       });
     }
-    const compressedView = !!(this.spectroInfo.start_times && this.spectroInfo.end_times);
-    const offsetY = compressedView ? -30 : 0;
+    const compressedView = !!(this.spectroInfo.compressedWidth);
+    const offsetY = compressedView ? -50 : 30;
     if (this.displaying.sequence) {
       sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
         const polygon = spectroSequenceToGeoJSon(
@@ -283,9 +254,7 @@ export default class TimeLayer {
         this.textData.push({
           text: `${end_time - start_time}ms`,
           x: xpos,
-          y: (ymax - ymin) / 2.0,
-          offsetX: 0,
-          offsetY: -5 + offsetY,
+          y: ((ymax - ymin) / 2.0) + -35 + offsetY,
         });
       });
     }
@@ -355,6 +324,7 @@ export default class TimeLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
+        fontSize: `${this.getFontSize(16, 12, this.xScale)}px`,
       },
       color: () => {
         return "white";
@@ -363,6 +333,8 @@ export default class TimeLayer {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
+      textScaled: this.textScaled,
+      textBaseline: 'middle',
     };
   }
 

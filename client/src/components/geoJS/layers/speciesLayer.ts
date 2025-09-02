@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { SpectrogramAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
+import BaseTextLayer from "./baseTextLayer";
 import { LayerStyle } from "./types";
 
 interface TextData {
@@ -11,25 +12,8 @@ interface TextData {
   offsetX?: number;
 }
 
-export default class SpeciesLayer {
+export default class SpeciesLayer extends BaseTextLayer<TextData> {
 
-  textData: TextData[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textLayer: any;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  geoViewerRef: any;
-
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  event: (name: string, data: any) => void;
-
-  spectroInfo: SpectroInfo;
-
-  textStyle: LayerStyle<TextData>;
-
-  scaledWidth: number;
-  scaledHeight: number;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -39,12 +23,7 @@ export default class SpeciesLayer {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo
   ) {
-    this.geoViewerRef = geoViewerRef;
-    this.spectroInfo = spectroInfo;
-    this.textData = [];
-    this.event = event;
-    this.scaledWidth = 0;
-    this.scaledHeight = 0;
+    super(geoViewerRef, event, spectroInfo);
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["text"],
@@ -53,22 +32,7 @@ export default class SpeciesLayer {
       .createFeature("text")
       .text((data: TextData) => data.text)
       .position((data: TextData) => ({ x: data.x, y: data.y }));
-
-
-    this.textStyle = this.createTextStyle();
   }
-
-  setScaledDimensions(newWidth: number, newHeight: number) {
-    this.scaledWidth = newWidth;
-    this.scaledHeight = newHeight;
-  }
-
-  destroy() {
-    if (this.textLayer) {
-      this.geoViewerRef.deleteLayer(this.textLayer);
-    }    
-  }
-
 
 
   formatData(annotationData: SpectrogramAnnotation[]) {
@@ -91,27 +55,15 @@ export default class SpeciesLayer {
           const specie = species[i];
           this.textData.push({
             text: `${specie.species_code || specie.common_name}`,
-            x: xmin + (xmax-xmin) /2.0,
-            y: ymax ,
-            offsetX:0,
-            offsetY: -5 + textOffset,
+            x: xmin + (xmax - xmin) / 2.0,
+            y: ymax + textOffset,
           });
-          textOffset -= 15;
+          textOffset -= 40;
     
         }
       }
     });
   }
-
-  redraw() {
-    // add some styles
-    this.textLayer.data(this.textData).style(this.createTextStyle()).draw();
-  }
-
-  disable() {
-    this.textLayer.data([]).draw();
-  }
-
 
   createTextStyle(): LayerStyle<TextData> {
     return {
@@ -122,6 +74,7 @@ export default class SpeciesLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
+        fontSize: '18px',
       },
       color: () => {
         return "white";
@@ -131,6 +84,8 @@ export default class SpeciesLayer {
         y: data.offsetY || 0,
       }),
       textAlign: 'center',
+      textBaseline: 'bottom',
+      textScaled: this.textScaled
     };
   }
 }

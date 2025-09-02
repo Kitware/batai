@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { SpectrogramAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
+import BaseTextLayer from "./baseTextLayer";
 import { LayerStyle } from "./types";
 
 interface LineData {
@@ -17,31 +18,13 @@ interface TextData {
   offsetX?: number;
 }
 
-export default class FreqLayer {
+export default class FreqLayer extends BaseTextLayer<TextData> {
   lineData: LineData[];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lineLayer: any;
 
-  textData: TextData[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textLayer: any;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  geoViewerRef: any;
-
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  event: (name: string, data: any) => void;
-
-  spectroInfo: SpectroInfo;
-
-  textStyle: LayerStyle<TextData>;
   lineStyle: LayerStyle<LineData>;
-
-  scaledWidth: number;
-  scaledHeight: number;
-
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
@@ -51,13 +34,8 @@ export default class FreqLayer {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo
   ) {
-    this.geoViewerRef = geoViewerRef;
+    super(geoViewerRef, event, spectroInfo);
     this.lineData = [];
-    this.spectroInfo = spectroInfo;
-    this.textData = [];
-    this.scaledWidth = 0;
-    this.scaledHeight = 0;
-    this.event = event;
     //Only initialize once, prevents recreating Layer each edit
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["text", "line"],
@@ -71,11 +49,6 @@ export default class FreqLayer {
 
     this.textStyle = this.createTextStyle();
     this.lineStyle = this.createLineStyle();
-  }
-
-  setScaledDimensions(newWidth: number, newHeight: number) {
-    this.scaledWidth = newWidth;
-    this.scaledHeight = newHeight;
   }
 
   destroy() {
@@ -196,6 +169,7 @@ export default class FreqLayer {
         stroke: true,
         uniformPolygon: true,
         fill: false,
+        fontSize: '16px',
       },
       color: () => {
         return "white";
@@ -204,7 +178,9 @@ export default class FreqLayer {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
-      textAlign: 'starts',
+      textAlign: 'start',
+      textScaled: this.textScaled,
+      textBaseline: 'bottom',
     };
   }
 }

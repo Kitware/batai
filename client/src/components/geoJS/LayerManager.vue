@@ -572,11 +572,14 @@ export default defineComponent({
       speciesLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       speciesSequenceLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       sequenceAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      if (timeLayer && layerVisibility.value.includes("time")) {
+      if (timeLayer && (layerVisibility.value.includes("time") || layerVisibility.value.includes('duration'))) {
+        if (layerVisibility.value.includes("time")) {
+          timeLayer.displayDuration = false;
+        } else {
+          timeLayer.displayDuration = true;
+        }
         timeLayer.formatData(annotations, sequenceAnnotations);
         timeLayer.redraw();
-      } else {
-        timeLayer?.disable();
       }
       if (freqLayer && layerVisibility.value.includes("freq")) {
         freqLayer.formatData(annotations);
