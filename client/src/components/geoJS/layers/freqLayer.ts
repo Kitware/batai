@@ -172,7 +172,7 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
         fontSize: '16px',
       },
       color: () => {
-        return "white";
+        return this.color;
       },
       offset: (data) => ({
         x: data.offsetX || 0,

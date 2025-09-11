@@ -442,6 +442,13 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
     this.textLayer.data([]).draw();
   }
 
+  setTextColor(newColor: string) {
+    this.color = newColor;
+    this.textStyle = this.createTextStyle();
+    this.lineStyle = this.createLineStyle();
+    this.redraw();
+  }
+
   setGridEnabled(val: boolean) {
     this.gridEnabled = val;
     if (this.gridEnabled) {
@@ -458,10 +465,11 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
   createLineStyle(): LayerStyle<LineData> {
     return {
       ...{
-        strokeColor: "#00FFFF",
+        strokeColor: () => this.color,
         strokeWidth: 2.0,
         antialiasing: 0,
         stroke: true,
+        color: () => this.color,
         uniformPolygon: true,
         fill: false,
       },
@@ -496,7 +504,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
         fontSize: `${this.getFontSize(20, 12, this.xScale)}px`
       },
       color: () => {
-        return "white";
+        return this.color;
       },
       offset: (data) => ({
         x: data.offsetX || 0,
