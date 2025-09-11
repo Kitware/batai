@@ -99,7 +99,7 @@ export default class SpeciesSequenceLayer extends BaseTextLayer<TextData> {
         if (d.textType === "type") {
           return "yellow";
         }
-        return "white";
+        return this.color;
       },
       offset: (data) => ({
         x: data.offsetX || 0,

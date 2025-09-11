@@ -206,8 +206,24 @@ export default defineComponent({
     );
     onMounted(() => {
       loadData();
-      colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
-      backgroundColor.value = configuration.value.default_spectrogram_background_color || 'rgb(0, 0, 0)';
+      const localBackgroundColor = localStorage.getItem('spectrogramBackgroundColor');
+      if (localBackgroundColor) {
+        backgroundColor.value = localBackgroundColor;
+      } else {
+        backgroundColor.value = configuration.value.default_spectrogram_background_color || 'rgb(0, 0, 0)';
+      }
+      const localColorScheme = localStorage.getItem('spectrogramColorScheme');
+      if (localColorScheme) {
+        colorScheme.value = colorSchemes.find((scheme) => scheme.value === localColorScheme) || colorSchemes[0];
+      } else if (configuration.value.default_color_scheme) {
+        colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
+      }
+    });
+    watch(backgroundColor, () => {
+      localStorage.setItem('spectrogramBackgroundColor', backgroundColor.value);
+    });
+    watch(colorScheme, () => {
+      localStorage.setItem('spectrogramColorScheme', colorScheme.value.value);
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);

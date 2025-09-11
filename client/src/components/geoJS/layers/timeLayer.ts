@@ -327,7 +327,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         fontSize: `${this.getFontSize(16, 12, this.xScale)}px`,
       },
       color: () => {
-        return "white";
+        return this.color;
       },
       offset: (data) => ({
         x: data.offsetX || 0,
