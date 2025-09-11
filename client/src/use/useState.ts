@@ -46,7 +46,6 @@ const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
 const sharedList: Ref<Recording[]> = ref([]);
 const recordingList: Ref<Recording[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
-const blackBackground = ref(true);
 const scaledVals: Ref<{ x: number; y: number }> = ref({ x: 1, y: 1 });
 const viewCompressedOverlay = ref(false);
 const sideTab: Ref<"annotations" | "recordings"> = ref("annotations");
@@ -61,7 +60,7 @@ const configuration: Ref<Configuration> = ref({
   is_admin: false,
 });
 const scaledWidth = ref(0);
-const scaledHeight = ref(0);
+const scaledHeight = ref(0);  
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -160,7 +159,6 @@ export default function useState() {
     sharedList,
     recordingList,
     nextShared,
-    blackBackground,
     scaledVals,
     viewCompressedOverlay,
     sideTab,
