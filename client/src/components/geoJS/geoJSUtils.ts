@@ -620,6 +620,34 @@ function reOrdergeoJSON(coords: GeoJSON.Position[]) {
   ];
 }
 
+function luminance(r: number, g: number, b: number): number {
+  const toLinear = (c: number): number => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+
+  const R = toLinear(r);
+  const G = toLinear(g);
+  const B = toLinear(b);
+
+  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+}
+
+
+function getContrastingColor(r: number, g: number, b: number): "black" | "white" {
+  const L = luminance(r, g, b);
+  return L > 0.179 ? "black" : "white";
+}
+
+function textColorFromBackground(rgbString: string): "black" | "white" {
+  const matches = rgbString.match(/\d+/g);
+  if (!matches || matches.length < 3) {
+    throw new Error("Invalid RGB string format");
+  }
+  const [r, g, b] = matches.map(Number);
+  return getContrastingColor(r, g, b);
+}
+
 export {
   spectroToGeoJSon,
   geojsonToSpectro,
@@ -627,4 +655,5 @@ export {
   useGeoJS,
   spectroToCenter,
   spectroSequenceToGeoJSon,
+  textColorFromBackground
 };
