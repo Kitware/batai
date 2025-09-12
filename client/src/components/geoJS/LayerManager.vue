@@ -321,6 +321,8 @@ export default defineComponent({
       if (viewCompressedOverlay.value && compressedOverlayLayer && !props.spectroInfo?.compressedWidth && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
         compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
         compressedOverlayLayer.redraw();
+      } else {
+        compressedOverlayLayer?.disable();
       }
       if (sequenceAnnotationLayer && layerVisibility.value.includes('sequence')) {
         sequenceAnnotationLayer.formatData(

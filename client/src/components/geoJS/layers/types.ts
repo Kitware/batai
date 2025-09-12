@@ -20,4 +20,5 @@ export interface LayerStyle<D> {
     textBaseline?: ((data: D) => string) | string;
     textScaled?: ((data: D) => number | undefined) | number | undefined;
     [x: string]: unknown;
+    visible?: (data: D) => boolean;
   }
