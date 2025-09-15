@@ -20,6 +20,7 @@ interface TextData {
   textAlign?: 'left' | 'center' | 'right';
   textBaseline?: 'top' | 'middle' | 'bottom';
   textScaled?: number | undefined;
+  compressedLabel?: boolean;
 }
 
 export default class LegendLayer extends BaseTextLayer<TextData> {
@@ -153,7 +154,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
           thicker: i % 1000 === 0,
         });
         this.textDataX.push({
-          text: `${i}ms`,
+          text: `${i}ₘₛ`,
           type: 'time',
           x: i * timeToPixels,
           y: baseYPos + length,
@@ -260,22 +261,26 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
         //Need to decide what text to add to the label
         if (!bottomWithinYAxisStart) {
         this.textDataX.push({
-          text: `${start_time}ms`,
+          text: `▶${start_time}ₘₛ`,
           type: 'time',
           x: 0 + pixelOffset,
           y: baseYPos + length + (yOffset === 0 ? 18 : -12),
           textScaled: this.textScaled,
+          textAlign: 'left',
+          compressedLabel: true,
         });
       }
       if (!topWithinYAxisEnd) {
 
         this.textDataX.push({
-          text: `${end_time}ms`,
+          text: `${end_time}ₘₛ◀`,
           type: 'time',
           x: width + pixelOffset,
           y: baseTopPos + (baseTopPos === 0 ? -16 : 16),
           textBaseline: baseTopPos === 0 ? 'bottom' : 'top',
+          textAlign: 'right',
           textScaled: this.textScaled,
+          compressedLabel: true,
         });
       }
         pixelOffset += width;
@@ -514,6 +519,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
       textAlign: (data) => (data.textAlign || "center"),
       textScaled: (data) => (data.textScaled),
       fontSize: (data) => data.type === 'time' && this.compressedView ? `${this.getFontSize(16, 10, this.xScale)}px` : `20px`,
+      visible: (data) => (data.compressedLabel && this.xScale < 1.5) ? false : true,
     };
   }
 }
