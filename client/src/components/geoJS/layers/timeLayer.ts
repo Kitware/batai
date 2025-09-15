@@ -8,6 +8,7 @@ interface LineData {
   line: GeoJSON.LineString;
   thicker?: boolean;
   grid?: boolean;
+  markerLine?: boolean; // Line for markiing time endpoints
 }
 
 interface TextData {
@@ -103,6 +104,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
               [xmin, ymin + lineDist],
             ],
           },
+          markerLine: true,
           thicker: true,
         });
         this.lineData.push({
@@ -113,6 +115,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
               [xmax, ymin + lineDist],
             ],
           },
+          markerLine: true,
           thicker: true,
         });
         // Now we need to create the text Labels
@@ -163,6 +166,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
               [xmin, ymax - lineDist],
             ],
           },
+          markerLine: true,
           thicker: true,
         });
         this.lineData.push({
@@ -173,6 +177,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
               [xmax, ymax - lineDist],
             ],
           },
+          markerLine: true,
           thicker: true,
         });
         // Now we need to create the text Labels
@@ -296,8 +301,14 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         uniformPolygon: true,
         fill: false,
       },
+      strokeColor: () => {
+        return this.color;
+      },
       strokeOpacity: (_point, _index, data) => {
         // Reduce the rectangle opacity if a polygon is also drawn
+        if (data.markerLine && this.zoomLevel < 0) {
+          return 0.0;
+        }
         if (data.grid) {
           return 0.5;
         }

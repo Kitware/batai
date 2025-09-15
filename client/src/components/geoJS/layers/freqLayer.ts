@@ -141,6 +141,9 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
         uniformPolygon: true,
         fill: false,
       },
+      strokeColor: () => {
+        return this.color;
+      },
       strokeOpacity: (_point, _index, data) => {
         // Reduce the rectangle opacity if a polygon is also drawn
         if (data.grid) {
