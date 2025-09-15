@@ -141,6 +141,9 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
         uniformPolygon: true,
         fill: false,
       },
+      strokeColor: () => {
+        return this.color;
+      },
       strokeOpacity: (_point, _index, data) => {
         // Reduce the rectangle opacity if a polygon is also drawn
         if (data.grid) {
@@ -172,7 +175,7 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
         fontSize: '16px',
       },
       color: () => {
-        return "white";
+        return this.color;
       },
       offset: (data) => ({
         x: data.offsetX || 0,

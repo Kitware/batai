@@ -25,6 +25,7 @@ export default abstract class BaseTextLayer<D> {
   scaledWidth: number;
   scaledHeight: number;
 
+  color = "white";
 
 
 
@@ -84,6 +85,12 @@ export default abstract class BaseTextLayer<D> {
     this.redraw();
   }
 
+  setTextColor(newColor: string) {
+    this.color = newColor;
+    this.textStyle = this.createTextStyle();
+    this.redraw();
+  }
+
 
   destroy() {
     if (this.textLayer) {
@@ -117,7 +124,7 @@ export default abstract class BaseTextLayer<D> {
   createTextStyle(): LayerStyle<D> {
     return {
       ...{
-        strokeColor: "white",
+        strokeColor: () => this.color,
         strokeWidth: 2.0,
         antialiasing: 0,
         stroke: true,
@@ -126,7 +133,7 @@ export default abstract class BaseTextLayer<D> {
         fontSize: () => this.xScale < 2.5 ? '12px' : '16px'
       },
       color: () => {
-        return "white";
+        return this.color;
       },
       textScaled: this.textScaled,
       textBaseline: 'middle',

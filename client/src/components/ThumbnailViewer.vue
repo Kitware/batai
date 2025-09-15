@@ -34,7 +34,7 @@ export default defineComponent({
     const {
       scaledWidth,
       scaledHeight,
-      blackBackground,
+      backgroundColor,
     } = useState();
 
     function updateViewerAndImages() {
@@ -154,7 +154,7 @@ export default defineComponent({
       yScale,
       scaledWidth,
       scaledHeight,
-      blackBackground,
+      backgroundColor,
     };
   },
 });
@@ -165,8 +165,8 @@ export default defineComponent({
     <div
       id="spectro"
       ref="containerRef"
+      :style="{ backgroundColor: backgroundColor }"
       class="playback-container"
-      :class="{ 'black-background': blackBackground, 'white-background': !blackBackground }"
     />
     <layer-manager
       v-if="initialized"

@@ -77,7 +77,7 @@ export default class SpeciesLayer extends BaseTextLayer<TextData> {
         fontSize: '18px',
       },
       color: () => {
-        return "white";
+        return this.color;
       },
       offset: (data) => ({
         x: data.offsetX || 0,

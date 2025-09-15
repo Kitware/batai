@@ -2,7 +2,7 @@
 import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
 import * as d3 from "d3";
 import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
-import { geojsonToSpectro, SpectroInfo } from "./geoJSUtils";
+import { geojsonToSpectro, SpectroInfo, textColorFromBackground } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
 import CompressedOverlayLayer from "./layers/compressedOverlayLayer";
@@ -640,6 +640,7 @@ export default defineComponent({
         // convert rgb(0 0 0) to rgb(0, 0, 0)
         backgroundColor.value = backgroundColor.value.replace(/rgb\((\d+)\s+(\d+)\s+(\d+)\)/, 'rgb($1, $2, $3)');
       }
+      
       const backgroundRgbColor = d3.color(backgroundColor.value) as d3.RGBColor;
       const redStops: number[] = [backgroundRgbColor.r / 255];
       const greenStops: number[] = [backgroundRgbColor.g / 255];
@@ -654,6 +655,22 @@ export default defineComponent({
       rValues.value = redStops.join(' ');
       gValues.value = greenStops.join(' ');
       bValues.value = blueStops.join(' ');
+      const textColor = textColorFromBackground(backgroundColor.value);
+      if (freqLayer) {
+        freqLayer.setTextColor(textColor);
+      }
+      if (speciesLayer) {
+        speciesLayer.setTextColor(textColor);
+      }
+      if (legendLayer) {
+        legendLayer.setTextColor(textColor);
+      }
+      if (timeLayer) {
+        timeLayer.setTextColor(textColor);
+      } 
+      if (speciesSequenceLayer) {
+        speciesSequenceLayer.setTextColor(textColor);
+      }
 
     }
 

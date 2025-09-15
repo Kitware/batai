@@ -32,7 +32,7 @@ export default defineComponent({
       selectedId,
       selectedType,
       creationType,
-      blackBackground,
+      backgroundColor,
       scaledVals,
       configuration,
       scaledWidth,
@@ -237,10 +237,10 @@ export default defineComponent({
       createAnnotation,
       cursorHandler,
       imageCursorRef,
-      blackBackground,
       wheelEvent,
       scaledWidth,
       scaledHeight,
+      backgroundColor
     };
   },
 });
@@ -249,7 +249,7 @@ export default defineComponent({
 <template>
   <div
     class="video-annotator"
-    :class="{ 'black-background': blackBackground, 'white-background': !blackBackground }"
+    :style="{ backgroundColor: backgroundColor }"
     @wheel="wheelEvent($event)"
   >
     <div
