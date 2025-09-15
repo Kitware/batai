@@ -1,35 +1,19 @@
 import geo, { GeoEvent } from 'geojs';
 import { SpectroInfo, geojsonToSpectro } from '../geoJSUtils';
-import { LayerStyle, RectGeoJSData, TextData } from './types';
+import { TextData } from './types';
+import BaseTextLayer from './baseTextLayer';
 
 
-export default class MeasureToolLayer {
+export default class MeasureToolLayer extends BaseTextLayer<TextData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  geoViewerRef: any;
-  spectroInfo: SpectroInfo;
-
+  frequencyRulerLayer: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  event: (name: string, data: any) => void;
-
-  scaledWidth: number;
-  scaledHeight: number;
-
+  pointAnnotation: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  measureLayer: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  measureAnnotation: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textLayer: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textAnnotation: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textFeature: any;
+  lineAnnotation: any;
 
   mode: null | 'rectangle';
-
-
-  rectStyle: LayerStyle<RectGeoJSData>;
-  textStyle: LayerStyle<TextData>;
+  dragging: boolean;
 
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,227 +22,91 @@ export default class MeasureToolLayer {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo,
   ) {
-    this.geoViewerRef = geoViewerRef;
-    this.spectroInfo = spectroInfo;
-    this.event = event;
+    super(geoViewerRef, event, spectroInfo);
 
-    this.scaledWidth = 0;
-    this.scaledHeight = 0;
-
-    const rectangleLayer = this.geoViewerRef.createLayer("annotation", {
-      clickToEdit: false
+    const frequencyRulerLayer = this.geoViewerRef.createLayer("feature", {
+      features: ['point', 'line'],
     });
-    const labelLayer = this.geoViewerRef.createLayer("feature", {
-      features: ['text'],
-    });
-    console.log('adding labelLayer', labelLayer);
-    this.textLayer = labelLayer;
-    this.measureLayer = rectangleLayer;
-    this.textFeature = null;
-//    this.textFeature = layer
-//      .createFeature("text")
-//      .text((data: TextData) => data.text)
-//      .position((data: TextData) => ({ x: data.x, y: data.y }));
+    this.frequencyRulerLayer = frequencyRulerLayer;
     this.mode = null;
-    this.measureLayer.mode(this.mode);
-    this.measureAnnotation = null;
+    this.pointAnnotation= null;
+    this.lineAnnotation = null;
+    this.dragging = false;
 
     this.textStyle = this.createTextStyle();
-    this.rectStyle = this.createRectStyle();
-  }
-
-  handleFinishDrawing(e: GeoEvent) {
-    // 0. Make sure it is a legal annotation (doesn't cross compressed segments)
-    this.applyStyles();
-    // 3. Remove existing annotation (only one measure at a time)
-    this.updateActiveMeasureAnnotation(e.annotation.id());
-    // 4. Draw text with measurements
-    // 5. Trigger redraw?
-    this.measureLayer.draw();
-    this.enableDrawing();
-  }
-
-  updateActiveMeasureAnnotation(activeAnnotationId: number) {
-    console.log('updating active annotation to be ', activeAnnotationId);
-    const annotations = this.measureLayer.annotations();
-    if (annotations && annotations.length) {
-      annotations.forEach((annotation: any) => {
-        const id = annotation.id();
-        if (id !== activeAnnotationId) {
-          console.log('removing annotation ', id)
-          this.measureLayer.removeAnnotation(annotation);
-        }
-      });
-    }
-  }
-
-  applyStyles() {
-    const annotations = this.measureLayer.annotations();
-    if (annotations && annotations.length) {
-      annotations.forEach((annotation: any) => {
-        annotation.style(this.createRectStyle());
-      });
-    }
-    this.measureLayer.draw();
-  }
-
-  _updateMode() {
-    this.measureLayer.mode(this.mode, this.measureAnnotation);
   }
 
   enableDrawing() {
-    console.log(geo.event);
-    this.mode = 'rectangle';
-    this._updateMode();
-    this.measureAnnotation = this.measureLayer.annotations()[0];
-    this.measureLayer.geoOn(geo.event.annotation.add, (e: GeoEvent) => {
-      // this.updateActiveMeasureAnnotation(e.annotation.id());
-      console.log(e);
-      if (this.measureLayer.annotations().length > 1) {
-        const oldAnnotation = this.measureLayer.annotations()[1];
-        this.measureLayer.removeAnnotation(oldAnnotation);
-      }
-      // this.measureAnnotation = this.measureLayer.annotations()[0];
-      // this.applyStyles();
-      // this.measureLayer.draw();
-      // this._updateMode();
-    });
-    Object.values(geo.event.annotation).forEach((eventName: string) => {
-      this.measureLayer.geoOn(eventName, (e: GeoEvent) => {
-        console.log(eventName, e);
+    // Frequency ruler
+    this.lineAnnotation = this.frequencyRulerLayer.createFeature('line')
+      .data([[
+        {x: 0, y: 0},
+        {x: this.spectroInfo.width, y: 0},
+      ]])
+      .style({
+        strokeColor: 'white',
+        strokeWidth: 2,
       });
-    });
-    this.measureLayer.geoOn(geo.event.annotation.mode, (e: GeoEvent) => {
-      // If we're still in "measure mode", re-enable drawing for the annotation
-      this.applyStyles();
-      this.measureLayer.annotations()[0].label('');
-      this.measureLayer.draw();
-      // if (this.mode === 'rectangle') {
-        // this._updateMode();
-      // }
-    });
-    this.measureLayer.geoOn(geo.event.annotation.state, (e: GeoEvent) => {
-      console.log(this.measureLayer.annotations()[0].state());
-      if (this.measureLayer.annotations()[0].state() === 'done') {
-        this.showMeasurements(this.measureLayer.annotations()[0]);
+    this.pointAnnotation = this.frequencyRulerLayer.createFeature('point')
+      .data([{x: 0, y: 0}])
+      .style({
+        radius: 10,
+        fillColor: 'blue',
+        stroke: true,
+        strokeColor: 'white',
+        strokeWidth: 5,
+      });
+    this.geoViewerRef.geoOn(geo.event.mousedown, (e: GeoEvent) => {
+      const gcs = this.geoViewerRef.displayToGcs(e.map);
+      const p = this.pointAnnotation.data()[0];
+      const dx = gcs.x - p.x;
+      const dy = gcs.y - p.y;
+      if (Math.sqrt(dx*dx + dy*dy) < 10) {
+        this.geoViewerRef.interactor().addAction({
+          action: 'dragpoint',
+          name: 'drag point with mouse',
+          owner: 'MeasureToolLayer',
+          input: 'left',
+        });
+        this.dragging = true;
       }
     });
+    this.geoViewerRef.geoOn(geo.event.actionmove, (e: GeoEvent) => {
+      if (this.dragging) {
+        this.updateRuler(e.mouse.geo.y);
+      }
+    });
+    this.geoViewerRef.geoOn(geo.event.mouseup, () => {
+      this.dragging = false;
+      this.geoViewerRef.interactor().removeAction(undefined, undefined, 'MeasureToolLayer');
+    });
+    this.frequencyRulerLayer.draw();
+  }
+
+  updateRuler(newY: number) {
+    this.lineAnnotation.data([[
+      {x: 0, y: newY},
+      {x: this.spectroInfo.width, y: newY},
+    ]]);
+    this.pointAnnotation.data([{x: 0, y: newY}]);
+    this.frequencyRulerLayer.draw();
+    const height = Math.max(this.scaledHeight, this.spectroInfo.height);
+    const freq = height - newY >= 0
+      ? ((height - newY) * (this.spectroInfo.high_freq - this.spectroInfo.low_freq)) / height / 1000 + this.spectroInfo.low_freq / 1000
+      : -1;
+    console.log(freq);
   }
 
   disableDrawing() {
     this.mode = null;
-    this._updateMode();
-    this.measureLayer.geoOff(geo.event.annotation.add);
-    this.measureLayer.geoOff(geo.event.actionup);
-    this.measureLayer.removeAllAnnotations();
-    this.measureAnnotation = null;
-    this.textFeature.data([]).draw();
+    this.textLayer.data([]).draw();
+    this.clearRulerLayer();
   }
 
-  showMeasurements(annotation: any) {
-    if (!annotation.features() && !annotation.features.length) {
-      // The annotation has no features
-      return;
-    }
-    const rectangle: GeoJSON.Feature<GeoJSON.Polygon> = annotation.geojson();
-    const measurements = geojsonToSpectro(rectangle, this.spectroInfo);
-    if (measurements.error) {
-      // Raise
-      console.error(measurements.error);
-      return;
-    }
-    const coordinates = rectangle.geometry.coordinates[0];
-    const determineFreqOffset = (input: number) => {
-      if (input < 10000) {
-        return 31;
-      }
-      if (input < 100000) {
-        return 33;
-      }
-      return 35;
-    };
-    const measureData = [
-      {
-         label: `${measurements.start_time}ms`,
-         x: coordinates[0][0],
-         y: coordinates[0][1],
-         offset: { x: 0, y: 10 },
-      },
-      {
-         label: `${measurements.end_time}ms`,
-         x: coordinates[3][0],
-         y: coordinates[3][1],
-         offset: { x: 0, y: 10 },
-      },
-      {
-         label: `${measurements.low_freq}Hz`,
-         x: coordinates[3][0],
-         y: coordinates[3][1],
-         offset: { x: determineFreqOffset(measurements.low_freq), y: -5 },
-      },
-      {
-         label: `${measurements.high_freq}Hz`,
-         x: coordinates[2][0],
-         y: coordinates[2][1],
-         offset: { x: determineFreqOffset(measurements.high_freq), y: 5 },
-      },
-    ];
-    if (!this.textFeature) {
-      this.textFeature = this.textLayer.createFeature('text');
-    }
-    this.textFeature.data(
-      measureData
-    ).position(
-      function (dataPoint: { label: string, x: number, y: number }) {
-        const { x, y } = dataPoint;
-        return { x, y };
-      }
-    ).text(
-      function (dataPoint: { label: string, x: number, y: number }) {
-        return dataPoint.label;
-      }
-    ).style({
-      fontSize: '12px',
-      color: 'white',
-      offset: function(dataPoint: { offset: { x: number, y: number } }) {
-        return dataPoint.offset;
-      },
-    }).draw();
-  }
-
-  createTextStyle(): LayerStyle<TextData> {
-    return {
-      ...{
-        stroleColor: "yellow",
-        strokeWidth: 2.0,
-        antialiasing: 0,
-        stroke: true,
-        uniformPolygon: true,
-        fill: false,
-      },
-      color: () => {
-        return "white";
-      },
-      offset: (data) => ({
-        x: data.offsetX || 0,
-        y: data.offsetY || 0,
-      }),
-      textAlign: 'starts',
-    };
-  }
-
-  createRectStyle(): LayerStyle<RectGeoJSData> {
-    return {
-      ...{
-        strokeColor: 'black',
-        strokeWidth: 1.0,
-        antialiasing: 0,
-        stroke: true,
-        uniformPolygon: true,
-        fill: false,
-      },
-      fill: false,
-      strokeColor: "cyan",
-    };
+  clearRulerLayer() {
+    this.pointAnnotation.data([]);
+    this.lineAnnotation.data([]);
+    this.textLayer.data([]).draw();
+    this.frequencyRulerLayer.draw();
   }
 }
