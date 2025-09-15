@@ -154,7 +154,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
           thicker: i % 1000 === 0,
         });
         this.textDataX.push({
-          text: `${i}ms`,
+          text: `${i}ₘₛ`,
           type: 'time',
           x: i * timeToPixels,
           y: baseYPos + length,
@@ -261,7 +261,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
         //Need to decide what text to add to the label
         if (!bottomWithinYAxisStart) {
         this.textDataX.push({
-          text: `▶${start_time}ms`,
+          text: `▶${start_time}ₘₛ`,
           type: 'time',
           x: 0 + pixelOffset,
           y: baseYPos + length + (yOffset === 0 ? 18 : -12),
@@ -273,7 +273,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
       if (!topWithinYAxisEnd) {
 
         this.textDataX.push({
-          text: `${end_time}ms◀`,
+          text: `${end_time}ₘₛ◀`,
           type: 'time',
           x: width + pixelOffset,
           y: baseTopPos + (baseTopPos === 0 ? -16 : 16),

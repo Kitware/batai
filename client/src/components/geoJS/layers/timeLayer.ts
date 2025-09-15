@@ -117,13 +117,13 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         });
         // Now we need to create the text Labels
         this.textData.push({
-          text: `${start_time}ms`,
+          text: `${start_time}ₘₛ`,
           x: xmin,
           y: ymin + lineDist + 5,
           textBaseline: 'top',
         });
         this.textData.push({
-          text: `${end_time}ms`,
+          text: `${end_time}ₘₛ`,
           x: xmax,
           y: ymin + lineDist + 5,
           textBaseline: 'top',
@@ -177,12 +177,12 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         });
         // Now we need to create the text Labels
         this.textData.push({
-          text: `${start_time}ms`,
+          text: `${start_time}ₘₛ`,
           x: xmin,
           y: ymax - lineDist,
         });
         this.textData.push({
-          text: `${end_time}ms`,
+          text: `${end_time}ₘₛ`,
           x: xmax,
           y: ymax - lineDist,
         });
@@ -220,7 +220,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         const ypos = (ymax + ymin) / 2.0;
         // Now we need to create the text Labels
         this.textData.push({
-          text: `${end_time - start_time}ms`,
+          text: `${end_time - start_time}ₘₛ`,
           x: xpos,
           y: ypos + lineDist,
         });
@@ -252,7 +252,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         const xpos = (xmin + xmax) / 2.0;
         // Now we need to create the text Labels
         this.textData.push({
-          text: `${end_time - start_time}ms`,
+          text: `${end_time - start_time}ₘₛ`,
           x: xpos,
           y: ((ymax - ymin) / 2.0) + -35 + offsetY,
         });
