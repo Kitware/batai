@@ -514,8 +514,9 @@ export default defineComponent({
           speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
 
           if (!measureToolLayer) {
-            measureToolLayer = new MeasureToolLayer(props.geoViewerRef, event, props.spectroInfo);
+            measureToolLayer = new MeasureToolLayer(props.geoViewerRef, event, props.spectroInfo, measuring.value);
           }
+          measureToolLayer.redraw();
           watch(measuring, () => {
             if (measuring.value) {
               measureToolLayer.enableDrawing();
@@ -523,7 +524,6 @@ export default defineComponent({
               measureToolLayer.disableDrawing();
             }
           });
-          // measureToolLater.setScaleDimensions(...);
 
           timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
           timeLayer.formatData(localAnnotations.value, sequenceAnnotations.value);

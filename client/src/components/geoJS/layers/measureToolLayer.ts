@@ -22,6 +22,7 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo,
+    measuring?: boolean
   ) {
     super(geoViewerRef, event, spectroInfo);
 
@@ -48,6 +49,10 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.yValue = 0;
 
     this.textStyle = this.createTextStyle();
+    this.rulerOn = measuring || false;
+    if (this.rulerOn) {
+      this.enableDrawing();
+    }
   }
 
   enableDrawing() {
