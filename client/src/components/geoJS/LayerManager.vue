@@ -518,10 +518,8 @@ export default defineComponent({
           }
           watch(measuring, () => {
             if (measuring.value) {
-              console.log('enabling drawing');
               measureToolLayer.enableDrawing();
             } else {
-              console.log('disabling drawing');
               measureToolLayer.disableDrawing();
             }
           });
@@ -625,6 +623,10 @@ export default defineComponent({
         );
         sequenceAnnotationLayer.redraw();
       }
+      if (measureToolLayer) {
+        measureToolLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        measureToolLayer.redraw();
+      }
       // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
       legendLayer?.onPan();
     });
@@ -659,7 +661,7 @@ export default defineComponent({
         // convert rgb(0 0 0) to rgb(0, 0, 0)
         backgroundColor.value = backgroundColor.value.replace(/rgb\((\d+)\s+(\d+)\s+(\d+)\)/, 'rgb($1, $2, $3)');
       }
-      
+
       const backgroundRgbColor = d3.color(backgroundColor.value) as d3.RGBColor;
       const redStops: number[] = [backgroundRgbColor.r / 255];
       const greenStops: number[] = [backgroundRgbColor.g / 255];
@@ -686,11 +688,13 @@ export default defineComponent({
       }
       if (timeLayer) {
         timeLayer.setTextColor(textColor);
-      } 
+      }
       if (speciesSequenceLayer) {
         speciesSequenceLayer.setTextColor(textColor);
       }
-
+      if (measureToolLayer) {
+        measureToolLayer.setTextColor(textColor);
+      }
     }
 
     watch([backgroundColor, colorScheme], updateColorFilter);
