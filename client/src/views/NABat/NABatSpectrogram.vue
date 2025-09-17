@@ -290,7 +290,7 @@ export default defineComponent({
                   :color="measuring ? 'blue' : ''"
                   @click="toggleMeasureMode"
                 >
-                  mdi-tape-measure
+                  mdi-ruler
                 </v-icon>
               </template>
               <span>Use a draggable straight edge to measure frequency</span>
