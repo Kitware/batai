@@ -281,14 +281,20 @@ export default defineComponent({
               </div>
             </v-col>
             <v-spacer />
-            <v-icon
-              size="35"
-              class="mr-5 mt-5"
-              :color="measuring ? 'blue' : ''"
-              @click="toggleMeasureMode"
-            >
-              mdi-tape-measure
-            </v-icon>
+            <v-tooltip>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="measuring ? 'blue' : ''"
+                  @click="toggleMeasureMode"
+                >
+                  mdi-tape-measure
+                </v-icon>
+              </template>
+              <span>Use a draggable straight edge to measure frequency</span>
+            </v-tooltip>
             <v-tooltip
               v-if="!disabledFeatures.includes('speciesLabel')"
               bottom
