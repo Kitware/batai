@@ -515,6 +515,7 @@ export default defineComponent({
 
           if (!measureToolLayer) {
             measureToolLayer = new MeasureToolLayer(props.geoViewerRef, event, props.spectroInfo, measuring.value);
+            measureToolLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           }
           measureToolLayer.redraw();
           watch(measuring, () => {

@@ -3,6 +3,12 @@ import { SpectroInfo } from '../geoJSUtils';
 import { LayerStyle, LineData, TextData } from './types';
 import BaseTextLayer from './baseTextLayer';
 
+function _determineRulerColor(isDragging: boolean, isDarkMode: boolean) {
+  if (isDarkMode) {
+    return isDragging ? 'orange' : 'yellow';
+  }
+  return isDragging ? 'cyan' : 'blue';
+}
 
 export default class MeasureToolLayer extends BaseTextLayer<TextData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,6 +53,7 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.lineAnnotation = null;
     this.dragging = false;
     this.yValue = 0;
+    this.color = 'white';
 
     this.textStyle = this.createTextStyle();
     this.rulerOn = measuring || false;
@@ -72,7 +79,8 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
       const p = this.pointAnnotation.data()[0];
       const dx = gcs.x - p.x;
       const dy = gcs.y - p.y;
-      if (Math.sqrt(dx*dx + dy*dy) < 10) {
+      // TODO figure out how to do screen pixels for this
+      if (Math.sqrt(dx*dx + dy*dy) < 20 || dy < 10) {
         this.geoViewerRef.interactor().addAction({
           action: 'dragpoint',
           name: 'drag point with mouse',
@@ -90,20 +98,35 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.geoViewerRef.geoOn(geo.event.mouseup, () => {
       this.dragging = false;
       this.geoViewerRef.interactor().removeAction(undefined, undefined, 'MeasureToolLayer');
+      this.updateRuler(this.yValue);
     });
     this.frequencyRulerLayer.draw();
     this.updateRuler(this.yValue);
   }
 
+  _getTextCoordinates(): { x: number, y: number } {
+    const bounds = this.geoViewerRef.bounds();
+    const startX = 0;
+    const endX = ((this.compressedView
+      ? this.scaledWidth
+      : this.spectroInfo.width
+    ) || this.spectroInfo.width);
+    const left = Math.max(startX, bounds.left);
+    const right = Math.min(endX, bounds.right);
+    return { x: (left + right) / 2, y: this.yValue };
+  }
+
   updateRuler(newY: number) {
+    // this.setTextColor();
     if (newY < 0) {
       return;
     }
     this.yValue = newY;
+    const spectroWidth = this.compressedView ? this.scaledWidth : this.spectroInfo.width;
     this.lineAnnotation
       .data([[
         {x: 0, y: this.yValue},
-        {x: this.spectroInfo.width, y: this.yValue},
+        {x: (spectroWidth || this.spectroInfo.width), y: this.yValue},
       ]])
       .style(this.createLineStyle());
     this.pointAnnotation
@@ -115,13 +138,13 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
       ? ((height - newY) * (this.spectroInfo.high_freq - this.spectroInfo.low_freq)) / height / 1000 + this.spectroInfo.low_freq / 1000
       : -1;
     const textValue = `${frequency.toFixed(1)}KHz`;
+    const { x: textX, y: textY } = this._getTextCoordinates();
     this.textData = [
       {
         text: textValue,
-        x: 0,
-        y: this.yValue,
+        x: textX,
+        y: textY,
         offsetY: 20,
-        offsetX: 20,
       },
     ];
     this.textLayer.data(this.textData).draw();
@@ -158,12 +181,12 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
 
   createTextStyle(): LayerStyle<TextData> {
     return {
-      color: () => this.color,
+      color: () => _determineRulerColor(this.dragging, this.color === 'white'),
       offset: (data: TextData) => ({
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
-      textAlign: 'start',
+      textAlign: 'center',
       textScaled: this.textScaled,
       textBaseline: 'bottom',
     };
@@ -172,24 +195,18 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
   createPointStyle(): LayerStyle<LineData> {
     return {
       radius: 10,
-      fillColor: this.color,
+      fillColor: () => _determineRulerColor(this.dragging, this.color === 'white'),
+      strokeColor: () => _determineRulerColor(this.dragging, this.color === 'white'),
       stroke: true,
-      strokeColor: this.color,
       strokeWidth: 5,
     };
   }
 
   createLineStyle(): LayerStyle<LineData> {
     return {
-      strokeColor: this.color,
+      strokeColor: () => _determineRulerColor(this.dragging, this.color === 'white'),
       strokeWidth: 2,
     };
   }
 
-  setTextColor(color: string) {
-    super.setTextColor(color);
-    if (this.rulerOn) {
-      this.updateRuler(this.yValue);
-    }
-  }
 }
