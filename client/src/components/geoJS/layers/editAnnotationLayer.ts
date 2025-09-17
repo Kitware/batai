@@ -5,19 +5,11 @@ import {
   spectroToGeoJSon,
   reOrdergeoJSON,
   spectroSequenceToGeoJSon,
+  rectVertex,
+  rectEdge,
 } from "../geoJSUtils";
 import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
-import { LayerStyle } from "./types";
-import { GeoJSON } from "geojson";
-
-export type EditAnnotationTypes = "rectangle";
-
-interface RectGeoJSData {
-  id: number;
-  selected: boolean;
-  editing: boolean | string;
-  polygon: GeoJSON.Polygon;
-}
+import { LayerStyle, RectGeoJSData, EditAnnotationTypes } from "./types";
 
 const typeMapper = new Map([
   ["LineString", "line"],
@@ -26,13 +18,6 @@ const typeMapper = new Map([
   ["rectangle", "rectangle"],
 ]);
 
-/**
- * correct matching of drag handle to cursor direction relies on strict ordering of
- * vertices within the GeoJSON coordinate list using utils.reOrdergeoJSON()
- * and utils.reOrderBounds()
- */
-const rectVertex = ["sw-resize", "nw-resize", "ne-resize", "se-resize"];
-const rectEdge = ["w-resize", "n-resize", "e-resize", "s-resize"];
 /**
  * This class is used to edit annotations within the viewer
  * It will do and display different things based on it either being in
@@ -416,7 +401,7 @@ export default class EditAnnotationLayer {
     }
     if (typeof this.type !== "string") {
       throw new Error(
-        `editing props needs to be a string of value 
+        `editing props needs to be a string of value
         ${geo.listAnnotations().join(", ")}
           when geojson prop is not set`
       );

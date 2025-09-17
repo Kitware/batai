@@ -648,6 +648,14 @@ function textColorFromBackground(rgbString: string): "black" | "white" {
   return getContrastingColor(r, g, b);
 }
 
+/**
+ * correct matching of drag handle to cursor direction relies on strict ordering of
+ * vertices within the GeoJSON coordinate list using utils.reOrdergeoJSON()
+ * and utils.reOrderBounds()
+ */
+const rectVertex = ["sw-resize", "nw-resize", "ne-resize", "se-resize"];
+const rectEdge = ["w-resize", "n-resize", "e-resize", "s-resize"];
+
 export {
   spectroToGeoJSon,
   geojsonToSpectro,
@@ -655,5 +663,7 @@ export {
   useGeoJS,
   spectroToCenter,
   spectroSequenceToGeoJSon,
-  textColorFromBackground
+  textColorFromBackground,
+  rectVertex,
+  rectEdge,
 };
