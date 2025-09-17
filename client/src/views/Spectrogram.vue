@@ -240,7 +240,15 @@ export default defineComponent({
       timeRef.value = time;
       freqRef.value = freq;
     };
-    watch(compressed, () => loadData());
+    watch(compressed, () => {
+      loadData();
+      if (drawingBoundingBox.value) {
+        toggleDrawingBoundingBox();
+      }
+      if (measuring.value) {
+        toggleMeasureMode();
+      }
+    });
 
     const keyboardEvent = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
@@ -284,6 +292,11 @@ export default defineComponent({
       viewCompressedOverlay.value = !viewCompressedOverlay.value;
     };
 
+    const drawingBoxes = ref(false);
+    function toggleDrawingBoundingBoxes() {
+      drawingBoxes.value = !drawingBoxes.value;
+    }
+
     return {
       annotationState,
       compressed,
@@ -315,6 +328,8 @@ export default defineComponent({
       colorpickerMenu,
       measuring,
       toggleMeasureMode,
+      drawingBoxes,
+      toggleDrawingBoundingBoxes,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -421,6 +436,20 @@ export default defineComponent({
               </v-select>
             </v-col>
             <v-spacer />
+            <v-tooltip>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="drawingBoxes ? 'blue' : ''"
+                  @click="toggleDrawingBoundingBoxes"
+                >
+                  mdi-border-radius
+                </v-icon>
+              </template>
+              <span>Draw bounding boxes to measure pulses</span>
+            </v-tooltip>
             <v-tooltip>
               <template #activator="{props: subProps }">
                 <v-icon
