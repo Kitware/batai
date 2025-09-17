@@ -22,6 +22,10 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
   dragging: boolean;
   yValue: number;
 
+  moveHandler: (e: GeoEvent) => void;
+  mousedownHandler: (e: GeoEvent) => void;
+  mouseupHandler: () => void;
+
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
@@ -60,6 +64,32 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     if (this.rulerOn) {
       this.enableDrawing();
     }
+
+    this.moveHandler = (e: GeoEvent) => {
+      if (e && this.dragging) {
+        this.updateRuler(e.mouse.geo.y);
+      }
+    };
+    this.mousedownHandler = (e: GeoEvent) => {
+      const gcs = this.geoViewerRef.displayToGcs(e.map);
+      const p = this.pointAnnotation.data()[0];
+      const dx = Math.abs(gcs.x - p.x);
+      const dy = Math.abs(gcs.y - p.y);
+      if (Math.sqrt(dx*dx + dy*dy) < 20 || dy < 10) {
+        this.geoViewerRef.interactor().addAction({
+          action: 'dragpoint',
+          name: 'drag point with mouse',
+          owner: 'MeasureToolLayer',
+          input: 'left',
+        });
+        this.dragging = true;
+      }
+    };
+    this.mouseupHandler = () => {
+      this.dragging = false;
+      this.geoViewerRef.interactor().removeAction(undefined, undefined, 'MeasureToolLayer');
+      this.updateRuler(this.yValue);
+    };
   }
 
   enableDrawing() {
@@ -74,32 +104,9 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.pointAnnotation = this.frequencyRulerLayer.createFeature('point')
       .data([{x: 0, y: this.yValue}])
       .style(this.createPointStyle());
-    this.geoViewerRef.geoOn(geo.event.mousedown, (e: GeoEvent) => {
-      const gcs = this.geoViewerRef.displayToGcs(e.map);
-      const p = this.pointAnnotation.data()[0];
-      const dx = gcs.x - p.x;
-      const dy = gcs.y - p.y;
-      // TODO figure out how to do screen pixels for this
-      if (Math.sqrt(dx*dx + dy*dy) < 20 || dy < 10) {
-        this.geoViewerRef.interactor().addAction({
-          action: 'dragpoint',
-          name: 'drag point with mouse',
-          owner: 'MeasureToolLayer',
-          input: 'left',
-        });
-        this.dragging = true;
-      }
-    });
-    this.geoViewerRef.geoOn(geo.event.actionmove, (e: GeoEvent) => {
-      if (this.dragging) {
-        this.updateRuler(e.mouse.geo.y);
-      }
-    });
-    this.geoViewerRef.geoOn(geo.event.mouseup, () => {
-      this.dragging = false;
-      this.geoViewerRef.interactor().removeAction(undefined, undefined, 'MeasureToolLayer');
-      this.updateRuler(this.yValue);
-    });
+    this.geoViewerRef.geoOn(geo.event.mousedown, this.mousedownHandler);
+    this.geoViewerRef.geoOn(geo.event.actionmove, this.moveHandler);
+    this.geoViewerRef.geoOn(geo.event.mouseup, this.mouseupHandler);
     this.frequencyRulerLayer.draw();
     this.updateRuler(this.yValue);
   }
@@ -117,7 +124,6 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
   }
 
   updateRuler(newY: number) {
-    // this.setTextColor();
     if (newY < 0) {
       return;
     }
@@ -155,6 +161,9 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.textData = [];
     this.textLayer.data(this.textData).draw();
     this.clearRulerLayer();
+    this.geoViewerRef.geoOff(geo.event.mousedown, this.mousedownHandler);
+    this.geoViewerRef.geoOff(geo.event.mouseup, this.mouseupHandler);
+    this.geoViewerRef.geoOff(geo.event.actionmove, this.moveHandler);
   }
 
   clearRulerLayer() {
