@@ -134,7 +134,7 @@ services:
       - rabbitmq:/var/lib/rabbitmq/mnesia
 
   minio:
-    image: minio/minio:latest
+    image: bitnamilegacy/minio:2025.4.22
     # When run with a TTY, minio prints credentials on startup
     tty: true
     command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9001}"]
