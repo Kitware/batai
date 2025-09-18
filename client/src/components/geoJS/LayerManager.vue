@@ -13,6 +13,7 @@ import FreqLayer from "./layers/freqLayer";
 import SpeciesLayer from "./layers/speciesLayer";
 import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import MeasureToolLayer from "./layers/measureToolLayer";
+import BoundingBoxLayer from "./layers/boundingBoxLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
 export default defineComponent({
@@ -66,6 +67,7 @@ export default defineComponent({
       backgroundColor,
       measuring,
       frequencyRulerY,
+      drawingBoundingBox,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -83,6 +85,7 @@ export default defineComponent({
     let speciesLayer: SpeciesLayer;
     let speciesSequenceLayer: SpeciesSequenceLayer;
     let measureToolLayer: MeasureToolLayer;
+    let boundingBoxLayer: BoundingBoxLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -537,6 +540,18 @@ export default defineComponent({
             }
           });
 
+          if (!boundingBoxLayer) {
+            boundingBoxLayer = new BoundingBoxLayer(props.geoViewerRef, event, props.spectroInfo, drawingBoundingBox.value);
+            boundingBoxLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          }
+          watch(drawingBoundingBox, () => {
+            if (drawingBoundingBox.value) {
+              boundingBoxLayer.enableDrawing();
+            } else {
+              boundingBoxLayer.disableDrawing();
+            }
+          });
+
           timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
           timeLayer.formatData(localAnnotations.value, sequenceAnnotations.value);
           freqLayer.formatData(localAnnotations.value);
@@ -713,6 +728,9 @@ export default defineComponent({
       }
       if (measureToolLayer) {
         measureToolLayer.setTextColor(textColor);
+      }
+      if (boundingBoxLayer) {
+        boundingBoxLayer.setTextColor(textColor);
       }
     }
 

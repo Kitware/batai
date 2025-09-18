@@ -66,6 +66,8 @@ export default defineComponent({
       configuration,
       measuring,
       toggleMeasureMode,
+      drawingBoundingBox,
+      toggleDrawingBoundingBox,
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -292,11 +294,6 @@ export default defineComponent({
       viewCompressedOverlay.value = !viewCompressedOverlay.value;
     };
 
-    const drawingBoxes = ref(false);
-    function toggleDrawingBoundingBoxes() {
-      drawingBoxes.value = !drawingBoxes.value;
-    }
-
     return {
       annotationState,
       compressed,
@@ -328,8 +325,8 @@ export default defineComponent({
       colorpickerMenu,
       measuring,
       toggleMeasureMode,
-      drawingBoxes,
-      toggleDrawingBoundingBoxes,
+      drawingBoundingBox,
+      toggleDrawingBoundingBox,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -442,8 +439,8 @@ export default defineComponent({
                   v-bind="subProps"
                   size="35"
                   class="mr-5 mt-5"
-                  :color="drawingBoxes ? 'blue' : ''"
-                  @click="toggleDrawingBoundingBoxes"
+                  :color="drawingBoundingBox ? 'blue' : ''"
+                  @click="toggleDrawingBoundingBox"
                 >
                   mdi-border-radius
                 </v-icon>

@@ -10,6 +10,7 @@ import {
 } from "../geoJSUtils";
 import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
 import { LayerStyle, RectGeoJSData, EditAnnotationTypes } from "./types";
+import { GeoJSON } from 'geojson';
 
 const typeMapper = new Map([
   ["LineString", "line"],

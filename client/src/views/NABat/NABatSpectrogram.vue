@@ -62,6 +62,8 @@ export default defineComponent({
       configuration,
       measuring,
       toggleMeasureMode,
+      drawingBoundingBox,
+      toggleDrawingBoundingBox,
     } = useState();
     const secondsWarning = 60;
     const { prompt } = usePrompt();
@@ -193,11 +195,6 @@ export default defineComponent({
       }
     }, { immediate: true });
 
-    const drawingBoxes = ref(false);
-    function toggleDrawingBoundingBoxes() {
-      drawingBoxes.value = !drawingBoxes.value;
-    }
-
     return {
       errorMessage,
       additionalErrors,
@@ -221,9 +218,9 @@ export default defineComponent({
       viewCompressedOverlay,
       sideTab,
       measuring,
-      drawingBoxes,
       toggleMeasureMode,
-      toggleDrawingBoundingBoxes,
+      drawingBoundingBox,
+      toggleDrawingBoundingBox,
       // Color Scheme
       colorSchemes,
       colorScheme,
@@ -302,8 +299,8 @@ export default defineComponent({
                   v-bind="subProps"
                   size="35"
                   class="mr-5 mt-5"
-                  :color="drawingBoxes ? 'blue' : ''"
-                  @click="toggleDrawingBoundingBoxes"
+                  :color="drawingBoundingBox ? 'blue' : ''"
+                  @click="toggleDrawingBoundingBox"
                 >
                   mdi-border-radius
                 </v-icon>
