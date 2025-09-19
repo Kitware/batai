@@ -64,6 +64,8 @@ export default defineComponent({
       viewCompressedOverlay,
       sideTab,
       configuration,
+      measuring,
+      toggleMeasureMode,
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -311,6 +313,8 @@ export default defineComponent({
       colorScheme,
       backgroundColor,
       colorpickerMenu,
+      measuring,
+      toggleMeasureMode,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -417,6 +421,20 @@ export default defineComponent({
               </v-select>
             </v-col>
             <v-spacer />
+            <v-tooltip>
+              <template #activator="{props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="measuring ? 'blue' : ''"
+                  @click="toggleMeasureMode"
+                >
+                  mdi-ruler
+                </v-icon>
+              </template>
+              <span>Use a draggable straight edge to measure frequency</span>
+            </v-tooltip>
             <v-tooltip bottom>
               <template #activator="{ props: subProps }">
                 <v-icon

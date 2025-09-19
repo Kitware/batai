@@ -2,21 +2,7 @@
 import { SpectrogramAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
-import { LayerStyle } from "./types";
-
-interface LineData {
-  line: GeoJSON.LineString;
-  thicker?: boolean;
-  grid?: boolean;
-}
-
-interface TextData {
-  text: string;
-  x: number;
-  y: number;
-  offsetY?: number;
-  offsetX?: number;
-}
+import { LayerStyle, LineData, TextData } from "./types";
 
 export default class FreqLayer extends BaseTextLayer<TextData> {
   lineData: LineData[];

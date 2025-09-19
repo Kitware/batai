@@ -2,16 +2,8 @@
 import geo, { GeoEvent } from "geojs";
 import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
 import { SpectrogramAnnotation } from "../../../api/api";
-import { LayerStyle } from "./types";
+import { LayerStyle, RectGeoJSData } from "./types";
 
-interface RectGeoJSData {
-  id: number;
-  selected: boolean;
-  editing?: boolean;
-  polygon: GeoJSON.Polygon;
-  color?: string;
-  owned: boolean; // if the annotation is user owned
-}
 
 export default class RectangleLayer {
   formattedData: RectGeoJSData[];
@@ -113,7 +105,7 @@ export default class RectangleLayer {
 
   setScaledDimensions(newWidth: number, newHeight: number) {
     this.scaledWidth = newWidth;
-    this.scaledHeight = newHeight;    
+    this.scaledHeight = newHeight;
   }
 
   destroy() {

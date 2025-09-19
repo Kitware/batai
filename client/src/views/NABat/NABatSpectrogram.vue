@@ -60,6 +60,8 @@ export default defineComponent({
       viewCompressedOverlay,
       sideTab,
       configuration,
+      measuring,
+      toggleMeasureMode,
     } = useState();
     const secondsWarning = 60;
     const { prompt } = usePrompt();
@@ -183,7 +185,6 @@ export default defineComponent({
       }
     }, { immediate: true });
 
-
     return {
       errorMessage,
       additionalErrors,
@@ -206,6 +207,8 @@ export default defineComponent({
       toggleCompressedOverlay,
       viewCompressedOverlay,
       sideTab,
+      measuring,
+      toggleMeasureMode,
       // Color Scheme
       colorSchemes,
       colorScheme,
@@ -278,6 +281,20 @@ export default defineComponent({
               </div>
             </v-col>
             <v-spacer />
+            <v-tooltip>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="measuring ? 'blue' : ''"
+                  @click="toggleMeasureMode"
+                >
+                  mdi-ruler
+                </v-icon>
+              </template>
+              <span>Use a draggable straight edge to measure frequency</span>
+            </v-tooltip>
             <v-tooltip
               v-if="!disabledFeatures.includes('speciesLabel')"
               bottom
