@@ -24,6 +24,7 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
 
   moveHandler: (e: GeoEvent) => void;
   mousedownHandler: (e: GeoEvent) => void;
+  hoverHandler: (e: GeoEvent) => void;
   mouseupHandler: () => void;
 
   constructor(
@@ -68,6 +69,19 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.moveHandler = (e: GeoEvent) => {
       if (e && this.dragging) {
         this.updateRuler(e.mouse.geo.y);
+      } 
+    };
+    this.hoverHandler = (e: GeoEvent) => {
+      if (e) {
+       const gcs = this.geoViewerRef.displayToGcs(e.map);
+        const p = this.pointAnnotation.data()[0];
+        const dx = Math.abs(gcs.x - p.x);
+        const dy = Math.abs(gcs.y - p.y);
+        if (Math.sqrt(dx*dx + dy*dy) < 20 || dy < 10) {
+          this.event('update:cursor', { cursor: 'grab' });
+        } else {
+          this.event('update:cursor', { cursor: 'default' });
+        }
       }
     };
     this.mousedownHandler = (e: GeoEvent) => {
@@ -83,12 +97,14 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
           input: 'left',
         });
         this.dragging = true;
+        this.event('update:cursor', { cursor: 'grabbing' });
       }
     };
     this.mouseupHandler = () => {
       this.dragging = false;
       this.geoViewerRef.interactor().removeAction(undefined, undefined, 'MeasureToolLayer');
       this.updateRuler(this.yValue);
+      this.event('update:cursor', { cursor: 'grab' });
     };
   }
 
@@ -107,6 +123,7 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.geoViewerRef.geoOn(geo.event.mousedown, this.mousedownHandler);
     this.geoViewerRef.geoOn(geo.event.actionmove, this.moveHandler);
     this.geoViewerRef.geoOn(geo.event.mouseup, this.mouseupHandler);
+    this.geoViewerRef.geoOn(geo.event.mousemove, this.hoverHandler);
     this.frequencyRulerLayer.draw();
     this.updateRuler(this.yValue);
   }
