@@ -66,8 +66,6 @@ export default defineComponent({
       configuration,
       measuring,
       toggleMeasureMode,
-      drawingBoundingBox,
-      toggleDrawingBoundingBox,
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -244,9 +242,6 @@ export default defineComponent({
     };
     watch(compressed, () => {
       loadData();
-      if (drawingBoundingBox.value) {
-        toggleDrawingBoundingBox();
-      }
       if (measuring.value) {
         toggleMeasureMode();
       }
@@ -325,8 +320,6 @@ export default defineComponent({
       colorpickerMenu,
       measuring,
       toggleMeasureMode,
-      drawingBoundingBox,
-      toggleDrawingBoundingBox,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -433,20 +426,6 @@ export default defineComponent({
               </v-select>
             </v-col>
             <v-spacer />
-            <v-tooltip>
-              <template #activator="{ props: subProps }">
-                <v-icon
-                  v-bind="subProps"
-                  size="35"
-                  class="mr-5 mt-5"
-                  :color="drawingBoundingBox ? 'blue' : ''"
-                  @click="toggleDrawingBoundingBox"
-                >
-                  mdi-border-radius
-                </v-icon>
-              </template>
-              <span>Draw bounding boxes to measure pulses</span>
-            </v-tooltip>
             <v-tooltip>
               <template #activator="{props: subProps }">
                 <v-icon
