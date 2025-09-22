@@ -543,6 +543,9 @@ export default defineComponent({
           timeLayer.disable();
           freqLayer.disable();
         }
+        if (props.spectroInfo.compressedWidth && viewCompressedOverlay.value) {
+          viewCompressedOverlay.value = false;
+        }
       }
       triggerUpdate();
     };
@@ -574,9 +577,13 @@ export default defineComponent({
         rectAnnotationLayer.redraw();
       }
       if (compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times && viewCompressedOverlay.value) {
-        compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
-        compressedOverlayLayer.redraw();
+        if (!props.thumbnail && props.spectroInfo.compressedWidth ) {
+          compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+          compressedOverlayLayer.redraw();
+        } else {
+          compressedOverlayLayer?.disable(); 
+        }
       }
       editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (editing.value && editingAnnotation.value) {
