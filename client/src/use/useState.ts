@@ -62,6 +62,7 @@ const configuration: Ref<Configuration> = ref({
 const scaledWidth = ref(0);
 const scaledHeight = ref(0);
 const measuring: Ref<boolean> = ref(false);
+const frequencyRulerY: Ref<number> = ref(0);
 const toggleMeasureMode = () => {
   measuring.value = !measuring.value;
 };
@@ -146,6 +147,7 @@ export default function useState() {
     colorScale,
     measuring,
     toggleMeasureMode,
+    frequencyRulerY,
     colorSchemes,
     colorScheme,
     backgroundColor,

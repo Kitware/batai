@@ -34,7 +34,8 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo,
-    measuring?: boolean
+    measuring?: boolean,
+    yValue?: number
   ) {
     super(geoViewerRef, event, spectroInfo);
 
@@ -58,7 +59,7 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.pointAnnotation= null;
     this.lineAnnotation = null;
     this.dragging = false;
-    this.yValue = 0;
+    this.yValue = yValue || 0;
     this.color = 'white';
     this.hovering = false;
 
@@ -71,7 +72,7 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.moveHandler = (e: GeoEvent) => {
       if (e && this.dragging) {
         this.updateRuler(e.mouse.geo.y);
-      } 
+      }
     };
     this.hoverHandler = (e: GeoEvent) => {
       if (e) {
@@ -145,6 +146,7 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     if (newY < 0) {
       return;
     }
+    this.event("measure:dragged", { yValue: newY });
     this.yValue = newY;
     const spectroWidth = this.compressedView ? this.scaledWidth : this.spectroInfo.width;
     this.lineAnnotation
@@ -186,10 +188,10 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
   }
 
   clearRulerLayer() {
-    this.pointAnnotation.data([]);
-    this.lineAnnotation.data([]);
-    this.textLayer.data([]).draw();
-    this.frequencyRulerLayer.draw();
+    this.pointAnnotation?.data([]);
+    this.lineAnnotation?.data([]);
+    this.textLayer?.data([]).draw();
+    this.frequencyRulerLayer?.draw();
   }
 
   destroy() {
@@ -197,6 +199,15 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.textData = [];
     if (this.frequencyRulerLayer) {
       this.geoViewerRef.deleteLater(this.frequencyRulerLayer);
+    }
+  }
+
+  setScaledDimensions(width: number, height: number) {
+    super.setScaledDimensions(width, height);
+    this.clearRulerLayer();
+    if (this.rulerOn) {
+      this.enableDrawing();
+      this.updateRuler(this.yValue);
     }
   }
 

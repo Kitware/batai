@@ -65,6 +65,7 @@ export default defineComponent({
       colorScheme,
       backgroundColor,
       measuring,
+      frequencyRulerY,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -286,6 +287,10 @@ export default defineComponent({
             editing.value = false;
           }
         }
+      }
+      if (type === "measure:dragged") {
+        const { yValue } = data;
+        frequencyRulerY.value = yValue || 0;
       }
     };
 
@@ -514,7 +519,13 @@ export default defineComponent({
           speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
 
           if (!measureToolLayer) {
-            measureToolLayer = new MeasureToolLayer(props.geoViewerRef, event, props.spectroInfo, measuring.value);
+            measureToolLayer = new MeasureToolLayer(
+              props.geoViewerRef,
+              event,
+              props.spectroInfo,
+              measuring.value,
+              frequencyRulerY.value
+            );
             measureToolLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           }
           measureToolLayer.redraw();
