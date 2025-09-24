@@ -242,9 +242,6 @@ export default defineComponent({
     };
     watch(compressed, () => {
       loadData();
-      if (measuring.value) {
-        toggleMeasureMode();
-      }
     });
 
     const keyboardEvent = (e: KeyboardEvent) => {

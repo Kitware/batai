@@ -173,9 +173,6 @@ export default defineComponent({
       if (drawingBoundingBox.value) {
         toggleDrawingBoundingBox();
       }
-      if (measuring.value) {
-        toggleMeasureMode();
-      }
     });
 
 
