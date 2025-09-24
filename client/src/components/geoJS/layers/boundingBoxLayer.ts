@@ -181,8 +181,9 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
 
   applyStyles() {
     if (this.boxLayer && this.boxLayer.annotations().length) {
-      this.boxLayer.annotations().forEach((annotation: { style: (style: LayerStyle<RectGeoJSData>) => void }) => {
+      this.boxLayer.annotations().forEach((annotation: any) => {
         annotation.style(this.createRectStyle());
+        annotation.editHandleStyle(this.createEditHandleStyle());
       });
     }
   }
@@ -211,6 +212,16 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
         y: data.offsetY || 0,
       }),
       textScaled: this.textScaled,
+    };
+  }
+
+  createEditHandleStyle() {
+    return {
+      handles: {
+        rotate: false,
+        resize: false,
+      },
+      strokeColor: this._isDarkMode() ? 'cyan' : 'magenta',
     };
   }
 }
