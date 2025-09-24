@@ -65,9 +65,6 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
 
     this.textStyle = this.createTextStyle();
     this.rulerOn = measuring || false;
-    if (this.rulerOn) {
-      this.enableDrawing();
-    }
 
     this.moveHandler = (e: GeoEvent) => {
       if (e && this.dragging) {
@@ -108,6 +105,10 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
       this.updateRuler(this.yValue);
       this.event('update:cursor', { cursor: 'grab' });
     };
+
+    if (this.rulerOn) {
+      this.enableDrawing();
+    }
   }
 
   enableDrawing() {
