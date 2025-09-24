@@ -12,6 +12,7 @@ import TimeLayer from "./layers/timeLayer";
 import FreqLayer from "./layers/freqLayer";
 import SpeciesLayer from "./layers/speciesLayer";
 import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
+import MeasureToolLayer from "./layers/measureToolLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
 export default defineComponent({
@@ -63,6 +64,8 @@ export default defineComponent({
       configuration,
       colorScheme,
       backgroundColor,
+      measuring,
+      frequencyRulerY,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -79,6 +82,7 @@ export default defineComponent({
     let freqLayer: FreqLayer;
     let speciesLayer: SpeciesLayer;
     let speciesSequenceLayer: SpeciesSequenceLayer;
+    let measureToolLayer: MeasureToolLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -283,6 +287,10 @@ export default defineComponent({
             editing.value = false;
           }
         }
+      }
+      if (type === "measure:dragged") {
+        const { yValue } = data;
+        frequencyRulerY.value = yValue || 0;
       }
     };
 
@@ -510,6 +518,25 @@ export default defineComponent({
           speciesLayer.spectroInfo = props.spectroInfo;
           speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
 
+          if (!measureToolLayer) {
+            measureToolLayer = new MeasureToolLayer(
+              props.geoViewerRef,
+              event,
+              props.spectroInfo,
+              measuring.value,
+              frequencyRulerY.value
+            );
+            measureToolLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          }
+          measureToolLayer.redraw();
+          watch(measuring, () => {
+            if (measuring.value) {
+              measureToolLayer.enableDrawing();
+            } else {
+              measureToolLayer.disableDrawing();
+            }
+          });
+
           timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
           timeLayer.formatData(localAnnotations.value, sequenceAnnotations.value);
           freqLayer.formatData(localAnnotations.value);
@@ -615,6 +642,10 @@ export default defineComponent({
         );
         sequenceAnnotationLayer.redraw();
       }
+      if (measureToolLayer) {
+        measureToolLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        measureToolLayer.redraw();
+      }
       // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
       legendLayer?.onPan();
     });
@@ -649,7 +680,7 @@ export default defineComponent({
         // convert rgb(0 0 0) to rgb(0, 0, 0)
         backgroundColor.value = backgroundColor.value.replace(/rgb\((\d+)\s+(\d+)\s+(\d+)\)/, 'rgb($1, $2, $3)');
       }
-      
+
       const backgroundRgbColor = d3.color(backgroundColor.value) as d3.RGBColor;
       const redStops: number[] = [backgroundRgbColor.r / 255];
       const greenStops: number[] = [backgroundRgbColor.g / 255];
@@ -676,11 +707,13 @@ export default defineComponent({
       }
       if (timeLayer) {
         timeLayer.setTextColor(textColor);
-      } 
+      }
       if (speciesSequenceLayer) {
         speciesSequenceLayer.setTextColor(textColor);
       }
-
+      if (measureToolLayer) {
+        measureToolLayer.setTextColor(textColor);
+      }
     }
 
     watch([backgroundColor, colorScheme], updateColorFilter);

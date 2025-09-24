@@ -60,7 +60,12 @@ const configuration: Ref<Configuration> = ref({
   is_admin: false,
 });
 const scaledWidth = ref(0);
-const scaledHeight = ref(0);  
+const scaledHeight = ref(0);
+const measuring: Ref<boolean> = ref(false);
+const frequencyRulerY: Ref<number> = ref(0);
+const toggleMeasureMode = () => {
+  measuring.value = !measuring.value;
+};
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -140,6 +145,9 @@ export default function useState() {
     layerVisibility,
     createColorScale,
     colorScale,
+    measuring,
+    toggleMeasureMode,
+    frequencyRulerY,
     colorSchemes,
     colorScheme,
     backgroundColor,
