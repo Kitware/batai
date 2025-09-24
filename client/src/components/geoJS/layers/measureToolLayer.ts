@@ -202,8 +202,16 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     }
   }
 
-  setScaledDimensions(width: number, height: number) {
-    super.setScaledDimensions(width, height);
+  setScaledDimensions(scaledWidth: number, scaledHeight: number) {
+    // Get the frequency represented by the current ruler
+    const height = Math.max(this.scaledHeight, this.spectroInfo.height);
+    const frequency = height - this.yValue >= 0
+      ? ((height - this.yValue) * (this.spectroInfo.high_freq - this.spectroInfo.low_freq)) / height / 1000 + this.spectroInfo.low_freq / 1000
+      : -1;
+    // Get the new yValue needed based on the updated scaled height
+    const newY = scaledHeight - ((frequency - (this.spectroInfo.low_freq / 1000)) * scaledHeight * 1000) / (this.spectroInfo.high_freq - this.spectroInfo.low_freq);
+    this.yValue = newY;
+    super.setScaledDimensions(scaledWidth, scaledHeight);
     this.clearRulerLayer();
     if (this.rulerOn) {
       this.enableDrawing();
