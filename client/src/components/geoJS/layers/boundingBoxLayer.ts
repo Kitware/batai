@@ -199,14 +199,14 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
       stroke: true,
       uniformPolygon: true,
       fill: false,
-      strokeColor: this._isDarkMode() ? 'cyan' : 'magenta',
+      strokeColor: this._isDarkMode() ? 'yellow' : 'blue',
     };
   }
 
   createTextStyle(): LayerStyle<TextData> {
     return {
       fontSize: '16px',
-      color: () => this._isDarkMode() ? 'yellow' : 'blue',
+      color: () => this.color,
       offset: (data) => ({
         x: data.offsetX || 0,
         y: data.offsetY || 0,
@@ -221,7 +221,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
         rotate: false,
         resize: false,
       },
-      strokeColor: this._isDarkMode() ? 'cyan' : 'magenta',
+      strokeColor: this._isDarkMode() ? 'yellow' : 'blue',
     };
   }
 }

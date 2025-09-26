@@ -610,7 +610,7 @@ export default defineComponent({
           compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
           compressedOverlayLayer.redraw();
         } else {
-          compressedOverlayLayer?.disable(); 
+          compressedOverlayLayer?.disable();
         }
       }
       editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
@@ -731,7 +731,7 @@ export default defineComponent({
       if (measureToolLayer) {
         measureToolLayer.setTextColor(textColor);
       }
-      if (isNaBat() && boundingBoxLayer) {
+      if (boundingBoxLayer) {
         boundingBoxLayer.setTextColor(textColor);
       }
     }
