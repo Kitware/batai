@@ -13,6 +13,7 @@ import FreqLayer from "./layers/freqLayer";
 import SpeciesLayer from "./layers/speciesLayer";
 import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import MeasureToolLayer from "./layers/measureToolLayer";
+import BoundingBoxLayer from "./layers/boundingBoxLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
 export default defineComponent({
@@ -66,6 +67,8 @@ export default defineComponent({
       backgroundColor,
       measuring,
       frequencyRulerY,
+      drawingBoundingBox,
+      isNaBat,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -83,6 +86,7 @@ export default defineComponent({
     let speciesLayer: SpeciesLayer;
     let speciesSequenceLayer: SpeciesSequenceLayer;
     let measureToolLayer: MeasureToolLayer;
+    let boundingBoxLayer: BoundingBoxLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -537,6 +541,19 @@ export default defineComponent({
             }
           });
 
+          if (isNaBat() && !boundingBoxLayer) {
+            boundingBoxLayer = new BoundingBoxLayer(props.geoViewerRef, event, props.spectroInfo, drawingBoundingBox.value);
+            boundingBoxLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          }
+          watch(drawingBoundingBox, () => {
+            if (!isNaBat) return;
+            if (drawingBoundingBox.value) {
+              boundingBoxLayer.enableDrawing();
+            } else {
+              boundingBoxLayer.disableDrawing();
+            }
+          });
+
           timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
           timeLayer.formatData(localAnnotations.value, sequenceAnnotations.value);
           freqLayer.formatData(localAnnotations.value);
@@ -593,7 +610,7 @@ export default defineComponent({
           compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
           compressedOverlayLayer.redraw();
         } else {
-          compressedOverlayLayer?.disable(); 
+          compressedOverlayLayer?.disable();
         }
       }
       editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
@@ -713,6 +730,9 @@ export default defineComponent({
       }
       if (measureToolLayer) {
         measureToolLayer.setTextColor(textColor);
+      }
+      if (boundingBoxLayer) {
+        boundingBoxLayer.setTextColor(textColor);
       }
     }
 

@@ -240,7 +240,9 @@ export default defineComponent({
       timeRef.value = time;
       freqRef.value = freq;
     };
-    watch(compressed, () => loadData());
+    watch(compressed, () => {
+      loadData();
+    });
 
     const keyboardEvent = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {

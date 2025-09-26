@@ -24,6 +24,8 @@ export interface LayerStyle<D> {
     visible?: (data: D) => boolean;
   }
 
+export type EditAnnotationTypes = "rectangle";
+
 export interface RectGeoJSData {
   id: number;
   selected: boolean;
