@@ -132,6 +132,11 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
         offsetX: determineFreqOffset(highFreq),
         offsetY: 5,
       },
+      {
+        text: `${endTime - startTime}ms`,
+        x: (coordinates[0][0] + coordinates[2][0]) / 2,
+        y: (coordinates[0][1] + coordinates[1][1]) / 2,
+      },
     ];
     this.redraw();
   }
@@ -154,6 +159,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
       this.textData = [];
       this.textLayer.data(this.textData).draw();
     }
+    this.updateErrorState(undefined);
   }
 
   clearAnnotations() {
