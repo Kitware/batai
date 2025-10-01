@@ -68,7 +68,6 @@ export default defineComponent({
       measuring,
       frequencyRulerY,
       drawingBoundingBox,
-      isNaBat,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -541,12 +540,11 @@ export default defineComponent({
             }
           });
 
-          if (isNaBat() && !boundingBoxLayer) {
+          if (!boundingBoxLayer) {
             boundingBoxLayer = new BoundingBoxLayer(props.geoViewerRef, event, props.spectroInfo, drawingBoundingBox.value);
             boundingBoxLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           }
           watch(drawingBoundingBox, () => {
-            if (!isNaBat) return;
             if (drawingBoundingBox.value) {
               boundingBoxLayer.enableDrawing();
             } else {
