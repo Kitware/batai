@@ -1,5 +1,6 @@
 <script lang="ts">
-import { defineComponent, ref, Ref, } from 'vue';
+import { defineComponent, onMounted, ref, Ref, } from 'vue';
+import useState from '@use/useState';
 import NABatAdminUpdateSpecies from '@components/NABat/NABatAdminUpdateSpecies.vue';
 import NABatAdminBrowser from '@components/NABat/NABatAdminBrowser.vue';
 
@@ -13,8 +14,24 @@ export default defineComponent({
     // Reactive state for the settings
     const tab: Ref<'browser' | 'species'> = ref('browser');
 
+    const accessToken: Ref<string> = ref('');
+    const refreshToken: Ref<string> = ref('');
+
+    const { naBatSessionId, startNABatSession } = useState();
+
+    onMounted(() => {
+      const sessionId = localStorage.getItem('nabat_session_id');
+      if (sessionId) {
+        naBatSessionId.value = sessionId;
+      }
+    });
+
     return {
       tab,
+      accessToken,
+      refreshToken,
+      startNABatSession,
+      naBatSessionId,
     };
   },
 });
@@ -22,6 +39,47 @@ export default defineComponent({
 
 <template>
   <v-card>
+    <v-card
+      class="my-4 ml-2"
+      flat
+    >
+      <v-row>
+        <v-col cols="6">
+          <v-label>NABat Access Token</v-label>
+          <v-text-field
+            v-model="accessToken"
+            density="compact"
+            hide-details
+            hint="NABat Access Token"
+            persistent-hint
+          />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="6">
+          <v-label>NABat Refresh Token</v-label>
+          <v-text-field
+            v-model="refreshToken"
+            density="compact"
+            hide-details
+            hint="NABat Refresh Token"
+            persistent-hint
+          />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col>
+          <v-btn
+            :disabled="!refreshToken || !accessToken"
+            color="primary"
+            @click="startNABatSession(accessToken, refreshToken)"
+          >
+            Create NABat Session
+          </v-btn>
+          <span v-if="naBatSessionId">{{ naBatSessionId }}</span>
+        </v-col>
+      </v-row>
+    </v-card>
     <v-tabs
       v-model="tab"
       class="ma-auto"

@@ -9,6 +9,7 @@ import {
   Recording,
   SpectrogramAnnotation,
   SpectrogramSequenceAnnotation,
+  createNABatSession,
 } from "../api/api";
 import {
   interpolateCividis,
@@ -133,6 +134,15 @@ export default function useState() {
     return router.currentRoute.value.fullPath.includes('nabat');
   }
 
+  const naBatSessionId: Ref<string> = ref('');
+  function setAndStoreNABatSessionId(sessionId: string) {
+    localStorage.setItem('nabat_session_id', sessionId);
+  }
+  async function startNABatSession(accessToken: string, refreshToken: string) {
+    const { nabat_session_id } = await createNABatSession(accessToken, refreshToken);
+    setAndStoreNABatSessionId(nabat_session_id);
+  }
+
   return {
     annotationState,
     creationType,
@@ -166,5 +176,7 @@ export default function useState() {
     sideTab,
     scaledWidth,
     scaledHeight,
+    naBatSessionId,
+    startNABatSession,
   };
 }

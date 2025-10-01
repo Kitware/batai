@@ -225,6 +225,7 @@ def delete_recording(
 
 @router.get('/')
 def get_recordings(request: HttpRequest, public: bool | None = None):
+    breakpoint()
     # Filter recordings based on the owner's id or public=True
     if public is not None and public:
         recordings = (

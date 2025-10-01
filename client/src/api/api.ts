@@ -137,6 +137,10 @@ export type OtherUserAnnotations = Record<
 
 export type UploadLocation = null | { latitude?: number; longitude?: number; gridCellId?: number };
 
+export interface NABatSessionCreateResponse {
+  nabat_session_id: string;
+}
+
 export const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_APP_API_ROOT as string,
 });
@@ -490,6 +494,21 @@ async function getExportStatus(exportId: number) {
   return result.data;
 }
 
+async function createNABatSession(accessToken: string, refreshToken: string) {
+  const data = {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  };
+  console.log(data);
+  const result = await axiosInstance.post<NABatSessionCreateResponse>(`nabat/session/create`, data);
+  return result.data;
+}
+
+async function refreshNABatSession(sessionId: string) {
+  const result = await axiosInstance.put<NABatSessionCreateResponse>(`nabat/session/refresh/${sessionId}`);
+  return result.data;
+}
+
 export {
   uploadRecordingFile,
   getRecordings,
@@ -523,4 +542,6 @@ export {
   getFilteredProcessingTasks,
   getFileAnnotationDetails,
   getExportStatus,
+  createNABatSession,
+  refreshNABatSession,
 };

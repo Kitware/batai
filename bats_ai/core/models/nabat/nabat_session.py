@@ -9,8 +9,6 @@ class NABatSession(TimeStampedModel, models.Model):
     session_token = models.UUIDField()
     api_token = models.TextField(blank=False, null=False)
     refresh_token = models.TextField(blank=False, null=False)
-    survey_event_id = models.TextField(blank=False, null=False)
-    file_id = models.TextField(blank=False, null=False)
     user_id = models.TextField(blank=False, null=True)
     expires_at = models.DateTimeField(blank=True, null=True)
 

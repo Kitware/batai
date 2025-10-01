@@ -13,7 +13,11 @@ from bats_ai.core.views import (
     RecordingRouter,
     SpeciesRouter,
 )
-from bats_ai.core.views.nabat import NABatConfigurationRouter, NABatRecordingRouter
+from bats_ai.core.views.nabat import (
+    NABatConfigurationRouter,
+    NABatRecordingRouter,
+    NABatSessionRouter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,3 +48,4 @@ api.add_router('/configuration/', ConfigurationRouter)
 api.add_router('/processing-task/', ProcessingTaskRouter)
 api.add_router('/nabat/recording/', NABatRecordingRouter)
 api.add_router('/nabat/configuration/', NABatConfigurationRouter)
+api.add_router('/nabat/session/', NABatSessionRouter)
