@@ -32,7 +32,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
       }));
 
       this.drawing = drawing || false;
-      this.boxError = null;
+      this.boxError = undefined;
 
       this.initialize();
   }
@@ -87,7 +87,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
       end_time: endTime,
       low_freq: lowFreq,
       high_freq: highFreq,
-      error,
+      warning,
     } = geojsonToSpectro(
       geojsonData,
       this.spectroInfo,
@@ -95,7 +95,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
       this.scaledHeight,
     );
 
-    this.updateErrorState(error);
+    this.updateErrorState(warning);
 
     const determineFreqOffset = (freq: number) => {
       if (freq < 10000) return 38;

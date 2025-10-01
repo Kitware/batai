@@ -506,7 +506,7 @@ function geojsonToSpectro(
   spectroInfo: SpectroInfo,
   scaledWidth = 0,
   scaledHeight = 0,
-): { error?: string; start_time: number; end_time: number; low_freq: number; high_freq: number } {
+): { warning?: string; start_time: number; end_time: number; low_freq: number; high_freq: number } {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
 
@@ -579,7 +579,7 @@ function geojsonToSpectro(
     if (warn) {
       // the time spreads across multiple pulses and isn't allowed;
       return {
-        error:
+        warning:
           "Start or End Time spread across pulses.  This is not allowed in compressed annotations",
         start_time,
         end_time,

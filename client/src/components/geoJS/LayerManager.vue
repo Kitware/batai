@@ -218,9 +218,9 @@ export default defineComponent({
             if (index !== -1 && props.spectroInfo && selectedType.value === 'pulse') {
               // update bounds for the localAnnotation
               const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
-              if (conversionResult.error) {
+              if (conversionResult.warning) {
                 displayError.value = true;
-                errorMsg.value = conversionResult.error;
+                errorMsg.value = conversionResult.warning;
                 return;
               }
               const { low_freq, high_freq, start_time, end_time } = conversionResult;
@@ -236,9 +236,9 @@ export default defineComponent({
             if (index !== -1 && props.spectroInfo && selectedType.value === 'sequence') {
               // update bounds for the localAnnotation
               const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
-              if (conversionResult.error) {
+              if (conversionResult.warning) {
                 displayError.value = true;
-                errorMsg.value = conversionResult.error;
+                errorMsg.value = conversionResult.warning;
                 return;
               }
               const { start_time, end_time } = conversionResult;
@@ -257,9 +257,9 @@ export default defineComponent({
           if (geoJSON && props.spectroInfo) {
             const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
 
-            if (conversionResult.error) {
+            if (conversionResult.warning) {
               displayError.value = true;
-              errorMsg.value = conversionResult.error;
+              errorMsg.value = conversionResult.warning;
               return;
             }
             const { low_freq, high_freq, start_time, end_time } = conversionResult;
