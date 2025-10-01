@@ -67,6 +67,7 @@ export default defineComponent({
       measuring,
       toggleMeasureMode,
       drawingBoundingBox,
+      boundingBoxError,
       toggleDrawingBoundingBox,
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
@@ -324,6 +325,7 @@ export default defineComponent({
       toggleMeasureMode,
       drawingBoundingBox,
       toggleDrawingBoundingBox,
+      boundingBoxError,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -432,6 +434,13 @@ export default defineComponent({
             <v-spacer />
             <v-tooltip>
               <template #activator="{ props: subProps }">
+                <v-badge
+                  v-if="boundingBoxError"
+                  :offset-x="-37"
+                  :offset-y="-9"
+                  color="warning"
+                  dot
+                />
                 <v-icon
                   v-bind="subProps"
                   size="35"
@@ -442,9 +451,8 @@ export default defineComponent({
                   mdi-border-radius
                 </v-icon>
               </template>
-              <span>Draw bounding boxes to measure pulses</span>
+              <span>{{ boundingBoxError || 'Draw a bound box to measure pulses' }}</span>
             </v-tooltip>
-            <v-spacer />
             <v-tooltip>
               <template #activator="{props: subProps }">
                 <v-icon

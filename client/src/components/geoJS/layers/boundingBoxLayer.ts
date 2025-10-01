@@ -1,24 +1,13 @@
 import geo, { GeoEvent } from 'geojs';
 import BaseTextLayer from "./baseTextLayer";
-import { geojsonToSpectro, reOrdergeoJSON, SpectroInfo } from '../geoJSUtils';
-import { EditAnnotationTypes, LayerStyle, RectGeoJSData, TextData } from './types';
+import { geojsonToSpectro, SpectroInfo } from '../geoJSUtils';
+import { LayerStyle, RectGeoJSData, TextData } from './types';
 
 export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   boxLayer: any;
   drawing: boolean;
-  _mode: 'editing' | 'creation' | null;
-
-  boxStyle: LayerStyle<RectGeoJSData>;
-
-  // formattedData: GeoJSON.Feature[];
-
-  disableModeSync: boolean;
-
-  selectedHandleIndex: number;
-  hoverHandleIndex: number;
-
-  shapeInProgress: GeoJSON.Polygon | GeoJSON.LineString | null;
+  boxError: string | undefined;
 
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,13 +31,8 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
         y: data.y,
       }));
 
-      this._mode = null;
       this.drawing = drawing || false;
-
-      this.selectedHandleIndex = -1;
-      this.hoverHandleIndex = -1;
-      this.shapeInProgress = null;
-      this.disableModeSync = false;
+      this.boxError = null;
 
       this.initialize();
   }
@@ -89,6 +73,12 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
     }
   }
 
+  updateErrorState(error: string | undefined) {
+    this.boxError = error;
+    const message = error ? 'The current bounding box spans multiple pulses. The measurement labels are correct, but it is not to scale.' : null;
+    this.event("bbox:error", { error: message });
+  }
+
   updateLabels(annotation: any) {
     const geojsonData = annotation.geojson();
     const coordinates = geojsonData.geometry.coordinates[0];
@@ -97,12 +87,15 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
       end_time: endTime,
       low_freq: lowFreq,
       high_freq: highFreq,
+      error,
     } = geojsonToSpectro(
       geojsonData,
       this.spectroInfo,
       this.scaledWidth,
       this.scaledHeight,
     );
+
+    this.updateErrorState(error);
 
     const determineFreqOffset = (freq: number) => {
       if (freq < 10000) return 38;
@@ -126,14 +119,14 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
         offsetY: 10,
       },
       {
-        text: `${lowFreq}KHz`,
+        text: `${(lowFreq / 1000).toFixed(1)}KHz`,
         x: coordinates[3][0],
         y: coordinates[3][1],
         offsetX: determineFreqOffset(lowFreq),
         offsetY: -5,
       },
       {
-        text: `${highFreq}KHz`,
+        text: `${(highFreq / 1000).toFixed(1)}KHz`,
         x: coordinates[2][0],
         y: coordinates[2][1],
         offsetX: determineFreqOffset(highFreq),

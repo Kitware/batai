@@ -67,6 +67,7 @@ const toggleMeasureMode = () => {
   measuring.value = !measuring.value;
 };
 const drawingBoundingBox = ref(false);
+const boundingBoxError = ref('');
 const toggleDrawingBoundingBox = () => {
   drawingBoundingBox.value = !drawingBoundingBox.value;
 };
@@ -153,6 +154,7 @@ export default function useState() {
     toggleMeasureMode,
     frequencyRulerY,
     drawingBoundingBox,
+    boundingBoxError,
     toggleDrawingBoundingBox,
     colorSchemes,
     colorScheme,

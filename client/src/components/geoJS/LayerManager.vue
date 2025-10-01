@@ -68,6 +68,7 @@ export default defineComponent({
       measuring,
       frequencyRulerY,
       drawingBoundingBox,
+      boundingBoxError,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -294,6 +295,10 @@ export default defineComponent({
       if (type === "measure:dragged") {
         const { yValue } = data;
         frequencyRulerY.value = yValue || 0;
+      }
+      if (type === "bbox:error") {
+        const { error } = data;
+        boundingBoxError.value = error || '';
       }
     };
 
