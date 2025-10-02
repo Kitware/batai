@@ -2,7 +2,12 @@
 import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
 import * as d3 from "d3";
 import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
-import { geojsonToSpectro, SpectroInfo, textColorFromBackground } from "./geoJSUtils";
+import {
+  annotationSpreadAcrossPulsesWarning,
+  geojsonToSpectro,
+  SpectroInfo,
+  textColorFromBackground,
+} from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
 import CompressedOverlayLayer from "./layers/compressedOverlayLayer";
@@ -236,7 +241,7 @@ export default defineComponent({
             if (index !== -1 && props.spectroInfo && selectedType.value === 'sequence') {
               // update bounds for the localAnnotation
               const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
-              if (conversionResult.warning) {
+              if (conversionResult.warning && conversionResult.warning !== annotationSpreadAcrossPulsesWarning) {
                 displayError.value = true;
                 errorMsg.value = conversionResult.warning;
                 return;
@@ -257,7 +262,9 @@ export default defineComponent({
           if (geoJSON && props.spectroInfo) {
             const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
 
-            if (conversionResult.warning) {
+            if (conversionResult.warning
+              && !(creationType.value === 'sequence' && conversionResult.warning === annotationSpreadAcrossPulsesWarning)
+            ) {
               displayError.value = true;
               errorMsg.value = conversionResult.warning;
               return;

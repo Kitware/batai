@@ -1,6 +1,8 @@
 import { ref, Ref } from "vue";
 import geo from "geojs";
 
+const annotationSpreadAcrossPulsesWarning = 'Start or End Time spread across pulses.  This is not allowed in compressed annotations';
+
 const useGeoJS = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const geoViewer: Ref<any> = ref();
@@ -579,8 +581,7 @@ function geojsonToSpectro(
     if (warn) {
       // the time spreads across multiple pulses and isn't allowed;
       return {
-        warning:
-          "Start or End Time spread across pulses.  This is not allowed in compressed annotations",
+        warning: annotationSpreadAcrossPulsesWarning,
         start_time,
         end_time,
         low_freq,
@@ -674,4 +675,5 @@ export {
   textColorFromBackground,
   rectVertex,
   rectEdge,
+  annotationSpreadAcrossPulsesWarning,
 };
