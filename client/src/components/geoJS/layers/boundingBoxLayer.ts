@@ -79,6 +79,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
     this.event("bbox:error", { error: message });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateLabels(annotation: any) {
     const geojsonData = annotation.geojson();
     const coordinates = geojsonData.geometry.coordinates[0];
@@ -180,6 +181,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
 
   applyStyles() {
     if (this.boxLayer && this.boxLayer.annotations().length) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.boxLayer.annotations().forEach((annotation: any) => {
         annotation.style(this.createRectStyle());
         annotation.editHandleStyle(this.createEditHandleStyle());
