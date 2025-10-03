@@ -3,7 +3,9 @@ import BaseTextLayer from "./baseTextLayer";
 import { geojsonToSpectro, SpectroInfo } from '../geoJSUtils';
 import { LayerStyle, RectGeoJSData, TextData } from './types';
 
-export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
+type BoundingBoxTextData = TextData & { textAlign?: 'start' | 'end' | 'center', textBaseline?: 'top' | 'middle' | 'bottom' };
+
+export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   boxLayer: any;
   drawing: boolean;
@@ -24,9 +26,9 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
     });
     this.textLayer = textLayer
       .createFeature('text')
-      .text((data: TextData) => data.text)
+      .text((data: BoundingBoxTextData) => data.text)
       .style(this.createTextStyle())
-      .position((data: TextData) => ({
+      .position((data: BoundingBoxTextData) => ({
         x: data.x,
         y: data.y,
       }));
@@ -98,45 +100,43 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
 
     this.updateErrorState(warning);
 
-    const determineFreqOffset = (freq: number) => {
-      if (freq < 10000) return 38;
-      if (freq < 100000) return 40;
-      return 42;
-    };
-
     this.textData = [
       {
-        text: `${startTime}ms`,
+        text: `${startTime}ₘₛ`,
         x: coordinates[0][0],
-        y: coordinates[0][1],
+        y: coordinates[0][1] + 12,
+        textAlign: 'center',
+        textBaseline: 'top',
         offsetX: 0,
-        offsetY: 10,
+        offsetY: 0,
       },
       {
-        text: `${endTime}ms`,
+        text: `${endTime}ₘₛ`,
         x: coordinates[3][0],
-        y: coordinates[3][1],
-        offsetX: 0,
-        offsetY: 10,
+        y: coordinates[3][1] + 12,
+        textAlign: 'center',
+        textBaseline: 'top',
       },
       {
         text: `${(lowFreq / 1000).toFixed(1)}KHz`,
-        x: coordinates[3][0],
+        x: coordinates[3][0] + 5,
         y: coordinates[3][1],
-        offsetX: determineFreqOffset(lowFreq),
-        offsetY: -5,
+        textAlign: 'start',
+        textBaseline: 'middle',
       },
       {
         text: `${(highFreq / 1000).toFixed(1)}KHz`,
-        x: coordinates[2][0],
+        x: coordinates[2][0] + 5,
         y: coordinates[2][1],
-        offsetX: determineFreqOffset(highFreq),
-        offsetY: 5,
+        textAlign: 'start',
+        textBaseline: 'middle',
       },
       {
-        text: `${endTime - startTime}ms`,
+        text: `${endTime - startTime}ₘₛ`,
         x: (coordinates[0][0] + coordinates[2][0]) / 2,
         y: (coordinates[0][1] + coordinates[1][1]) / 2,
+        textAlign: 'center',
+        textBaseline: 'middle',
       },
     ];
     this.redraw();
@@ -204,15 +204,18 @@ export default class BoundingBoxLayer extends BaseTextLayer<TextData> {
     };
   }
 
-  createTextStyle(): LayerStyle<TextData> {
+  createTextStyle(): LayerStyle<BoundingBoxTextData> {
     return {
       fontSize: '16px',
+      textAlign: (data) => data.textAlign || 'start',
+      textBaseline: (data) => data.textBaseline || 'bottom',
       color: () => this.color,
       offset: (data) => ({
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
       textScaled: this.textScaled,
+
     };
   }
 

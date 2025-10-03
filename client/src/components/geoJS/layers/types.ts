@@ -9,7 +9,7 @@ export interface LayerStyle<D> {
     strokeColor?: StyleFunction<string, D> | PointFunction<string, D>;
     fillColor?: StyleFunction<string, D> | PointFunction<string, D>;
     fillOpacity?: StyleFunction<number, D> | PointFunction<number, D>;
-    visible?: StyleFunction<boolean, D> | PointFunction<boolean, D>;
+    visible?: boolean | ((data: D) => boolean);
     position?: (point: [number, number]) => { x: number; y: number };
     color?: (data: D) => string;
     textOpacity?: (data: D) => number;
@@ -21,7 +21,6 @@ export interface LayerStyle<D> {
     textBaseline?: ((data: D) => string) | string;
     textScaled?: ((data: D) => number | undefined) | number | undefined;
     [x: string]: unknown;
-    visible?: (data: D) => boolean;
   }
 
 export type EditAnnotationTypes = "rectangle";
