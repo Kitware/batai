@@ -66,6 +66,9 @@ export default defineComponent({
       configuration,
       measuring,
       toggleMeasureMode,
+      drawingBoundingBox,
+      boundingBoxError,
+      toggleDrawingBoundingBox,
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -240,7 +243,12 @@ export default defineComponent({
       timeRef.value = time;
       freqRef.value = freq;
     };
-    watch(compressed, () => loadData());
+    watch(compressed, () => {
+      loadData();
+      if (drawingBoundingBox.value) {
+        toggleDrawingBoundingBox();
+      }
+    });
 
     const keyboardEvent = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
@@ -315,6 +323,9 @@ export default defineComponent({
       colorpickerMenu,
       measuring,
       toggleMeasureMode,
+      drawingBoundingBox,
+      toggleDrawingBoundingBox,
+      boundingBoxError,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -421,6 +432,27 @@ export default defineComponent({
               </v-select>
             </v-col>
             <v-spacer />
+            <v-tooltip>
+              <template #activator="{ props: subProps }">
+                <v-badge
+                  v-if="boundingBoxError"
+                  :offset-x="-37"
+                  :offset-y="-9"
+                  color="warning"
+                  dot
+                />
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="drawingBoundingBox ? 'blue' : ''"
+                  @click="toggleDrawingBoundingBox"
+                >
+                  mdi-border-radius
+                </v-icon>
+              </template>
+              <span>{{ boundingBoxError || 'Draw a bound box to measure pulses' }}</span>
+            </v-tooltip>
             <v-tooltip>
               <template #activator="{props: subProps }">
                 <v-icon

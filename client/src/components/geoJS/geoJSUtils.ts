@@ -1,6 +1,8 @@
 import { ref, Ref } from "vue";
 import geo from "geojs";
 
+const annotationSpreadAcrossPulsesWarning = 'Start or End Time spread across pulses.  This is not allowed in compressed annotations';
+
 const useGeoJS = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const geoViewer: Ref<any> = ref();
@@ -506,7 +508,7 @@ function geojsonToSpectro(
   spectroInfo: SpectroInfo,
   scaledWidth = 0,
   scaledHeight = 0,
-): { error?: string; start_time: number; end_time: number; low_freq: number; high_freq: number } {
+): { warning?: string; start_time: number; end_time: number; low_freq: number; high_freq: number } {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
 
@@ -543,6 +545,9 @@ function geojsonToSpectro(
     let additivePixels = 0;
     let start_time = -1;
     let end_time = -1;
+    let warn = false;
+    let startIndex = 0;
+    let endIndex = 0;
     for (let i = 0; i < start_times.length; i += 1) {
       // convert the start/end time to a pixel
       const nextPixels = (widths && widths[i]) || 0;
@@ -552,6 +557,7 @@ function geojsonToSpectro(
         const lowPixels = start - additivePixels;
         const lowTime = start_times[i] + lowPixels / timeToPixels;
         start_time = Math.round(lowTime);
+        startIndex = i;
       }
       if (
         end_time === -1 &&
@@ -562,17 +568,20 @@ function geojsonToSpectro(
         const highPixels = end - additivePixels;
         const highTime = start_times[i] + highPixels / timeToPixels;
         end_time = Math.round(highTime);
+        endIndex = i;
       }
       additivePixels += nextPixels;
+    }
+    if (startIndex !== endIndex) {
+      warn = true;
     }
     const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     const high_freq = Math.round(spectroInfo.high_freq - coords[1][1] / heightScale);
     const low_freq = Math.round(spectroInfo.high_freq - coords[3][1] / heightScale);
-    if (start_time === -1 || end_time === -1) {
+    if (warn) {
       // the time spreads across multiple pulses and isn't allowed;
       return {
-        error:
-          "Start or End Time spread across pusles.  This is not allowed in compressed annotations",
+        warning: annotationSpreadAcrossPulsesWarning,
         start_time,
         end_time,
         low_freq,
@@ -648,6 +657,14 @@ function textColorFromBackground(rgbString: string): "black" | "white" {
   return getContrastingColor(r, g, b);
 }
 
+/**
+ * correct matching of drag handle to cursor direction relies on strict ordering of
+ * vertices within the GeoJSON coordinate list using utils.reOrdergeoJSON()
+ * and utils.reOrderBounds()
+ */
+const rectVertex = ["sw-resize", "nw-resize", "ne-resize", "se-resize"];
+const rectEdge = ["w-resize", "n-resize", "e-resize", "s-resize"];
+
 export {
   spectroToGeoJSon,
   geojsonToSpectro,
@@ -655,5 +672,8 @@ export {
   useGeoJS,
   spectroToCenter,
   spectroSequenceToGeoJSon,
-  textColorFromBackground
+  textColorFromBackground,
+  rectVertex,
+  rectEdge,
+  annotationSpreadAcrossPulsesWarning,
 };

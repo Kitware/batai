@@ -2,7 +2,12 @@
 import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
 import * as d3 from "d3";
 import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
-import { geojsonToSpectro, SpectroInfo, textColorFromBackground } from "./geoJSUtils";
+import {
+  annotationSpreadAcrossPulsesWarning,
+  geojsonToSpectro,
+  SpectroInfo,
+  textColorFromBackground,
+} from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";
 import RectangleLayer from "./layers/rectangleLayer";
 import CompressedOverlayLayer from "./layers/compressedOverlayLayer";
@@ -13,6 +18,7 @@ import FreqLayer from "./layers/freqLayer";
 import SpeciesLayer from "./layers/speciesLayer";
 import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import MeasureToolLayer from "./layers/measureToolLayer";
+import BoundingBoxLayer from "./layers/boundingBoxLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
 export default defineComponent({
@@ -66,6 +72,8 @@ export default defineComponent({
       backgroundColor,
       measuring,
       frequencyRulerY,
+      drawingBoundingBox,
+      boundingBoxError,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -83,6 +91,7 @@ export default defineComponent({
     let speciesLayer: SpeciesLayer;
     let speciesSequenceLayer: SpeciesSequenceLayer;
     let measureToolLayer: MeasureToolLayer;
+    let boundingBoxLayer: BoundingBoxLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -214,9 +223,9 @@ export default defineComponent({
             if (index !== -1 && props.spectroInfo && selectedType.value === 'pulse') {
               // update bounds for the localAnnotation
               const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
-              if (conversionResult.error) {
+              if (conversionResult.warning) {
                 displayError.value = true;
-                errorMsg.value = conversionResult.error;
+                errorMsg.value = conversionResult.warning;
                 return;
               }
               const { low_freq, high_freq, start_time, end_time } = conversionResult;
@@ -232,9 +241,9 @@ export default defineComponent({
             if (index !== -1 && props.spectroInfo && selectedType.value === 'sequence') {
               // update bounds for the localAnnotation
               const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
-              if (conversionResult.error) {
+              if (conversionResult.warning && conversionResult.warning !== annotationSpreadAcrossPulsesWarning) {
                 displayError.value = true;
-                errorMsg.value = conversionResult.error;
+                errorMsg.value = conversionResult.warning;
                 return;
               }
               const { start_time, end_time } = conversionResult;
@@ -253,9 +262,11 @@ export default defineComponent({
           if (geoJSON && props.spectroInfo) {
             const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
 
-            if (conversionResult.error) {
+            if (conversionResult.warning
+              && !(creationType.value === 'sequence' && conversionResult.warning === annotationSpreadAcrossPulsesWarning)
+            ) {
               displayError.value = true;
-              errorMsg.value = conversionResult.error;
+              errorMsg.value = conversionResult.warning;
               return;
             }
             const { low_freq, high_freq, start_time, end_time } = conversionResult;
@@ -291,6 +302,10 @@ export default defineComponent({
       if (type === "measure:dragged") {
         const { yValue } = data;
         frequencyRulerY.value = yValue || 0;
+      }
+      if (type === "bbox:error") {
+        const { error } = data;
+        boundingBoxError.value = error || '';
       }
     };
 
@@ -537,6 +552,18 @@ export default defineComponent({
             }
           });
 
+          if (!boundingBoxLayer) {
+            boundingBoxLayer = new BoundingBoxLayer(props.geoViewerRef, event, props.spectroInfo, drawingBoundingBox.value);
+            boundingBoxLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          }
+          watch(drawingBoundingBox, () => {
+            if (drawingBoundingBox.value) {
+              boundingBoxLayer.enableDrawing();
+            } else {
+              boundingBoxLayer.disableDrawing();
+            }
+          });
+
           timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
           timeLayer.formatData(localAnnotations.value, sequenceAnnotations.value);
           freqLayer.formatData(localAnnotations.value);
@@ -593,7 +620,7 @@ export default defineComponent({
           compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
           compressedOverlayLayer.redraw();
         } else {
-          compressedOverlayLayer?.disable(); 
+          compressedOverlayLayer?.disable();
         }
       }
       editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
@@ -713,6 +740,9 @@ export default defineComponent({
       }
       if (measureToolLayer) {
         measureToolLayer.setTextColor(textColor);
+      }
+      if (boundingBoxLayer) {
+        boundingBoxLayer.setTextColor(textColor);
       }
     }
 

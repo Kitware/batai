@@ -66,6 +66,11 @@ const frequencyRulerY: Ref<number> = ref(0);
 const toggleMeasureMode = () => {
   measuring.value = !measuring.value;
 };
+const drawingBoundingBox = ref(false);
+const boundingBoxError = ref('');
+const toggleDrawingBoundingBox = () => {
+  drawingBoundingBox.value = !drawingBoundingBox.value;
+};
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -148,6 +153,9 @@ export default function useState() {
     measuring,
     toggleMeasureMode,
     frequencyRulerY,
+    drawingBoundingBox,
+    boundingBoxError,
+    toggleDrawingBoundingBox,
     colorSchemes,
     colorScheme,
     backgroundColor,
