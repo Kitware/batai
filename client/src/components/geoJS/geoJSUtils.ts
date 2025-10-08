@@ -121,7 +121,10 @@ const useGeoJS = () => {
       });
     }
     clearQuadFeatures();
-    quadFeatureLayer.node().css("filter", "url(#apply-color-scheme)");
+    // quadFeatureLayer.node().css("filter", "url(#apply-color-scheme)");
+    // quadFeatureLayer.node().css("filter", "url(#spectro-smoothing-gaussian)");
+    // quadFeatureLayer.node().css("filter", "url(#spectro-smoothing-convo)");
+    quadFeatureLayer.node().css("filter", "url(#spectro-smoothing-combined)");
     for (let i = 0; i < imageCount; i += 1) {
       quadFeatures.push(quadFeatureLayer.createFeature("quad"));
     }
