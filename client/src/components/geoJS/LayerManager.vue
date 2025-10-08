@@ -748,6 +748,22 @@ export default defineComponent({
 
     watch([backgroundColor, colorScheme], updateColorFilter);
 
+    function convMatrixFromOrder(order: number) {
+      let matrix = '';
+      for (let i = 0; i < order; i++) {
+        for (let j = 0; j < order; j++) {
+          matrix += `1${j === order - 1 ? '': ' '}`;
+        }
+        matrix += `${i === order - 1 ? '' : '\n'}`;
+      }
+      return matrix;
+    }
+
+    // Knobs for testing blur filters
+    const contrast = ref({slope: 1.2, intercept: -0.1});
+    const gaussianBlur = ref({ stdDeviation: 1.5 });
+    const convolutionMatrix = ref({ order: 5 });
+
     return {
       annotationState,
       localAnnotations,
@@ -757,6 +773,10 @@ export default defineComponent({
       rValues,
       gValues,
       bValues,
+      contrast,
+      gaussianBlur,
+      convolutionMatrix,
+      convMatrixFromOrder,
     };
   },
 });
@@ -796,7 +816,6 @@ export default defineComponent({
         values="0"
         result="grayscale"
       />
-
       <!-- apply color scheme -->
       <feComponentTransfer>
         <feFuncR
@@ -812,6 +831,183 @@ export default defineComponent({
           :tableValues="bValues"
         />
       </feComponentTransfer>
+    </filter>
+    <filter id="spectro-smoothing-gaussian">
+      <!-- convert to grayscale -->
+      <feColorMatrix
+        in="SourceGraphic"
+        result="grayscale"
+        type="saturate"
+        values="0"
+      />
+      <!-- apply color scheme -->
+      <feComponentTransfer
+        in="grayscale"
+        out="colorscheme"
+      >
+        <feFuncR
+          type="table"
+          :tableValues="rValues"
+        />
+        <feFuncG
+          type="table"
+          :tableValues="gValues"
+        />
+        <feFuncB
+          type="table"
+          :tableValues="bValues"
+        />
+      </feComponentTransfer>
+      <!-- Light gaussian blur -->
+      <feGaussianBlur
+        in="colorscheme"
+        :stdDeviation="gaussianBlur.stdDeviation"
+        result="blurred"
+      />
+      <!-- increase contrast for defined edges -->
+      <feComponentTransfer
+        in="blurred"
+        result="contrasted"
+      >
+        <feFuncR
+          type="linear"
+          :slope="contrast.slope"
+          :intercept="contrast.intercept"
+        />
+        <feFuncG
+          type="linear"
+          :slope="contrast.slope"
+          :intercept="contrast.intercept"
+        />
+        <feFuncB
+          type="linear"
+          :slope="contrast.slope"
+          :intercept="contrast.intercept"
+        />
+      </feComponentTransfer>
+      <!-- blend for even more refined edges -->
+      <feBlend
+        in="colorscheme"
+        in2="contrasted"
+        mode="overlay"
+      />
+    </filter>
+    <filter id="spectro-smoothing-convo">
+      <!-- convert to grayscale -->
+      <feColorMatrix
+        in="SourceGraphic"
+        result="grayscale"
+        type="saturate"
+        values="0"
+      />
+
+      <!-- apply color scheme -->
+      <feComponentTransfer
+        in="grayscale"
+        out="colorscheme"
+      >
+        <feFuncR
+          type="table"
+          :tableValues="rValues"
+        />
+        <feFuncG
+          type="table"
+          :tableValues="gValues"
+        />
+        <feFuncB
+          type="table"
+          :tableValues="bValues"
+        />
+      </feComponentTransfer>
+      <!-- Use a convolution matrix to blur -->
+      <feConvolveMatrix
+        in="colorscheme"
+        out="blurred"
+        :order="convolutionMatrix.order"
+        :kernelMatrix="convMatrixFromOrder(convolutionMatrix.order)"
+        :divisor="convolutionMatrix.order ** 2"
+      />
+      <!-- blend for even more refined edges -->
+      <feBlend
+        in="colorscheme"
+        in2="blurred"
+        mode="overlay"
+      />
+    </filter>
+    <filter id="spectro-smoothing-combined">
+      <!-- convert to grayscale -->
+      <feColorMatrix
+        in="SourceGraphic"
+        result="grayscale"
+        type="saturate"
+        values="0"
+      />
+      <!-- apply color scheme -->
+      <feComponentTransfer
+        in="grayscale"
+        out="colorscheme"
+      >
+        <feFuncR
+          type="table"
+          :tableValues="rValues"
+        />
+        <feFuncG
+          type="table"
+          :tableValues="gValues"
+        />
+        <feFuncB
+          type="table"
+          :tableValues="bValues"
+        />
+      </feComponentTransfer>
+      <!-- light gaussian blur to remove pixelation -->
+      <feGaussianBlur
+        in="colorscheme"
+        :stdDeviation="gaussianBlur.stdDeviation"
+        result="gblurred"
+      />
+      <!-- add blur via convolutional matrix -->
+      <feConvolveMatrix
+        in="gblurred"
+        out="mblurred"
+        :order="convolutionMatrix.order"
+        :kernelMatrix="convMatrixFromOrder(convolutionMatrix.order)"
+        :divisor="convolutionMatrix.order ** 2"
+      />
+      <!-- Add contrast -->
+      <feComponentTransfer
+        in="mblurred"
+        out="contrasted"
+        result="contrasted"
+      >
+        <feFuncR
+          type="linear"
+          :slope="contrast.slope"
+          :intercept="contrast.intercept"
+        />
+        <feFuncG
+          type="linear"
+          :slope="contrast.slope"
+          :intercept="contrast.intercept"
+        />
+        <feFuncB
+          type="linear"
+          :slope="contrast.slope"
+          :intercept="contrast.intercept"
+        />
+      </feComponentTransfer>
+      <!-- blend -->
+      <feBlend
+        in="SourceGraphic"
+        in2="contrasted"
+        mode="overlay"
+        result="blended"
+      />
+      <!-- additional blurring? -->
+      <feGaussianBlur
+        in="blended"
+        stdDeviation="0.4"
+      />
     </filter>
   </svg>
 </template>
