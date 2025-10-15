@@ -148,18 +148,18 @@ const useGeoJS = () => {
         .draw();
       previousWidth += currentWidth;
     });
+    const margin = 0.03;
     if (resetCam) {
-      resetMapDimensions(width, height, 0.3, resetCam);
+      resetMapDimensions(width, height, margin, resetCam);
     } else {
       const params = geo.util.pixelCoordinateParams(container.value, width, height);
-      const margin = 0.3;
       const { right, bottom } = params.map.maxBounds;
       originalBounds = params.map.maxBounds;
       geoViewer.value.maxBounds({
-        left: 0 - right * margin,
+        left: 0 - right * (margin / 2),
         top: 0 - bottom * margin,
         right: right * (1 + margin),
-        bottom: bottom * (1 + margin),
+        bottom: bottom * (1 + margin / 2),
       });
     }
   };

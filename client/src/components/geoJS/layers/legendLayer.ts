@@ -201,7 +201,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
         const width = this.scaledWidth > compressedWidth ? (this.scaledWidth / compressedWidth) * widths[i] : widths[i];
         const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  150)  && leftOffset !== 0 && yOffset !== 0;
         const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  150)  && leftOffset !== 0 && topOffset !== 0;
-     
+
 
       if (!bottomWithinYAxisStart) {
         this.lineDataX.push({
@@ -232,7 +232,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
           },
           thicker: true,
         });
-      
+
         this.lineDataX.push({
           line: {
             type: "LineString",
@@ -432,6 +432,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
   }
 
   redraw() {
+    return;
     const combinedLineData = this.lineDataX.concat(this.lineDataY);
     this.lineLayer
       .data(combinedLineData)

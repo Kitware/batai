@@ -19,6 +19,7 @@ import SpeciesLayer from "./layers/speciesLayer";
 import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import MeasureToolLayer from "./layers/measureToolLayer";
 import BoundingBoxLayer from "./layers/boundingBoxLayer";
+import AxesLayer from "./layers/axesLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
 export default defineComponent({
@@ -92,6 +93,7 @@ export default defineComponent({
     let speciesSequenceLayer: SpeciesSequenceLayer;
     let measureToolLayer: MeasureToolLayer;
     let boundingBoxLayer: BoundingBoxLayer;
+    let axesLayer: AxesLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -581,6 +583,10 @@ export default defineComponent({
           timeLayer.disable();
           freqLayer.disable();
         }
+        if (!props.thumbnail && !axesLayer) {
+          axesLayer = new AxesLayer(props.geoViewerRef, event, props.spectroInfo);
+          axesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        }
         if (props.spectroInfo.compressedWidth && viewCompressedOverlay.value) {
           viewCompressedOverlay.value = false;
         }
@@ -675,6 +681,7 @@ export default defineComponent({
       }
       // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
       legendLayer?.onPan();
+      axesLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
     });
     watch(viewCompressedOverlay, () => {
       if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
