@@ -1,6 +1,8 @@
 import { SpectroInfo } from "../geoJSUtils";
 import geo from "geojs";
 import { LayerStyle, TextData } from "./types";
+import { timer } from "d3";
+import { mdiTimerCancel } from "@mdi/js";
 
 interface Point {
   x: number;
@@ -37,7 +39,9 @@ export default class AxesLayer {
   color: string;
 
   freqRange: number[];
-  tickSize: number;
+  timeRange: number[];
+  tickSizeY: number;
+  tickSizeX: number;
   tickLength: number;
   xTicks: Tick[];
   yTicks: Tick[];
@@ -62,7 +66,9 @@ export default class AxesLayer {
     this.color = 'white';
 
     this.freqRange = [0, 1];
-    this.tickSize = 10000;
+    this.tickSizeY = 10000;
+    this.timeRange = [0, 1];
+    this.tickSizeX = 50;
     this.tickLength = 10;
     this.xTicks = [];
     this.yTicks = [];
@@ -117,12 +123,12 @@ export default class AxesLayer {
     // Clear existing data (move line data clearig here as well)
     this.textData = [];
     this.yTicks = [];
+    this.xTicks = [];
     this.lineData = [];
-    this.computeFrequencyRange();
-    this.computeFrequencyTickOptions();
     // this.computeTimeRange();
     this.computeLineData();
     this.computeYTickData();
+    this.computeXTickData();
     this.axesFeature
       .data(this.lineData)
       .style(this.createAxesStyle())
@@ -156,13 +162,13 @@ export default class AxesLayer {
     // Need the frequency value of all the ticks
     const freqRangeMagnitude = this.freqRange[1] - this.freqRange[0];
     if (freqRangeMagnitude > 50000) {
-      this.tickSize = 10000;
+      this.tickSizeY = 10000;
       return;
     } else if (freqRangeMagnitude > 20000) {
-      this.tickSize = 5000;
+      this.tickSizeY = 5000;
       return;
     } else {
-      this.tickSize = 2000;
+      this.tickSizeY = 2000;
     }
   }
 
@@ -187,17 +193,19 @@ export default class AxesLayer {
   }
 
   computeYTickData() {
+    this.computeFrequencyRange();
+    this.computeFrequencyTickOptions();
     const mapNode: HTMLElement = (this.geoViewerRef.node()[0] as HTMLElement);
     const { left } = mapNode.getBoundingClientRect();
     const yAxisTop = { x: left + 2, y: 0 };
     const { x: gcsLeft } = this.geoViewerRef.displayToGcs(yAxisTop);
     const yTickStop = { x: left + this.tickLength, y: 0 };
-    const textStart = { x: left + this.tickLength, y: 0 };
+    const textStart = { x: left + this.tickLength + 5, y: 0 };
     const gcsTickStop = this.geoViewerRef.displayToGcs(yTickStop).x;
     const gcsTextStart = this.geoViewerRef.displayToGcs(textStart).x;
     const tickFrequencies = [];
     const maxFreq = this.freqRange[1];
-    for (let i = this.spectroInfo.low_freq; i < Math.floor(maxFreq); i += this.tickSize) {
+    for (let i = this.spectroInfo.low_freq; i < Math.min(Math.floor(maxFreq), this.spectroInfo.high_freq); i += this.tickSizeY) {
       tickFrequencies.push(i);
     }
     // Each i value is a frequency. Compute the needed y-value for each one
@@ -218,6 +226,73 @@ export default class AxesLayer {
         text: `${(tick.value / 1000).toFixed(0)}KHz`,
         x: gcsTextStart,
         y,
+      });
+    });
+  }
+
+  computeXTickData() {
+    if (this.compressedView) {
+      this._computeCompressedXTickData();
+    } else {
+      this._computeFullXTickData();
+    }
+  }
+
+  computeTimeRange() {
+    const mapNode: HTMLElement = this.geoViewerRef.node()[0] as HTMLElement;
+    const { left, right, bottom } = mapNode.getBoundingClientRect();
+    const xAxisLeft = { x: left, y: bottom - 2 };
+    const xAxisRight = { x: right, y: bottom - 2};
+    const axisLeftGcs = this.geoViewerRef.displayToGcs(xAxisLeft);
+    const axisRightGcs = this.geoViewerRef.displayToGcs(xAxisRight);
+    const startTimeX = axisLeftGcs.x;
+    const endTimeX = axisRightGcs.x;
+    const startTime = startTimeX * ((this.spectroInfo.end_time - this.spectroInfo.start_time) / this.scaledWidth);
+    const endTime = endTimeX * ((this.spectroInfo.end_time - this.spectroInfo.start_time) / this.scaledWidth);
+    this.timeRange = [startTime, Math.min(endTime, this.spectroInfo.end_time)];
+
+    const timeRangeMagnitude = this.timeRange[1] - this.timeRange[0];
+    if (timeRangeMagnitude > 200) {
+      this.tickSizeX = 50;
+    } else if (timeRangeMagnitude > 100) {
+      this.tickSizeX = 25;
+    } else {
+      this.tickSizeX = 10;
+    }
+  }
+
+  _computeCompressedXTickData() {
+    // TODO
+    console.log(this.spectroInfo);
+  }
+
+  _computeFullXTickData() {
+    this.computeTimeRange();
+    const mapNode: HTMLElement = (this.geoViewerRef.node()[0] as HTMLElement);
+    const { bottom, left, top } = mapNode.getBoundingClientRect();
+    const xAxisLeft = { x: left, y: bottom - top };
+    const { y: gcsBottom } = this.geoViewerRef.displayToGcs(xAxisLeft);
+    const xTickStop = { x: 0, y: bottom - (top + this.tickLength) };
+    const textStart = { x: 0, y: bottom - (top + this.tickLength + 5) };
+    const gcsTickStop = this.geoViewerRef.displayToGcs(xTickStop).y;
+    const gcsTextStart = this.geoViewerRef.displayToGcs(textStart).y;
+    for (let time = this.spectroInfo.start_time; time < Math.min(this.spectroInfo.end_time, this.timeRange[1]); time += this.tickSizeX) {
+      const xVal = (time * this.scaledWidth) / (this.spectroInfo.end_time - this.spectroInfo.start_time);
+      this.xTicks.push({
+        value: time,
+        unit: '',
+        position: { x: xVal, y: gcsBottom },
+      });
+    }
+    this.xTicks.forEach((tick: Tick) => {
+      const { x, y } = tick.position;
+      const line: Point[] = [{ x, y }, { x, y: gcsTickStop }];
+      this.lineData.push(line);
+
+      this.textData.push({
+        text: `${tick.value.toFixed(0)}ms`,
+        x,
+        y: gcsTextStart,
       });
     });
   }
