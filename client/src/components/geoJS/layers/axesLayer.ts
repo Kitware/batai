@@ -1,8 +1,6 @@
 import { SpectroInfo } from "../geoJSUtils";
 import geo from "geojs";
 import { LayerStyle, TextData } from "./types";
-import { timer } from "d3";
-import { mdiTimerCancel } from "@mdi/js";
 
 interface Point {
   x: number;
@@ -13,6 +11,10 @@ interface Tick {
   value: number;
   unit: string;
   position: Point;
+}
+
+interface TickTextData extends TextData {
+  textAlign?: 'left' | 'center' | 'right';
 }
 
 export default class AxesLayer {
@@ -35,7 +37,7 @@ export default class AxesLayer {
   textLayer: any;
 
   lineData: Point[][];
-  textData: TextData[];
+  textData: TickTextData[];
   color: string;
 
   freqRange: number[];
@@ -226,6 +228,7 @@ export default class AxesLayer {
         text: `${(tick.value / 1000).toFixed(0)}KHz`,
         x: gcsTextStart,
         y,
+        textAlign: 'left',
       });
     });
   }
@@ -262,8 +265,59 @@ export default class AxesLayer {
   }
 
   _computeCompressedXTickData() {
-    // TODO
-    console.log(this.spectroInfo);
+    const {
+      start_times: startTimes,
+      end_times: endTimes,
+      widths,
+      compressedWidth,
+      height,
+    } = this.spectroInfo;
+    if (!startTimes || !endTimes || !widths || !compressedWidth || !height) return;
+
+    const mapNode: HTMLElement = (this.geoViewerRef.node()[0] as HTMLElement);
+    const { bottom, left, top } = mapNode.getBoundingClientRect();
+    const xAxisLeft = { x: left, y: bottom - top };
+    const { y: gcsBottom } = this.geoViewerRef.displayToGcs(xAxisLeft);
+    const xTickStop = { x: 0, y: bottom - (top + this.tickLength) };
+    const textStart = { x: 0, y: bottom - (top + this.tickLength + 5) };
+    const gcsTickStop = this.geoViewerRef.displayToGcs(xTickStop).y;
+    const gcsTextStart = this.geoViewerRef.displayToGcs(textStart).y;
+
+    const gcsTopLeft = this.geoViewerRef.displayToGcs({x: left, y: 0});
+    const gcsTop = gcsTopLeft.y;
+
+    let cumulativeWidth = 0;
+
+    startTimes.forEach((time, idx) => {
+      this.xTicks.push({
+        value: time,
+        unit: '',
+        position: { x: cumulativeWidth, y: gcsBottom }
+      });
+      cumulativeWidth += widths[idx] * (this.scaledWidth / compressedWidth);
+    });
+
+    this.xTicks.forEach((tick, idx) => {
+      const { x, y } = tick.position;
+      const isFirstTick = idx === 0;
+      const tickEnd = isFirstTick ? gcsTickStop : gcsTop;
+      const line: Point[] = [{ x, y }, { x, y: tickEnd }];
+      this.lineData.push(line);
+      this.textData.push({
+        text: `▶${tick.value.toFixed(0)}ₘₛ`,
+        x,
+        y: gcsTextStart,
+        textAlign: 'left',
+      });
+      if (idx > 0) {
+        this.textData.push({
+          text: `${endTimes[idx - 1].toFixed(0)}ₘₛ◀`,
+          x,
+          y: gcsTop + 24,
+          textAlign: 'right',
+        });
+      }
+    });
   }
 
   _computeFullXTickData() {
@@ -290,9 +344,10 @@ export default class AxesLayer {
       this.lineData.push(line);
 
       this.textData.push({
-        text: `${tick.value.toFixed(0)}ms`,
+        text: `${tick.value.toFixed(0)}ₘₛ`,
         x,
         y: gcsTextStart,
+        textAlign: 'center',
       });
     });
   }
@@ -307,7 +362,7 @@ export default class AxesLayer {
   createTextStyle(): LayerStyle<TextData> {
     return {
       fontSize: '16px',
-      textAlign: () => 'start',
+      textAlign: (data: TickTextData) => data.textAlign || 'center',
       textBaseline: () => 'middle',
       color: () => this.color,
       offset: (data) => ({
