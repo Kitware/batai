@@ -48,6 +48,8 @@ export default class AxesLayer {
   xTicks: Tick[];
   yTicks: Tick[];
 
+  disabled: boolean;
+
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
@@ -75,9 +77,32 @@ export default class AxesLayer {
     this.xTicks = [];
     this.yTicks = [];
 
+    this.disabled = false;
+
+    this.init();
+  }
+
+  init() {
     this.initializeLineLayer();
     this.initializeTextLayer();
     this.addEventListeners();
+    this.drawAxes();
+  }
+
+  disable() {
+    this.disabled = true;
+    this.lineData = [];
+    this.textData = [];
+    if (this.lineLayer && this.axesFeature) {
+      this.axesFeature.data(this.lineData).draw();
+    }
+    if (this.textLayer) {
+      this.textLayer.data(this.textData).draw();
+    }
+  }
+
+  enable() {
+    this.disabled = false;
     this.drawAxes();
   }
 
@@ -122,6 +147,11 @@ export default class AxesLayer {
   }
 
   drawAxes() {
+    if (this.disabled) {
+      this.axesFeature.data([]).draw();
+      this.textLayer.data([]).draw();
+      return;
+    }
     // Clear existing data (move line data clearig here as well)
     this.textData = [];
     this.yTicks = [];
@@ -350,6 +380,15 @@ export default class AxesLayer {
         textAlign: 'center',
       });
     });
+  }
+
+  destroy() {
+    if (this.textLayer) {
+      this.geoViewerRef.deleteLayer(this.textLayer);
+    }
+    if (this.lineLayer) {
+      this.geoViewerRef.deleteLayer(this.lineLayer);
+    }
   }
 
   createAxesStyle() {

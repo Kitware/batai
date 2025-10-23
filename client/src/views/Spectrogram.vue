@@ -69,6 +69,8 @@ export default defineComponent({
       drawingBoundingBox,
       boundingBoxError,
       toggleDrawingBoundingBox,
+      fixedAxes,
+      toggleFixedAxes,
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -326,6 +328,8 @@ export default defineComponent({
       drawingBoundingBox,
       toggleDrawingBoundingBox,
       boundingBoxError,
+      fixedAxes,
+      toggleFixedAxes,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -432,6 +436,20 @@ export default defineComponent({
               </v-select>
             </v-col>
             <v-spacer />
+            <v-tooltip>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="fixedAxes ? 'blue': ''"
+                  @click="toggleFixedAxes"
+                >
+                  mdi-axis-lock
+                </v-icon>
+              </template>
+              Lock axes to viewport
+            </v-tooltip>
             <v-tooltip>
               <template #activator="{ props: subProps }">
                 <v-badge

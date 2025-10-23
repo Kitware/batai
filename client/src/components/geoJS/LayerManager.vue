@@ -75,6 +75,7 @@ export default defineComponent({
       frequencyRulerY,
       drawingBoundingBox,
       boundingBoxError,
+      fixedAxes,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -87,13 +88,13 @@ export default defineComponent({
     let sequenceAnnotationLayer: SequenceLayer;
     let editAnnotationLayer: EditAnnotationLayer;
     let legendLayer: LegendLayer;
+    let axesLayer: AxesLayer;
     let timeLayer: TimeLayer;
     let freqLayer: FreqLayer;
     let speciesLayer: SpeciesLayer;
     let speciesSequenceLayer: SpeciesSequenceLayer;
     let measureToolLayer: MeasureToolLayer;
     let boundingBoxLayer: BoundingBoxLayer;
-    let axesLayer: AxesLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -360,12 +361,14 @@ export default defineComponent({
         sequenceAnnotationLayer.redraw();
       }
       if (!props.thumbnail) {
-        if (layerVisibility.value.includes("grid")) {
-          legendLayer.setGridEnabled(true);
-        } else {
-          legendLayer.setGridEnabled(false);
+        if (legendLayer) {
+          if (layerVisibility.value.includes("grid")) {
+            legendLayer.setGridEnabled(true);
+          } else {
+            legendLayer.setGridEnabled(false);
+          }
+          legendLayer.redraw();
         }
-        legendLayer.redraw();
         if (layerVisibility.value.includes("time") || layerVisibility.value.includes('duration')) {
           if (layerVisibility.value.includes("time")) {
             timeLayer.displayDuration = false;
@@ -472,6 +475,20 @@ export default defineComponent({
         speciesSequenceLayer.destroy();
       }
     });
+
+    function setAxes() {
+      if (!legendLayer || !axesLayer) {
+        return;
+      }
+      if (fixedAxes.value) {
+        legendLayer.disable();
+        axesLayer.enable();
+      } else {
+        axesLayer.disable();
+        legendLayer.enable();
+      }
+    }
+
     const initLayers = () => {
       if (props.spectroInfo) {
         if (!compressedOverlayLayer) {
@@ -513,6 +530,11 @@ export default defineComponent({
           legendLayer.calcGridLines();
           legendLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           legendLayer.onPan();
+          if (!axesLayer) {
+            axesLayer = new AxesLayer(props.geoViewerRef, event, props.spectroInfo);
+          }
+          axesLayer.init();
+          axesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!timeLayer) {
             timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
           }
@@ -572,7 +594,9 @@ export default defineComponent({
           speciesLayer.formatData(localAnnotations.value);
           speciesSequenceLayer.formatData(localSequenceAnnotations.value);
 
-          legendLayer.redraw();
+          if (legendLayer) {
+            legendLayer.redraw();
+          }
           if (layerVisibility.value.includes('species')) {
             speciesLayer.redraw();
             speciesSequenceLayer.redraw();
@@ -583,15 +607,11 @@ export default defineComponent({
           timeLayer.disable();
           freqLayer.disable();
         }
-        if (!props.thumbnail && !axesLayer) {
-          axesLayer = new AxesLayer(props.geoViewerRef, event, props.spectroInfo);
-          axesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-        }
         if (props.spectroInfo.compressedWidth && viewCompressedOverlay.value) {
           viewCompressedOverlay.value = false;
         }
       }
-      triggerUpdate();
+      setAxes();
     };
     onMounted(() => {
       initLayers();
@@ -754,6 +774,9 @@ export default defineComponent({
     }
 
     watch([backgroundColor, colorScheme], updateColorFilter);
+
+
+    watch(fixedAxes, setAxes);
 
     return {
       annotationState,

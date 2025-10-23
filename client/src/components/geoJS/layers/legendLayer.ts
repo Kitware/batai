@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { SpectroInfo } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
-import { LayerStyle } from "./types";
+import { LayerStyle, TextData } from "./types";
 import geo from "geojs";
 
 interface LineData {
@@ -10,12 +10,7 @@ interface LineData {
   grid?: boolean;
 }
 
-interface TextData {
-  text: string;
-  x: number;
-  y: number;
-  offsetY?: number;
-  offsetX?: number;
+interface LegendTextData extends TextData {
   type: 'time' | 'freq',
   textAlign?: 'left' | 'center' | 'right';
   textBaseline?: 'top' | 'middle' | 'bottom';
@@ -23,7 +18,7 @@ interface TextData {
   compressedLabel?: boolean;
 }
 
-export default class LegendLayer extends BaseTextLayer<TextData> {
+export default class LegendLayer extends BaseTextLayer<LegendTextData> {
   lineDataX: LineData[];
   lineDataY: LineData[];
 
@@ -33,8 +28,8 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   gridLayer: any;
 
-  textDataX: TextData[];
-  textDataY: TextData[];
+  textDataX: LegendTextData[];
+  textDataY: LegendTextData[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   textLayer: any;
 
@@ -42,12 +37,14 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
 
   spectroInfo: SpectroInfo;
 
-  textStyle: LayerStyle<TextData>;
+  textStyle: LayerStyle<LegendTextData>;
   lineStyle: LayerStyle<LineData>;
 
   axisBuffer: number;
 
   gridEnabled: boolean;
+
+  disabled: boolean;
 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -69,28 +66,33 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
     this.scaledHeight = -1;
     this.scaledWidth  = -1;
     this.gridEnabled = false;
-    //Only initialize once, prevents recreating Layer each edit
-    const layer = this.geoViewerRef.createLayer("feature", {
-      features: ["text", "line"],
-    });
-    this.textLayer = layer
-      .createFeature("text")
-      .text((data: TextData) => data.text)
-      .position((data: TextData) => ({ x: data.x, y: data.y }));
+    this.disabled = false;
 
-    this.lineLayer = layer.createFeature("line");
-    this.gridLayer = layer.createFeature("line");
-
-    this.textStyle = this.createTextStyle();
-    this.lineStyle = this.createLineStyle();
-    this.gridLines = [];
-    this.geoViewerRef.geoOn(geo.event.pan, () => this.onPan());
-    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
-    this.createLabels();
-    this.calcGridLines();
-
+    this.init();
   }
 
+  init() {
+    if (!this.textLayer) {
+      const layer = this.geoViewerRef.createLayer("feature", {
+        features: ["text", "line"],
+      });
+      this.textLayer = layer
+        .createFeature("text")
+        .text((data: LegendTextData) => data.text)
+        .position((data: LegendTextData) => ({ x: data.x, y: data.y }));
+
+      this.lineLayer = layer.createFeature("line");
+      this.gridLayer = layer.createFeature("line");
+
+      this.textStyle = this.createTextStyle();
+      this.lineStyle = this.createLineStyle();
+      this.gridLines = [];
+      this.geoViewerRef.geoOn(geo.event.pan, () => this.onPan());
+      this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
+      this.createLabels();
+      this.calcGridLines();
+    }
+  }
 
   onPan() {
     const bounds = this.geoViewerRef.camera().bounds;
@@ -432,20 +434,26 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
   }
 
   redraw() {
-    return;
+    if (this.disabled) return;
     const combinedLineData = this.lineDataX.concat(this.lineDataY);
     this.lineLayer
       .data(combinedLineData)
       .line((d: LineData) => d.line.coordinates)
       .style(this.createLineStyle())
       .draw();
-    const combinedTextData = this.textDataX.concat(this.textDataY);
-    this.textLayer.data(combinedTextData).style(this.createTextStyle()).draw();
+    const combinedLegendTextData = this.textDataX.concat(this.textDataY);
+    this.textLayer.data(combinedLegendTextData).style(this.createTextStyle()).draw();
   }
 
   disable() {
+    this.disabled = true;
     this.lineLayer.data([]).draw();
     this.textLayer.data([]).draw();
+  }
+
+  enable() {
+    this.disabled = false;
+    this.redraw();
   }
 
   setTextColor(newColor: string) {
@@ -498,7 +506,7 @@ export default class LegendLayer extends BaseTextLayer<TextData> {
       },
     };
   }
-  createTextStyle(): LayerStyle<TextData> {
+  createTextStyle(): LayerStyle<LegendTextData> {
     return {
       ...{
         strokeColor: "yellow",
