@@ -91,14 +91,7 @@ export default class AxesLayer {
 
   disable() {
     this.disabled = true;
-    this.lineData = [];
-    this.textData = [];
-    if (this.lineLayer && this.axesFeature) {
-      this.axesFeature.data(this.lineData).draw();
-    }
-    if (this.textLayer) {
-      this.textLayer.data(this.textData).draw();
-    }
+    this.drawAxes();
   }
 
   enable() {
@@ -116,7 +109,9 @@ export default class AxesLayer {
       this.xScale = newWidth / this.spectroInfo.width;
       this.compressedView = false;
     }
-    this.drawAxes();
+    if (!this.disabled) {
+      this.drawAxes();
+    }
   }
 
   initializeLineLayer() {
@@ -148,8 +143,12 @@ export default class AxesLayer {
 
   drawAxes() {
     if (this.disabled) {
-      this.axesFeature.data([]).draw();
-      this.textLayer.data([]).draw();
+      this.textData = [];
+      this.yTicks = [];
+      this.xTicks = [];
+      this.lineData = [];
+      this.axesFeature.data(this.lineData).draw();
+      this.textLayer.data(this.textData).draw();
       return;
     }
     // Clear existing data (move line data clearig here as well)

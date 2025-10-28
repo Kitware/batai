@@ -533,7 +533,6 @@ export default defineComponent({
           if (!axesLayer) {
             axesLayer = new AxesLayer(props.geoViewerRef, event, props.spectroInfo);
           }
-          axesLayer.init();
           axesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!timeLayer) {
             timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
