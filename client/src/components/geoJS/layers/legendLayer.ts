@@ -465,7 +465,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
 
   setGridEnabled(val: boolean) {
     this.gridEnabled = val;
-    if (this.gridEnabled) {
+    if (this.gridEnabled && !this.disabled) {
       this.gridLayer
         .data(this.gridLines)
         .line((d: LineData) => d.line.coordinates)

@@ -9,7 +9,6 @@ interface Point {
 
 interface Tick {
   value: number;
-  unit: string;
   position: Point;
 }
 
@@ -32,11 +31,21 @@ export default class AxesLayer {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lineLayer: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gridLayer: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   axesFeature: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gridFeature: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   textLayer: any;
 
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+
   lineData: Point[][];
+  gridData: Point[][];
   textData: TickTextData[];
   color: string;
 
@@ -45,10 +54,10 @@ export default class AxesLayer {
   tickSizeY: number;
   tickSizeX: number;
   tickLength: number;
-  xTicks: Tick[];
-  yTicks: Tick[];
 
   disabled: boolean;
+
+  showGridLines: boolean;
 
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,6 +75,7 @@ export default class AxesLayer {
     this.compressedView = false;
 
     this.lineData = [];
+    this.gridData = [];
     this.textData = [];
     this.color = 'white';
 
@@ -74,19 +84,33 @@ export default class AxesLayer {
     this.timeRange = [0, 1];
     this.tickSizeX = 50;
     this.tickLength = 10;
-    this.xTicks = [];
-    this.yTicks = [];
 
     this.disabled = false;
+    this.showGridLines = false;
 
     this.init();
   }
 
   init() {
     this.initializeLineLayer();
+    this.initializeGridLayer();
     this.initializeTextLayer();
     this.addEventListeners();
     this.drawAxes();
+  }
+
+  computeNodeBounds() {
+    const mapNode: HTMLElement = (this.geoViewerRef.node()[0] as HTMLElement);
+    const {
+      left,
+      right,
+      top,
+      bottom
+    } = mapNode.getBoundingClientRect();
+    this.left = left;
+    this.top = top;
+    this.right = right;
+    this.bottom = bottom;
   }
 
   disable() {
@@ -97,6 +121,13 @@ export default class AxesLayer {
   enable() {
     this.disabled = false;
     this.drawAxes();
+  }
+
+  setGridEnabled(value: boolean) {
+    this.showGridLines = value;
+    if (!this.disabled) {
+      this.drawAxes();
+    }
   }
 
   setScaledDimensions(newWidth: number, newHeight: number) {
@@ -121,6 +152,13 @@ export default class AxesLayer {
     this.axesFeature = this.lineLayer.createFeature("line");
   }
 
+  initializeGridLayer() {
+    this.gridLayer = this.geoViewerRef.createLayer("feature", {
+      features: ["line"],
+    });
+    this.gridFeature = this.gridLayer.createFeature("line");
+  }
+
   initializeTextLayer() {
     this.textLayer = this.geoViewerRef.createLayer('feature', {
       features: ['text']
@@ -142,27 +180,26 @@ export default class AxesLayer {
   }
 
   drawAxes() {
+    this.lineData = [];
+    this.gridData = [];
+    this.textData = [];
     if (this.disabled) {
-      this.textData = [];
-      this.yTicks = [];
-      this.xTicks = [];
-      this.lineData = [];
-      this.axesFeature.data(this.lineData).draw();
-      this.textLayer.data(this.textData).draw();
+      this.axesFeature?.data(this.lineData).draw();
+      this.gridFeature?.data(this.lineData).draw();
+      this.textLayer?.data(this.textData).draw();
       return;
     }
-    // Clear existing data (move line data clearig here as well)
-    this.textData = [];
-    this.yTicks = [];
-    this.xTicks = [];
-    this.lineData = [];
-    // this.computeTimeRange();
+    this.computeNodeBounds();
     this.computeLineData();
     this.computeYTickData();
     this.computeXTickData();
     this.axesFeature
       .data(this.lineData)
       .style(this.createAxesStyle())
+      .draw();
+    this.gridFeature
+      .data(this.gridData)
+      .style(this.createGridStyle())
       .draw();
     this.textLayer
       .data(this.textData)
@@ -239,16 +276,16 @@ export default class AxesLayer {
     for (let i = this.spectroInfo.low_freq; i < Math.min(Math.floor(maxFreq), this.spectroInfo.high_freq); i += this.tickSizeY) {
       tickFrequencies.push(i);
     }
+    const yTicks: Tick[] = [];
     // Each i value is a frequency. Compute the needed y-value for each one
     tickFrequencies.forEach((freq: number) => {
       const yVal = this.scaledHeight - (((freq / 1000) - (this.spectroInfo.low_freq / 1000)) *this.scaledHeight * 1000) / (this.spectroInfo.high_freq - this.spectroInfo.low_freq);
-      this.yTicks.push({
+      yTicks.push({
         value: freq,
-        unit: '',
         position: { x: gcsLeft, y: yVal },
       });
     });
-    this.yTicks.forEach((tick: Tick) => {
+    yTicks.forEach((tick: Tick) => {
       const { x, y } = tick.position;
       const line: Point[] = [{ x, y }, {x: gcsTickStop, y}];
       this.lineData.push(line);
@@ -259,6 +296,14 @@ export default class AxesLayer {
         y,
         textAlign: 'left',
       });
+
+      if (this.showGridLines) {
+        const gridStart = this.geoViewerRef.displayToGcs({ x: textStart.x + 80, y: 0}).x;
+        this.gridData.push([
+          { x: gridStart, y },
+          { x: this.scaledWidth, y },
+        ]);
+      }
     });
   }
 
@@ -317,21 +362,30 @@ export default class AxesLayer {
 
     let cumulativeWidth = 0;
 
+    const xTicks: Tick[] = [];
     startTimes.forEach((time, idx) => {
-      this.xTicks.push({
+      xTicks.push({
         value: time,
-        unit: '',
         position: { x: cumulativeWidth, y: gcsBottom }
       });
       cumulativeWidth += widths[idx] * (this.scaledWidth / compressedWidth);
     });
 
-    this.xTicks.forEach((tick, idx) => {
+    xTicks.forEach((tick, idx) => {
       const { x, y } = tick.position;
       const isFirstTick = idx === 0;
       const tickEnd = isFirstTick ? gcsTickStop : gcsTop;
-      const line: Point[] = [{ x, y }, { x, y: tickEnd }];
+      const line: Point[] = [{ x, y }, { x, y: gcsTickStop }];
       this.lineData.push(line);
+      if (tickEnd !== gcsTickStop) {
+        // Use the feature for the grid to draw fainter lines across
+        // the image linking start/end time labels
+        const gridLine = [
+          { x, y: gcsTickStop + 50 },
+          { x, y: gcsTop }
+        ];
+        this.gridData.push(gridLine);
+      }
       this.textData.push({
         text: `▶${tick.value.toFixed(0)}ₘₛ`,
         x,
@@ -359,15 +413,15 @@ export default class AxesLayer {
     const textStart = { x: 0, y: bottom - (top + this.tickLength + 5) };
     const gcsTickStop = this.geoViewerRef.displayToGcs(xTickStop).y;
     const gcsTextStart = this.geoViewerRef.displayToGcs(textStart).y;
+    const xTicks: Tick[] = [];
     for (let time = this.spectroInfo.start_time; time < Math.min(this.spectroInfo.end_time, this.timeRange[1]); time += this.tickSizeX) {
       const xVal = (time * this.scaledWidth) / (this.spectroInfo.end_time - this.spectroInfo.start_time);
-      this.xTicks.push({
+      xTicks.push({
         value: time,
-        unit: '',
         position: { x: xVal, y: gcsBottom },
       });
     }
-    this.xTicks.forEach((tick: Tick) => {
+    xTicks.forEach((tick: Tick) => {
       const { x, y } = tick.position;
       const line: Point[] = [{ x, y }, { x, y: gcsTickStop }];
       this.lineData.push(line);
@@ -378,6 +432,16 @@ export default class AxesLayer {
         y: gcsTextStart,
         textAlign: 'center',
       });
+
+      if (this.showGridLines) {
+        const gridStart = this.geoViewerRef.displayToGcs({ x: xTickStop.x, y: xTickStop.y - 20}).y;
+        const gcsTopLeft = this.geoViewerRef.displayToGcs({x: left, y: 0});
+        const gcsTop = gcsTopLeft.y;
+        this.gridData.push([
+          { x, y: gridStart },
+          { x, y: gcsTop },
+        ]);
+      }
     });
   }
 
@@ -407,6 +471,14 @@ export default class AxesLayer {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
+    };
+  }
+
+  createGridStyle() {
+    return {
+      strokeWidth: 1,
+      strokeColor: this.color,
+      strokeOpacity: 0.5,
     };
   }
 }

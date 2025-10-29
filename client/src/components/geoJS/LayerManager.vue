@@ -364,8 +364,10 @@ export default defineComponent({
         if (legendLayer) {
           if (layerVisibility.value.includes("grid")) {
             legendLayer.setGridEnabled(true);
+            axesLayer.setGridEnabled(true);
           } else {
             legendLayer.setGridEnabled(false);
+            axesLayer.setGridEnabled(false);
           }
           legendLayer.redraw();
         }

@@ -148,7 +148,7 @@ const useGeoJS = () => {
         .draw();
       previousWidth += currentWidth;
     });
-    const margin = 0.03;
+    const margin = 0.3;
     if (resetCam) {
       resetMapDimensions(width, height, margin, resetCam);
     } else {
