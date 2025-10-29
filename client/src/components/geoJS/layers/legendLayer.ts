@@ -112,16 +112,6 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
   setScaledDimensions( width: number, height: number) {
     super.setScaledDimensions(width, height);
     this.createLabels();
-    this.calcGridLines();
-    if (this.gridEnabled) {
-      this.gridLayer
-        .data(this.gridLines)
-        .line((d: LineData) => d.line.coordinates)
-        .style(this.createLineStyle())
-        .draw();
-    } else {
-      this.gridLayer.data([]).draw();
-    }
     this.redraw();
   }
 
@@ -435,6 +425,16 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
 
   redraw() {
     if (this.disabled) return;
+    this.calcGridLines();
+    if (this.gridEnabled) {
+      this.gridLayer
+        .data(this.gridLines)
+        .line((d: LineData) => d.line.coordinates)
+        .style(this.createLineStyle())
+        .draw();
+    } else {
+      this.gridLayer.data([]).draw();
+    }
     const combinedLineData = this.lineDataX.concat(this.lineDataY);
     this.lineLayer
       .data(combinedLineData)
