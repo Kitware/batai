@@ -208,10 +208,8 @@ export default class AxesLayer {
   }
 
   computeFrequencyRange() {
-    const mapNode: HTMLElement = (this.geoViewerRef.node()[0] as HTMLElement);
-    const { left, bottom } = mapNode.getBoundingClientRect();
-    const yAxisTop = { x: left + 2, y: 0 };
-    const yAxisBottom = { x: left + 2, y: bottom };
+    const yAxisTop = { x: this.left + 2, y: 0 };
+    const yAxisBottom = { x: this.left + 2, y: this.bottom };
     const axisTopGcs = this.geoViewerRef.displayToGcs(yAxisTop);
     const axisBottomGcs = this.geoViewerRef.displayToGcs(yAxisBottom);
     const highFreqY = axisTopGcs.y;
@@ -241,12 +239,10 @@ export default class AxesLayer {
   }
 
   computeLineData() {
-    const mapNode: HTMLElement = (this.geoViewerRef.node()[0] as HTMLElement);
-    const { left, top, right, bottom } = mapNode.getBoundingClientRect();
-    const yAxisTop = { x: left + 2, y: 0 };
-    const yAxisBottom = { x: left + 2, y: bottom - top };
-    const xAxisLeft = { x: left, y: bottom - (top + 2)};
-    const xAxisRight = { x: right, y: bottom - (top + 2)};
+    const yAxisTop = { x: this.left + 2, y: 0 };
+    const yAxisBottom = { x: this.left + 2, y: this.bottom - this.top };
+    const xAxisLeft = { x: this.left, y: this.bottom - (this.top + 2)};
+    const xAxisRight = { x: this.right, y: this.bottom - (this.top + 2)};
 
     this.lineData = [
       [
@@ -263,12 +259,10 @@ export default class AxesLayer {
   computeYTickData() {
     this.computeFrequencyRange();
     this.computeFrequencyTickOptions();
-    const mapNode: HTMLElement = (this.geoViewerRef.node()[0] as HTMLElement);
-    const { left } = mapNode.getBoundingClientRect();
-    const yAxisTop = { x: left + 2, y: 0 };
+    const yAxisTop = { x: this.left + 2, y: 0 };
     const { x: gcsLeft } = this.geoViewerRef.displayToGcs(yAxisTop);
-    const yTickStop = { x: left + this.tickLength, y: 0 };
-    const textStart = { x: left + this.tickLength + 5, y: 0 };
+    const yTickStop = { x: this.left + this.tickLength, y: 0 };
+    const textStart = { x: this.left + this.tickLength + 5, y: 0 };
     const gcsTickStop = this.geoViewerRef.displayToGcs(yTickStop).x;
     const gcsTextStart = this.geoViewerRef.displayToGcs(textStart).x;
     const tickFrequencies = [];
@@ -316,10 +310,8 @@ export default class AxesLayer {
   }
 
   computeTimeRange() {
-    const mapNode: HTMLElement = this.geoViewerRef.node()[0] as HTMLElement;
-    const { left, right, bottom } = mapNode.getBoundingClientRect();
-    const xAxisLeft = { x: left, y: bottom - 2 };
-    const xAxisRight = { x: right, y: bottom - 2};
+    const xAxisLeft = { x: this.left, y: this.bottom - 2 };
+    const xAxisRight = { x: this.right, y: this.bottom - 2};
     const axisLeftGcs = this.geoViewerRef.displayToGcs(xAxisLeft);
     const axisRightGcs = this.geoViewerRef.displayToGcs(xAxisRight);
     const startTimeX = axisLeftGcs.x;
@@ -348,16 +340,14 @@ export default class AxesLayer {
     } = this.spectroInfo;
     if (!startTimes || !endTimes || !widths || !compressedWidth || !height) return;
 
-    const mapNode: HTMLElement = (this.geoViewerRef.node()[0] as HTMLElement);
-    const { bottom, left, top } = mapNode.getBoundingClientRect();
-    const xAxisLeft = { x: left, y: bottom - top };
+    const xAxisLeft = { x: this.left, y: this.bottom - this.top };
     const { y: gcsBottom } = this.geoViewerRef.displayToGcs(xAxisLeft);
-    const xTickStop = { x: 0, y: bottom - (top + this.tickLength) };
-    const textStart = { x: 0, y: bottom - (top + this.tickLength + 5) };
+    const xTickStop = { x: 0, y: this.bottom - (this.top + this.tickLength) };
+    const textStart = { x: 0, y: this.bottom - (this.top + this.tickLength + 5) };
     const gcsTickStop = this.geoViewerRef.displayToGcs(xTickStop).y;
     const gcsTextStart = this.geoViewerRef.displayToGcs(textStart).y;
 
-    const gcsTopLeft = this.geoViewerRef.displayToGcs({x: left, y: 0});
+    const gcsTopLeft = this.geoViewerRef.displayToGcs({x: this.left, y: 0});
     const gcsTop = gcsTopLeft.y;
 
     let cumulativeWidth = 0;
@@ -405,12 +395,10 @@ export default class AxesLayer {
 
   _computeFullXTickData() {
     this.computeTimeRange();
-    const mapNode: HTMLElement = (this.geoViewerRef.node()[0] as HTMLElement);
-    const { bottom, left, top } = mapNode.getBoundingClientRect();
-    const xAxisLeft = { x: left, y: bottom - top };
+    const xAxisLeft = { x: this.left, y: this.bottom - this.top };
     const { y: gcsBottom } = this.geoViewerRef.displayToGcs(xAxisLeft);
-    const xTickStop = { x: 0, y: bottom - (top + this.tickLength) };
-    const textStart = { x: 0, y: bottom - (top + this.tickLength + 5) };
+    const xTickStop = { x: 0, y: this.bottom - (this.top + this.tickLength) };
+    const textStart = { x: 0, y: this.bottom - (this.top + this.tickLength + 5) };
     const gcsTickStop = this.geoViewerRef.displayToGcs(xTickStop).y;
     const gcsTextStart = this.geoViewerRef.displayToGcs(textStart).y;
     const xTicks: Tick[] = [];
@@ -435,7 +423,7 @@ export default class AxesLayer {
 
       if (this.showGridLines) {
         const gridStart = this.geoViewerRef.displayToGcs({ x: xTickStop.x, y: xTickStop.y - 20}).y;
-        const gcsTopLeft = this.geoViewerRef.displayToGcs({x: left, y: 0});
+        const gcsTopLeft = this.geoViewerRef.displayToGcs({x: this.left, y: 0});
         const gcsTop = gcsTopLeft.y;
         this.gridData.push([
           { x, y: gridStart },
