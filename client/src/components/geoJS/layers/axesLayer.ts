@@ -360,6 +360,10 @@ export default class AxesLayer {
       });
       cumulativeWidth += widths[idx] * (this.scaledWidth / compressedWidth);
     });
+    const lastTick: Tick = {
+      value: endTimes[endTimes.length - 1],
+      position: { x: cumulativeWidth, y: gcsBottom },
+    };
 
     xTicks.forEach((tick, idx) => {
       const { x, y } = tick.position;
@@ -390,6 +394,17 @@ export default class AxesLayer {
           textAlign: 'right',
         });
       }
+    });
+
+    this.gridData.push([
+      { x: lastTick.position.x, y: lastTick.position.y },
+      { x: lastTick.position.x, y: gcsTop },
+    ]);
+    this.textData.push({
+        text: `${lastTick.value.toFixed(0)}ₘₛ◀`,
+        x: lastTick.position.x,
+        y: gcsTop + 24,
+        textAlign: 'right',
     });
   }
 
