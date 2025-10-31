@@ -448,6 +448,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
   disable() {
     this.disabled = true;
     this.lineLayer.data([]).draw();
+    this.gridLayer.data([]).draw();
     this.textLayer.data([]).draw();
   }
 

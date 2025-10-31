@@ -536,6 +536,10 @@ export default defineComponent({
             axesLayer = new AxesLayer(props.geoViewerRef, event, props.spectroInfo);
           }
           axesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          if (layerVisibility.value.includes('grid')) {
+            legendLayer.setGridEnabled(true);
+            axesLayer.setGridEnabled(true);
+          }
           if (!timeLayer) {
             timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
           }
