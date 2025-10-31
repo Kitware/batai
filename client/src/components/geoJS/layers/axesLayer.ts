@@ -341,17 +341,32 @@ export default class AxesLayer {
     if (!startTimes || !endTimes || !widths || !compressedWidth || !height) return;
 
     const xAxisLeft = { x: this.left, y: this.bottom - this.top };
-    const { y: gcsBottom } = this.geoViewerRef.displayToGcs(xAxisLeft);
+    const { x: minX, y: gcsBottom } = this.geoViewerRef.displayToGcs(xAxisLeft);
+    const { x: maxX } = this.geoViewerRef.displayToGcs({ x: this.right, y: this.top });
     const xTickStop = { x: 0, y: this.bottom - (this.top + this.tickLength) };
     const textStart = { x: 0, y: this.bottom - (this.top + this.tickLength + 5) };
     const gcsTickStop = this.geoViewerRef.displayToGcs(xTickStop).y;
     const gcsTextStart = this.geoViewerRef.displayToGcs(textStart).y;
 
     const gcsTopLeft = this.geoViewerRef.displayToGcs({x: this.left, y: 0});
+    const gcsTopText = this.geoViewerRef.displayToGcs({x: this.left, y: 12}).y;
     const gcsTop = gcsTopLeft.y;
 
     let cumulativeWidth = 0;
+    let visibleSegments = 0;
+    for (let i = 0; i < widths.length; i++) {
+      const startingWidth = cumulativeWidth;
+      const endWidth = startingWidth + (widths[i] * (this.scaledWidth / compressedWidth));
+      if (
+        (endWidth >= minX && endWidth <= maxX)
+        || (startingWidth >= minX && endWidth <= maxX)
+      ) {
+        visibleSegments += 1;
+      }
+      cumulativeWidth = endWidth;
+    }
 
+    cumulativeWidth = 0;
     const xTicks: Tick[] = [];
     startTimes.forEach((time, idx) => {
       xTicks.push({
@@ -386,11 +401,27 @@ export default class AxesLayer {
         y: gcsTextStart,
         textAlign: 'left',
       });
+      if (visibleSegments <= (startTimes.length / 4) * 3 && idx < xTicks.length - 1) {
+        // Add additional ticks using number of visible segments
+        // as a proxy for how zoomed in the user currently is
+        const xVal = (x + xTicks[idx + 1].position.x) / 2;
+        const time = ((startTimes[idx] + endTimes[idx]) / 2).toFixed(0);
+        this.lineData.push([
+          { x: xVal, y: y },
+          { x: xVal, y: gcsTickStop },
+        ]);
+        this.textData.push({
+          text: `${time}ₘₛ`,
+          x: xVal,
+          y: gcsTextStart,
+          textAlign: 'center'
+        });
+      }
       if (idx > 0) {
         this.textData.push({
           text: `${endTimes[idx - 1].toFixed(0)}ₘₛ◀`,
           x,
-          y: gcsTop + 24,
+          y: gcsTopText,
           textAlign: 'right',
         });
       }
@@ -403,7 +434,7 @@ export default class AxesLayer {
     this.textData.push({
         text: `${lastTick.value.toFixed(0)}ₘₛ◀`,
         x: lastTick.position.x,
-        y: gcsTop + 24,
+        y: gcsTop,
         textAlign: 'right',
     });
   }
