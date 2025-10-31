@@ -292,7 +292,7 @@ export default class AxesLayer {
       });
 
       if (this.showGridLines) {
-        const gridStart = this.geoViewerRef.displayToGcs({ x: textStart.x + 80, y: 0}).x;
+        const gridStart = this.geoViewerRef.displayToGcs({ x: gcsTickStop, y: 0}).x;
         this.gridData.push([
           { x: gridStart, y },
           { x: this.scaledWidth, y },
@@ -481,7 +481,7 @@ export default class AxesLayer {
     return {
       strokeWidth: 1,
       strokeColor: this.color,
-      strokeOpacity: 0.5,
+      strokeOpacity: 0.4,
     };
   }
 }
