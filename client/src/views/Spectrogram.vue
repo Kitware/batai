@@ -448,7 +448,7 @@ export default defineComponent({
                   mdi-axis-lock
                 </v-icon>
               </template>
-              Lock axes to viewport
+              Toggle between locked and floating axes
             </v-tooltip>
             <v-tooltip>
               <template #activator="{ props: subProps }">

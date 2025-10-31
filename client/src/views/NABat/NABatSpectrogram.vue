@@ -64,6 +64,8 @@ export default defineComponent({
       toggleMeasureMode,
       drawingBoundingBox,
       toggleDrawingBoundingBox,
+      fixedAxes,
+      toggleFixedAxes,
     } = useState();
     const secondsWarning = 60;
     const { prompt } = usePrompt();
@@ -218,6 +220,8 @@ export default defineComponent({
       toggleMeasureMode,
       drawingBoundingBox,
       toggleDrawingBoundingBox,
+      fixedAxes,
+      toggleFixedAxes,
       // Color Scheme
       colorSchemes,
       colorScheme,
@@ -290,6 +294,20 @@ export default defineComponent({
               </div>
             </v-col>
             <v-spacer />
+            <v-tooltip>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="35"
+                  class="mr-5 mt-5"
+                  :color="fixedAxes ? 'blue': ''"
+                  @click="toggleFixedAxes"
+                >
+                  mdi-axis-lock
+                </v-icon>
+              </template>
+              Toggle between locked and floating axes
+            </v-tooltip>
             <v-tooltip>
               <template #activator="{ props: subProps }">
                 <v-icon

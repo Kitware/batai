@@ -72,7 +72,7 @@ const toggleDrawingBoundingBox = () => {
   drawingBoundingBox.value = !drawingBoundingBox.value;
 };
 
-const fixedAxes = ref(false);
+const fixedAxes = ref(true);
 const toggleFixedAxes = () => {
   fixedAxes.value = !fixedAxes.value;
 };
