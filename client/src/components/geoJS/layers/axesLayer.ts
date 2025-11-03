@@ -410,12 +410,12 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
         const time = ((startTimes[idx] + endTimes[idx]) / 2).toFixed(0);
         this.lineData.push([
           { x: xVal, y: y },
-          { x: xVal, y: gcsTickStop },
+          { x: xVal, y: gcsTickStop - 20 },
         ]);
         this.textData.push({
           text: `${time}ₘₛ`,
           x: xVal,
-          y: gcsTextStart,
+          y: gcsTextStart - 20,
           textAlign: 'center',
           textScaled: this.textScaled,
         });
