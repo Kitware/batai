@@ -292,9 +292,8 @@ export default class AxesLayer {
       });
 
       if (this.showGridLines) {
-        const gridStart = this.geoViewerRef.displayToGcs({ x: gcsTickStop, y: 0}).x;
         this.gridData.push([
-          { x: gridStart, y },
+          { x: gcsTickStop, y },
           { x: this.scaledWidth, y },
         ]);
       }
