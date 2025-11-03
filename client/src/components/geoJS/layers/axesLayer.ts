@@ -1,6 +1,7 @@
 import { SpectroInfo } from "../geoJSUtils";
 import geo from "geojs";
 import { LayerStyle, TextData } from "./types";
+import BaseTextLayer from "./baseTextLayer";
 
 interface Point {
   x: number;
@@ -14,9 +15,10 @@ interface Tick {
 
 interface TickTextData extends TextData {
   textAlign?: 'left' | 'center' | 'right';
+  textScaled?: number;
 }
 
-export default class AxesLayer {
+export default class AxesLayer extends BaseTextLayer<TickTextData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   geoViewerRef: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,8 +38,6 @@ export default class AxesLayer {
   axesFeature: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   gridFeature: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textLayer: any;
 
   left: number;
   top: number;
@@ -66,6 +66,7 @@ export default class AxesLayer {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo
   ) {
+    super(geoViewerRef, event, spectroInfo);
     this.geoViewerRef = geoViewerRef;
     this.event = event;
     this.spectroInfo = spectroInfo;
@@ -289,6 +290,7 @@ export default class AxesLayer {
         x: gcsTextStart,
         y,
         textAlign: 'left',
+        textScaled: this.textScaled,
       });
 
       if (this.showGridLines) {
@@ -399,6 +401,7 @@ export default class AxesLayer {
         x,
         y: gcsTextStart,
         textAlign: 'left',
+        textScaled: this.textScaled,
       });
       if (visibleSegments <= (startTimes.length / 4) * 3 && idx < xTicks.length - 1) {
         // Add additional ticks using number of visible segments
@@ -413,7 +416,8 @@ export default class AxesLayer {
           text: `${time}ₘₛ`,
           x: xVal,
           y: gcsTextStart,
-          textAlign: 'center'
+          textAlign: 'center',
+          textScaled: this.textScaled,
         });
       }
       if (idx > 0) {
@@ -422,6 +426,7 @@ export default class AxesLayer {
           x,
           y: gcsTopText,
           textAlign: 'right',
+          textScaled: this.textScaled,
         });
       }
     });
@@ -435,6 +440,7 @@ export default class AxesLayer {
         x: lastTick.position.x,
         y: gcsTop,
         textAlign: 'right',
+        textScaled: this.textScaled,
     });
   }
 
@@ -464,6 +470,7 @@ export default class AxesLayer {
         x,
         y: gcsTextStart,
         textAlign: 'center',
+        textScaled: this.textScaled,
       });
 
       if (this.showGridLines) {
@@ -504,6 +511,7 @@ export default class AxesLayer {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
+      textScaled: (data: TickTextData) => (data.textScaled),
     };
   }
 
