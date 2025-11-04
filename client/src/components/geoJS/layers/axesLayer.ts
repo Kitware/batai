@@ -3,9 +3,11 @@ import geo from "geojs";
 import { LayerStyle, TextData } from "./types";
 import BaseTextLayer from "./baseTextLayer";
 
+type LabelCategory = 'time' | 'frequency';
 interface Point {
   x: number;
   y: number;
+  type?: LabelCategory;
 }
 
 interface Tick {
@@ -16,6 +18,7 @@ interface Tick {
 interface TickTextData extends TextData {
   textAlign?: 'left' | 'center' | 'right';
   textScaled?: number;
+  type?: LabelCategory;
 }
 
 export default class AxesLayer extends BaseTextLayer<TickTextData> {
@@ -402,8 +405,9 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
         y: gcsTextStart,
         textAlign: 'left',
         textScaled: this.textScaled,
+        type: 'time',
       });
-      if (visibleSegments <= (startTimes.length / 4) * 3 && idx < xTicks.length - 1) {
+      if (visibleSegments <= 6 && idx < xTicks.length - 1) {
         // Add additional ticks using number of visible segments
         // as a proxy for how zoomed in the user currently is
         const xVal = (x + xTicks[idx + 1].position.x) / 2;
@@ -418,6 +422,7 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
           y: gcsTextStart - 20,
           textAlign: 'center',
           textScaled: this.textScaled,
+          type: 'time',
         });
       }
       if (idx > 0) {
@@ -427,6 +432,7 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
           y: gcsTopText,
           textAlign: 'right',
           textScaled: this.textScaled,
+          type: 'time',
         });
       }
     });
@@ -441,6 +447,7 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
         y: gcsTop,
         textAlign: 'right',
         textScaled: this.textScaled,
+        type: 'time',
     });
   }
 
@@ -503,7 +510,6 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
 
   createTextStyle(): LayerStyle<TextData> {
     return {
-      fontSize: '16px',
       textAlign: (data: TickTextData) => data.textAlign || 'center',
       textBaseline: () => 'middle',
       color: () => this.color,
@@ -512,6 +518,8 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
         y: data.offsetY || 0,
       }),
       textScaled: (data: TickTextData) => (data.textScaled),
+      visible: (data: TickTextData) => (data.type === 'time' && this.compressedView && this.xScale < 1.5) ? false: true,
+      fontSize: (data: TickTextData) => data.type === 'time' && this.compressedView ? `${this.getFontSize(16, 10, this.xScale)}px` : `20px`,
     };
   }
 
