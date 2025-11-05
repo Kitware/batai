@@ -7,7 +7,7 @@ interface RectCompressedGeoJSData {
 }
 
 
-function scaleCompressedTime(start_time: number, end_time: number, spectroInfo: SpectroInfo, yScale: number, scaledWidth: number, scaledHeight: number) {
+function scaleCompressedTime(start_time: number, end_time: number, spectroInfo: SpectroInfo, scaledWidth: number, scaledHeight: number) {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
 
@@ -24,11 +24,11 @@ function scaleCompressedTime(start_time: number, end_time: number, spectroInfo: 
     type: "Polygon",
     coordinates: [
       [
-        [start_time_scaled, low_freq * yScale],
-        [start_time_scaled, high_freq * yScale],
-        [end_time_scaled, high_freq * yScale],
-        [end_time_scaled, low_freq * yScale],
-        [start_time_scaled, low_freq * yScale],
+        [start_time_scaled, low_freq],
+        [start_time_scaled, high_freq],
+        [end_time_scaled, high_freq],
+        [end_time_scaled, low_freq],
+        [start_time_scaled, low_freq],
       ],
     ],
   } as GeoJSON.Polygon;
@@ -88,7 +88,6 @@ export default class CompressedOverlayLayer {
   formatData(
     baseStartTimes: number[],
     baseEndTimes: number[],
-    yScale = 1,
   ) {
     const arr: RectCompressedGeoJSData[] = [];
     const startTimes = [...baseStartTimes];
@@ -99,7 +98,7 @@ export default class CompressedOverlayLayer {
       // These are swapped because we want to mask out the area inbetween
       const startTime = endTimes[i];
       const endTime = startTimes[i];
-      const polygon = scaleCompressedTime(startTime, endTime, this.spectroInfo, yScale, this.scaledWidth, this.scaledHeight);
+      const polygon = scaleCompressedTime(startTime, endTime, this.spectroInfo, this.scaledWidth, this.scaledHeight);
       const newAnnotation: RectCompressedGeoJSData = {
         polygon,
       };

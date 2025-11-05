@@ -37,10 +37,6 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    yScale: {
-      type: Number,
-      default: 1,
-    },
     scaledWidth: {
       type: Number,
       default: -1,
@@ -337,12 +333,11 @@ export default defineComponent({
           selectedType.value === 'pulse' ? selectedAnnotationId.value : null,
           currentUser.value,
           colorScale.value,
-          props.yScale,
         );
         rectAnnotationLayer.redraw();
       }
       if (viewCompressedOverlay.value && compressedOverlayLayer && !props.spectroInfo?.compressedWidth && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
-        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times);
         compressedOverlayLayer.redraw();
       } else {
         compressedOverlayLayer?.disable();
@@ -353,7 +348,6 @@ export default defineComponent({
           selectedType.value === 'sequence' ? selectedAnnotationId.value : null,
           currentUser.value,
           colorScale.value,
-          props.yScale,
         );
         sequenceAnnotationLayer.redraw();
       }
@@ -494,13 +488,13 @@ export default defineComponent({
           sequenceAnnotationLayer.spectroInfo = props.spectroInfo;
           sequenceAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         }
-        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
+        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
         rectAnnotationLayer.redraw();
         if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo.start_times && props.spectroInfo.end_times) {
-          compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+          compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times);
           compressedOverlayLayer.redraw();
         }
-        sequenceAnnotationLayer.formatData(localSequenceAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value, props.yScale);
+        sequenceAnnotationLayer.formatData(localSequenceAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
         sequenceAnnotationLayer.redraw();
         if (!props.thumbnail) {
           if (!legendLayer) {
@@ -610,14 +604,13 @@ export default defineComponent({
           selectedType.value === 'pulse' ? selectedAnnotationId.value : null,
           currentUser.value,
           colorScale.value,
-          props.yScale,
         );
         rectAnnotationLayer.redraw();
       }
       if (compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times && viewCompressedOverlay.value) {
         if (!props.thumbnail) {
           compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-          compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+          compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times);
           compressedOverlayLayer.redraw();
         } else {
           compressedOverlayLayer?.disable();
@@ -665,7 +658,6 @@ export default defineComponent({
           selectedAnnotationId.value,
           currentUser.value,
           colorScale.value,
-          props.yScale,
         );
         sequenceAnnotationLayer.redraw();
       }
@@ -679,7 +671,7 @@ export default defineComponent({
     watch(viewCompressedOverlay, () => {
       if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
         compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
+        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times);
         compressedOverlayLayer.redraw();
       } else {
         compressedOverlayLayer.disable();

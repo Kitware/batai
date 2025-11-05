@@ -51,7 +51,7 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
     this.lineData = [];
     const lineDist = 16;
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
-      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, 1, this.scaledWidth, this.scaledHeight);
+      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, this.scaledWidth, this.scaledHeight);
       const {low_freq, high_freq } = annotation;
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
