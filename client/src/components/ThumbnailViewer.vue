@@ -48,12 +48,6 @@ export default defineComponent({
       geoJS.resetMapDimensions(width, height);
       geoJS.getGeoViewer().value.bounds({ left: 0, top: 0, bottom: height, right: width });
 
-      // Calculate yScale
-      const camera = geoJS.getGeoViewer().value.camera();
-      const coords = camera.worldToDisplay({ x: 0, y: 0 });
-      const end = camera.worldToDisplay({ x: 0, y: height });
-      const diff = coords.y - end.y;
-
       if (props.images.length) {
         geoJS.drawImages(props.images, scaledWidth.value || width, scaledHeight.value || height);
       }
