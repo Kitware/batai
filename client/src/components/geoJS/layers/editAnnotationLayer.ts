@@ -371,7 +371,6 @@ export default class EditAnnotationLayer {
           ? spectroToGeoJSon(
               annotationData as SpectrogramAnnotation,
               this.spectroInfo,
-              1,
               this.scaledWidth,
               this.scaledHeight
             )
@@ -380,7 +379,6 @@ export default class EditAnnotationLayer {
               this.spectroInfo,
               -10,
               -50,
-              1,
               this.scaledWidth,
               this.scaledHeight,
               offsetY
