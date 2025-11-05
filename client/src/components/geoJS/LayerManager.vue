@@ -615,7 +615,7 @@ export default defineComponent({
         rectAnnotationLayer.redraw();
       }
       if (compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times && viewCompressedOverlay.value) {
-        if (!props.thumbnail && props.spectroInfo.compressedWidth ) {
+        if (!props.thumbnail) {
           compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times, props.yScale);
           compressedOverlayLayer.redraw();
