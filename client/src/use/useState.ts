@@ -72,6 +72,11 @@ const toggleDrawingBoundingBox = () => {
   drawingBoundingBox.value = !drawingBoundingBox.value;
 };
 
+const fixedAxes = ref(true);
+const toggleFixedAxes = () => {
+  fixedAxes.value = !fixedAxes.value;
+};
+
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
   const setAnnotationState = (state: AnnotationState) => {
@@ -142,6 +147,7 @@ export default function useState() {
     return router.currentRoute.value.fullPath.includes('nabat');
   }
 
+
   return {
     annotationState,
     creationType,
@@ -180,5 +186,7 @@ export default function useState() {
     sideTab,
     scaledWidth,
     scaledHeight,
+    fixedAxes,
+    toggleFixedAxes,
   };
 }
