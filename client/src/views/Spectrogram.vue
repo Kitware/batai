@@ -391,7 +391,7 @@ export default defineComponent({
                 <span>{{ scaledVals.x.toFixed(2) }}x</span>
               </div>
               <div>
-                <b>ySAcale:</b>
+                <b>yScale:</b>
                 <span>{{ scaledVals.y.toFixed(2) }}x</span>
               </div>
             </v-col>

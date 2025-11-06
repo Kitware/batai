@@ -44,7 +44,6 @@ export default class SpeciesSequenceLayer extends BaseTextLayer<TextData> {
         this.spectroInfo,
         -10,
         -120,
-        1,
         this.scaledWidth,
         this.scaledHeight
       );

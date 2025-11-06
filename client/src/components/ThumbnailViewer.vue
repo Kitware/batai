@@ -27,7 +27,6 @@ export default defineComponent({
     const geoJS = useGeoJS();
     const initialized = ref(false);
     const clientHeight = ref(0);
-    const yScale = ref(1);
     const polyLayerCreated = ref(false);
     let downState: any;
 
@@ -48,13 +47,6 @@ export default defineComponent({
       }
       geoJS.resetMapDimensions(width, height);
       geoJS.getGeoViewer().value.bounds({ left: 0, top: 0, bottom: height, right: width });
-
-      // Calculate yScale
-      const camera = geoJS.getGeoViewer().value.camera();
-      const coords = camera.worldToDisplay({ x: 0, y: 0 });
-      const end = camera.worldToDisplay({ x: 0, y: height });
-      const diff = coords.y - end.y;
-      yScale.value = diff ? (clientHeight.value * 0.5) / diff : 1;
 
       if (props.images.length) {
         geoJS.drawImages(props.images, scaledWidth.value || width, scaledHeight.value || height);
@@ -151,7 +143,6 @@ export default defineComponent({
       containerRef,
       geoViewerRef: geoJS.getGeoViewer(),
       initialized,
-      yScale,
       scaledWidth,
       scaledHeight,
       backgroundColor,
@@ -172,7 +163,6 @@ export default defineComponent({
       v-if="initialized"
       :geo-viewer-ref="geoViewerRef"
       :spectro-info="spectroInfo"
-      :y-scale="yScale"
       :scaled-width="scaledWidth"
       :scaled-height="scaledHeight"
       thumbnail

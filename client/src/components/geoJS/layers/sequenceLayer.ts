@@ -130,7 +130,6 @@ export default class SequenceLayer {
     selectedIndex: number | null,
     currentUser: string,
     colorScale?: d3.ScaleOrdinal<string, string, never>,
-    yScale = 1,
   ) {
     const arr: RectGeoJSData[] = [];
     const compressedView = !!(this.spectroInfo.compressedWidth);
@@ -141,7 +140,6 @@ export default class SequenceLayer {
         this.spectroInfo,
         -10,
         -50,
-        yScale,
         this.scaledWidth,
         this.scaledHeight,
         offsetY

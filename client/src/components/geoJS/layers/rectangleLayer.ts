@@ -119,11 +119,10 @@ export default class RectangleLayer {
     selectedIndex: number | null,
     currentUser: string,
     colorScale?: d3.ScaleOrdinal<string, string, never>,
-    yScale = 1,
   ) {
     const arr: RectGeoJSData[] = [];
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
-      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, yScale, this.scaledWidth, this.scaledHeight);
+      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, this.scaledWidth, this.scaledHeight);
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers

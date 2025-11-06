@@ -142,7 +142,6 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
           this.spectroInfo,
           -10,
           -50,
-          1,
           this.scaledWidth,
           this.scaledHeight,
           offsetY
@@ -207,7 +206,6 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         const polygon = spectroToGeoJSon(
           annotation,
           this.spectroInfo,
-          1,
           this.scaledWidth,
           this.scaledHeight
         );
@@ -240,7 +238,6 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
           this.spectroInfo,
           -10,
           -50,
-          1,
           this.scaledWidth,
           this.scaledHeight
         );
