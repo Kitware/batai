@@ -421,6 +421,7 @@ export default defineComponent({
                 clearable
                 variant="outlined"
                 closable-chips
+                hide-details
               >
                 <template #selection="{ item }">
                   <v-chip
@@ -440,7 +441,7 @@ export default defineComponent({
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="fixedAxes ? 'blue': ''"
                   @click="toggleFixedAxes"
@@ -461,7 +462,7 @@ export default defineComponent({
                 />
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="drawingBoundingBox ? 'blue' : ''"
                   @click="toggleDrawingBoundingBox"
@@ -475,7 +476,7 @@ export default defineComponent({
               <template #activator="{props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="measuring ? 'blue' : ''"
                   @click="toggleMeasureMode"
@@ -547,7 +548,7 @@ export default defineComponent({
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="gridEnabled ? 'blue' : ''"
                   @click="gridEnabled = !gridEnabled"
@@ -561,7 +562,7 @@ export default defineComponent({
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="30"
                   class="mr-5 mt-5"
                   :color="compressed ? 'blue' : ''"
                   @click="compressed = !compressed"
