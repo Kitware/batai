@@ -24,6 +24,7 @@ import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import RecordingList from "@components/RecordingList.vue";
 import ColorPickerMenu from "@components/ColorPickerMenu.vue";
 import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
+import OtherUserAnnotationsDialog from "@/components/OtherUserAnnotationsDialog.vue";
 import useState from "@use/useState";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 export default defineComponent({
@@ -36,6 +37,7 @@ export default defineComponent({
     RecordingList,
     ColorPickerMenu,
     ColorSchemeSelect,
+    OtherUserAnnotationsDialog,
   },
   props: {
     id: {
@@ -51,7 +53,6 @@ export default defineComponent({
       colorSchemes,
       colorScheme,
       backgroundColor,
-      setSelectedUsers,
       createColorScale,
       currentUser,
       annotationState,
@@ -74,7 +75,6 @@ export default defineComponent({
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
-    const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const allImagesLoaded: Ref<boolean[]> = ref([]);
@@ -116,7 +116,9 @@ export default defineComponent({
       }
     };
 
+    const loading = ref(false);
     const loadData = async () => {
+      loading.value = true;
       loadedImage.value = false;
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
@@ -171,6 +173,7 @@ export default defineComponent({
         otherUserAnnotations.value = otherResponse.data;
         createColorScale(Object.keys(otherUserAnnotations.value));
       }
+      loading.value = false;
     };
     const setSelection = (annotationId: number) => {
       selectedId.value = annotationId;
@@ -268,17 +271,6 @@ export default defineComponent({
 
     const otherUsers = computed(() => Object.keys(otherUserAnnotations.value));
 
-    const deleteChip = (item: string) => {
-      selectedUsers.value.splice(
-        selectedUsers.value.findIndex((data) => data === item)
-      );
-      setSelectedUsers(selectedUsers.value);
-    };
-
-    watch(selectedUsers, () => {
-      setSelectedUsers(selectedUsers.value);
-    });
-
     const processSelection = ({
       id,
       annotationType,
@@ -298,6 +290,7 @@ export default defineComponent({
       annotationState,
       compressed,
       loadedImage,
+      loading,
       images,
       spectroInfo,
       annotations,
@@ -334,8 +327,6 @@ export default defineComponent({
       otherUserAnnotations,
       sequenceAnnotations,
       otherUsers,
-      selectedUsers,
-      deleteChip,
       colorScale,
       scaledVals,
       recordingInfo,
@@ -406,37 +397,21 @@ export default defineComponent({
                 <span> {{ annotationState }}</span>
               </div>
             </v-col>
-            <v-col
-              v-if="otherUsers.length && colorScale"
-              cols="3"
-              class="ma-0 pa-0 pt-5"
-            >
-              <v-select
-                v-model="selectedUsers"
-                :items="otherUsers"
-                density="compact"
-                label="Other Users"
-                multiple
-                single-line
-                clearable
-                variant="outlined"
-                closable-chips
-                hide-details
-              >
-                <template #selection="{ item }">
-                  <v-chip
-                    closable
-                    size="x-small"
-                    :color="colorScale(item.value)"
-                    text-color="gray"
-                    @click:close="deleteChip(item.value)"
-                  >
-                    {{ item.value.replace(/@.*/, "") }}
-                  </v-chip>
-                </template>
-              </v-select>
-            </v-col>
             <v-spacer />
+            <v-progress-circular
+              v-if="loading"
+              class="mr-3 mt-3"
+              size="25"
+              color="primary"
+              indeterminate
+            />
+            <other-user-annotations-dialog
+              v-if="otherUsers.length && colorScale"
+              class="mr-3 mt-3"
+              :color-scale="colorScale"
+              :other-users="otherUsers"
+              :user-emails="Object.keys(otherUserAnnotations)"
+            />
             <v-tooltip>
               <template #activator="{ props: subProps }">
                 <v-icon
