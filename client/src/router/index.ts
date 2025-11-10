@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, RouteLocationNormalized } from 'vue-router';
-import HomePage from '../views/HomePage.vue';
+import HelpPage from '../views/HelpPage.vue';
 import Recordings from '../views/Recordings.vue';
 import Spectrogram from '../views/Spectrogram.vue';
 import Login from '../views/Login.vue';
@@ -37,7 +37,7 @@ function routerInit(){
     routes: [
       {
         path: '/',
-        component: HomePage,
+        component: Recordings,
       },
       {
         path: '/login',
@@ -45,8 +45,8 @@ function routerInit(){
         component: Login,
       },
       {
-        path: '/recordings',
-        component: Recordings,
+        path: '/help',
+        component: HelpPage,
       },
       {
         path: '/admin',

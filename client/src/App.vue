@@ -26,7 +26,7 @@ export default defineComponent({
         loginText.value = "Logout";
         loadConfiguration();
         if (sharedList.value.length === 0) {
-        getShared();
+          getShared();
         }
       } else {
         loginText.value = "Login";
@@ -85,12 +85,6 @@ export default defineComponent({
       >
         <v-tab
           to="/"
-          value="home"
-        >
-          Home
-        </v-tab>
-        <v-tab
-          to="/recordings"
           value="recordings"
         >
           Recordings
@@ -107,6 +101,12 @@ export default defineComponent({
           value="admin"
         >
           Admin
+        </v-tab>
+        <v-tab
+          to="/help"
+          value="help"
+        >
+          Help
         </v-tab>
       </v-tabs>
       <h3
