@@ -16,9 +16,11 @@ from bats_ai.core.models import (
     CompressedSpectrogram,
     Recording,
     RecordingAnnotation,
+    RecordingTag,
     SequenceAnnotations,
     Species,
 )
+from bats_ai.core.views.recording_tag import RecordingTagSchema
 from bats_ai.core.views.sequence_annotations import (
     SequenceAnnotationSchema,
     UpdateSequenceAnnotationSchema,
@@ -43,6 +45,7 @@ class RecordingSchema(Schema):
     recording_location: str | None
     grts_cell_id: int | None
     grts_cell: int | None
+    tag: RecordingTagSchema | None
 
 
 class RecordingUploadSchema(Schema):
@@ -51,15 +54,16 @@ class RecordingUploadSchema(Schema):
     recorded_time: str
     equipment: str | None
     comments: str | None
-    latitude: float = None
-    longitude: float = None
-    gridCellId: int = None
-    publicVal: bool = None
-    site_name: str = None
-    software: str = None
-    detector: str = None
-    species_list: str = None
-    unusual_occurrences: str = None
+    latitude: float | None
+    longitude: float | None
+    gridCellId: int | None
+    publicVal: bool | None
+    site_name: str | None
+    software: str | None
+    detector: str | None
+    species_list: str | None
+    unusual_occurrences: str | None
+    tag: str | None
 
 
 class RecordingAnnotationSchema(Schema):
@@ -150,6 +154,9 @@ def create_recording(
         species_list=payload.species_list,
         unusual_occurrences=payload.unusual_occurrences,
     )
+    if payload.tag:
+        tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=payload.tag)
+        recording.tag = tag
 
     recording.save()
     # Start generating recording as soon as created
@@ -193,6 +200,9 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
         recording.species_list = recording_data.species_list
     if recording_data.unusual_occurrences:
         recording.unusual_occurrences = recording_data.unusual_occurrences
+    if recording_data.tag:
+        tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=recording_data.tag)
+        recording.tag = tag
 
     recording.save()
 
