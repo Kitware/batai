@@ -11,6 +11,7 @@ from bats_ai.core.views import (
     ProcessingTaskRouter,
     RecordingAnnotationRouter,
     RecordingRouter,
+    RecordingTagRouter,
     SpeciesRouter,
 )
 from bats_ai.core.views.nabat import NABatConfigurationRouter, NABatRecordingRouter
@@ -42,5 +43,6 @@ api.add_router('/recording-annotation/', RecordingAnnotationRouter)
 api.add_router('/export-annotation/', ExportAnnotationRouter)
 api.add_router('/configuration/', ConfigurationRouter)
 api.add_router('/processing-task/', ProcessingTaskRouter)
+api.add_router('/recording-tag/', RecordingTagRouter)
 api.add_router('/nabat/recording/', NABatRecordingRouter)
 api.add_router('/nabat/configuration/', NABatConfigurationRouter)
