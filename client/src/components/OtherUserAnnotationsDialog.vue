@@ -32,7 +32,6 @@ watch(selectedUsers, () => {
         <template #activator="{ props: tooltipProps }">
           <v-icon
             v-bind="{ ...modalProps, ...tooltipProps }"
-            class="mr-3 mt-3"
             size="25"
             :color="selectedUsers.length === 0 ? '' : 'blue'"
           >

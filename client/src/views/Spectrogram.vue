@@ -22,9 +22,8 @@ import { SpectroInfo } from "@components/geoJS/geoJSUtils";
 import AnnotationList from "@components/AnnotationList.vue";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import RecordingList from "@components/RecordingList.vue";
-import ColorPickerMenu from "@components/ColorPickerMenu.vue";
-import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
 import OtherUserAnnotationsDialog from "@/components/OtherUserAnnotationsDialog.vue";
+import ColorSchemeDialog from "@/components/ColorSchemeDialog.vue";
 import useState from "@use/useState";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 export default defineComponent({
@@ -35,9 +34,8 @@ export default defineComponent({
     ThumbnailViewer,
     RecordingInfoDialog,
     RecordingList,
-    ColorPickerMenu,
-    ColorSchemeSelect,
     OtherUserAnnotationsDialog,
+    ColorSchemeDialog,
   },
   props: {
     id: {
@@ -214,27 +212,7 @@ export default defineComponent({
         loadData();
       }
     );
-    onMounted(() => {
-      loadData();
-      const localBackgroundColor = localStorage.getItem('spectrogramBackgroundColor');
-      if (localBackgroundColor) {
-        backgroundColor.value = localBackgroundColor;
-      } else {
-        backgroundColor.value = configuration.value.default_spectrogram_background_color || 'rgb(0, 0, 0)';
-      }
-      const localColorScheme = localStorage.getItem('spectrogramColorScheme');
-      if (localColorScheme) {
-        colorScheme.value = colorSchemes.find((scheme) => scheme.value === localColorScheme) || colorSchemes[0];
-      } else if (configuration.value.default_color_scheme) {
-        colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
-      }
-    });
-    watch(backgroundColor, () => {
-      localStorage.setItem('spectrogramBackgroundColor', backgroundColor.value);
-    });
-    watch(colorScheme, () => {
-      localStorage.setItem('spectrogramColorScheme', colorScheme.value.value);
-    });
+    onMounted(loadData);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -405,13 +383,14 @@ export default defineComponent({
               color="primary"
               indeterminate
             />
-            <other-user-annotations-dialog
-              v-if="otherUsers.length && colorScale"
-              class="mr-3 mt-3"
-              :color-scale="colorScale"
-              :other-users="otherUsers"
-              :user-emails="Object.keys(otherUserAnnotations)"
-            />
+            <div class="mr-3 mt-3">
+              <other-user-annotations-dialog
+                v-if="otherUsers.length && colorScale"
+                :color-scale="colorScale"
+                :other-users="otherUsers"
+                :user-emails="Object.keys(otherUserAnnotations)"
+              />
+            </div>
             <v-tooltip>
               <template #activator="{ props: subProps }">
                 <v-icon
@@ -564,17 +543,8 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
-            <div class="color-scheme-flex">
-              <color-scheme-select
-                v-model="colorScheme"
-                label="Color Scheme"
-                :color-schemes="colorSchemes"
-                class="pt-3"
-              />
-              <color-picker-menu
-                v-model="backgroundColor"
-                tooltip-text="Spectrogram background color"
-              />
+            <div class="mt-4">
+              <color-scheme-dialog />
             </div>
           </v-row>
         </v-container>
@@ -671,16 +641,5 @@ export default defineComponent({
 <style scoped>
 .spectro-main {
   height: calc(100vh - 21vh - 64px - 72px);
-}
-
-.color-square {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  border-radius: 4px;
-}
-.color-scheme-flex {
-  display:flex;
-  align-items: center;
 }
 </style>
