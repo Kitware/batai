@@ -1,6 +1,11 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, onMounted } from 'vue';
-import { deleteRecording, getRecordings, Recording } from '../api/api';
+import {
+  deleteRecording,
+  getRecordings,
+  Recording ,
+  getRecordingTags,
+} from '../api/api';
 import UploadRecording, { EditingRecording } from '@components/UploadRecording.vue';
 import MapLocation from '@components/MapLocation.vue';
 import useState from '@use/useState';
@@ -17,7 +22,7 @@ export default defineComponent({
     },
   setup() {
     const itemsPerPage = ref(-1);
-    const { sharedList, recordingList } = useState();
+    const { sharedList, recordingList, recordingTagList } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
     let intervalRef: number | null = null;
 
@@ -25,28 +30,32 @@ export default defineComponent({
     const batchUploadDialog = ref(false);
     const headers = ref([
         {
-            title:'Name',
-            key:'name',
+          title:'Name',
+          key: 'name',
         },
         {
           title: 'Annotation',
-          key:'annotation'
+          key: 'annotation',
         },
         {
-            title:'Owner',
-            key:'owner_username',
+          title:'Owner',
+          key:'owner_username',
         },
         {
-            title:'Recorded Date',
-            key:'recorded_date',
+          title: 'Tag',
+          key: 'tag_text',
         },
         {
-            title:'Public',
-            key:'public',
+          title:'Recorded Date',
+          key:'recorded_date',
         },
         {
-            title:'GRTS CellId',
-            key:'grts_cell_id',
+          title:'Public',
+          key:'public',
+        },
+        {
+          title:'GRTS CellId',
+          key:'grts_cell_id',
         },
 
         {
@@ -58,79 +67,94 @@ export default defineComponent({
           key:'comments'
         },
         {
-            title:'Users Annotated',
-            key:'userAnnotations',
+          title:'Users Annotated',
+          key:'userAnnotations',
         },
         {
-            title:'Edit',
-            key:'edit',
+          title:'Edit',
+          key:'edit',
         },
     ]);
 
     const sharedHeaders = ref([
         {
-            title:'Name',
-            key:'name',
+          title: 'Name',
+          key: 'name',
         },
         {
           title: 'Annotation',
-          key:'annotation'
+          key: 'annotation'
         },
         {
-            title:'Owner',
-            key:'owner_username',
+          title: 'Owner',
+          key: 'owner_username',
         },
         {
-            title:'Recorded Date',
-            key:'recorded_date',
+          title: 'Tag',
+          key: 'tag_text',
         },
         {
-            title:'Public',
-            key:'public',
+          title: 'Recorded Date',
+          key: 'recorded_date',
         },
         {
-            title:'GRTS CellId',
-            key:'grts_cell_id',
+          title: 'Public',
+          key: 'public',
+        },
+        {
+          title: 'GRTS CellId',
+          key: 'grts_cell_id',
         },
         {
           title: 'Location',
-          key:'details'
+          key: 'details'
         },
         {
           title: 'Details',
-          key:'comments'
+          key: 'comments'
         },
-
         {
-            title:'Annotated by Me',
-            key:'userMadeAnnotations',
+          title: 'Annotated by Me',
+          key: 'userMadeAnnotations',
         },
     ]);
+    const dataLoading = ref(false);
     const fetchRecordings = async () => {
-        const recordings = await getRecordings();
-        recordingList.value = recordings.data;
-        // If we have a spectrogram being generated we need to refresh on an interval
-        let missingSpectro = false;
-        for (let i =0; i< recordingList.value.length; i+=1) {
-          if (!recordingList.value[i].hasSpectrogram) {
-            missingSpectro = true;
-            break;
-          }
+      dataLoading.value = true;
+      const recordings = await getRecordings();
+      recordingList.value = recordings.data;
+      // If we have a spectrogram being generated we need to refresh on an interval
+      let missingSpectro = false;
+      for (let i =0; i< recordingList.value.length; i+=1) {
+        if (!recordingList.value[i].hasSpectrogram) {
+          missingSpectro = true;
+          break;
         }
-        if (missingSpectro) {
-          if (intervalRef === null) {
-            intervalRef = setInterval(() => fetchRecordings(), 5000);
-          }
-        } else  {
-          if (intervalRef !== null) {
-            clearInterval(intervalRef);
-          }
+      }
+      if (missingSpectro) {
+        if (intervalRef === null) {
+          intervalRef = setInterval(() => fetchRecordings(), 5000);
         }
-        const shared = await getRecordings(true);
-        sharedList.value = shared.data;
-
+      } else  {
+        if (intervalRef !== null) {
+          clearInterval(intervalRef);
+        }
+      }
+      const shared = await getRecordings(true);
+      sharedList.value = shared.data;
+      dataLoading.value = false;
     };
-    onMounted(() => fetchRecordings());
+    const fetchRecordingTags = async () => {
+      dataLoading.value = true;
+      const tags = await getRecordingTags();
+      recordingTagList.value = tags.data;
+      dataLoading.value = false;
+    };
+    onMounted(async () => {
+      await fetchRecordingTags();
+      await fetchRecordings();
+    });
+
 
     const uploadDone = () => {
         uploadDialog.value = false;
@@ -190,6 +214,7 @@ export default defineComponent({
         openDeleteRecordingDialog,
         recordingToDelete,
         editingRecording,
+        dataLoading,
      };
   },
 });
@@ -237,7 +262,7 @@ export default defineComponent({
           <v-card-actions class="pa-4">
             <v-btn
               variant="flat"
-              @click="deleteRecordingDialog = false"
+              @click="deleteDialogOpen = false"
             >
               Cancel
             </v-btn>
@@ -256,6 +281,7 @@ export default defineComponent({
         :headers="headers"
         :items="recordingList"
         density="compact"
+        :loading="dataLoading"
         class="elevation-1 my-recordings"
       >
         <template #item.edit="{ item }">
@@ -292,6 +318,15 @@ export default defineComponent({
         </template>
         <template #item.annotation="{ item }">
           <RecordingAnnotationSummary :file-annotations="item.fileAnnotations" />
+        </template>
+
+        <template #item.tag_text="{ item }">
+          <v-chip
+            v-if="item.tag_text"
+            size="small"
+          >
+            {{ item.tag_text }}
+          </v-chip>
         </template>
 
         <template #item.recorded_date="{ item }">
@@ -393,6 +428,7 @@ export default defineComponent({
         v-model:items-per-page="itemsPerPage"
         :headers="sharedHeaders"
         :items="sharedList"
+        :loading="dataLoading"
         density="compact"
         class="elevation-1 shared-recordings"
       >
