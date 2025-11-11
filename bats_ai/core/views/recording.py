@@ -56,14 +56,14 @@ class RecordingUploadSchema(Schema):
     comments: str | None
     latitude: float | None
     longitude: float | None
-    gridCellId: int | None
+    gridCellId: int | None = None
     publicVal: bool | None
     site_name: str | None
     software: str | None
     detector: str | None
     species_list: str | None
     unusual_occurrences: str | None
-    tag: str | None
+    tag: str | None = None
 
 
 class RecordingAnnotationSchema(Schema):
