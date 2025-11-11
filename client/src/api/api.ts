@@ -27,6 +27,7 @@ export interface Recording {
   detector?: string;
   species_list?: string;
   unusual_occurrences?: string;
+  tag_text: string | null;
 }
 
 export interface Species {
@@ -154,6 +155,7 @@ export interface RecordingFileParameters {
   detector?: string;
   species_list?: string;
   unusual_occurrences?: string;
+  tag?: string;
 }
 
 async function uploadRecordingFile(file: File, params: RecordingFileParameters) {
@@ -250,11 +252,20 @@ interface GRTSCellCenter {
   error?: string;
 }
 
+export interface RecordingTag {
+  id: number;
+  text: string;
+  user_id: number;
+}
+
 async function getRecordings(getPublic = false) {
   return axiosInstance.get<Recording[]>(`/recording/?public=${getPublic}`);
 }
 async function getRecording(id: string) {
   return axiosInstance.get<Recording>(`/recording/${id}/`);
+}
+async function getRecordingTags() {
+  return axiosInstance.get<RecordingTag[]>(`/recording-tag/`);
 }
 
 async function deleteRecording(id: number) {
@@ -523,4 +534,5 @@ export {
   getFilteredProcessingTasks,
   getFileAnnotationDetails,
   getExportStatus,
+  getRecordingTags,
 };
