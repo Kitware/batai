@@ -44,7 +44,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const { recordingTagList } = useState();
     const tagOptions = computed(() => recordingTagList.value.map((tag: RecordingTag) => tag.text));
-    const currentTag: Ref<string | undefined> = ref(undefined)
+    const currentTag: Ref<string | undefined> = ref(undefined);
 
     const dateAdapter = useDate();
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
@@ -239,7 +239,6 @@ export default defineComponent({
           species_list: speciesList.value,
           unusual_occurrences: unusualOccurrences.value,
         };
-
         await patchRecording(props.editing.id, fileUploadParams);
         emit('done');
       } else {

@@ -228,6 +228,7 @@ async function patchRecording(recordingId: number, params: RecordingFileParamete
       latitude,
       longitude,
       gridCellId,
+      tag: params.tag,
       site_name: params.site_name,
       software: params.software,
       detector: params.detector,
