@@ -501,6 +501,11 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
     }
   }
 
+  setTextColor(newColor: string): void {
+    this.color = newColor;
+    this.drawAxes();
+  }
+
   createAxesStyle() {
     return {
       strokeWidth: 1,

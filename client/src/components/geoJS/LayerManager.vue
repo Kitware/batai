@@ -756,6 +756,9 @@ export default defineComponent({
       if (legendLayer) {
         legendLayer.setTextColor(textColor);
       }
+      if (axesLayer) {
+        axesLayer.setTextColor(textColor);
+      }
       if (timeLayer) {
         timeLayer.setTextColor(textColor);
       }
