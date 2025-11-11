@@ -5,7 +5,7 @@ import logging
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import HttpRequest
 from ninja import File, Form, Schema
 from ninja.files import UploadedFile
@@ -240,10 +240,15 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
         recordings = (
             Recording.objects.filter(public=True)
             .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
+            .annotate(tag_text=F('tag__text'))
             .values()
         )
     else:
-        recordings = Recording.objects.filter(owner=request.user).values()
+        recordings = (
+            Recording.objects.filter(owner=request.user)
+            .annotate(tag_text=F('tag__text'))
+            .values()
+        )
 
     # TODO with larger dataset it may be better to do this in a queryset instead of python
     for recording in recordings:
