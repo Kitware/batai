@@ -1,5 +1,11 @@
 <script lang="ts">
-import { defineComponent, ref, Ref, onMounted } from 'vue';
+import {
+  computed,
+  defineComponent,
+  ref,
+  Ref,
+  onMounted,
+} from 'vue';
 import {
   deleteRecording,
   getRecordings,
@@ -12,6 +18,7 @@ import useState from '@use/useState';
 import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
+import { FilterFunction } from 'vuetify';
 export default defineComponent({
     components: {
         UploadRecording,
@@ -144,12 +151,49 @@ export default defineComponent({
       sharedList.value = shared.data;
       dataLoading.value = false;
     };
+
     const fetchRecordingTags = async () => {
       dataLoading.value = true;
       const tags = await getRecordingTags();
       recordingTagList.value = tags.data;
       dataLoading.value = false;
     };
+
+    const filterTags: Ref<string[]> = ref([]);
+    const sharedFilterTags: Ref<string[]> = ref([]);
+    const recordingTags = computed(() => {
+      const tags = recordingList.value
+        .map((recording: Recording) => recording.tag_text)
+        .filter((tag: string | null) => tag !== null);
+      return [...new Set(tags)];
+    });
+    const sharedRecordingTags = computed(() => {
+      const tags = sharedList.value
+        .map((recording: Recording) => recording.tag_text)
+        .filter((tag: string | null) => tag !== null);
+      return [...new Set(tags)];
+    });
+    const tagFilter: FilterFunction = (value: string, search: string, item: any) => {
+      if (filterTags.value.length === 0) {
+        return true;
+      }
+      const itemTag = item?.columns?.tag_text;
+      if (itemTag && filterTags.value.includes(itemTag)) {
+        return true;
+      }
+      return false;
+    };
+    const sharedTagFilter: FilterFunction = (value: string, search: string, item: any) => {
+      if (filterTags.value.length === 0) {
+        return true;
+      }
+      const itemTag = item?.columns?.tag_text;
+      if (itemTag && sharedFilterTags.value.includes(itemTag)) {
+        return true;
+      }
+      return false;
+    };
+
     onMounted(async () => {
       await fetchRecordingTags();
       await fetchRecordings();
@@ -207,6 +251,12 @@ export default defineComponent({
         sharedList,
         uploadDialog,
         batchUploadDialog,
+        tagFilter,
+        sharedTagFilter,
+        filterTags,
+        sharedFilterTags,
+        recordingTags,
+        sharedRecordingTags,
         uploadDone,
         editRecording,
         deleteOneRecording,
@@ -280,10 +330,25 @@ export default defineComponent({
         v-model:items-per-page="itemsPerPage"
         :headers="headers"
         :items="recordingList"
+        :custom-filter="tagFilter"
+        filter-keys="['tag']"
+        :search="filterTags.length ? 'seach-active' : ''"
         density="compact"
         :loading="dataLoading"
         class="elevation-1 my-recordings"
       >
+        <template #top>
+          <div max-height="100px">
+            <v-combobox
+              v-model="filterTags"
+              :items="recordingTags"
+              label="Filter recordings by tag"
+              multiple
+              chips
+              closable-chips
+            />
+          </div>
+        </template>
         <template #item.edit="{ item }">
           <v-icon @click="editRecording(item)">
             mdi-pencil
@@ -428,10 +493,25 @@ export default defineComponent({
         v-model:items-per-page="itemsPerPage"
         :headers="sharedHeaders"
         :items="sharedList"
+        :custom-filter="sharedTagFilter"
+        filter-keys="['tag']"
+        :search="sharedFilterTags.length ? 'seach-active' : ''"
         :loading="dataLoading"
         density="compact"
         class="elevation-1 shared-recordings"
       >
+        <template #top>
+          <div max-height="100px">
+            <v-combobox
+              v-model="sharedFilterTags"
+              :items="sharedRecordingTags"
+              label="Filter recordings by tag"
+              multiple
+              chips
+              closable-chips
+            />
+          </div>
+        </template>
         <template #item.name="{ item }">
           <router-link
             :to="`/recording/${item.id.toString()}/spectrogram`"
