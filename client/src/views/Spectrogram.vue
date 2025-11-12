@@ -22,8 +22,8 @@ import { SpectroInfo } from "@components/geoJS/geoJSUtils";
 import AnnotationList from "@components/AnnotationList.vue";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import RecordingList from "@components/RecordingList.vue";
-import ColorPickerMenu from "@components/ColorPickerMenu.vue";
-import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
+import OtherUserAnnotationsDialog from "@/components/OtherUserAnnotationsDialog.vue";
+import ColorSchemeDialog from "@/components/ColorSchemeDialog.vue";
 import useState from "@use/useState";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 export default defineComponent({
@@ -34,8 +34,8 @@ export default defineComponent({
     ThumbnailViewer,
     RecordingInfoDialog,
     RecordingList,
-    ColorPickerMenu,
-    ColorSchemeSelect,
+    OtherUserAnnotationsDialog,
+    ColorSchemeDialog,
   },
   props: {
     id: {
@@ -51,7 +51,6 @@ export default defineComponent({
       colorSchemes,
       colorScheme,
       backgroundColor,
-      setSelectedUsers,
       createColorScale,
       currentUser,
       annotationState,
@@ -74,7 +73,6 @@ export default defineComponent({
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
-    const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const allImagesLoaded: Ref<boolean[]> = ref([]);
@@ -116,7 +114,9 @@ export default defineComponent({
       }
     };
 
+    const loading = ref(false);
     const loadData = async () => {
+      loading.value = true;
       loadedImage.value = false;
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
@@ -171,6 +171,7 @@ export default defineComponent({
         otherUserAnnotations.value = otherResponse.data;
         createColorScale(Object.keys(otherUserAnnotations.value));
       }
+      loading.value = false;
     };
     const setSelection = (annotationId: number) => {
       selectedId.value = annotationId;
@@ -211,27 +212,7 @@ export default defineComponent({
         loadData();
       }
     );
-    onMounted(() => {
-      loadData();
-      const localBackgroundColor = localStorage.getItem('spectrogramBackgroundColor');
-      if (localBackgroundColor) {
-        backgroundColor.value = localBackgroundColor;
-      } else {
-        backgroundColor.value = configuration.value.default_spectrogram_background_color || 'rgb(0, 0, 0)';
-      }
-      const localColorScheme = localStorage.getItem('spectrogramColorScheme');
-      if (localColorScheme) {
-        colorScheme.value = colorSchemes.find((scheme) => scheme.value === localColorScheme) || colorSchemes[0];
-      } else if (configuration.value.default_color_scheme) {
-        colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
-      }
-    });
-    watch(backgroundColor, () => {
-      localStorage.setItem('spectrogramBackgroundColor', backgroundColor.value);
-    });
-    watch(colorScheme, () => {
-      localStorage.setItem('spectrogramColorScheme', colorScheme.value.value);
-    });
+    onMounted(loadData);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -268,17 +249,6 @@ export default defineComponent({
 
     const otherUsers = computed(() => Object.keys(otherUserAnnotations.value));
 
-    const deleteChip = (item: string) => {
-      selectedUsers.value.splice(
-        selectedUsers.value.findIndex((data) => data === item)
-      );
-      setSelectedUsers(selectedUsers.value);
-    };
-
-    watch(selectedUsers, () => {
-      setSelectedUsers(selectedUsers.value);
-    });
-
     const processSelection = ({
       id,
       annotationType,
@@ -298,6 +268,7 @@ export default defineComponent({
       annotationState,
       compressed,
       loadedImage,
+      loading,
       images,
       spectroInfo,
       annotations,
@@ -334,8 +305,6 @@ export default defineComponent({
       otherUserAnnotations,
       sequenceAnnotations,
       otherUsers,
-      selectedUsers,
-      deleteChip,
       colorScale,
       scaledVals,
       recordingInfo,
@@ -406,41 +375,27 @@ export default defineComponent({
                 <span> {{ annotationState }}</span>
               </div>
             </v-col>
-            <v-col
-              v-if="otherUsers.length && colorScale"
-              cols="3"
-              class="ma-0 pa-0 pt-5"
-            >
-              <v-select
-                v-model="selectedUsers"
-                :items="otherUsers"
-                density="compact"
-                label="Other Users"
-                multiple
-                single-line
-                clearable
-                variant="outlined"
-                closable-chips
-              >
-                <template #selection="{ item }">
-                  <v-chip
-                    closable
-                    size="x-small"
-                    :color="colorScale(item.value)"
-                    text-color="gray"
-                    @click:close="deleteChip(item.value)"
-                  >
-                    {{ item.value.replace(/@.*/, "") }}
-                  </v-chip>
-                </template>
-              </v-select>
-            </v-col>
             <v-spacer />
+            <v-progress-circular
+              v-if="loading"
+              class="mr-3 mt-3"
+              size="25"
+              color="primary"
+              indeterminate
+            />
+            <div class="mr-3 mt-3">
+              <other-user-annotations-dialog
+                v-if="otherUsers.length && colorScale"
+                :color-scale="colorScale"
+                :other-users="otherUsers"
+                :user-emails="Object.keys(otherUserAnnotations)"
+              />
+            </div>
             <v-tooltip>
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="fixedAxes ? 'blue': ''"
                   @click="toggleFixedAxes"
@@ -461,7 +416,7 @@ export default defineComponent({
                 />
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="drawingBoundingBox ? 'blue' : ''"
                   @click="toggleDrawingBoundingBox"
@@ -475,7 +430,7 @@ export default defineComponent({
               <template #activator="{props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="measuring ? 'blue' : ''"
                   @click="toggleMeasureMode"
@@ -547,7 +502,7 @@ export default defineComponent({
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="gridEnabled ? 'blue' : ''"
                   @click="gridEnabled = !gridEnabled"
@@ -561,7 +516,7 @@ export default defineComponent({
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="30"
                   class="mr-5 mt-5"
                   :color="compressed ? 'blue' : ''"
                   @click="compressed = !compressed"
@@ -588,17 +543,8 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
-            <div class="color-scheme-flex">
-              <color-scheme-select
-                v-model="colorScheme"
-                label="Color Scheme"
-                :color-schemes="colorSchemes"
-                class="pt-3"
-              />
-              <color-picker-menu
-                v-model="backgroundColor"
-                tooltip-text="Spectrogram background color"
-              />
+            <div class="mt-4">
+              <color-scheme-dialog />
             </div>
           </v-row>
         </v-container>
@@ -695,16 +641,5 @@ export default defineComponent({
 <style scoped>
 .spectro-main {
   height: calc(100vh - 21vh - 64px - 72px);
-}
-
-.color-square {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  border-radius: 4px;
-}
-.color-scheme-flex {
-  display:flex;
-  align-items: center;
 }
 </style>
