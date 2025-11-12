@@ -13,7 +13,7 @@ export default defineComponent({
 <template>
   <v-card>
     <v-card-title>
-      Bat-AI
+      BatAI Help
     </v-card-title>
     <v-card-text class="ma-5">
       <p>
