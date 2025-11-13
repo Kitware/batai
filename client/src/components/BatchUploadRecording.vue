@@ -1,11 +1,12 @@
 <script lang="ts">
-import { defineComponent, ref, Ref, watch } from 'vue';
+import { computed, defineComponent, ref, Ref, watch } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '@use/useRequest';
-import { UploadLocation, uploadRecordingFile, getCellLocation, RecordingFileParameters, getGuanoMetadata } from '../api/api';
+import { UploadLocation, uploadRecordingFile, getCellLocation, RecordingFileParameters, getGuanoMetadata, RecordingTag } from '../api/api';
 import BatchRecordingElement, { BatchRecording } from './BatchRecordingElement.vue';
 import { cloneDeep } from 'lodash';
 import { extractDateTimeComponents, getCurrentTime } from '@use/useUtils';
+import useState from '@use/useState';
 
 
 interface AutoFillResult {
@@ -22,6 +23,9 @@ export default defineComponent({
   },
   emits: ['done', 'cancel'],
   setup(props, { emit }) {
+    const { recordingTagList } = useState();
+    const tagOptions = computed(() => recordingTagList.value.map((tag: RecordingTag) => tag.text));
+
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref();
     const recordings: Ref<BatchRecording[]> = ref([]);
@@ -33,6 +37,7 @@ export default defineComponent({
     const globalPublic = ref(false);
     const globalEquipment = ref('');
     const globalComments = ref('');
+    const globalTag = ref(undefined as undefined | string);
 
     const autoFill = async (filename: string) => {
 
@@ -162,7 +167,7 @@ export default defineComponent({
           detector: fileElement.detector,
           species_list: fileElement.speciesList,
           unusual_occurrences: fileElement.unusualOccurrences,
-
+          tag: fileElement.tag,
         };
         await uploadRecordingFile(file, fileUploadParams);
         recordings.value.splice(0, 1);
@@ -225,7 +230,7 @@ export default defineComponent({
       recordings.value = updatedRecordings;
     };
 
-    watch([globalPublic, globalComments, globalEquipment], () => {
+    watch([globalPublic, globalComments, globalEquipment, globalTag], () => {
       const newResults: BatchRecording[] = [];
         recordings.value.forEach((item) => {
           item.public = globalPublic.value;
@@ -235,12 +240,15 @@ export default defineComponent({
           if (globalEquipment.value) {
             item.equipment = globalEquipment.value;
           }
+          item.tag = globalTag.value || undefined;
           newResults.push(item);
         });
       recordings.value = newResults;
     });
 
     return {
+      tagOptions,
+      globalTag,
       errorText,
       fileModel,
       fileInputEl,
@@ -318,6 +326,18 @@ export default defineComponent({
                   >
                     Get Guano Metadata
                   </v-btn>
+                </v-row>
+
+                <v-row>
+                  <v-combobox
+                    v-model="globalTag"
+                    class="mt-2"
+                    clearable
+                    chips
+                    label="Tag"
+                    hint="Set a tag for this batch of recordings"
+                    :items="tagOptions"
+                  />
                 </v-row>
 
                 <v-row>

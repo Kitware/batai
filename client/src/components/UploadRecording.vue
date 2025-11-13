@@ -28,6 +28,7 @@ export interface EditingRecording {
   detector?: string;
   speciesList?: string;
   unusualOccurrences?: string;
+  tag?: string;
 }
 
 export default defineComponent({
@@ -44,7 +45,8 @@ export default defineComponent({
   setup(props, { emit }) {
     const { recordingTagList } = useState();
     const tagOptions = computed(() => recordingTagList.value.map((tag: RecordingTag) => tag.text));
-    const currentTag: Ref<string | undefined> = ref(undefined);
+    const initialTag = props.editing ? props.editing.tag : undefined;
+    const currentTag: Ref<string | undefined> = ref(initialTag);
 
     const dateAdapter = useDate();
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
@@ -160,6 +162,7 @@ export default defineComponent({
           comments: comments.value,
           publicVal: publicVal.value,
           location,
+          tag: currentTag.value,
           site_name: siteName.value,
           software: software.value,
           detector: detector.value,
