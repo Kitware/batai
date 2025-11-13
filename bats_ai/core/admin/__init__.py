@@ -13,6 +13,7 @@ from .nabat.admin import (
 from .processing_task import ProcessingTaskAdmin
 from .recording import RecordingAdmin
 from .recording_annotations import RecordingAnnotationAdmin
+from .recording_tag import RecordingTagAdmin
 from .sequence_annotations import SequenceAnnotationsAdmin
 from .species import SpeciesAdmin
 from .spectrogram import SpectrogramAdmin
@@ -28,6 +29,7 @@ __all__ = [
     'GRTSCellsAdmin',
     'CompressedSpectrogramAdmin',
     'RecordingAnnotationAdmin',
+    'RecordingTagAdmin',
     'ProcessingTaskAdmin',
     'ConfigurationAdmin',
     'ExportedAnnotationFileAdmin',
