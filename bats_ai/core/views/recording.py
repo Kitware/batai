@@ -245,9 +245,7 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
         )
     else:
         recordings = (
-            Recording.objects.filter(owner=request.user)
-            .annotate(tag_text=F('tag__text'))
-            .values()
+            Recording.objects.filter(owner=request.user).annotate(tag_text=F('tag__text')).values()
         )
 
     # TODO with larger dataset it may be better to do this in a queryset instead of python

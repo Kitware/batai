@@ -173,6 +173,7 @@ export default defineComponent({
         .filter((tag: string | null) => tag !== null);
       return [...new Set(tags)];
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tagFilter: FilterFunction = (value: string, search: string, item: any) => {
       if (filterTags.value.length === 0) {
         return true;
@@ -183,6 +184,7 @@ export default defineComponent({
       }
       return false;
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sharedTagFilter: FilterFunction = (value: string, search: string, item: any) => {
       if (filterTags.value.length === 0) {
         return true;
