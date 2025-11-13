@@ -1,10 +1,11 @@
 <script lang="ts">
-import { defineComponent, PropType, ref, Ref, watch } from "vue";
+import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
 import { RecordingMimeTypes } from "../constants";
 import { getCellLocation, getCellfromLocation, getGuanoMetadata } from "../api/api";
 import MapLocation from "./MapLocation.vue";
 import { useDate } from "vuetify/lib/framework.mjs";
 import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';
+import useState from '@use/useState';
 export interface BatchRecording {
   name: string;
   file: File;
@@ -20,6 +21,7 @@ export interface BatchRecording {
   detector?: string;
   speciesList?: string;
   unusualOccurrences?: string;
+  tag?: string;
 }
 export default defineComponent({
   components: {
@@ -33,6 +35,10 @@ export default defineComponent({
   },
   emits: ["done", "cancel", "update", "delete"],
   setup(props, { emit }) {
+    const { recordingTagList } = useState();
+    const tagOptions = computed(() => recordingTagList.value.map((tag) => tag.text));
+    const initialTag = props.editing ? props.editing.tag : undefined;
+    const currentTag: Ref<string | undefined> = ref(initialTag);
     const dateAdapter = useDate();
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref(props.editing.file);
@@ -217,8 +223,10 @@ export default defineComponent({
         recordedTime,
         fileModel,
         publicVal,
+        currentTag,
       ],
       () => {
+        console.log('updated');
         //Data has been updated we emit the updated recording value
         if (fileModel.value) {
           const newRecording: BatchRecording = {
@@ -231,6 +239,9 @@ export default defineComponent({
             file: fileModel.value,
             public: publicVal.value,
           };
+          if (currentTag.value) {
+            newRecording.tag = currentTag.value;
+          }
           if (latitude.value && longitude.value) {
             newRecording.location = {
               lat: latitude.value,
@@ -242,10 +253,16 @@ export default defineComponent({
       }
     );
 
-    watch([() => props.editing.comments, () => props.editing.equipment, () => props.editing.public], () => {
+    watch([
+      () => props.editing.comments,
+      () => props.editing.equipment,
+      () => props.editing.public,
+      () => props.editing.tag,
+    ], () => {
         publicVal.value = props.editing.public;
         equipment.value = props.editing.equipment;
         comments.value = props.editing.comments;
+        currentTag.value = props.editing.tag;
     });
 
     return {
@@ -266,6 +283,8 @@ export default defineComponent({
       publicVal,
       updateMap,
       recordedTime,
+      tagOptions,
+      currentTag,
       // Guano Metadata
       siteName,
       software,
@@ -335,6 +354,16 @@ export default defineComponent({
               v-model="name"
               label="name"
               :rules="[(v) => !!v || 'Requires a name']"
+            />
+          </v-row>
+          <v-row>
+            <v-combobox
+              v-model="currentTag"
+              clearable
+              chips
+              label="Tag"
+              hint="Set a tag for this batch of recordings"
+              :items="tagOptions"
             />
           </v-row>
           <v-row>

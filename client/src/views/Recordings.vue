@@ -226,6 +226,9 @@ export default defineComponent({
         const [ lon, lat ] = item.recording_location.coordinates;
         editingRecording.value['location'] = {lat, lon};
       }
+      if (item.tag_text) {
+        editingRecording.value.tag = item.tag_text;
+      }
       uploadDialog.value = true;
     };
     const deleteDialogOpen = ref(false);

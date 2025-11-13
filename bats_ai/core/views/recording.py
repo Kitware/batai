@@ -52,17 +52,17 @@ class RecordingUploadSchema(Schema):
     name: str
     recorded_date: str
     recorded_time: str
-    equipment: str | None
-    comments: str | None
-    latitude: float | None
-    longitude: float | None
+    equipment: str | None = None
+    comments: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     gridCellId: int | None = None
-    publicVal: bool | None
-    site_name: str | None
-    software: str | None
-    detector: str | None
-    species_list: str | None
-    unusual_occurrences: str | None
+    publicVal: bool | None = None
+    site_name: str | None = None
+    software: str | None = None
+    detector: str | None = None
+    species_list: str | None = None
+    unusual_occurrences: str | None = None
     tag: str | None = None
 
 
