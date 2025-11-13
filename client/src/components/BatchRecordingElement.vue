@@ -226,7 +226,6 @@ export default defineComponent({
         currentTag,
       ],
       () => {
-        console.log('updated');
         //Data has been updated we emit the updated recording value
         if (fileModel.value) {
           const newRecording: BatchRecording = {

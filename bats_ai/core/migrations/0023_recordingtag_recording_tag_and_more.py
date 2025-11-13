@@ -16,18 +16,32 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='RecordingTag',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('text', models.CharField(max_length=50)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    'user',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
             model_name='recording',
             name='tag',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='core.recordingtag'),
+            field=models.ForeignKey(
+                null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='core.recordingtag'
+            ),
         ),
         migrations.AddConstraint(
             model_name='recordingtag',
-            constraint=models.UniqueConstraint(fields=('user', 'text'), name='unique_user_text_tag'),
+            constraint=models.UniqueConstraint(
+                fields=('user', 'text'), name='unique_user_text_tag'
+            ),
         ),
     ]
