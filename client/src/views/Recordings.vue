@@ -18,7 +18,7 @@ import useState from '@use/useState';
 import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
-import { FilterFunction } from 'vuetify';
+import { FilterFunction, InternalItem } from 'vuetify';
 export default defineComponent({
     components: {
         UploadRecording,
@@ -173,23 +173,21 @@ export default defineComponent({
         .filter((tag: string | null) => tag !== null);
       return [...new Set(tags)];
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tagFilter: FilterFunction = (value: string, search: string, item: any) => {
+    const tagFilter: FilterFunction = (value: string, search: string, item?: InternalItem<Recording>) => {
       if (filterTags.value.length === 0) {
         return true;
       }
-      const itemTag = item?.columns?.tag_text;
+      const itemTag = item?.raw.tag_text;
       if (itemTag && filterTags.value.includes(itemTag)) {
         return true;
       }
       return false;
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sharedTagFilter: FilterFunction = (value: string, search: string, item: any) => {
+    const sharedTagFilter: FilterFunction = (value: string, search: string, item?: InternalItem<Recording>) => {
       if (filterTags.value.length === 0) {
         return true;
       }
-      const itemTag = item?.columns?.tag_text;
+      const itemTag = item?.raw.tag_text;
       if (itemTag && sharedFilterTags.value.includes(itemTag)) {
         return true;
       }
@@ -200,7 +198,6 @@ export default defineComponent({
       await fetchRecordingTags();
       await fetchRecordings();
     });
-
 
     const uploadDone = () => {
         uploadDialog.value = false;
