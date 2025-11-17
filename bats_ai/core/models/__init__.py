@@ -5,7 +5,7 @@ from .exported_file import ExportedAnnotationFile
 from .grts_cells import GRTSCells
 from .image import Image
 from .processing_task import ProcessingTask, ProcessingTaskType
-from .recording import Recording
+from .recording import Recording, RecordingTag
 from .recording_annotation import RecordingAnnotation
 from .recording_annotation_status import RecordingAnnotationStatus
 from .sequence_annotations import SequenceAnnotations
@@ -17,6 +17,7 @@ __all__ = [
     'Annotations',
     'Image',
     'Recording',
+    'RecordingTag',
     'RecordingAnnotationStatus',
     'Species',
     'Spectrogram',

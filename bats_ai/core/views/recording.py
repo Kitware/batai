@@ -5,7 +5,7 @@ import logging
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import HttpRequest
 from ninja import File, Form, Schema
 from ninja.files import UploadedFile
@@ -16,9 +16,11 @@ from bats_ai.core.models import (
     CompressedSpectrogram,
     Recording,
     RecordingAnnotation,
+    RecordingTag,
     SequenceAnnotations,
     Species,
 )
+from bats_ai.core.views.recording_tag import RecordingTagSchema
 from bats_ai.core.views.sequence_annotations import (
     SequenceAnnotationSchema,
     UpdateSequenceAnnotationSchema,
@@ -43,23 +45,25 @@ class RecordingSchema(Schema):
     recording_location: str | None
     grts_cell_id: int | None
     grts_cell: int | None
+    tag: RecordingTagSchema | None
 
 
 class RecordingUploadSchema(Schema):
     name: str
     recorded_date: str
     recorded_time: str
-    equipment: str | None
-    comments: str | None
-    latitude: float = None
-    longitude: float = None
-    gridCellId: int = None
-    publicVal: bool = None
-    site_name: str = None
-    software: str = None
-    detector: str = None
-    species_list: str = None
-    unusual_occurrences: str = None
+    equipment: str | None = None
+    comments: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    gridCellId: int | None = None
+    publicVal: bool | None = None
+    site_name: str | None = None
+    software: str | None = None
+    detector: str | None = None
+    species_list: str | None = None
+    unusual_occurrences: str | None = None
+    tag: str | None = None
 
 
 class RecordingAnnotationSchema(Schema):
@@ -150,6 +154,9 @@ def create_recording(
         species_list=payload.species_list,
         unusual_occurrences=payload.unusual_occurrences,
     )
+    if payload.tag:
+        tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=payload.tag)
+        recording.tag = tag
 
     recording.save()
     # Start generating recording as soon as created
@@ -193,6 +200,9 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
         recording.species_list = recording_data.species_list
     if recording_data.unusual_occurrences:
         recording.unusual_occurrences = recording_data.unusual_occurrences
+    if recording_data.tag:
+        tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=recording_data.tag)
+        recording.tag = tag
 
     recording.save()
 
@@ -230,10 +240,13 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
         recordings = (
             Recording.objects.filter(public=True)
             .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
+            .annotate(tag_text=F('tag__text'))
             .values()
         )
     else:
-        recordings = Recording.objects.filter(owner=request.user).values()
+        recordings = (
+            Recording.objects.filter(owner=request.user).annotate(tag_text=F('tag__text')).values()
+        )
 
     # TODO with larger dataset it may be better to do this in a queryset instead of python
     for recording in recordings:
