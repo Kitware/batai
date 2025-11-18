@@ -12,6 +12,7 @@ from .sequence_annotations import SequenceAnnotations
 from .species import Species
 from .spectrogram import Spectrogram
 from .spectrogram_image import SpectrogramImage
+from .spectrogram_vector import SpectrogramSvg
 
 __all__ = [
     'Annotations',
@@ -30,4 +31,5 @@ __all__ = [
     'ProcessingTaskType',
     'ExportedAnnotationFile',
     'SpectrogramImage',
+    'SpectrogramSvg',
 ]
