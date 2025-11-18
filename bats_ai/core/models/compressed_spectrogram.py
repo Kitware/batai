@@ -9,6 +9,7 @@ import numpy as np
 from .recording import Recording
 from .spectrogram import Spectrogram
 from .spectrogram_image import SpectrogramImage
+from .spectrogram_vector import SpectrogramSvg
 
 
 # TimeStampedModel also provides "created" and "modified" fields
@@ -17,6 +18,7 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
     spectrogram = models.ForeignKey(Spectrogram, on_delete=models.CASCADE)
     length = models.IntegerField()
     images = GenericRelation(SpectrogramImage)
+    vector_images = GenericRelation(SpectrogramSvg)
     starts = ArrayField(ArrayField(models.IntegerField()))
     stops = ArrayField(ArrayField(models.IntegerField()))
     widths = ArrayField(ArrayField(models.IntegerField()))
@@ -26,6 +28,11 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
     def image_url_list(self):
         """Ordered list of image URLs for this spectrogram."""
         images = self.images.filter(type='compressed').order_by('index')
+        return [default_storage.url(img.image_file.name) for img in images]
+
+    @property
+    def vector_image_url_list(self):
+        images = self.vector_images.filter(type='compressed').order_by('index')
         return [default_storage.url(img.image_file.name) for img in images]
 
     @property
