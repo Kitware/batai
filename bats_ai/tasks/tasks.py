@@ -15,6 +15,7 @@ from bats_ai.core.models import (
     Species,
     Spectrogram,
     SpectrogramImage,
+    SpectrogramSvg,
 )
 from bats_ai.utils.spectrogram_utils import generate_spectrogram_assets, predict_from_compressed
 
@@ -58,6 +59,12 @@ def recording_compute_spectrogram(recording_id: int):
                         'type': 'spectrogram',
                     },
                 )
+
+        for idx, svg_path in enumerate(results['normal']['vectors']):
+            with open(svg_path, 'rb') as f:
+                # TODO
+                SpectrogramSvg.objects.get_or_create()
+
 
         # Create or get CompressedSpectrogram
         compressed = results['compressed']

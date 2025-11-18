@@ -20,6 +20,8 @@ import tqdm
 from bats_ai.core.models import CompressedSpectrogram
 from bats_ai.core.models.nabat import NABatCompressedSpectrogram
 
+from .contour_utils import extract_marching_squares_contours
+
 logger = logging.getLogger(__name__)
 
 FREQ_MIN = 5e3
@@ -29,12 +31,14 @@ FREQ_PAD = 2e3
 
 class SpectrogramAssetResult(TypedDict):
     paths: list[str]
+    vectors: list[str]
     width: int
     height: int
 
 
 class SpectrogramCompressedAssetResult(TypedDict):
     paths: list[str]
+    vectors: list[str]
     width: int
     height: int
     widths: list[float]
@@ -226,10 +230,10 @@ def generate_spectrogram_assets(
         os.path.splitext(os.path.basename(output_base))[0] + '_spectrogram',
     )
     os.makedirs(os.path.dirname(normal_out_path_base), exist_ok=True)
-    normal_paths = save_img(normal_img_resized, normal_out_path_base)
+    normal_paths, vector_paths = save_img(normal_img_resized, normal_out_path_base)
     real_duration = math.ceil(duration * 1e3)
-    compressed_img, compressed_paths, widths, starts, stops = generate_compressed(
-        normal_img_resized, real_duration, output_base
+    compressed_img, compressed_paths, compressed_vector_paths, widths, starts, stops = (
+        generate_compressed(normal_img_resized, real_duration, output_base)
     )
 
     result = {
@@ -238,11 +242,13 @@ def generate_spectrogram_assets(
         'freq_max': freq_high,
         'normal': {
             'paths': normal_paths,
+            'vectors': vector_paths,
             'width': normal_img_resized.shape[1],
             'height': normal_img_resized.shape[0],
         },
         'compressed': {
             'paths': compressed_paths,
+            'vectors': compressed_vector_paths,
             'width': compressed_img.shape[1],
             'height': compressed_img.shape[0],
             'widths': widths,
@@ -359,9 +365,9 @@ def generate_compressed(img: np.ndarray, duration: float, output_base: str):
     compressed_out_path = os.path.join(out_folder, f'{base_name}_compressed')
 
     # save_img should be your existing function to save images and return file paths
-    paths = save_img(compressed_img, compressed_out_path)
+    paths, vector_paths = save_img(compressed_img, compressed_out_path)
 
-    return compressed_img, paths, widths, starts_time, stops_time
+    return compressed_img, paths, vector_paths, widths, starts_time, stops_time
 
 
 def save_img(img: np.ndarray, output_base: str):
@@ -374,6 +380,7 @@ def save_img(img: np.ndarray, output_base: str):
     )
     total = len(chunks)
     output_paths = []
+    output_svg_paths = []
     for index, chunk in enumerate(chunks):
         out_path = f'{output_base}.{index + 1:02d}_of_{total:02d}.jpg'
         out_img = Image.fromarray(chunk, 'RGB')
@@ -381,4 +388,12 @@ def save_img(img: np.ndarray, output_base: str):
         output_paths.append(out_path)
         logger.info(f'Saved image: {out_path}')
 
-    return output_paths
+        svg_path = f'{output_base}.{index + 1:02d}_of_{total:02d}.svg'
+        try:
+            extract_marching_squares_contours(out_path, svg_path)
+            output_svg_paths.append(svg_path)
+            logger.info(f'Saved SVG {svg_path}')
+        except Exception as e:
+            logger.error(f'Failed to create SVG for {out_path}. {e}')
+
+    return output_paths, output_svg_paths
