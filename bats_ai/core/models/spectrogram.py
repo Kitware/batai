@@ -7,11 +7,13 @@ import numpy as np
 
 from .recording import Recording
 from .spectrogram_image import SpectrogramImage
+from .spectrogram_vector import SpectrogramSvg
 
 
 class Spectrogram(TimeStampedModel, models.Model):
     recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
     images = GenericRelation(SpectrogramImage)
+    vector_images = GenericRelation(SpectrogramSvg)
     width = models.IntegerField()  # pixels
     height = models.IntegerField()  # pixels
     duration = models.IntegerField()  # milliseconds
@@ -22,6 +24,11 @@ class Spectrogram(TimeStampedModel, models.Model):
     def image_url_list(self):
         """Ordered list of image URLs for this spectrogram."""
         images = self.images.filter(type='spectrogram').order_by('index')
+        return [default_storage.url(img.image_file.name) for img in images]
+
+    @property
+    def vector_url_list(self):
+        images = self.vector_images.filter(type='spectrogram').order_by('index')
         return [default_storage.url(img.image_file.name) for img in images]
 
     @property
