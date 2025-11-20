@@ -62,8 +62,15 @@ def recording_compute_spectrogram(recording_id: int):
 
         for idx, svg_path in enumerate(results['normal']['vectors']):
             with open(svg_path, 'rb') as f:
-                # TODO
-                SpectrogramSvg.objects.get_or_create()
+                SpectrogramSvg.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(spectrogram),
+                    object_id=spectrogram.id,
+                    index=idx,
+                    defaults={
+                        'type': 'spectrogram',
+                        'image_file': File(f, name=os.path.basename(svg_path)),
+                    },
+                )
 
 
         # Create or get CompressedSpectrogram
@@ -89,6 +96,18 @@ def recording_compute_spectrogram(recording_id: int):
                     index=idx,
                     defaults={
                         'image_file': File(f, name=os.path.basename(img_path)),
+                        'type': 'compressed',
+                    },
+                )
+
+        for idx, svg_path in enumerate(compressed['vectors']):
+            with open(svg_path, 'rb') as f:
+                SpectrogramSvg.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(compressed_obj),
+                    object_id=compressed_obj.id,
+                    index=idx,
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(svg_path)),
                         'type': 'compressed',
                     },
                 )

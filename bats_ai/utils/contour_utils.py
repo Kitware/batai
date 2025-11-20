@@ -156,7 +156,12 @@ def polygon_area(points: np.ndarray) -> float:
 def smooth_contour_spline(contour, smoothing_factor=0.1):
     """Smooth contour using spline interpolation"""
     # Reshape contour
-    contour = contour.reshape(-1, 2)
+    if contour.ndim != 2 or contour.shape[1] != 2:
+        if contour.size % 2 == 0:
+            contour = contour.reshape(-1, 2)
+        else:
+            logger.warning(f'Invalid contour shape: {contour.shape}')
+    # contour = contour.reshape(-1, 2)
 
     # Close the contour by adding first point at end
     if not np.array_equal(contour[0], contour[-1]):
@@ -178,8 +183,8 @@ def smooth_contour_spline(contour, smoothing_factor=0.1):
         tck, u = interpolate.splprep(
             [contour[:, 0], contour[:, 1]], s=len(contour) * smoothing_factor, per=True
         )
-        smooth_points, _ = interpolate.splev(alpha, tck)
-        smooth_contour = np.column_stack(smooth_points)
+        x_smooth, y_smooth = interpolate.splev(alpha, tck)
+        smooth_contour = np.column_stack([x_smooth, y_smooth])
     except Exception as e:
         # Fallback to simple smoothing if spline fails
         logger.info(f'Spline fitting failed {e}. Falling back to simple smoothing.')
@@ -254,8 +259,10 @@ def save_contours_to_svg(
 
     # Draw lower levels first so higher ones sit on top
     contours_with_levels_sorted = sorted(contours_with_levels, key=lambda x: x[1])
+    logger.info(f'Sorted contours length: {len(contours_with_levels_sorted)}')
 
     for i, (contour, level) in enumerate(contours_with_levels_sorted):
+        # logger.info(f'Attempting to add path for level {level}')
         pts = contour.tolist()
         if len(pts) < 3:
             continue
@@ -348,6 +355,7 @@ def extract_marching_squares_contours(
             marching_contours.append((smooth, level))
 
     if marching_contours:
+        logger.info(f'Saving contours to {output_path}')
         save_contours_to_svg(marching_contours, output_path, img.shape, reference_image=img)
 
     return sorted(marching_contours, key=lambda x: x[1], reverse=True)
