@@ -37,7 +37,7 @@ export default defineComponent({
     const globalPublic = ref(false);
     const globalEquipment = ref('');
     const globalComments = ref('');
-    const globalTag = ref(undefined as undefined | string);
+    const globalTags = ref([] as string[]);
 
     const autoFill = async (filename: string) => {
 
@@ -167,7 +167,7 @@ export default defineComponent({
           detector: fileElement.detector,
           species_list: fileElement.speciesList,
           unusual_occurrences: fileElement.unusualOccurrences,
-          tag: fileElement.tag,
+          tags: fileElement.tags,
         };
         await uploadRecordingFile(file, fileUploadParams);
         recordings.value.splice(0, 1);
@@ -230,7 +230,7 @@ export default defineComponent({
       recordings.value = updatedRecordings;
     };
 
-    watch([globalPublic, globalComments, globalEquipment, globalTag], () => {
+    watch([globalPublic, globalComments, globalEquipment, globalTags], () => {
       const newResults: BatchRecording[] = [];
         recordings.value.forEach((item) => {
           item.public = globalPublic.value;
@@ -240,15 +240,15 @@ export default defineComponent({
           if (globalEquipment.value) {
             item.equipment = globalEquipment.value;
           }
-          item.tag = globalTag.value || undefined;
+          item.tags = globalTags.value;
           newResults.push(item);
         });
       recordings.value = newResults;
-    });
+    }, { deep: true });
 
     return {
       tagOptions,
-      globalTag,
+      globalTags,
       errorText,
       fileModel,
       fileInputEl,
@@ -330,13 +330,15 @@ export default defineComponent({
 
                 <v-row>
                   <v-combobox
-                    v-model="globalTag"
+                    v-model="globalTags"
+                    :items="tagOptions"
                     class="mt-2"
+                    multiple
                     clearable
                     chips
+                    closable-chips
                     label="Tag"
                     hint="Set a tag for this batch of recordings"
-                    :items="tagOptions"
                   />
                 </v-row>
 

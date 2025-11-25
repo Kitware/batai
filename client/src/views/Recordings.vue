@@ -19,6 +19,7 @@ import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
 import { FilterFunction, InternalItem } from 'vuetify';
+import { VListItemSubtitle } from 'vuetify/lib/components';
 export default defineComponent({
     components: {
         UploadRecording,
@@ -162,36 +163,42 @@ export default defineComponent({
     const filterTags: Ref<string[]> = ref([]);
     const sharedFilterTags: Ref<string[]> = ref([]);
     const recordingTags = computed(() => {
-      const tags = recordingList.value
-        .map((recording: Recording) => recording.tag_text)
-        .filter((tag: string | null) => tag !== null);
-      return [...new Set(tags)];
+      const tags = new Set();
+      recordingList.value.forEach((recording: Recording) => {
+        recording.tags_text?.forEach((tag: string) => {
+          if (tag) {
+            tags.add(tag);
+          }
+        });
+      });
+      return Array.from(tags);
     });
     const sharedRecordingTags = computed(() => {
-      const tags = sharedList.value
-        .map((recording: Recording) => recording.tag_text)
-        .filter((tag: string | null) => tag !== null);
-      return [...new Set(tags)];
+      const tags = new Set();
+      sharedList.value.forEach((recording: Recording) => {
+        recording.tags_text?.forEach((tag: string) => {
+          if (tag) {
+            tags.add(tag);
+          }
+        });
+      });
+      return Array.from(tags);
     });
     const tagFilter: FilterFunction = (value: string, search: string, item?: InternalItem<Recording>) => {
       if (filterTags.value.length === 0) {
         return true;
       }
-      const itemTag = item?.raw.tag_text;
-      if (itemTag && filterTags.value.includes(itemTag)) {
-        return true;
-      }
-      return false;
+      const filterTagSet = new Set(filterTags.value);
+      const itemTagSet = new Set(item?.raw.tags_text);
+      return filterTagSet.intersection(itemTagSet).size > 0;
     };
     const sharedTagFilter: FilterFunction = (value: string, search: string, item?: InternalItem<Recording>) => {
       if (filterTags.value.length === 0) {
         return true;
       }
-      const itemTag = item?.raw.tag_text;
-      if (itemTag && sharedFilterTags.value.includes(itemTag)) {
-        return true;
-      }
-      return false;
+      const filterTagSet = new Set(filterTags.value);
+      const itemTagSet = new Set(item?.raw.tags_text);
+      return filterTagSet.intersection(itemTagSet).size > 0;
     };
 
     onMounted(async () => {
@@ -225,8 +232,8 @@ export default defineComponent({
         const [ lon, lat ] = item.recording_location.coordinates;
         editingRecording.value['location'] = {lat, lon};
       }
-      if (item.tag_text) {
-        editingRecording.value.tag = item.tag_text;
+      if (item.tags_text) {
+        editingRecording.value.tags = item.tags_text.filter((tag: string) => !!tag);
       }
       uploadDialog.value = true;
     };
@@ -348,6 +355,7 @@ export default defineComponent({
               multiple
               chips
               closable-chips
+              clearable
             />
           </div>
         </template>
@@ -388,12 +396,15 @@ export default defineComponent({
         </template>
 
         <template #item.tag_text="{ item }">
-          <v-chip
-            v-if="item.tag_text"
-            size="small"
-          >
-            {{ item.tag_text }}
-          </v-chip>
+          <span v-if="item.tags_text">
+            <v-chip
+              v-for="tag in item.tags_text"
+              :key="tag"
+              size="small"
+            >
+              {{ tag }}
+            </v-chip>
+          </span>
         </template>
 
         <template #item.recorded_date="{ item }">

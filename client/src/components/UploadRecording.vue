@@ -28,7 +28,7 @@ export interface EditingRecording {
   detector?: string;
   speciesList?: string;
   unusualOccurrences?: string;
-  tag?: string;
+  tags?: string[];
 }
 
 export default defineComponent({
@@ -45,8 +45,8 @@ export default defineComponent({
   setup(props, { emit }) {
     const { recordingTagList } = useState();
     const tagOptions = computed(() => recordingTagList.value.map((tag: RecordingTag) => tag.text));
-    const initialTag = props.editing ? props.editing.tag : undefined;
-    const currentTag: Ref<string | undefined> = ref(initialTag);
+    const initialTags = props.editing ? props.editing.tags : undefined;
+    const currentTags: Ref<string[]> = ref(initialTags || []);
 
     const dateAdapter = useDate();
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
@@ -155,21 +155,20 @@ export default defineComponent({
         location['gridCellId'] = gridCellId.value;
       }
       const fileUploadParams: RecordingFileParameters = {
-          name: name.value,
-          recorded_date: recordedDate.value,
-          recorded_time: recordedTime.value,
-          equipment: equipment.value,
-          comments: comments.value,
-          publicVal: publicVal.value,
-          location,
-          tag: currentTag.value,
-          site_name: siteName.value,
-          software: software.value,
-          detector: detector.value,
-          species_list: speciesList.value,
-          unusual_occurrences: unusualOccurrences.value,
-        };
-
+        name: name.value,
+        recorded_date: recordedDate.value,
+        recorded_time: recordedTime.value,
+        equipment: equipment.value,
+        comments: comments.value,
+        publicVal: publicVal.value,
+        location,
+        tags: currentTags.value,
+        site_name: siteName.value,
+        software: software.value,
+        detector: detector.value,
+        species_list: speciesList.value,
+        unusual_occurrences: unusualOccurrences.value,
+      };
       await uploadRecordingFile(file, fileUploadParams);
       emit('done');
     });
@@ -235,7 +234,7 @@ export default defineComponent({
           comments: comments.value,
           publicVal: publicVal.value,
           location,
-          tag: currentTag.value,
+          tags: currentTags.value,
           site_name: siteName.value,
           software: software.value,
           detector: detector.value,
@@ -291,7 +290,7 @@ export default defineComponent({
       uploadProgress,
       name,
       tagOptions,
-      currentTag,
+      currentTags,
       equipment,
       comments,
       recordedDate,
@@ -403,12 +402,14 @@ export default defineComponent({
             </v-row>
             <v-row>
               <v-combobox
-                v-model="currentTag"
+                v-model="currentTags"
+                :items="tagOptions"
+                multiple
                 clearable
                 chips
+                closable-chips
                 label="Tag"
                 hint="Give this recording a tag for searching and filtering"
-                :items="tagOptions"
               />
             </v-row>
             <v-row>

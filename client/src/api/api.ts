@@ -27,7 +27,7 @@ export interface Recording {
   detector?: string;
   species_list?: string;
   unusual_occurrences?: string;
-  tag_text: string | null;
+  tags_text?: string[];
 }
 
 export interface Species {
@@ -155,7 +155,7 @@ export interface RecordingFileParameters {
   detector?: string;
   species_list?: string;
   unusual_occurrences?: string;
-  tag?: string;
+  tags?: string[];
 }
 
 async function uploadRecordingFile(file: File, params: RecordingFileParameters) {
@@ -191,8 +191,8 @@ async function uploadRecordingFile(file: File, params: RecordingFileParameters) 
   if (params.unusual_occurrences) {
     formData.append("unusual_occurrences", params.unusual_occurrences);
   }
-  if (params.tag) {
-    formData.append("tag", params.tag);
+  if (params.tags) {
+    params.tags.forEach((tag: string) => formData.append("tags", tag));
   }
   const recordingParams = {
     name: params.name,
@@ -203,7 +203,7 @@ async function uploadRecordingFile(file: File, params: RecordingFileParameters) 
     detector: params.detector,
     species_list: params.species_list,
     unusual_occurrences: params.unusual_occurrences,
-    tag: params.tag,
+    tags: params.tags,
   };
   const payloadBlob = new Blob([JSON.stringify(recordingParams)], { type: "application/json" });
   formData.append("payload", payloadBlob);
@@ -232,7 +232,7 @@ async function patchRecording(recordingId: number, params: RecordingFileParamete
       latitude,
       longitude,
       gridCellId,
-      tag: params.tag,
+      tags: params.tags,
       site_name: params.site_name,
       software: params.software,
       detector: params.detector,

@@ -21,7 +21,7 @@ export interface BatchRecording {
   detector?: string;
   speciesList?: string;
   unusualOccurrences?: string;
-  tag?: string;
+  tags?: string[];
 }
 export default defineComponent({
   components: {
@@ -37,8 +37,8 @@ export default defineComponent({
   setup(props, { emit }) {
     const { recordingTagList } = useState();
     const tagOptions = computed(() => recordingTagList.value.map((tag) => tag.text));
-    const initialTag = props.editing ? props.editing.tag : undefined;
-    const currentTag: Ref<string | undefined> = ref(initialTag);
+    const initialTags = props.editing ? props.editing.tags : [];
+    const currentTags: Ref<string[] | undefined> = ref(initialTags);
     const dateAdapter = useDate();
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref(props.editing.file);
@@ -223,7 +223,7 @@ export default defineComponent({
         recordedTime,
         fileModel,
         publicVal,
-        currentTag,
+        currentTags,
       ],
       () => {
         //Data has been updated we emit the updated recording value
@@ -238,8 +238,8 @@ export default defineComponent({
             file: fileModel.value,
             public: publicVal.value,
           };
-          if (currentTag.value) {
-            newRecording.tag = currentTag.value;
+          if (currentTags.value) {
+            newRecording.tags = currentTags.value;
           }
           if (latitude.value && longitude.value) {
             newRecording.location = {
@@ -256,12 +256,12 @@ export default defineComponent({
       () => props.editing.comments,
       () => props.editing.equipment,
       () => props.editing.public,
-      () => props.editing.tag,
+      () => props.editing.tags,
     ], () => {
         publicVal.value = props.editing.public;
         equipment.value = props.editing.equipment;
         comments.value = props.editing.comments;
-        currentTag.value = props.editing.tag;
+        currentTags.value = props.editing.tags;
     });
 
     return {
@@ -283,7 +283,7 @@ export default defineComponent({
       updateMap,
       recordedTime,
       tagOptions,
-      currentTag,
+      currentTags,
       // Guano Metadata
       siteName,
       software,
@@ -357,9 +357,11 @@ export default defineComponent({
           </v-row>
           <v-row>
             <v-combobox
-              v-model="currentTag"
+              v-model="currentTags"
               clearable
+              multiple
               chips
+              closable-chips
               label="Tag"
               hint="Set a tag for this batch of recordings"
               :items="tagOptions"

@@ -47,7 +47,7 @@ class Recording(TimeStampedModel, models.Model):
         Species, related_name='recording_official_species'
     )  # species that are detemrined by the owner or from annotations as official species list
     unusual_occurrences = models.TextField(blank=True, null=True)
-    tag = models.ForeignKey(RecordingTag, on_delete=models.DO_NOTHING, null=True)
+    tags = models.ManyToManyField(RecordingTag)
 
     @property
     def has_spectrogram(self):
