@@ -362,8 +362,8 @@ export default defineComponent({
               multiple
               chips
               closable-chips
-              label="Tag"
-              hint="Set a tag for this batch of recordings"
+              label="Tags"
+              hint="Set one or more tags for this recording"
               :items="tagOptions"
             />
           </v-row>

@@ -408,8 +408,8 @@ export default defineComponent({
                 clearable
                 chips
                 closable-chips
-                label="Tag"
-                hint="Give this recording a tag for searching and filtering"
+                label="Tags"
+                hint="Give this recording one or more tags for filtering"
               />
             </v-row>
             <v-row>

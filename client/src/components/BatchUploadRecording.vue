@@ -337,8 +337,8 @@ export default defineComponent({
                     clearable
                     chips
                     closable-chips
-                    label="Tag"
-                    hint="Set a tag for this batch of recordings"
+                    label="Tags"
+                    hint="Set one or more tags for this batch of recordings"
                   />
                 </v-row>
 

@@ -19,7 +19,7 @@ import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
 import { FilterFunction, InternalItem } from 'vuetify';
-import { VListItemSubtitle } from 'vuetify/lib/components';
+
 export default defineComponent({
     components: {
         UploadRecording,
@@ -50,7 +50,7 @@ export default defineComponent({
           key:'owner_username',
         },
         {
-          title: 'Tag',
+          title: 'Tags',
           key: 'tag_text',
         },
         {
@@ -65,7 +65,6 @@ export default defineComponent({
           title:'GRTS CellId',
           key:'grts_cell_id',
         },
-
         {
           title: 'Location',
           key:'recording_location'
@@ -98,7 +97,7 @@ export default defineComponent({
           key: 'owner_username',
         },
         {
-          title: 'Tag',
+          title: 'Tags',
           key: 'tag_text',
         },
         {
@@ -351,7 +350,7 @@ export default defineComponent({
             <v-combobox
               v-model="filterTags"
               :items="recordingTags"
-              label="Filter recordings by tag"
+              label="Filter recordings by tags"
               multiple
               chips
               closable-chips
@@ -518,7 +517,7 @@ export default defineComponent({
             <v-combobox
               v-model="sharedFilterTags"
               :items="sharedRecordingTags"
-              label="Filter recordings by tag"
+              label="Filter recordings by tags"
               multiple
               chips
               closable-chips
