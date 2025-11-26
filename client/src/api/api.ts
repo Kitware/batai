@@ -27,6 +27,7 @@ export interface Recording {
   detector?: string;
   species_list?: string;
   unusual_occurrences?: string;
+  tags_text?: string[];
 }
 
 export interface Species {
@@ -154,6 +155,7 @@ export interface RecordingFileParameters {
   detector?: string;
   species_list?: string;
   unusual_occurrences?: string;
+  tags?: string[];
 }
 
 async function uploadRecordingFile(file: File, params: RecordingFileParameters) {
@@ -189,6 +191,9 @@ async function uploadRecordingFile(file: File, params: RecordingFileParameters) 
   if (params.unusual_occurrences) {
     formData.append("unusual_occurrences", params.unusual_occurrences);
   }
+  if (params.tags) {
+    params.tags.forEach((tag: string) => formData.append("tags", tag));
+  }
   const recordingParams = {
     name: params.name,
     equipment: params.equipment,
@@ -198,6 +203,7 @@ async function uploadRecordingFile(file: File, params: RecordingFileParameters) 
     detector: params.detector,
     species_list: params.species_list,
     unusual_occurrences: params.unusual_occurrences,
+    tags: params.tags,
   };
   const payloadBlob = new Blob([JSON.stringify(recordingParams)], { type: "application/json" });
   formData.append("payload", payloadBlob);
@@ -226,6 +232,7 @@ async function patchRecording(recordingId: number, params: RecordingFileParamete
       latitude,
       longitude,
       gridCellId,
+      tags: params.tags,
       site_name: params.site_name,
       software: params.software,
       detector: params.detector,
@@ -250,11 +257,20 @@ interface GRTSCellCenter {
   error?: string;
 }
 
+export interface RecordingTag {
+  id: number;
+  text: string;
+  user_id: number;
+}
+
 async function getRecordings(getPublic = false) {
   return axiosInstance.get<Recording[]>(`/recording/?public=${getPublic}`);
 }
 async function getRecording(id: string) {
   return axiosInstance.get<Recording>(`/recording/${id}/`);
+}
+async function getRecordingTags() {
+  return axiosInstance.get<RecordingTag[]>(`/recording-tag/`);
 }
 
 async function deleteRecording(id: number) {
@@ -523,4 +539,5 @@ export {
   getFilteredProcessingTasks,
   getFileAnnotationDetails,
   getExportStatus,
+  getRecordingTags,
 };

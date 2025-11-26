@@ -1,11 +1,19 @@
 <script lang="ts">
-import { defineComponent, PropType, ref, Ref } from 'vue';
+import {
+  computed,
+  defineComponent,
+  PropType,
+  ref,
+  Ref,
+} from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '@use/useRequest';
-import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, RecordingFileParameters } from '../api/api';
+import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, RecordingFileParameters, RecordingTag } from '../api/api';
 import MapLocation from './MapLocation.vue';
 import { useDate } from 'vuetify/lib/framework.mjs';
 import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';
+import useState from '@use/useState';
+
 export interface EditingRecording {
   id: number;
   name: string;
@@ -20,6 +28,7 @@ export interface EditingRecording {
   detector?: string;
   speciesList?: string;
   unusualOccurrences?: string;
+  tags?: string[];
 }
 
 export default defineComponent({
@@ -34,6 +43,11 @@ export default defineComponent({
   },
   emits: ['done', 'cancel'],
   setup(props, { emit }) {
+    const { recordingTagList } = useState();
+    const tagOptions = computed(() => recordingTagList.value.map((tag: RecordingTag) => tag.text));
+    const initialTags = props.editing ? props.editing.tags : undefined;
+    const currentTags: Ref<string[]> = ref(initialTags || []);
+
     const dateAdapter = useDate();
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref();
@@ -141,20 +155,20 @@ export default defineComponent({
         location['gridCellId'] = gridCellId.value;
       }
       const fileUploadParams: RecordingFileParameters = {
-          name: name.value,
-          recorded_date: recordedDate.value,
-          recorded_time: recordedTime.value,
-          equipment: equipment.value,
-          comments: comments.value,
-          publicVal: publicVal.value,
-          location,
-          site_name: siteName.value,
-          software: software.value,
-          detector: detector.value,
-          species_list: speciesList.value,
-          unusual_occurrences: unusualOccurrences.value,
-        };
-
+        name: name.value,
+        recorded_date: recordedDate.value,
+        recorded_time: recordedTime.value,
+        equipment: equipment.value,
+        comments: comments.value,
+        publicVal: publicVal.value,
+        location,
+        tags: currentTags.value,
+        site_name: siteName.value,
+        software: software.value,
+        detector: detector.value,
+        species_list: speciesList.value,
+        unusual_occurrences: unusualOccurrences.value,
+      };
       await uploadRecordingFile(file, fileUploadParams);
       emit('done');
     });
@@ -220,13 +234,13 @@ export default defineComponent({
           comments: comments.value,
           publicVal: publicVal.value,
           location,
+          tags: currentTags.value,
           site_name: siteName.value,
           software: software.value,
           detector: detector.value,
           species_list: speciesList.value,
           unusual_occurrences: unusualOccurrences.value,
         };
-
         await patchRecording(props.editing.id, fileUploadParams);
         emit('done');
       } else {
@@ -257,7 +271,7 @@ export default defineComponent({
         latitude.value = result.data.latitude;
         longitude.value = result.data.longitude;
         triggerUpdateMap();
-        
+
       }
     }
   };
@@ -275,6 +289,8 @@ export default defineComponent({
       progressState,
       uploadProgress,
       name,
+      tagOptions,
+      currentTags,
       equipment,
       comments,
       recordedDate,
@@ -382,6 +398,18 @@ export default defineComponent({
                 v-model="name"
                 label="name"
                 :rules="[ v => !!v || 'Requires a name']"
+              />
+            </v-row>
+            <v-row>
+              <v-combobox
+                v-model="currentTags"
+                :items="tagOptions"
+                multiple
+                clearable
+                chips
+                closable-chips
+                label="Tags"
+                hint="Give this recording one or more tags for filtering"
               />
             </v-row>
             <v-row>
