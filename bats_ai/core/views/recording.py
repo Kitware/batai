@@ -206,9 +206,15 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
     if recording_data.unusual_occurrences:
         recording.unusual_occurrences = recording_data.unusual_occurrences
     if recording_data.tags:
+        existing_tags = recording.tags.all()
         for tag in recording_data.tags:
             tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=tag)
-        recording.tags.add(tag)
+            if tag not in existing_tags:
+                recording.tags.add(tag)
+        # Remove any tags that are not in the updated list
+        for existing_tag in existing_tags:
+            if existing_tag.text not in recording_data.tags:
+                recording.tags.remove(existing_tag)
 
     recording.save()
 
