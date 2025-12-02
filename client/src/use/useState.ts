@@ -9,6 +9,7 @@ import {
   Recording,
   SpectrogramAnnotation,
   SpectrogramSequenceAnnotation,
+  RecordingTag,
 } from "../api/api";
 import {
   interpolateCividis,
@@ -45,6 +46,7 @@ const sequenceAnnotations: Ref<SpectrogramSequenceAnnotation[]> = ref([]);
 const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
 const sharedList: Ref<Recording[]> = ref([]);
 const recordingList: Ref<Recording[]> = ref([]);
+const recordingTagList: Ref<RecordingTag[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
 const scaledVals: Ref<{ x: number; y: number }> = ref({ x: 1, y: 1 });
 const viewCompressedOverlay = ref(false);
@@ -180,6 +182,7 @@ export default function useState() {
     selectedType,
     sharedList,
     recordingList,
+    recordingTagList,
     nextShared,
     scaledVals,
     viewCompressedOverlay,

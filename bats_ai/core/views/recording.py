@@ -1,9 +1,11 @@
 from datetime import datetime
 import json
 import logging
+from typing import List, Optional
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
 from django.db.models import Q
 from django.http import HttpRequest
@@ -16,9 +18,11 @@ from bats_ai.core.models import (
     CompressedSpectrogram,
     Recording,
     RecordingAnnotation,
+    RecordingTag,
     SequenceAnnotations,
     Species,
 )
+from bats_ai.core.views.recording_tag import RecordingTagSchema
 from bats_ai.core.views.sequence_annotations import (
     SequenceAnnotationSchema,
     UpdateSequenceAnnotationSchema,
@@ -43,23 +47,25 @@ class RecordingSchema(Schema):
     recording_location: str | None
     grts_cell_id: int | None
     grts_cell: int | None
+    tags: list[RecordingTagSchema] = []
 
 
 class RecordingUploadSchema(Schema):
     name: str
     recorded_date: str
     recorded_time: str
-    equipment: str | None
-    comments: str | None
-    latitude: float = None
-    longitude: float = None
-    gridCellId: int = None
-    publicVal: bool = None
-    site_name: str = None
-    software: str = None
-    detector: str = None
-    species_list: str = None
-    unusual_occurrences: str = None
+    equipment: str | None = None
+    comments: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    gridCellId: int | None = None
+    publicVal: bool | None = None
+    site_name: str | None = None
+    software: str | None = None
+    detector: str | None = None
+    species_list: str | None = None
+    unusual_occurrences: str | None = None
+    tags: Optional[List[str]] = None
 
 
 class RecordingAnnotationSchema(Schema):
@@ -150,6 +156,12 @@ def create_recording(
         species_list=payload.species_list,
         unusual_occurrences=payload.unusual_occurrences,
     )
+    recording.save()
+
+    if payload.tags:
+        for tag in payload.tags:
+            tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=tag)
+            recording.tags.add(tag)
 
     recording.save()
     # Start generating recording as soon as created
@@ -193,6 +205,16 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
         recording.species_list = recording_data.species_list
     if recording_data.unusual_occurrences:
         recording.unusual_occurrences = recording_data.unusual_occurrences
+    if recording_data.tags:
+        existing_tags = recording.tags.all()
+        for tag in recording_data.tags:
+            tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=tag)
+            if tag not in existing_tags:
+                recording.tags.add(tag)
+        # Remove any tags that are not in the updated list
+        for existing_tag in existing_tags:
+            if existing_tag.text not in recording_data.tags:
+                recording.tags.remove(existing_tag)
 
     recording.save()
 
@@ -230,10 +252,15 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
         recordings = (
             Recording.objects.filter(public=True)
             .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
+            .annotate(tags_text=ArrayAgg('tags__text'))
             .values()
         )
     else:
-        recordings = Recording.objects.filter(owner=request.user).values()
+        recordings = (
+            Recording.objects.filter(owner=request.user)
+            .annotate(tags_text=ArrayAgg('tags__text'))
+            .values()
+        )
 
     # TODO with larger dataset it may be better to do this in a queryset instead of python
     for recording in recordings:
@@ -270,7 +297,9 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
 def get_recording(request: HttpRequest, id: int):
     # Filter recordings based on the owner's id or public=True
     try:
-        recordings = Recording.objects.filter(pk=id).values()
+        recordings = (
+            Recording.objects.filter(pk=id).annotate(tags_text=ArrayAgg('tags__text')).values()
+        )
         if len(recordings) > 0:
             recording = recordings[0]
 
@@ -312,7 +341,6 @@ def get_recording(request: HttpRequest, id: int):
                 RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
                 for fileAnnotation in fileAnnotations
             ]
-
             return recording
         else:
             return {'error': 'Recording not found'}

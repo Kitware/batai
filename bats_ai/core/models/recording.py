@@ -10,6 +10,19 @@ from .species import Species
 logger = logging.getLogger(__name__)
 
 
+class RecordingTag(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.CharField(max_length=50)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'text'], name='unique_user_text_tag')
+        ]
+
+    def __str__(self):
+        return f'{self.text} ({self.user.username})'
+
+
 # TimeStampedModel also provides "created" and "modified" fields
 class Recording(TimeStampedModel, models.Model):
     name = models.CharField(max_length=255)
@@ -34,6 +47,7 @@ class Recording(TimeStampedModel, models.Model):
         Species, related_name='recording_official_species'
     )  # species that are detemrined by the owner or from annotations as official species list
     unusual_occurrences = models.TextField(blank=True, null=True)
+    tags = models.ManyToManyField(RecordingTag)
 
     @property
     def has_spectrogram(self):
@@ -70,8 +84,6 @@ class Recording(TimeStampedModel, models.Model):
 
     @property
     def compressed_spectrogram(self):
-        pass
-
         compressed_spectrograms = self.compressed_spectrograms
 
         assert len(compressed_spectrograms) >= 1
