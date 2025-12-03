@@ -118,6 +118,7 @@ export interface UpdateFileAnnotation {
 
 export interface Spectrogram {
   urls: string[];
+  vectors: string[];
   filename?: string;
   annotations?: SpectrogramAnnotation[];
   fileAnnotations: FileAnnotation[];

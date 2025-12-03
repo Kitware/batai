@@ -31,7 +31,7 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
         return [default_storage.url(img.image_file.name) for img in images]
 
     @property
-    def vector_image_url_list(self):
+    def vector_url_list(self):
         images = self.vector_images.filter(type='compressed').order_by('index')
         return [default_storage.url(img.image_file.name) for img in images]
 

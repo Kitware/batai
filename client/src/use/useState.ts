@@ -79,6 +79,11 @@ const toggleFixedAxes = () => {
   fixedAxes.value = !fixedAxes.value;
 };
 
+const viewContours = ref(false);
+const toggleViewContours = () => {
+  viewContours.value = !viewContours.value;
+};
+
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
   const setAnnotationState = (state: AnnotationState) => {
@@ -191,5 +196,7 @@ export default function useState() {
     scaledHeight,
     fixedAxes,
     toggleFixedAxes,
+    viewContours,
+    toggleViewContours,
   };
 }

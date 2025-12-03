@@ -373,6 +373,7 @@ def get_spectrogram(request: HttpRequest, id: int):
 
     spectro_data = {
         'urls': spectrogram.image_url_list,
+        'vectors': spectrogram.vector_url_list,
         'spectroInfo': {
             'spectroId': spectrogram.pk,
             'width': spectrogram.width,
@@ -443,6 +444,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
 
     spectro_data = {
         'urls': compressed_spectrogram.image_url_list,
+        'vectors': compressed_spectrogram.vector_url_list,
         'spectroInfo': {
             'spectroId': compressed_spectrogram.pk,
             'width': compressed_spectrogram.spectrogram.width,
