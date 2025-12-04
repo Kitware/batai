@@ -192,10 +192,10 @@ export default defineComponent({
       return filterTagSet.intersection(itemTagSet).size > 0;
     };
     const sharedTagFilter: FilterFunction = (value: string, search: string, item?: InternalItem<Recording>) => {
-      if (filterTags.value.length === 0) {
+      if (sharedFilterTags.value.length === 0) {
         return true;
       }
-      const filterTagSet = new Set(filterTags.value);
+      const filterTagSet = new Set(sharedFilterTags.value);
       const itemTagSet = new Set(item?.raw.tags_text);
       return filterTagSet.intersection(itemTagSet).size > 0;
     };

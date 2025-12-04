@@ -865,7 +865,7 @@ export default defineComponent({
       />
       
       <feColorMatrix
-        in="SourceGraphic"
+        in="sourceGraphic"
         type="luminanceToAlpha"
         result="luminance"
       />
