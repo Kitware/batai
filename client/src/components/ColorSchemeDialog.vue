@@ -41,7 +41,7 @@ watch(colorScheme, () => {
         <template #activator="{ props: tooltipProps }">
           <v-icon
             v-bind="{ ...modalProps, ...tooltipProps }"
-            size="25"
+            size="30"
           >
             mdi-palette
           </v-icon>

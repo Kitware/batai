@@ -20,6 +20,7 @@ import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import useState from "@use/useState";
 import ColorPickerMenu from "@components/ColorPickerMenu.vue";
 import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
+import TransparencyFilterControl from "@/components/TransparencyFilterControl.vue";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import RecordingAnnotations from "@components/RecordingAnnotations.vue";
 import { usePrompt } from '@use/prompt-service';
@@ -34,6 +35,7 @@ export default defineComponent({
     RecordingAnnotations,
     ColorPickerMenu,
     ColorSchemeSelect,
+    TransparencyFilterControl,
   },
   props: {
     id: {
@@ -462,6 +464,9 @@ export default defineComponent({
                 v-model="backgroundColor"
                 tooltip-text="Spectrogram background color"
               />
+            </div>
+            <div class="mt-4 mr-3">
+              <transparency-filter-control />
             </div>
           </v-row>
         </v-container>
