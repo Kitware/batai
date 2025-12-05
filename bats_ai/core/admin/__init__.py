@@ -11,6 +11,7 @@ from .nabat.admin import (
     NABatSpectrogramAdmin,
 )
 from .processing_task import ProcessingTaskAdmin
+from .pulse_annotation import ComputedPulseAnnotationAdmin
 from .recording import RecordingAdmin
 from .recording_annotations import RecordingAnnotationAdmin
 from .recording_tag import RecordingTagAdmin
@@ -41,4 +42,5 @@ __all__ = [
     'NABatCompressedSpectrogramAdmin',
     'NABatSpectrogramAdmin',
     'NABatRecordingAdmin',
+    'ComputedPulseAnnotationAdmin',
 ]
