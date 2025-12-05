@@ -72,6 +72,56 @@ but allows developers to run Python code on their native system.
    4. `npm run dev`
 6. When finished, run `docker compose stop`
 
+## Importing Recordings
+
+The `importRecordings` management command allows you to bulk import WAV files from a
+directory. It will:
+
+- Recursively search for all `.wav` and `.WAV` files in the specified directory
+- Extract GUANO metadata from each file (with filename fallback if metadata is missing)
+- Create Recording objects with the extracted metadata
+- Generate spectrograms synchronously for each recording
+- Log progress to the terminal
+
+### Usage
+
+**Basic usage with Docker Compose (with bind mount):**
+
+```bash
+docker compose run --rm -v /path/to/wav/files:/data django ./manage.py importRecordings /data
+```
+
+**With options:**
+
+```bash
+docker compose run --rm -v /path/to/wav/files:/data django ./manage.py importRecordings /data \
+  --owner username \
+  --public \
+  --limit 10
+```
+
+**Options:**
+
+- `directory` (required): Path to directory containing WAV files
+- `--owner USERNAME`: Username of the owner for the recordings (defaults to first superuser)
+- `--public`: Make imported recordings public
+- `--limit N`: Limit the number of WAV files to import (useful for testing)
+
+**Example with bind mount:**
+
+```bash
+docker compose run --rm \
+  -v /media/bryon.lewis/Elements/BATSAI/training_files:/data \
+  django ./manage.py importRecordings /data --limit 5
+```
+
+This will:
+
+1. Mount your host directory `/media/bryon.lewis/Elements/BATSAI/training_files` to `/data` in the container
+2. Import only the first 5 WAV files found
+3. Use the first superuser as the owner
+4. Create private recordings (unless `--public` is specified)
+
 ## Testing
 
 ### Initial Setup for Testing
@@ -91,9 +141,9 @@ Individual test environments may be selectively run.
 This also allows additional options to be be added.
 Useful sub-commands include:
 
-* `uv run tox -e lint`: Run only the style checks
-* `uv run tox -e type`: Run only the type checks
-* `uv run tox -e test`: Run only the pytest-driven tests
+- `uv run tox -e lint`: Run only the style checks
+- `uv run tox -e type`: Run only the type checks
+- `uv run tox -e test`: Run only the pytest-driven tests
 
 To automatically reformat all code to comply with
 some (but not all) of the style checks, run `uv run tox -e format`.
