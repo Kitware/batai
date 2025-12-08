@@ -743,7 +743,7 @@ export default defineComponent({
         return "0";
       }
       // number of discrete steps (higher = sharper but costlier)
-      const numSteps = 50;
+      const numSteps = 100;
       // which index is the last 'transparent' bucket
       const thresholdStep = Math.floor(t * (numSteps - 1));
 
@@ -869,9 +869,11 @@ export default defineComponent({
         type="luminanceToAlpha"
         result="luminance"
       />
-      <feComponentTransfer in="luminance" result="transparency-mask">
+      <feComponentTransfer
+        in="luminance"
+        result="transparency-mask">
         <feFuncA
-          type="discrete"
+          type="table"
           :tableValues="getTransparencyTableValues()"
         />
       </feComponentTransfer>
