@@ -5,10 +5,12 @@ import tempfile
 from PIL import Image
 from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Polygon
 from django.core.files import File
 
 from bats_ai.core.models import (
     CompressedSpectrogram,
+    ComputedPulseAnnotation,
     Configuration,
     Recording,
     RecordingAnnotation,
@@ -72,7 +74,6 @@ def recording_compute_spectrogram(recording_id: int):
                     },
                 )
 
-
         # Create or get CompressedSpectrogram
         compressed = results['compressed']
         compressed_obj, _ = CompressedSpectrogram.objects.get_or_create(
@@ -111,6 +112,42 @@ def recording_compute_spectrogram(recording_id: int):
                         'type': 'compressed',
                     },
                 )
+
+        # Generate computed annotations for contours
+        logger.info(
+            "Adding contour and bounding boxes for "
+            f"{len(results.get('contours', []))} pulses"
+        )
+        for idx, contour in enumerate(results.get('contours', [])):
+            # Transform contour (x, y) pairs into (time, freq) pairs
+            widths, starts, stops = compressed['widths'], compressed['starts'], compressed['stops']
+            start_time = starts[idx]
+            end_time = stops[idx]
+            width = widths[idx]
+            time_per_pixel = (end_time - start_time) / width
+            mhz_per_pixel = (results['freq_max'] - results['freq_min']) / compressed['height']
+            transformed_lines = []
+            for contour_line in contour:
+                new_curve = [
+                    [point[0] * time_per_pixel, point[1] * mhz_per_pixel]
+                    for point in contour_line["curve"]
+                ]
+                transformed_lines.append({
+                    "curve": new_curve,
+                    "level": contour_line["level"],
+                })
+            ComputedPulseAnnotation.objects.get_or_create(
+                index=idx,
+                recording=recording,
+                contours=transformed_lines,
+                bounding_box=Polygon((
+                    (start_time, results['freq_max']),
+                    (end_time, results['freq_max']),
+                    (end_time, results['freq_min']),
+                    (start_time, results['freq_min']),
+                    (start_time, results['freq_max']),
+                )),
+            )
 
         config = Configuration.objects.first()
         if config and config.run_inference_on_upload:

@@ -4,6 +4,7 @@ import logging
 import math
 import os
 from pathlib import Path
+import tempfile
 from typing import TypedDict
 
 from PIL import Image
@@ -46,12 +47,18 @@ class SpectrogramCompressedAssetResult(TypedDict):
     stops: list[float]
 
 
+class Contour(TypedDict):
+    curve: list[list[int | float]]
+    level: int | float
+
+
 class SpectrogramAssets(TypedDict):
     duration: float
     freq_min: int
     freq_max: int
     normal: SpectrogramAssetResult
     compressed: SpectrogramCompressedAssetResult
+    contours: list[list[Contour]]
 
 
 class PredictionOutput(TypedDict):
@@ -232,7 +239,15 @@ def generate_spectrogram_assets(
     os.makedirs(os.path.dirname(normal_out_path_base), exist_ok=True)
     normal_paths, vector_paths = save_img(normal_img_resized, normal_out_path_base)
     real_duration = math.ceil(duration * 1e3)
-    compressed_img, compressed_paths, compressed_vector_paths, widths, starts, stops = (
+    (
+        compressed_img,
+        compressed_paths,
+        compressed_vector_paths,
+        widths,
+        starts,
+        stops,
+        contours,
+    ) = (
         generate_compressed(normal_img_resized, real_duration, output_base)
     )
 
@@ -256,8 +271,33 @@ def generate_spectrogram_assets(
             'stops': stops,
         },
     }
+    if contours:
+        result["contours"] = contours
 
     return result
+
+
+def generate_pulse_contours(segments: list[np.ndarray], widths: list):
+    logger.info(f"Generating pulse contours for {len(segments)} pulses")
+    contours = []
+    with tempfile.TemporaryDirectory() as tmpdir:
+        for index, segment in enumerate(segments):
+            # Save the NDArray as a file in the tempdir
+            out_img = Image.fromarray(segment, "RGB")
+            segment_path = f"{tmpdir}/{index}.jpg"
+            out_img.save(segment_path, format="JPEG", optimize=True, quality=80)
+            # Generate marching square contours from temp file
+            np_contours = extract_marching_squares_contours(
+                segment_path,
+                "",
+                save_to_file=False
+            )
+            logger.info(f"Generated {len(np_contours)} for pulse {index}")
+            segment_contours = [
+                {"curve": c[0].tolist(), "level": c[1]} for c in np_contours
+            ]
+            contours.append(segment_contours)
+    return contours
 
 
 def generate_compressed(img: np.ndarray, duration: float, output_base: str):
@@ -343,7 +383,9 @@ def generate_compressed(img: np.ndarray, duration: float, output_base: str):
             segments.append(segment)
             widths.append(stop_clamped - start_clamped)
 
+        contours = []
         if segments:
+            contours = generate_pulse_contours(segments, widths)
             compressed_img = np.hstack(segments)
             break
 
@@ -367,7 +409,7 @@ def generate_compressed(img: np.ndarray, duration: float, output_base: str):
     # save_img should be your existing function to save images and return file paths
     paths, vector_paths = save_img(compressed_img, compressed_out_path)
 
-    return compressed_img, paths, vector_paths, widths, starts_time, stops_time
+    return compressed_img, paths, vector_paths, widths, starts_time, stops_time, contours
 
 
 def save_img(img: np.ndarray, output_base: str):

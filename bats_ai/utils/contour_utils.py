@@ -2,7 +2,6 @@ import logging
 
 import cv2
 import numpy as np
-from scipy import ndimage
 from scipy.ndimage import gaussian_filter1d
 from skimage import measure
 from skimage.filters import threshold_multiotsu
@@ -312,6 +311,7 @@ def extract_marching_squares_contours(
     hist_sigma=2.0,
     hist_variance_threshold=400.0,
     hist_max_levels=5,
+    save_to_file=True,
     verbose=True,
 ):
     """Extract contours using marching squares (skimage.find_contours)."""
@@ -354,7 +354,7 @@ def extract_marching_squares_contours(
             smooth = smooth_contour_spline(contour_xy, smoothing_factor=smoothing_factor)
             marching_contours.append((smooth, level))
 
-    if marching_contours:
+    if marching_contours and save_to_file:
         logger.info(f'Saving contours to {output_path}')
         save_contours_to_svg(marching_contours, output_path, img.shape, reference_image=img)
 

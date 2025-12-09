@@ -4,7 +4,6 @@ from .recording import Recording
 
 
 class ComputedPulseAnnotation(models.Model):
-    id = models.IntegerField(primary_key=True)
     recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
     index = models.IntegerField(null=False, blank=False)
     bounding_box = models.PolygonField(null=False, blank=False)
