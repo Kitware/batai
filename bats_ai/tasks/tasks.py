@@ -129,12 +129,16 @@ def recording_compute_spectrogram(recording_id: int):
             transformed_lines = []
             for contour_line in contour:
                 new_curve = [
-                    [point[0] * time_per_pixel, point[1] * mhz_per_pixel]
+                    [
+                        point[0] * time_per_pixel + start_time,
+                        results['freq_max'] - (point[1] * mhz_per_pixel)
+                    ]
                     for point in contour_line["curve"]
                 ]
                 transformed_lines.append({
                     "curve": new_curve,
                     "level": contour_line["level"],
+                    "index": idx
                 })
             ComputedPulseAnnotation.objects.get_or_create(
                 index=idx,
