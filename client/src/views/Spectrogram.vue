@@ -72,7 +72,9 @@ export default defineComponent({
       fixedAxes,
       toggleFixedAxes,
       viewContours,
+      contoursLoading,
       toggleViewContours,
+      clearContours,
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -132,6 +134,7 @@ export default defineComponent({
     const loadData = async () => {
       loading.value = true;
       loadedImage.value = false;
+      clearContours()
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
@@ -320,6 +323,7 @@ export default defineComponent({
       toggleFixedAxes,
       viewContours,
       toggleViewContours,
+      contoursLoading,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -568,14 +572,22 @@ export default defineComponent({
             <v-tooltip>
               <template #activator="{ props: subProps }">
                 <v-icon
+                  v-if="!contoursLoading"
                   v-bind="subProps"
                   size="25"
                   :color="viewContours ? 'blue' : ''"
-                  @click="toggleViewContours()"
-                  class="mt-4"
+                  class="mt-4 mr-2"
+                  @click="toggleViewContours"
                 >
                   mdi-vector-curve
                 </v-icon>
+                <v-progress-circular
+                  v-else
+                  indeterminate
+                  size="25"
+                  class="mt-4 mr-2"
+                  color="primary"
+                />
               </template>
               <span>Toggle between smooth contour and raw image</span>
             </v-tooltip>

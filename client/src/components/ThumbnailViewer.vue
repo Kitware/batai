@@ -165,6 +165,7 @@ export default defineComponent({
       :spectro-info="spectroInfo"
       :scaled-width="scaledWidth"
       :scaled-height="scaledHeight"
+      :recording-id="recordingId"
       thumbnail
       @selected="$emit('selected',$event)"
     />
@@ -189,7 +190,7 @@ export default defineComponent({
     margin:2px;
     &.geojs-map:focus {
       outline: none;
-    }  
+    }
   }
 
   .playback-container {

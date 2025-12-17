@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
 import * as d3 from "d3";
-import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
+import { getComputedPulseAnnotations, SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
 import {
   annotationSpreadAcrossPulsesWarning,
   geojsonToSpectro,
@@ -20,6 +20,7 @@ import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import MeasureToolLayer from "./layers/measureToolLayer";
 import BoundingBoxLayer from "./layers/boundingBoxLayer";
 import AxesLayer from "./layers/axesLayer";
+import ContourLayer from "./layers/contourLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
 export default defineComponent({
@@ -45,7 +46,11 @@ export default defineComponent({
     scaledHeight: {
       type: Number,
       default: -1,
-    }
+    },
+    recordingId: {
+      type: String as PropType<string | null>,
+      required: true,
+    },
   },
   emits: ["selected", "update:annotation", "create:annotation", "set-cursor"],
   setup(props, { emit }) {
@@ -72,6 +77,9 @@ export default defineComponent({
       drawingBoundingBox,
       boundingBoxError,
       fixedAxes,
+      viewContours,
+      loadContours,
+      computedPulseAnnotations,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -91,6 +99,7 @@ export default defineComponent({
     let speciesSequenceLayer: SpeciesSequenceLayer;
     let measureToolLayer: MeasureToolLayer;
     let boundingBoxLayer: BoundingBoxLayer;
+    let contourLayer: ContourLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -445,6 +454,31 @@ export default defineComponent({
         triggerUpdate();
       }
     );
+    watch(viewContours, async () => {
+      if (props.thumbnail) {
+        return;
+      }
+      if (!props.recordingId || !props.spectroInfo) {
+        console.error('Could not load contours. Could not determine recording ID');
+        return;
+      }
+      if (computedPulseAnnotations.value.length === 0) {
+        await loadContours(new Number(props.recordingId) as number);
+      }
+      // initialize the layer/destroy the layer idk
+      contourLayer = new ContourLayer(
+        props.geoViewerRef,
+        event,
+        props.spectroInfo,
+      );
+      contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      if (viewContours.value) {
+        contourLayer.drawContours(computedPulseAnnotations.value);
+      } else {
+        console.log('removing features');
+        contourLayer.removeFeatures();
+      }
+    });
     onUnmounted(() => {
       if (editAnnotationLayer) {
         editAnnotationLayer.destroy();
