@@ -5,7 +5,7 @@ import re
 from guano import GuanoFile
 
 
-def parse_datetime(datetime_str):
+def parse_datetime(datetime_str: str) -> datetime | None:
     """Parse datetime string from GUANO metadata.
 
     Tries multiple formats:
