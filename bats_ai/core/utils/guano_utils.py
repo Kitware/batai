@@ -47,7 +47,6 @@ def extract_metadata_from_filename(filename: str) -> dict:
     label_name = match.group(2)
     date_str = match.group(3)
     timestamp_str = match.group(4)
-    # extra_data = match.group(5)  # Not used currently
 
     metadata = {}
 
@@ -121,6 +120,7 @@ def extract_guano_metadata(file_path: str | Path, check_filename: bool = False) 
     }
 
     # Fix longitude if positive (individuals don't put the - in the longitude)
+    # GUANO metadata is supposed to be WGS84, but some individuals don't put the - in the longitude.
     if nabat_fields['nabat_longitude']:
         try:
             longitude = float(nabat_fields['nabat_longitude'])

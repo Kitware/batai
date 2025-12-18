@@ -41,8 +41,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         import matplotlib
+
         matplotlib.use('Agg')
-        
+
         directory_path = Path(options['directory'])
         owner_username = options.get('owner')
         is_public = options.get('public', False)
@@ -186,6 +187,7 @@ class Command(BaseCommand):
                         self.style.ERROR(f'  Failed to generate spectrogram: {str(e)}')
                     )
                     logger.exception('Error generating spectrogram', exc_info=e)
+                    raise e
 
                 successful += 1
                 self.stdout.write(self.style.SUCCESS(f'  ✓ Successfully imported: {wav_file.name}'))
