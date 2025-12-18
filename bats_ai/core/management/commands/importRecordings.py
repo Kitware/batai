@@ -40,6 +40,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        import matplotlib
+        matplotlib.use('Agg')
+        
         directory_path = Path(options['directory'])
         owner_username = options.get('owner')
         is_public = options.get('public', False)
