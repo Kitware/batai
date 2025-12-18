@@ -74,8 +74,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f'Using default owner: {owner.username}'))
 
         # Find all WAV files
-        wav_files = list(directory_path.rglob('*.wav'))
-        wav_files.extend(directory_path.rglob('*.WAV'))
+        wav_files = list(directory_path.rglob('*.wav', case_sensitive=False))
 
         if not wav_files:
             self.stdout.write(
