@@ -414,6 +414,9 @@ export interface ConfigurationSettings {
   is_admin?: boolean;
   default_color_scheme: string;
   default_spectrogram_background_color: string;
+  non_admin_upload_enabled: boolean;
+  mark_annotations_completed_enabled: boolean;
+  show_my_recordings: boolean;
 }
 
 export type Configuration = ConfigurationSettings & { is_admin: boolean };
