@@ -67,3 +67,16 @@ def check_is_admin(request):
     if request.user.is_authenticated:
         return {'is_admin': request.user.is_superuser}
     return {'is_admin': False}
+
+
+@router.get('/me')
+def get_current_user(request):
+    if request.user.is_authenticated:
+        return {
+            'email': request.user.email,
+            'name': request.user.username,
+        }
+    return {
+        'email': '',
+        'name': ''
+    }
