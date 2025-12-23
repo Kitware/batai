@@ -396,6 +396,12 @@ async function deleteFileAnnotation(fileAnnotationId: number) {
   );
 }
 
+async function submitFileAnnotation(fileAnnotationId: number) {
+  return axiosInstance.patch<{ id: number, submitted: boolean }>(
+    `recording-annotation/${fileAnnotationId}/submit`
+  );
+}
+
 interface CellIDReponse {
   grid_cell_id?: number;
   error?: string;
@@ -539,6 +545,7 @@ export {
   putFileAnnotation,
   patchFileAnnotation,
   deleteFileAnnotation,
+  submitFileAnnotation,
   getConfiguration,
   patchConfiguration,
   getProcessingTasks,
