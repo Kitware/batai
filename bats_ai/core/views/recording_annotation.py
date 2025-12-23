@@ -20,6 +20,7 @@ class RecordingAnnotationSchema(Schema):
     owner: str
     confidence: float
     id: int | None = None
+    submitted: bool
     hasDetails: bool
 
     @classmethod
@@ -32,9 +33,10 @@ class RecordingAnnotationSchema(Schema):
             model=obj.model,
             id=obj.pk,
             hasDetails=obj.additional_data is not None,
+            submitted=obj.submitted
         )
 
-
+# TODO: do we really need this? why can't we just always return the details?
 class RecordingAnnotationDetailsSchema(Schema):
     species: list[SpeciesSchema] | None
     comments: str | None = None
@@ -44,6 +46,7 @@ class RecordingAnnotationDetailsSchema(Schema):
     id: int | None = None
     details: dict
     hasDetails: bool
+    submitted: bool
 
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
@@ -56,6 +59,7 @@ class RecordingAnnotationDetailsSchema(Schema):
             hasDetails=obj.additional_data is not None,
             details=obj.additional_data,
             id=obj.pk,
+            submitted=obj.submitted,
         )
 
 
@@ -176,5 +180,21 @@ def delete_recording_annotation(request: HttpRequest, id: int):
 
         annotation.delete()
         return 'Recording annotation deleted successfully.'
+    except RecordingAnnotation.DoesNotExist:
+        raise HttpError(404, 'Recording annotation not found.')
+
+
+# Submit endpoint
+@router.patch('/{id}/submit', response={200: str})
+def submit_recording_annotation(request: HttpRequest, id: int):
+    try:
+        annotation = RecordingAnnotation.objects.get(pk=id)
+
+        # Check permission
+        if annotation.recording.owner != request.user:
+            raise HttpError(403, 'Permission denied.')
+
+        annotation.submitted = True
+        return 'Recording annotation marked as submitted'
     except RecordingAnnotation.DoesNotExist:
         raise HttpError(404, 'Recording annotation not found.')

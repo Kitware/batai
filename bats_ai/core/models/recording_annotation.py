@@ -12,7 +12,8 @@ class RecordingAnnotation(TimeStampedModel, models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     species = models.ManyToManyField(Species)
     comments = models.TextField(blank=True, null=True)
-    model = models.TextField(blank=True, null=True)  # AI Model information if inference used
+    # AI Model information if inference used, else "User Defined"
+    model = models.TextField(blank=True, null=True)
     confidence = models.FloatField(
         default=1.0,
         validators=[
@@ -24,3 +25,4 @@ class RecordingAnnotation(TimeStampedModel, models.Model):
     additional_data = models.JSONField(
         blank=True, null=True, help_text='Additional information about the models/data'
     )
+    submitted = models.BooleanField(default=False)
