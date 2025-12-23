@@ -38,7 +38,7 @@ export default defineComponent({
     const annotations: Ref<FileAnnotation[]> = ref([]);
     const detailsDialog = ref(false);
     const detailRecordingId = ref(-1);
-    const { configuration, isNaBat } = useState();
+    const { configuration, isNaBat, currentUser } = useState();
 
     const setSelectedId = (annotation: FileAnnotation) => {
       selectedAnnotation.value = annotation;
@@ -68,7 +68,6 @@ export default defineComponent({
           }
         }
       }
-
     });
 
     const addAnnotation = async () => {
@@ -108,6 +107,15 @@ export default defineComponent({
 
     const isAdmin = computed(() => configuration.value.is_admin);
 
+    const userSubmittedAnnotationId = computed(() => {
+      if (!configuration.value.mark_annotations_completed_enabled) {
+        return undefined;
+      }
+      const userAnnotations = annotations.value.filter((annotation: FileAnnotation) => annotation.owner === currentUser.value);
+      const submittedAnnotation = userAnnotations.find((annotation: FileAnnotation) => annotation.submitted);
+      return submittedAnnotation?.id;
+    });
+
     const disableNaBatAnnotations = computed(() => {
       const currentUserAnnotations = annotations.value.filter((item) => item.owner === currentNaBatUser.value);
       if (isAdmin.value && props.type === 'nabat' && !props.apiToken) {
@@ -134,6 +142,7 @@ export default defineComponent({
       detailRecordingId,
       disableNaBatAnnotations,
       currentNaBatUser,
+      userSubmittedAnnotationId,
     };
   },
 });
@@ -183,6 +192,12 @@ export default defineComponent({
           <v-col class="annotation-model">
             <span>{{ annotation.model }} </span>
           </v-col>
+          <v-col v-if="annotation.submitted">
+            Submitted
+            <v-icon color="success">
+              mdi-check
+            </v-icon>
+          </v-col>
         </v-row>
         <v-row
           v-for="item in annotation.species"
@@ -211,6 +226,7 @@ export default defineComponent({
       :recording-id="recordingId"
       :annotation="selectedAnnotation"
       :api-token="apiToken"
+      :submitted-annotation-id="userSubmittedAnnotationId"
       :type="type"
       class="mt-4"
       @update:annotation="updatedAnnotation()"

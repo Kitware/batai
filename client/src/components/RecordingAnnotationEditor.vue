@@ -1,8 +1,16 @@
 <script lang="ts">
-import { defineComponent, PropType, ref, Ref, watch } from "vue";
+import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
-import { deleteFileAnnotation, FileAnnotation, patchFileAnnotation, Species, UpdateFileAnnotation } from "../api/api";
+import {
+  deleteFileAnnotation,
+  FileAnnotation,
+  patchFileAnnotation,
+  Species,
+  UpdateFileAnnotation,
+  submitFileAnnotation,
+} from "../api/api";
 import { deleteNABatFileAnnotation, patchNABatFileAnnotationLocal } from "../api/NABatApi";
+import useState from "@use/useState";
 import SpeciesInfo from "./SpeciesInfo.vue";
 import SpeciesEditor from "./SpeciesEditor.vue";
 import SpeciesNABatSave from "./SpeciesNABatSave.vue";
@@ -38,10 +46,14 @@ export default defineComponent({
       type: String as PropType<'nabat' | null>,
       default: () => null,
     },
+    submittedAnnotationId: {
+      type: Number as PropType<number | undefined>,
+      default: () => undefined,
+    },
   },
   emits: ['update:annotation', 'delete:annotation'],
   setup(props, { emit }) {
-
+    const { configuration, currentUser } = useState();
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
     const confidence: Ref<number> = ref(props.annotation?.confidence || 1.0);
@@ -84,21 +96,48 @@ export default defineComponent({
 
     };
 
-
-
     const deleteAnnotation = async () => {
       if (props.annotation && props.recordingId) {
             props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken, props.recordingId) : await deleteFileAnnotation(props.annotation.id,);
             emit('delete:annotation');
         }
     };
+
+    const submitAnnotation = async () => {
+      if (props.annotation && props.recordingId) {
+        await submitFileAnnotation(props.annotation.id);
+        emit('update:annotation');
+      }
+    };
+
+    const canSubmit = computed(() => (
+      props.annotation
+      && props.annotation.owner === currentUser.value
+      && props.annotation.model === 'User Defined'
+      && configuration.value.mark_annotations_completed_enabled
+    ));
+
+    const submissionTooltip = computed(() => {
+      if (props.submittedAnnotationId !== props.annotation?.id) {
+        return 'You have already submitted a different annotation for this recording.'
+      }
+      if (props.annotation && props.annotation.submitted) {
+        return 'This annotation has been submitted. This cannot be undone.';
+      }
+      return 'Submit this annotation. This action cannot be undone.';
+    });
+
     return {
         speciesEdit,
         confidence,
         comments,
         updateAnnotation,
         deleteAnnotation,
+        submitAnnotation,
         singleSpecies,
+        configuration,
+        canSubmit,
+        submissionTooltip,
     };
   },
 });
@@ -152,6 +191,7 @@ export default defineComponent({
           :key="`species_${annotation?.id}`"
           v-model="speciesEdit"
           :species-list="species"
+          :disabled="annotation?.submitted"
           @update:model-value="updateAnnotation()"
         />
       </v-row>
@@ -177,13 +217,35 @@ export default defineComponent({
         />
       </v-row>
       <v-row
-        v-if="type !== 'nabat'"
+        v-if="type !== 'nabat' && !configuration.mark_annotations_completed_enabled"
       >
         <v-textarea
           v-model="comments"
           label="Comments"
           @change="updateAnnotation()"
         />
+      </v-row>
+      <v-row v-if="canSubmit">
+        <v-tooltip>
+          <template #activator="{ props }">
+            <div
+              v-bind="props"
+            >
+              <v-btn
+                flat
+                color="primary"
+                :disabled="annotation.submitted || annotation.id !== submittedAnnotationId"
+                @click="submitAnnotation"
+              >
+                Submit
+                <template #append>
+                  <v-icon>mdi-check</v-icon>
+                </template>
+              </v-btn>
+            </div>
+          </template>
+          {{ submissionTooltip }}
+        </v-tooltip>
       </v-row>
     </v-card-text>
   </v-card>
