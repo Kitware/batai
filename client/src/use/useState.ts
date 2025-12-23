@@ -1,4 +1,4 @@
-import { ref, Ref, watch } from "vue";
+import { computed, ref, Ref, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
@@ -10,6 +10,8 @@ import {
   SpectrogramAnnotation,
   SpectrogramSequenceAnnotation,
   RecordingTag,
+  getComputedPulseAnnotations,
+  ComputedPulseAnnotation,
 } from "../api/api";
 import {
   interpolateCividis,
@@ -78,6 +80,22 @@ const fixedAxes = ref(true);
 const toggleFixedAxes = () => {
   fixedAxes.value = !fixedAxes.value;
 };
+
+const computedPulseAnnotations: Ref<ComputedPulseAnnotation[]> = ref([]);
+const viewContours = ref(false);
+const contoursLoading = ref(false);
+const toggleViewContours = () => {
+  viewContours.value = !viewContours.value;
+};
+async function loadContours(recordingId: number) {
+  contoursLoading.value = true;
+  computedPulseAnnotations.value = await getComputedPulseAnnotations(recordingId);
+  contoursLoading.value = false;
+}
+function clearContours() {
+  computedPulseAnnotations.value = [];
+}
+
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -191,5 +209,11 @@ export default function useState() {
     scaledHeight,
     fixedAxes,
     toggleFixedAxes,
+    viewContours,
+    contoursLoading,
+    toggleViewContours,
+    loadContours,
+    clearContours,
+    computedPulseAnnotations,
   };
 }

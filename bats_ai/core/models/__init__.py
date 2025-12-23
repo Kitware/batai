@@ -5,6 +5,7 @@ from .exported_file import ExportedAnnotationFile
 from .grts_cells import GRTSCells
 from .image import Image
 from .processing_task import ProcessingTask, ProcessingTaskType
+from .pulse_annotation import ComputedPulseAnnotation
 from .recording import Recording, RecordingTag
 from .recording_annotation import RecordingAnnotation
 from .recording_annotation_status import RecordingAnnotationStatus
@@ -12,6 +13,7 @@ from .sequence_annotations import SequenceAnnotations
 from .species import Species
 from .spectrogram import Spectrogram
 from .spectrogram_image import SpectrogramImage
+from .spectrogram_vector import SpectrogramSvg
 
 __all__ = [
     'Annotations',
@@ -30,4 +32,6 @@ __all__ = [
     'ProcessingTaskType',
     'ExportedAnnotationFile',
     'SpectrogramImage',
+    'SpectrogramSvg',
+    'ComputedPulseAnnotation',
 ]

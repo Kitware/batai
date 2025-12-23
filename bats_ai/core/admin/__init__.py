@@ -11,6 +11,7 @@ from .nabat.admin import (
     NABatSpectrogramAdmin,
 )
 from .processing_task import ProcessingTaskAdmin
+from .pulse_annotation import ComputedPulseAnnotationAdmin
 from .recording import RecordingAdmin
 from .recording_annotations import RecordingAnnotationAdmin
 from .recording_tag import RecordingTagAdmin
@@ -18,6 +19,7 @@ from .sequence_annotations import SequenceAnnotationsAdmin
 from .species import SpeciesAdmin
 from .spectrogram import SpectrogramAdmin
 from .spectrogram_image import SpectrogramImageAdmin
+from .spectrogram_svg import SpectrogramSvgAdmin
 
 __all__ = [
     'AnnotationsAdmin',
@@ -34,9 +36,11 @@ __all__ = [
     'ConfigurationAdmin',
     'ExportedAnnotationFileAdmin',
     'SpectrogramImageAdmin',
+    'SpectrogramSvgAdmin',
     # NABat Models
     'NABatRecordingAnnotationAdmin',
     'NABatCompressedSpectrogramAdmin',
     'NABatSpectrogramAdmin',
     'NABatRecordingAdmin',
+    'ComputedPulseAnnotationAdmin',
 ]

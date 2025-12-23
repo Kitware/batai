@@ -13,6 +13,7 @@ import {
   getAnnotations,
   getSpectrogram,
   Species,
+  Spectrogram,
   getSpectrogramCompressed,
   getOtherUserAnnotations,
   getSequenceAnnotations,
@@ -70,6 +71,10 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
+      viewContours,
+      contoursLoading,
+      toggleViewContours,
+      clearContours,
     } = useState();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
@@ -114,15 +119,30 @@ export default defineComponent({
       }
     };
 
+
     const loading = ref(false);
+    const spectrogramData: Ref<Spectrogram | null> = ref(null);
+
+    /**
+    const createImages = () => {
+      if (!spectrogramData.value) return;
+
+
+    };
+    */
+
     const loadData = async () => {
       loading.value = true;
       loadedImage.value = false;
+      clearContours()
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
-      if (response.data.urls.length) {
-        const urls = response.data.urls;
+      spectrogramData.value = response.data;
+      if (spectrogramData.value.vectors.length) {
+        const urls = viewContours
+          ? spectrogramData.value.vectors
+          : spectrogramData.value.urls;
         images.value = [];
         allImagesLoaded.value = [];
         loadedImage.value = false;
@@ -145,27 +165,27 @@ export default defineComponent({
         console.error("No URL found for the spectrogram");
       }
       spectroInfo.value = response.data["spectroInfo"];
-      if (response.data['compressed'] && spectroInfo.value) {
-        spectroInfo.value.start_times = response.data.compressed.start_times;
-        spectroInfo.value.end_times = response.data.compressed.end_times;
+      if (spectrogramData.value['compressed'] && spectroInfo.value) {
+        spectroInfo.value.start_times = spectrogramData.value.compressed.start_times;
+        spectroInfo.value.end_times = spectrogramData.value.compressed.end_times;
       }
       annotations.value =
-        response.data["annotations"]?.sort(
+        spectrogramData.value["annotations"]?.sort(
           (a, b) => a.start_time - b.start_time
         ) || [];
       sequenceAnnotations.value =
-        response.data["sequence"]?.sort(
+        spectrogramData.value["sequence"]?.sort(
           (a, b) => a.start_time - b.start_time
         ) || [];
-      if (response.data.currentUser) {
-        currentUser.value = response.data.currentUser;
+      if (spectrogramData.value.currentUser) {
+        currentUser.value = spectrogramData.value.currentUser;
       }
       const speciesResponse = await getSpecies();
       // Removing NOISE species from list and any duplicates
       speciesList.value = speciesResponse.data.filter(
         (value, index, self) => value.species_code !== "NOISE" && index === self.findIndex((t) => t.species_code === value.species_code)
       );
-      if (response.data.otherUsers && spectroInfo.value) {
+      if (spectrogramData.value.otherUsers && spectroInfo.value) {
         // We have other users so we should grab the other user annotations
         const otherResponse = await getOtherUserAnnotations(props.id);
         otherUserAnnotations.value = otherResponse.data;
@@ -301,6 +321,9 @@ export default defineComponent({
       boundingBoxError,
       fixedAxes,
       toggleFixedAxes,
+      viewContours,
+      toggleViewContours,
+      contoursLoading,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -543,9 +566,31 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
-            <div class="mt-4">
+            <div class="mt-4 mr-4">
               <color-scheme-dialog />
             </div>
+            <v-tooltip>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-if="!contoursLoading"
+                  v-bind="subProps"
+                  size="25"
+                  :color="viewContours ? 'blue' : ''"
+                  class="mt-4 mr-2"
+                  @click="toggleViewContours"
+                >
+                  mdi-vector-curve
+                </v-icon>
+                <v-progress-circular
+                  v-else
+                  indeterminate
+                  size="25"
+                  class="mt-4 mr-2"
+                  color="primary"
+                />
+              </template>
+              <span>Toggle between smooth contour and raw image</span>
+            </v-tooltip>
           </v-row>
         </v-container>
       </v-toolbar>

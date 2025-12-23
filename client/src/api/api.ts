@@ -118,6 +118,7 @@ export interface UpdateFileAnnotation {
 
 export interface Spectrogram {
   urls: string[];
+  vectors: string[];
   filename?: string;
   annotations?: SpectrogramAnnotation[];
   fileAnnotations: FileAnnotation[];
@@ -130,6 +131,7 @@ export interface Spectrogram {
   currentUser?: string;
   otherUsers?: UserInfo[];
 }
+
 
 export type OtherUserAnnotations = Record<
   string,
@@ -506,6 +508,23 @@ async function getExportStatus(exportId: number) {
   return result.data;
 }
 
+export interface Contour {
+  curve: number[][];
+  level: number;
+  index: number;
+}
+
+export interface ComputedPulseAnnotation {
+  id: number;
+  index: number;
+  contours: Contour[];
+}
+
+async function getComputedPulseAnnotations(recordingId: number) {
+  const result = await axiosInstance.get<ComputedPulseAnnotation[]>(`/recording/${recordingId}/pulse_data`);
+  return result.data;
+}
+
 export {
   uploadRecordingFile,
   getRecordings,
@@ -540,4 +559,5 @@ export {
   getFileAnnotationDetails,
   getExportStatus,
   getRecordingTags,
+  getComputedPulseAnnotations,
 };

@@ -48,6 +48,8 @@ dependencies = [
     # Production-only
     "gunicorn",
     "geopandas>=1.1.1",
+    "scikit-image>=0.25.2",
+    "svgwrite>=1.4.3",
 ]
 
 [project.optional-dependencies]

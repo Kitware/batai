@@ -267,6 +267,7 @@ export default defineComponent({
       :spectro-info="spectroInfo"
       :scaled-width="scaledWidth"
       :scaled-height="scaledHeight"
+      :recording-id="recordingId"
       @update:annotation="updateAnnotation($event)"
       @create:annotation="createAnnotation($event)"
       @set-cursor="setCursor($event)"
