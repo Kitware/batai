@@ -252,13 +252,13 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
         recordings = (
             Recording.objects.filter(public=True)
             .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
-            .annotate(tags_text=ArrayAgg('tags__text'))
+            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
             .values()
         )
     else:
         recordings = (
             Recording.objects.filter(owner=request.user)
-            .annotate(tags_text=ArrayAgg('tags__text'))
+            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
             .values()
         )
 
@@ -298,7 +298,9 @@ def get_recording(request: HttpRequest, id: int):
     # Filter recordings based on the owner's id or public=True
     try:
         recordings = (
-            Recording.objects.filter(pk=id).annotate(tags_text=ArrayAgg('tags__text')).values()
+            Recording.objects.filter(pk=id)
+            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
+            .values()
         )
         if len(recordings) > 0:
             recording = recordings[0]
