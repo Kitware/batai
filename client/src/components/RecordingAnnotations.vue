@@ -151,8 +151,22 @@ export default defineComponent({
 <template>
   <div>
     <v-row class="pa-4">
-      <v-col v-if="!isNaBat()">
-        Annotations
+      <v-col
+        v-if="!isNaBat()"
+        cols="6"
+      >
+        <v-row>
+          Annotations
+        </v-row>
+        <v-row
+          v-if="userSubmittedAnnotationId"
+          class="mt-8"
+        >
+          <b>File Reviewed</b>
+          <v-icon color="success">
+            mdi-check
+          </v-icon>
+        </v-row>
       </v-col>
       <v-spacer />
       <v-col v-if="!isNaBat() || !disableNaBatAnnotations">
