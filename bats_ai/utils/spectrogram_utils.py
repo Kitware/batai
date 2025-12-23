@@ -8,6 +8,7 @@ from typing import TypedDict
 
 from PIL import Image
 import cv2
+from django.conf import settings
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
@@ -58,6 +59,7 @@ class PredictionOutput(TypedDict):
 
 def predict_from_compressed(
     compressed_object: CompressedSpectrogram | NABatCompressedSpectrogram,
+    inference_mode: int = 0
 ) -> PredictionOutput:
     """
     Predict label, score, and confidences from an image file.
@@ -82,8 +84,22 @@ def predict_from_compressed(
     onnx_filename = current_file.parents[2] / 'assets' / 'model.mobilenet.onnx'
     assert os.path.exists(onnx_filename), f'ONNX model file not found at {onnx_filename}'
 
+    if inference_mode == 1:
+        # Get onnx model as a file from Mlflow
+        import mlflow
+        import mlflow.onnx as mlflow_onnx
+        from onnx import ModelProto
+        logger.info("Loading model from MLFlow artifact store")
+        mlflow.set_tracking_uri(settings.MLFLOW_ENDPOINT)
+
+        onnx_model: ModelProto = mlflow_onnx.load_model("models:/onnx-prototype/1")
+        onnx_input: Path | bytes = onnx_model.SerializeToString()
+    else:
+        logger.info("Loading model via local file")
+        onnx_input = onnx_filename
+
     session = ort.InferenceSession(
-        onnx_filename,
+        onnx_input,
         providers=[
             (
                 'CUDAExecutionProvider',
