@@ -185,7 +185,7 @@ def delete_recording_annotation(request: HttpRequest, id: int):
 
 
 # Submit endpoint
-@router.patch('/{id}/submit', response={200: str})
+@router.patch('/{id}/submit', response={200: dict})
 def submit_recording_annotation(request: HttpRequest, id: int):
     try:
         annotation = RecordingAnnotation.objects.get(pk=id)
@@ -195,6 +195,10 @@ def submit_recording_annotation(request: HttpRequest, id: int):
             raise HttpError(403, 'Permission denied.')
 
         annotation.submitted = True
-        return 'Recording annotation marked as submitted'
+        annotation.save()
+        return {
+            'id': id,
+            'submitted': annotation.submitted,
+        }
     except RecordingAnnotation.DoesNotExist:
         raise HttpError(404, 'Recording annotation not found.')
