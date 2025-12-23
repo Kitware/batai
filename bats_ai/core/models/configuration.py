@@ -32,6 +32,11 @@ class Configuration(models.Model):
     # 18 characters is just enough for "rgb(255, 255, 255)"
     default_spectrogram_background_color = models.CharField(max_length=18, default='rgb(0, 0, 0)')
 
+    # Fields used for community vetting focused deployment of BatAI
+    non_admin_upload_enabled = models.BooleanField(default=True)
+    mark_annotations_completed_enabled = models.BooleanField(default=False)
+    show_my_recordings = models.BooleanField(default=True)
+
     def save(self, *args, **kwargs):
         # Ensure only one instance of Configuration exists
         if not Configuration.objects.exists() and not self.pk:

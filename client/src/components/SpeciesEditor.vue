@@ -13,6 +13,14 @@ export default defineComponent({
       type: Array as PropType<Species[]>,
       default: () => [],
     },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+    multiple: {
+      type: Boolean,
+      default: true,
+    },
   },
   emits: ['update:modelValue'],
 
@@ -121,7 +129,7 @@ export default defineComponent({
     :items="groupedItems"
     item-title="species_code"
     item-value="species_code"
-    multiple
+    :multiple="multiple"
     chips
     closable-chips
     :custom-filter="customFilter"
@@ -129,6 +137,7 @@ export default defineComponent({
     clear-on-select
     label="Select Labels"
     :menu-props="{ maxHeight: '300px', maxWidth: '400px' }"
+    :disabled="disabled"
   >
     <template #subheader="{ props }">
       <v-list-subheader
@@ -175,7 +184,7 @@ export default defineComponent({
           <v-card-title
             :class="categoryColors[item.raw.category] ? `bg-${categoryColors[item.raw.category]}` : ''"
           >
-            {{ item.raw.category.toUpperCase() }}
+            {{ item.raw.category?.toUpperCase() }}
           </v-card-title>
           <v-card-text>
             <v-list>
