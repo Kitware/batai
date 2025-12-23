@@ -100,6 +100,7 @@ export interface FileAnnotation {
   confidence: number;
   hasDetails: boolean;
   id: number;
+  submitted: boolean;
 }
 
 export interface FileAnnotationDetails {
@@ -428,6 +429,10 @@ async function patchConfiguration(config: ConfigurationSettings) {
   return axiosInstance.patch("/configuration/", { ...config });
 }
 
+async function getCurrentUser() {
+  return axiosInstance.get<{name: string, email: string}>("/configuration/me");
+}
+
 export interface ProcessingTask {
   id: number;
   created: string;
@@ -543,4 +548,5 @@ export {
   getFileAnnotationDetails,
   getExportStatus,
   getRecordingTags,
+  getCurrentUser,
 };
