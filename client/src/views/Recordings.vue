@@ -9,8 +9,10 @@ import {
 import {
   deleteRecording,
   getRecordings,
-  Recording ,
+  Recording,
+  FileAnnotation,
   getRecordingTags,
+  getConfiguration,
 } from '../api/api';
 import UploadRecording, { EditingRecording } from '@components/UploadRecording.vue';
 import MapLocation from '@components/MapLocation.vue';
@@ -30,13 +32,24 @@ export default defineComponent({
     },
   setup() {
     const itemsPerPage = ref(-1);
-    const { sharedList, recordingList, recordingTagList } = useState();
+    const {
+      sharedList,
+      recordingList,
+      recordingTagList,
+      currentUser,
+      configuration,
+      loadCurrentUser,
+    } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
     let intervalRef: number | null = null;
 
     const uploadDialog = ref(false);
     const batchUploadDialog = ref(false);
-    const headers = ref([
+    const headers: Ref<{
+      title: string,
+      key: string,
+      value?: (item: Recording) => boolean | string | number,
+    }[]> = ref([
         {
           title:'Name',
           key: 'name',
@@ -200,9 +213,30 @@ export default defineComponent({
       return filterTagSet.intersection(itemTagSet).size > 0;
     };
 
+    function submittedForCurrentUser(recording: Recording) {
+      const userSubmittedAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return userSubmittedAnnotations.length > 0;
+    }
+
+    function addSubmittedColumn() {
+      if (configuration.value.mark_annotations_completed_enabled) {
+        const submittedHeader = {
+          title: 'Submitted',
+          key: 'submitted',
+          value: submittedForCurrentUser,
+        };
+        headers.value.push(submittedHeader);
+        sharedHeaders.value.push(submittedHeader);
+      }
+    }
+
     onMounted(async () => {
+      await loadCurrentUser();
       await fetchRecordingTags();
       await fetchRecordings();
+      addSubmittedColumn();
     });
 
     const uploadDone = () => {
@@ -273,6 +307,8 @@ export default defineComponent({
         recordingToDelete,
         editingRecording,
         dataLoading,
+        submittedForCurrentUser,
+        configuration,
      };
   },
 });
@@ -469,6 +505,24 @@ export default defineComponent({
             mdi-close
           </v-icon>
         </template>
+
+        <template
+          v-if="configuration.mark_annotations_completed_enabled"
+          #item.submitted="{ item }"
+        >
+          <v-icon
+            v-if="submittedForCurrentUser(item)"
+            color="success"
+          >
+            mdi-check
+          </v-icon>
+          <v-icon
+            v-else
+            color="error"
+          >
+            mdi-close
+          </v-icon>
+        </template>
         <template #bottom />
       </v-data-table>
     </v-card-text>
@@ -599,6 +653,24 @@ export default defineComponent({
         <template #item.userMadeAnnotations="{ item }">
           <v-icon
             v-if="item.userMadeAnnotations"
+            color="success"
+          >
+            mdi-check
+          </v-icon>
+          <v-icon
+            v-else
+            color="error"
+          >
+            mdi-close
+          </v-icon>
+        </template>
+
+        <template
+          v-if="configuration.mark_annotations_completed_enabled"
+          #item.submitted="{ item }"
+        >
+          <v-icon
+            v-if="submittedForCurrentUser(item)"
             color="success"
           >
             mdi-check

@@ -5,6 +5,7 @@ import * as d3 from "d3";
 import {
   Configuration,
   getConfiguration,
+  getCurrentUser,
   OtherUserAnnotations,
   Recording,
   SpectrogramAnnotation,
@@ -138,6 +139,11 @@ export default function useState() {
     configuration.value = (await getConfiguration()).data;
   }
 
+  async function loadCurrentUser() {
+    const userInfo = (await getCurrentUser()).data;
+    currentUser.value = userInfo.name;
+  }
+
   /**
    * Function used to determine whether or not we are currently looking
    * at an NABat-specific view.
@@ -172,6 +178,7 @@ export default function useState() {
     currentUser,
     setSelectedId,
     loadConfiguration,
+    loadCurrentUser,
     isNaBat,
     // State Passing Elements
     annotations,
