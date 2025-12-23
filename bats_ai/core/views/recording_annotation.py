@@ -33,8 +33,9 @@ class RecordingAnnotationSchema(Schema):
             model=obj.model,
             id=obj.pk,
             hasDetails=obj.additional_data is not None,
-            submitted=obj.submitted
+            submitted=obj.submitted,
         )
+
 
 # TODO: do we really need this? why can't we just always return the details?
 class RecordingAnnotationDetailsSchema(Schema):

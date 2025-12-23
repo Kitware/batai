@@ -76,7 +76,4 @@ def get_current_user(request):
             'email': request.user.email,
             'name': request.user.username,
         }
-    return {
-        'email': '',
-        'name': ''
-    }
+    return {'email': '', 'name': ''}

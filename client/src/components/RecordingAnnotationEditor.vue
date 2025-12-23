@@ -119,7 +119,7 @@ export default defineComponent({
 
     const submissionTooltip = computed(() => {
       if (props.submittedAnnotationId !== props.annotation?.id) {
-        return 'You have already submitted a different annotation for this recording.'
+        return 'You have already submitted a different annotation for this recording.';
       }
       if (props.annotation && props.annotation.submitted) {
         return 'This annotation has been submitted. This cannot be undone.';
