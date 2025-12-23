@@ -118,7 +118,7 @@ export default defineComponent({
     ));
 
     const submissionTooltip = computed(() => {
-      if (props.submittedAnnotationId !== props.annotation?.id) {
+      if (props.submittedAnnotationId !== undefined && props.submittedAnnotationId !== props.annotation?.id) {
         return 'You have already submitted a different annotation for this recording.';
       }
       if (props.annotation && props.annotation.submitted) {
@@ -234,7 +234,7 @@ export default defineComponent({
               <v-btn
                 flat
                 color="primary"
-                :disabled="annotation.submitted || annotation.id !== submittedAnnotationId"
+                :disabled="annotation.submitted || (submittedAnnotationId !== undefined && annotation.id !== submittedAnnotationId)"
                 @click="submitAnnotation"
               >
                 Submit
