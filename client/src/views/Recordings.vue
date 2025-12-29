@@ -20,6 +20,7 @@ import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
 import { FilterFunction, InternalItem } from 'vuetify';
+import { getNABatConfigurationAnnotations } from '@api/NABatApi';
 
 export default defineComponent({
     components: {
@@ -231,6 +232,33 @@ export default defineComponent({
       }
     }
 
+    const countSubmittedMyRecordings = computed(() => {
+      const submittedByMe = recordingList.value.filter((recording: Recording) => {
+        const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+          annotation.owner === currentUser.value && annotation.submitted
+        ));
+        return myAnnotations.length > 0;
+      });
+      return submittedByMe.length;
+    });
+    const countSubmittedSharedRecordings = computed(() => {
+      const submittedByMe = sharedList.value.filter((recording: Recording) => {
+        const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+          annotation.owner === currentUser.value && annotation.submitted
+        ));
+        return myAnnotations.length > 0;
+      });
+      return submittedByMe.length;
+    });
+
+    const recordingListStyles = computed(() => {
+      const sectionHeight = configuration.value.mark_annotations_completed_enabled ? '35vh' : '40vh';
+      return {
+        'height': sectionHeight,
+        'max-height': sectionHeight,
+      };
+    });
+
     onMounted(async () => {
       await loadCurrentUser();
       await fetchRecordingTags();
@@ -308,6 +336,9 @@ export default defineComponent({
         dataLoading,
         submittedForCurrentUser,
         configuration,
+        countSubmittedMyRecordings,
+        countSubmittedSharedRecordings,
+        recordingListStyles,
      };
   },
 });
@@ -379,6 +410,7 @@ export default defineComponent({
         density="compact"
         :loading="dataLoading"
         class="elevation-1 my-recordings"
+        :style="recordingListStyles"
       >
         <template #top>
           <div max-height="100px">
@@ -524,6 +556,21 @@ export default defineComponent({
         </template>
         <template #bottom />
       </v-data-table>
+      <div
+        v-if="recordingList.length && configuration.mark_annotations_completed_enabled"
+        class="d-flex justify-center align-center"
+      >
+        <v-progress-linear
+          height="10"
+          color="success"
+          :model-value="countSubmittedMyRecordings"
+          min="0"
+          :max="recordingList.length"
+        />
+        <span class="ml-4 text-h6">
+          ({{ countSubmittedMyRecordings }}/{{ recordingList.length }})
+        </span>
+      </div>
     </v-card-text>
     <v-dialog
       v-model="uploadDialog"
@@ -564,6 +611,7 @@ export default defineComponent({
         :loading="dataLoading"
         density="compact"
         class="elevation-1 shared-recordings"
+        :style="recordingListStyles"
       >
         <template #top>
           <div max-height="100px">
@@ -683,19 +731,30 @@ export default defineComponent({
         </template>
         <template #bottom />
       </v-data-table>
+      <div
+        v-if="sharedList.length && configuration.mark_annotations_completed_enabled"
+        class="d-flex justify-center align-center"
+      >
+        <v-progress-linear
+          height="10"
+          color="success"
+          :model-value="countSubmittedSharedRecordings"
+          min="0"
+          :max="sharedList.length"
+        />
+        <span class="ml-4 text-h6">
+          ({{ countSubmittedSharedRecordings }}/{{ sharedList.length }})
+        </span>
+      </div>
     </v-card-text>
   </v-card>
 </template>
 
 <style scoped>
 .my-recordings {
-  height: 40vh;
-  max-height: 40vh;
   overflow-y:scroll;
 }
 .shared-recordings {
-  height: 40vh;
-  max-height: 40vh;
   overflow-y:scroll;
 }
 </style>
