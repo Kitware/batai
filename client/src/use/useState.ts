@@ -158,6 +158,7 @@ export default function useState() {
     return router.currentRoute.value.fullPath.includes('nabat');
   }
 
+  const showSubmittedRecordings = ref(false);
 
   return {
     annotationState,
@@ -201,5 +202,6 @@ export default function useState() {
     scaledHeight,
     fixedAxes,
     toggleFixedAxes,
+    showSubmittedRecordings,
   };
 }

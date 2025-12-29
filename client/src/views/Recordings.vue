@@ -20,7 +20,6 @@ import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
 import { FilterFunction, InternalItem } from 'vuetify';
-import { getNABatConfigurationAnnotations } from '@api/NABatApi';
 
 export default defineComponent({
     components: {
@@ -39,6 +38,7 @@ export default defineComponent({
       currentUser,
       configuration,
       loadCurrentUser,
+      showSubmittedRecordings,
     } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
     let intervalRef: number | null = null;
@@ -232,23 +232,44 @@ export default defineComponent({
       }
     }
 
-    const countSubmittedMyRecordings = computed(() => {
+    const submittedMyRecordings = computed(() => {
       const submittedByMe = recordingList.value.filter((recording: Recording) => {
         const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
           annotation.owner === currentUser.value && annotation.submitted
         ));
         return myAnnotations.length > 0;
       });
-      return submittedByMe.length;
+      return submittedByMe;
     });
-    const countSubmittedSharedRecordings = computed(() => {
+
+    const submittedSharedRecordings = computed(() => {
       const submittedByMe = sharedList.value.filter((recording: Recording) => {
         const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
           annotation.owner === currentUser.value && annotation.submitted
         ));
         return myAnnotations.length > 0;
       });
-      return submittedByMe.length;
+      return submittedByMe;
+    });
+
+    const unsubmittedMyRecordings = computed(() => {
+      const unsubmitted = recordingList.value.filter((recording: Recording) => {
+        const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+          annotation.owner === currentUser.value && annotation.submitted
+        ));
+        return myAnnotations.length === 0;
+      });
+      return unsubmitted;
+    });
+
+    const unsubmittedSharedRecordings = computed(() => {
+      const unsubmitted = sharedList.value.filter((recording: Recording) => {
+        const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+          annotation.owner === currentUser.value && annotation.submitted
+        ));
+        return myAnnotations.length === 0;
+      });
+      return unsubmitted;
     });
 
     const recordingListStyles = computed(() => {
@@ -336,9 +357,12 @@ export default defineComponent({
         dataLoading,
         submittedForCurrentUser,
         configuration,
-        countSubmittedMyRecordings,
-        countSubmittedSharedRecordings,
+        submittedMyRecordings,
+        submittedSharedRecordings,
+        unsubmittedMyRecordings,
+        unsubmittedSharedRecordings,
         recordingListStyles,
+        showSubmittedRecordings,
      };
   },
 });
@@ -352,26 +376,35 @@ export default defineComponent({
           My Recordings
         </div>
         <v-spacer />
-        <v-menu>
-          <template #activator="{ props }">
-            <v-btn
-              color="primary"
-              v-bind="props"
-            >
-              Upload <v-icon>mdi-chevron-down</v-icon>
-            </v-btn>
-          </template>
-          <v-list>
-            <v-list-item @click="uploadDialog=true">
-              <v-list-item-title>Upload Recording</v-list-item-title>
-            </v-list-item>
-            <v-list-item @click="batchUploadDialog=true">
-              <v-list-item-title>
-                Batch Upload
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
+        <div class="d-flex justify-center align-center">
+          <v-checkbox
+            v-if="configuration.mark_annotations_completed_enabled"
+            v-model="showSubmittedRecordings"
+            class="mr-4"
+            label="Show submitted recordings"
+            hide-details
+          />
+          <v-menu>
+            <template #activator="{ props }">
+              <v-btn
+                color="primary"
+                v-bind="props"
+              >
+                Upload <v-icon>mdi-chevron-down</v-icon>
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item @click="uploadDialog=true">
+                <v-list-item-title>Upload Recording</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="batchUploadDialog=true">
+                <v-list-item-title>
+                  Batch Upload
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </div>
       </v-row>
     </v-card-title>
     <v-card-text>
@@ -403,7 +436,7 @@ export default defineComponent({
       <v-data-table
         v-model:items-per-page="itemsPerPage"
         :headers="headers"
-        :items="recordingList"
+        :items="showSubmittedRecordings ? recordingList : unsubmittedMyRecordings"
         :custom-filter="tagFilter"
         filter-keys="['tag']"
         :search="filterTags.length ? 'seach-active' : ''"
@@ -563,12 +596,12 @@ export default defineComponent({
         <v-progress-linear
           height="10"
           color="success"
-          :model-value="countSubmittedMyRecordings"
+          :model-value="submittedMyRecordings.length"
           min="0"
           :max="recordingList.length"
         />
         <span class="ml-4 text-h6">
-          ({{ countSubmittedMyRecordings }}/{{ recordingList.length }})
+          ({{ submittedMyRecordings.length }}/{{ recordingList.length }})
         </span>
       </div>
     </v-card-text>
@@ -604,7 +637,7 @@ export default defineComponent({
       <v-data-table
         v-model:items-per-page="itemsPerPage"
         :headers="sharedHeaders"
-        :items="sharedList"
+        :items="showSubmittedRecordings ? sharedList : unsubmittedSharedRecordings"
         :custom-filter="sharedTagFilter"
         filter-keys="['tag']"
         :search="sharedFilterTags.length ? 'seach-active' : ''"
@@ -738,12 +771,12 @@ export default defineComponent({
         <v-progress-linear
           height="10"
           color="success"
-          :model-value="countSubmittedSharedRecordings"
+          :model-value="submittedSharedRecordings.length"
           min="0"
           :max="sharedList.length"
         />
         <span class="ml-4 text-h6">
-          ({{ countSubmittedSharedRecordings }}/{{ sharedList.length }})
+          ({{ submittedSharedRecordings.length }}/{{ sharedList.length }})
         </span>
       </div>
     </v-card-text>
