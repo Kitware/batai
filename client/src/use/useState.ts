@@ -1,4 +1,4 @@
-import { ref, Ref, watch } from "vue";
+import { computed, ref, Ref, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
@@ -160,6 +160,65 @@ export default function useState() {
 
   const showSubmittedRecordings = ref(false);
 
+  const submittedMyRecordings = computed(() => {
+    const submittedByMe = recordingList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length > 0;
+    });
+    return submittedByMe;
+  });
+
+  const submittedSharedRecordings = computed(() => {
+    const submittedByMe = sharedList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length > 0;
+    });
+    return submittedByMe;
+  });
+
+  const unsubmittedMyRecordings = computed(() => {
+    const unsubmitted = recordingList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length === 0;
+    });
+    return unsubmitted;
+  });
+
+  const unsubmittedSharedRecordings = computed(() => {
+    const unsubmitted = sharedList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length === 0;
+    });
+    return unsubmitted;
+  });
+
+  // Use state to determine which recordings should be shown to the user
+  const myRecordingsDisplay = computed(() => {
+    if (!configuration.value.mark_annotations_completed_enabled) {
+      return recordingList.value;
+    } else {
+      return showSubmittedRecordings.value ? recordingList.value : unsubmittedMyRecordings.value;
+    }
+  });
+
+  const sharedRecordingsDisplay = computed(() => {
+    if (!configuration.value.mark_annotations_completed_enabled) {
+      return sharedList.value;
+    } else {
+      return showSubmittedRecordings.value ? sharedList.value : unsubmittedSharedRecordings.value;
+    }
+  });
+
+
+
   return {
     annotationState,
     creationType,
@@ -203,5 +262,11 @@ export default function useState() {
     fixedAxes,
     toggleFixedAxes,
     showSubmittedRecordings,
+    submittedMyRecordings,
+    submittedSharedRecordings,
+    unsubmittedMyRecordings,
+    unsubmittedSharedRecordings,
+    myRecordingsDisplay,
+    sharedRecordingsDisplay,
   };
 }

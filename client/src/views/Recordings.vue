@@ -22,13 +22,13 @@ import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.v
 import { FilterFunction, InternalItem } from 'vuetify';
 
 export default defineComponent({
-    components: {
-        UploadRecording,
-        MapLocation,
-        BatchUploadRecording,
-        RecordingInfoDisplay,
-        RecordingAnnotationSummary,
-    },
+  components: {
+    UploadRecording,
+    MapLocation,
+    BatchUploadRecording,
+    RecordingInfoDisplay,
+    RecordingAnnotationSummary,
+  },
   setup() {
     const itemsPerPage = ref(-1);
     const {
@@ -39,6 +39,10 @@ export default defineComponent({
       configuration,
       loadCurrentUser,
       showSubmittedRecordings,
+      submittedMyRecordings,
+      submittedSharedRecordings,
+      myRecordingsDisplay,
+      sharedRecordingsDisplay,
     } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
     let intervalRef: number | null = null;
@@ -232,46 +236,6 @@ export default defineComponent({
       }
     }
 
-    const submittedMyRecordings = computed(() => {
-      const submittedByMe = recordingList.value.filter((recording: Recording) => {
-        const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
-          annotation.owner === currentUser.value && annotation.submitted
-        ));
-        return myAnnotations.length > 0;
-      });
-      return submittedByMe;
-    });
-
-    const submittedSharedRecordings = computed(() => {
-      const submittedByMe = sharedList.value.filter((recording: Recording) => {
-        const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
-          annotation.owner === currentUser.value && annotation.submitted
-        ));
-        return myAnnotations.length > 0;
-      });
-      return submittedByMe;
-    });
-
-    const unsubmittedMyRecordings = computed(() => {
-      const unsubmitted = recordingList.value.filter((recording: Recording) => {
-        const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
-          annotation.owner === currentUser.value && annotation.submitted
-        ));
-        return myAnnotations.length === 0;
-      });
-      return unsubmitted;
-    });
-
-    const unsubmittedSharedRecordings = computed(() => {
-      const unsubmitted = sharedList.value.filter((recording: Recording) => {
-        const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
-          annotation.owner === currentUser.value && annotation.submitted
-        ));
-        return myAnnotations.length === 0;
-      });
-      return unsubmitted;
-    });
-
     const recordingListStyles = computed(() => {
       const sectionHeight = configuration.value.mark_annotations_completed_enabled ? '35vh' : '40vh';
       return {
@@ -359,10 +323,10 @@ export default defineComponent({
         configuration,
         submittedMyRecordings,
         submittedSharedRecordings,
-        unsubmittedMyRecordings,
-        unsubmittedSharedRecordings,
         recordingListStyles,
         showSubmittedRecordings,
+        myRecordingsDisplay,
+        sharedRecordingsDisplay,
      };
   },
 });
@@ -436,7 +400,7 @@ export default defineComponent({
       <v-data-table
         v-model:items-per-page="itemsPerPage"
         :headers="headers"
-        :items="showSubmittedRecordings ? recordingList : unsubmittedMyRecordings"
+        :items="myRecordingsDisplay"
         :custom-filter="tagFilter"
         filter-keys="['tag']"
         :search="filterTags.length ? 'seach-active' : ''"
@@ -637,7 +601,7 @@ export default defineComponent({
       <v-data-table
         v-model:items-per-page="itemsPerPage"
         :headers="sharedHeaders"
-        :items="showSubmittedRecordings ? sharedList : unsubmittedSharedRecordings"
+        :items="sharedRecordingsDisplay"
         :custom-filter="sharedTagFilter"
         filter-keys="['tag']"
         :search="sharedFilterTags.length ? 'seach-active' : ''"
