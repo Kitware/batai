@@ -11,6 +11,7 @@ import {
   SpectrogramAnnotation,
   SpectrogramSequenceAnnotation,
   RecordingTag,
+  FileAnnotation,
 } from "../api/api";
 import {
   interpolateCividis,
@@ -217,6 +218,41 @@ export default function useState() {
     }
   });
 
+  const allRecordings = computed(() => recordingList.value.concat(sharedList.value));
+
+  function hasSubmittedAnnotation(recording: Recording): boolean {
+    return recording.fileAnnotations.some((annotation: FileAnnotation) => (
+      annotation.owner === currentUser.value && annotation.submitted
+    ));
+  }
+
+  /**
+   * Given a recording ID, get the next unreviewed recording ID.
+   * Assume static order of recordingList and sharedList.
+   *
+   * @param currentId
+   */
+  function nextUnsubmittedRecordingId(currentId: number): number | undefined {
+    if (allRecordings.value.length === 0) {
+      return undefined;
+    }
+    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentId) || 0;
+
+    for (let i = startingIndex + 1; i < allRecordings.value.length; i++) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    for (let i = 0; i < startingIndex; i++) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    return undefined;
+  }
+
 
 
   return {
@@ -268,5 +304,6 @@ export default function useState() {
     unsubmittedSharedRecordings,
     myRecordingsDisplay,
     sharedRecordingsDisplay,
+    nextUnsubmittedRecordingId,
   };
 }
