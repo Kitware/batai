@@ -8,6 +8,7 @@ import {
   ref,
   watch,
 } from "vue";
+import { useRouter } from "vue-router";
 import {
   getSpecies,
   getAnnotations,
@@ -16,6 +17,7 @@ import {
   getSpectrogramCompressed,
   getOtherUserAnnotations,
   getSequenceAnnotations,
+  FileAnnotation,
 } from "../api/api";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
@@ -70,7 +72,10 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
+      nextUnsubmittedRecordingId,
+      previousUnsubmittedRecordingId,
     } = useState();
+    const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const speciesList: Ref<Species[]> = ref([]);
@@ -264,7 +269,18 @@ export default defineComponent({
       viewCompressedOverlay.value = !viewCompressedOverlay.value;
     };
 
+    function goToNextUnreviewed() {
+      const nextId = nextUnsubmittedRecordingId(parseInt(props.id));
+      router.push({path: `/recording/${nextId}/spectrogram`, replace: true });
+    }
+
+    function goToPreviousUnreviewed() {
+      const prevId = previousUnsubmittedRecordingId(parseInt(props.id));
+      router.push({ path: `/recording/${prevId}/spectrogram`, replace: true });
+    }
+
     return {
+      configuration,
       annotationState,
       compressed,
       loadedImage,
@@ -308,6 +324,9 @@ export default defineComponent({
       colorScale,
       scaledVals,
       recordingInfo,
+      // Vetting
+      goToNextUnreviewed,
+      goToPreviousUnreviewed,
     };
   },
 });
@@ -614,6 +633,62 @@ export default defineComponent({
           </v-row>
         </v-card-title>
         <v-card-text class="pa-0">
+          <div
+            v-if="configuration.mark_annotations_completed_enabled"
+          >
+            <v-col>
+              <v-row>
+                <v-col>
+                  <span class="text-h6">
+                    Vetting Controls
+                  </span>
+                  <v-tooltip>
+                    <template #activator="{ props }">
+                      <v-icon
+                        v-bind="props"
+                        class="pb-2"
+                        size="medium"
+                      >
+                        mdi-help-circle
+                      </v-icon>
+                    </template>
+                    Navigate between unreviewed files
+                  </v-tooltip>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col>
+                  <v-btn
+                    flat
+                    color="primary"
+                    @click="goToPreviousUnreviewed"
+                  >
+                    Prev
+                    <template #prepend>
+                      <v-icon>mdi-arrow-left</v-icon>
+                    </template>
+                  </v-btn>
+                </v-col>
+                <v-spacer />
+                <v-col>
+                  <v-btn
+                    flat
+                    color="primary"
+                    @click="goToNextUnreviewed"
+                  >
+                    Next
+                    <template #append>
+                      <v-icon>mdi-arrow-right</v-icon>
+                    </template>
+                  </v-btn>
+                </v-col>
+              </v-row>
+              <v-divider
+
+                class="my-2"
+              />
+            </v-col>
+          </div>
           <div v-if="sideTab === 'annotations'">
             <annotation-list
               :annotations="annotations"

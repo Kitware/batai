@@ -218,12 +218,31 @@ export default function useState() {
     }
   });
 
-  const allRecordings = computed(() => recordingList.value.concat(sharedList.value));
-
   function hasSubmittedAnnotation(recording: Recording): boolean {
     return recording.fileAnnotations.some((annotation: FileAnnotation) => (
       annotation.owner === currentUser.value && annotation.submitted
     ));
+  }
+
+  const allRecordings = computed(() => {
+    const recordings = recordingList.value.concat(sharedList.value);
+    return recordings.map((recording: Recording) => {
+      const isSubmitted = recording.fileAnnotations.some((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return {
+        ...recording,
+        submitted: isSubmitted,
+      };
+    });
+  });
+
+  function markAnnotationSubmitted(recordingId: number, annotationId: number) {
+    const recording = allRecordings.value.find((recording: Recording) => recording.id === recordingId);
+    if (!recording) return;
+    const annotation = recording.fileAnnotations.find((annotation: FileAnnotation) => annotation.id === annotationId);
+    if (!annotation) return;
+    annotation.submitted = true;
   }
 
   /**
@@ -253,6 +272,32 @@ export default function useState() {
     return undefined;
   }
 
+  /**
+   * Given a recording ID, get the next unreviewed recording ID.
+   * Assume static order of recordingList and sharedList.
+   *
+   * @param currentId
+   */
+  function previousUnsubmittedRecordingId(currentId: number): number | undefined {
+    if (allRecordings.value.length === 0) {
+      return undefined;
+    }
+    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentId) || 0;
+
+    for (let i = startingIndex -1; i >= 0; i--) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    for (let i = allRecordings.value.length - 1; i > startingIndex; i--) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    return undefined;
+  }
 
 
   return {
@@ -305,5 +350,7 @@ export default function useState() {
     myRecordingsDisplay,
     sharedRecordingsDisplay,
     nextUnsubmittedRecordingId,
+    previousUnsubmittedRecordingId,
+    markAnnotationSubmitted,
   };
 }

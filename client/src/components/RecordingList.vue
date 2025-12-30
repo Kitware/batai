@@ -75,19 +75,6 @@ export default defineComponent({
           />
         </v-col>
       </v-row>
-      <v-row>
-        <v-col>
-          <v-btn
-            flat
-            color="primary"
-          >
-            Next unreviewed recording
-            <template #append>
-              <v-icon>mdi-arrow-right</v-icon>
-            </template>
-          </v-btn>
-        </v-col>
-      </v-row>
     </v-col>
     <v-expansion-panel>
       <v-expansion-panel-title>My Recordings</v-expansion-panel-title>
