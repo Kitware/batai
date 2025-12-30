@@ -127,6 +127,16 @@ export default defineComponent({
       return 'Submit this annotation. This action cannot be undone.';
     });
 
+    const deleteEnabled = computed(() => {
+      return (
+        props.type !== 'nabat'
+        && (
+          configuration.value.is_admin
+          || !configuration.value.mark_annotations_completed_enabled
+        )
+      );
+    });
+
     return {
         speciesEdit,
         confidence,
@@ -138,6 +148,7 @@ export default defineComponent({
         configuration,
         canSubmit,
         submissionTooltip,
+        deleteEnabled,
     };
   },
 });
@@ -168,7 +179,7 @@ export default defineComponent({
         </v-tooltip>
         <v-spacer />
         <v-btn
-          v-if="type !== 'nabat'"
+          v-if="deleteEnabled"
           size="x-small"
           color="error"
           class="mt-1"

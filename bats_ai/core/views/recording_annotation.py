@@ -4,7 +4,7 @@ from django.http import HttpRequest
 from ninja import Router, Schema
 from ninja.errors import HttpError
 
-from bats_ai.core.models import Recording, RecordingAnnotation, Species
+from bats_ai.core.models import Configuration, Recording, RecordingAnnotation, Species
 from bats_ai.core.views.recording import SpeciesSchema
 
 logger = logging.getLogger(__name__)
@@ -173,6 +173,13 @@ def update_recording_annotation(
 @router.delete('/{id}', response={200: str})
 def delete_recording_annotation(request: HttpRequest, id: int):
     try:
+        configuration = Configuration.objects.first()
+        vetting_enabled = (
+            configuration.mark_annotations_completed_enabled if configuration else False
+        )
+        if vetting_enabled and not request.user.is_staff:
+            raise HttpError(403, 'Permission denied.')
+
         annotation = RecordingAnnotation.objects.get(pk=id)
 
         # Check permission
