@@ -100,6 +100,7 @@ export interface FileAnnotation {
   confidence: number;
   hasDetails: boolean;
   id: number;
+  submitted: boolean;
 }
 
 export interface FileAnnotationDetails {
@@ -395,6 +396,12 @@ async function deleteFileAnnotation(fileAnnotationId: number) {
   );
 }
 
+async function submitFileAnnotation(fileAnnotationId: number) {
+  return axiosInstance.patch<{ id: number, submitted: boolean }>(
+    `recording-annotation/${fileAnnotationId}/submit`
+  );
+}
+
 interface CellIDReponse {
   grid_cell_id?: number;
   error?: string;
@@ -414,6 +421,9 @@ export interface ConfigurationSettings {
   is_admin?: boolean;
   default_color_scheme: string;
   default_spectrogram_background_color: string;
+  non_admin_upload_enabled: boolean;
+  mark_annotations_completed_enabled: boolean;
+  show_my_recordings: boolean;
 }
 
 export type Configuration = ConfigurationSettings & { is_admin: boolean };
@@ -423,6 +433,10 @@ async function getConfiguration() {
 
 async function patchConfiguration(config: ConfigurationSettings) {
   return axiosInstance.patch("/configuration/", { ...config });
+}
+
+async function getCurrentUser() {
+  return axiosInstance.get<{name: string, email: string}>("/configuration/me");
 }
 
 export interface ProcessingTask {
@@ -531,6 +545,7 @@ export {
   putFileAnnotation,
   patchFileAnnotation,
   deleteFileAnnotation,
+  submitFileAnnotation,
   getConfiguration,
   patchConfiguration,
   getProcessingTasks,
@@ -540,4 +555,5 @@ export {
   getFileAnnotationDetails,
   getExportStatus,
   getRecordingTags,
+  getCurrentUser,
 };

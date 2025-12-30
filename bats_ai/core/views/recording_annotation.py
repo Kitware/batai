@@ -4,7 +4,7 @@ from django.http import HttpRequest
 from ninja import Router, Schema
 from ninja.errors import HttpError
 
-from bats_ai.core.models import Recording, RecordingAnnotation, Species
+from bats_ai.core.models import Configuration, Recording, RecordingAnnotation, Species
 from bats_ai.core.views.recording import SpeciesSchema
 
 logger = logging.getLogger(__name__)
@@ -20,6 +20,7 @@ class RecordingAnnotationSchema(Schema):
     owner: str
     confidence: float
     id: int | None = None
+    submitted: bool
     hasDetails: bool
 
     @classmethod
@@ -32,9 +33,11 @@ class RecordingAnnotationSchema(Schema):
             model=obj.model,
             id=obj.pk,
             hasDetails=obj.additional_data is not None,
+            submitted=obj.submitted,
         )
 
 
+# TODO: do we really need this? why can't we just always return the details?
 class RecordingAnnotationDetailsSchema(Schema):
     species: list[SpeciesSchema] | None
     comments: str | None = None
@@ -44,6 +47,7 @@ class RecordingAnnotationDetailsSchema(Schema):
     id: int | None = None
     details: dict
     hasDetails: bool
+    submitted: bool
 
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
@@ -56,6 +60,7 @@ class RecordingAnnotationDetailsSchema(Schema):
             hasDetails=obj.additional_data is not None,
             details=obj.additional_data,
             id=obj.pk,
+            submitted=obj.submitted,
         )
 
 
@@ -168,6 +173,15 @@ def update_recording_annotation(
 @router.delete('/{id}', response={200: str})
 def delete_recording_annotation(request: HttpRequest, id: int):
     try:
+        configuration = Configuration.objects.first()
+        vetting_enabled = (
+            configuration.mark_annotations_completed_enabled if configuration else False
+        )
+        if vetting_enabled and not request.user.is_staff:
+            raise HttpError(
+                403, 'Permission denied. Annotations cannot be deleted while vetting is enabled'
+            )
+
         annotation = RecordingAnnotation.objects.get(pk=id)
 
         # Check permission
@@ -176,5 +190,25 @@ def delete_recording_annotation(request: HttpRequest, id: int):
 
         annotation.delete()
         return 'Recording annotation deleted successfully.'
+    except RecordingAnnotation.DoesNotExist:
+        raise HttpError(404, 'Recording annotation not found.')
+
+
+# Submit endpoint
+@router.patch('/{id}/submit', response={200: dict})
+def submit_recording_annotation(request: HttpRequest, id: int):
+    try:
+        annotation = RecordingAnnotation.objects.get(pk=id)
+
+        # Check permission
+        if annotation.recording.owner != request.user:
+            raise HttpError(403, 'Permission denied.')
+
+        annotation.submitted = True
+        annotation.save()
+        return {
+            'id': id,
+            'submitted': annotation.submitted,
+        }
     except RecordingAnnotation.DoesNotExist:
         raise HttpError(404, 'Recording annotation not found.')

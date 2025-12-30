@@ -5,6 +5,7 @@ import * as d3 from "d3";
 import {
   Configuration,
   getConfiguration,
+  getCurrentUser,
   OtherUserAnnotations,
   Recording,
   SpectrogramAnnotation,
@@ -60,6 +61,9 @@ const configuration: Ref<Configuration> = ref({
   default_color_scheme: "inferno",
   default_spectrogram_background_color: "rgb(0, 0, 0)",
   is_admin: false,
+  mark_annotations_completed_enabled: false,
+  non_admin_upload_enabled: true,
+  show_my_recordings: true,
 });
 const scaledWidth = ref(0);
 const scaledHeight = ref(0);
@@ -138,6 +142,11 @@ export default function useState() {
     configuration.value = (await getConfiguration()).data;
   }
 
+  async function loadCurrentUser() {
+    const userInfo = (await getCurrentUser()).data;
+    currentUser.value = userInfo.name;
+  }
+
   /**
    * Function used to determine whether or not we are currently looking
    * at an NABat-specific view.
@@ -172,6 +181,7 @@ export default function useState() {
     currentUser,
     setSelectedId,
     loadConfiguration,
+    loadCurrentUser,
     isNaBat,
     // State Passing Elements
     annotations,

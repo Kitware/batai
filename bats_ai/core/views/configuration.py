@@ -22,6 +22,9 @@ class ConfigurationSchema(Schema):
     spectrogram_view: Configuration.SpectrogramViewMode
     default_color_scheme: Configuration.AvailableColorScheme
     default_spectrogram_background_color: str
+    non_admin_upload_enabled: bool
+    mark_annotations_completed_enabled: bool
+    show_my_recordings: bool
 
 
 # Endpoint to retrieve the configuration status
@@ -38,6 +41,9 @@ def get_configuration(request):
         spectrogram_view=config.spectrogram_view,
         default_color_scheme=config.default_color_scheme,
         default_spectrogram_background_color=config.default_spectrogram_background_color,
+        non_admin_upload_enabled=config.non_admin_upload_enabled,
+        mark_annotations_completed_enabled=config.mark_annotations_completed_enabled,
+        show_my_recordings=config.show_my_recordings,
         is_admin=request.user.is_authenticated and request.user.is_superuser,
     )
 
@@ -61,3 +67,13 @@ def check_is_admin(request):
     if request.user.is_authenticated:
         return {'is_admin': request.user.is_superuser}
     return {'is_admin': False}
+
+
+@router.get('/me')
+def get_current_user(request):
+    if request.user.is_authenticated:
+        return {
+            'email': request.user.email,
+            'name': request.user.username,
+        }
+    return {'email': '', 'name': ''}

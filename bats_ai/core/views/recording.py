@@ -76,6 +76,7 @@ class RecordingAnnotationSchema(Schema):
     confidence: float
     id: int | None = None
     hasDetails: bool
+    submitted: bool
 
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
@@ -87,6 +88,7 @@ class RecordingAnnotationSchema(Schema):
             model=obj.model,
             id=obj.pk,
             hasDetails=obj.additional_data is not None,
+            submitted=obj.submitted,
         )
 
 
@@ -246,7 +248,9 @@ def delete_recording(
 
 
 @router.get('/')
-def get_recordings(request: HttpRequest, public: bool | None = None):
+def get_recordings(
+    request: HttpRequest, public: bool | None = None, exclude_submitted: bool | None = None
+):
     # Filter recordings based on the owner's id or public=True
     if public is not None and public:
         recordings = (
@@ -289,6 +293,16 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
             ).exists()
         )
         recording['userMadeAnnotations'] = user_has_annotations
+
+    if exclude_submitted:
+        recordings = [
+            recording
+            for recording in recordings
+            if not any(
+                annotation['submitted'] and annotation['owner'] == request.user.username
+                for annotation in recording['fileAnnotations']
+            )
+        ]
 
     return list(recordings)
 
