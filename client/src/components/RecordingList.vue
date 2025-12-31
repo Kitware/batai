@@ -30,10 +30,13 @@ export default defineComponent({
     const openPanel = ref(1);
     const filtered = ref(true);
     const modifiedList = computed(() => {
-        if (filtered.value) {
-            return sharedList.value.filter((item) => !item.userMadeAnnotations);
-        }
-        return sharedList.value;
+      if (configuration.value.mark_annotations_completed_enabled) {
+        return sharedRecordingsDisplay.value;
+      }
+      if (filtered.value) {
+          return sharedList.value.filter((item) => !item.userMadeAnnotations);
+      }
+      return sharedList.value;
     });
 
     const userSubmittedAnnotation = (recording: Recording) => {
@@ -115,6 +118,23 @@ export default defineComponent({
               dense
             >
               <v-col>
+                <div>
+                  <b>Submitted: </b>
+                  <v-icon
+                    v-if="userSubmittedAnnotation(item)"
+                    color="success"
+                  >
+                    mdi-check
+                  </v-icon>
+                  <v-icon
+                    v-else
+                    color="error"
+                  >
+                    mdi-close
+                  </v-icon>
+                </div>
+              </v-col>
+              <v-col v-if="userSubmittedAnnotation(item)">
                 <b>My label: </b>
                 <span>{{ userSubmittedAnnotation(item) }}</span>
               </v-col>
@@ -127,6 +147,7 @@ export default defineComponent({
       <v-expansion-panel-title>Public</v-expansion-panel-title>
       <v-expansion-panel-text class="ma-0 pa-0">
         <v-switch
+          v-if="!configuration.mark_annotations_completed_enabled"
           v-model="filtered"
           label="Filter Annotated"
           dense
@@ -154,7 +175,7 @@ export default defineComponent({
               </v-col>
             </v-row>
             <v-row dense>
-              <v-col>
+              <v-col v-if="!configuration.mark_annotations_completed_enabled">
                 <div>
                   <b>Annotated:</b>
                   <v-icon
@@ -170,6 +191,29 @@ export default defineComponent({
                     mdi-close
                   </v-icon>
                 </div>
+              </v-col>
+              <v-col v-else>
+                <div>
+                  <b>Submitted: </b>
+                  <v-icon
+                    v-if="userSubmittedAnnotation(item)"
+                    color="success"
+                  >
+                    mdi-check
+                  </v-icon>
+                  <v-icon
+                    v-else
+                    color="error"
+                  >
+                    mdi-close
+                  </v-icon>
+                </div>
+              </v-col>
+              <v-col
+                v-if="configuration.mark_annotations_completed_enabled && userSubmittedAnnotation(item)"
+              >
+                <b>My label: </b>
+                <span>{{ userSubmittedAnnotation(item) }}</span>
               </v-col>
             </v-row>
           </v-card>
