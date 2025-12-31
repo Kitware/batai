@@ -7,15 +7,7 @@ import  { EditingRecording } from './UploadRecording.vue';
 export default defineComponent({
   setup() {
 
-    const {
-      sharedList,
-      recordingList,
-      currentUser,
-      configuration,
-      showSubmittedRecordings,
-      myRecordingsDisplay,
-      sharedRecordingsDisplay,
-    } = useState();
+    const { sharedList, recordingList, currentUser, configuration } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
 
     const fetchRecordings = async () => {
@@ -55,9 +47,6 @@ export default defineComponent({
         openPanel,
         userSubmittedAnnotation,
         configuration,
-        myRecordingsDisplay,
-        sharedRecordingsDisplay,
-        showSubmittedRecordings,
      };
   },
 });
@@ -65,17 +54,11 @@ export default defineComponent({
 
 <template>
   <v-expansion-panels v-model="openPanel">
-    <v-checkbox
-      v-if="configuration.mark_annotations_completed_enabled"
-      v-model="showSubmittedRecordings"
-      label="Show submitted recordings"
-      hide-details
-    />
     <v-expansion-panel>
       <v-expansion-panel-title>My Recordings</v-expansion-panel-title>
       <v-expansion-panel-text>
         <div
-          v-for="item in myRecordingsDisplay"
+          v-for="item in recordingList"
           :key="`public_${item.id}`"
         >
           <v-card class="pa-2 my-2">

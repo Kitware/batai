@@ -201,7 +201,7 @@ def submit_recording_annotation(request: HttpRequest, id: int):
         annotation = RecordingAnnotation.objects.get(pk=id)
 
         # Check permission
-        if annotation.owner != request.user:
+        if annotation.recording.owner != request.user:
             raise HttpError(403, 'Permission denied.')
 
         annotation.submitted = True
