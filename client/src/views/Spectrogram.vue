@@ -17,7 +17,6 @@ import {
   getSpectrogramCompressed,
   getOtherUserAnnotations,
   getSequenceAnnotations,
-  FileAnnotation,
 } from "../api/api";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
@@ -74,6 +73,7 @@ export default defineComponent({
       toggleFixedAxes,
       nextUnsubmittedRecordingId,
       previousUnsubmittedRecordingId,
+      currentRecordingId,
     } = useState();
     const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
@@ -122,6 +122,7 @@ export default defineComponent({
     const loading = ref(false);
     const loadData = async () => {
       loading.value = true;
+      currentRecordingId.value = parseInt(props.id);
       loadedImage.value = false;
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
@@ -270,13 +271,11 @@ export default defineComponent({
     };
 
     function goToNextUnreviewed() {
-      const nextId = nextUnsubmittedRecordingId(parseInt(props.id));
-      router.push({path: `/recording/${nextId}/spectrogram`, replace: true });
+      router.push({path: `/recording/${nextUnsubmittedRecordingId.value}/spectrogram`, replace: true });
     }
 
     function goToPreviousUnreviewed() {
-      const prevId = previousUnsubmittedRecordingId(parseInt(props.id));
-      router.push({ path: `/recording/${prevId}/spectrogram`, replace: true });
+      router.push({ path: `/recording/${previousUnsubmittedRecordingId.value}/spectrogram`, replace: true });
     }
 
     return {
@@ -327,6 +326,7 @@ export default defineComponent({
       // Vetting
       goToNextUnreviewed,
       goToPreviousUnreviewed,
+      nextUnsubmittedRecordingId,
     };
   },
 });
@@ -656,7 +656,7 @@ export default defineComponent({
                   </v-tooltip>
                 </v-col>
               </v-row>
-              <v-row>
+              <v-row v-if="nextUnsubmittedRecordingId">
                 <v-col>
                   <v-btn
                     flat
@@ -681,6 +681,11 @@ export default defineComponent({
                       <v-icon>mdi-arrow-right</v-icon>
                     </template>
                   </v-btn>
+                </v-col>
+              </v-row>
+              <v-row v-else>
+                <v-col>
+                  There are no more files to review
                 </v-col>
               </v-row>
               <v-divider

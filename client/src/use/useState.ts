@@ -48,6 +48,7 @@ const sequenceAnnotations: Ref<SpectrogramSequenceAnnotation[]> = ref([]);
 const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
 const sharedList: Ref<Recording[]> = ref([]);
 const recordingList: Ref<Recording[]> = ref([]);
+const currentRecordingId: Ref<number | undefined> = ref(undefined);
 const recordingTagList: Ref<RecordingTag[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
 const scaledVals: Ref<{ x: number; y: number }> = ref({ x: 1, y: 1 });
@@ -245,17 +246,11 @@ export default function useState() {
     annotation.submitted = true;
   }
 
-  /**
-   * Given a recording ID, get the next unreviewed recording ID.
-   * Assume static order of recordingList and sharedList.
-   *
-   * @param currentId
-   */
-  function nextUnsubmittedRecordingId(currentId: number): number | undefined {
+  const nextUnsubmittedRecordingId = computed(() => {
     if (allRecordings.value.length === 0) {
       return undefined;
     }
-    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentId) || 0;
+    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentRecordingId.value) || 0;
 
     for (let i = startingIndex + 1; i < allRecordings.value.length; i++) {
       if (!hasSubmittedAnnotation(allRecordings.value[i])) {
@@ -270,19 +265,13 @@ export default function useState() {
     }
 
     return undefined;
-  }
+  });
 
-  /**
-   * Given a recording ID, get the next unreviewed recording ID.
-   * Assume static order of recordingList and sharedList.
-   *
-   * @param currentId
-   */
-  function previousUnsubmittedRecordingId(currentId: number): number | undefined {
+  const previousUnsubmittedRecordingId = computed(() =>{
     if (allRecordings.value.length === 0) {
       return undefined;
     }
-    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentId) || 0;
+    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentRecordingId.value) || 0;
 
     for (let i = startingIndex -1; i >= 0; i--) {
       if (!hasSubmittedAnnotation(allRecordings.value[i])) {
@@ -297,8 +286,7 @@ export default function useState() {
     }
 
     return undefined;
-  }
-
+  });
 
   return {
     annotationState,
@@ -352,5 +340,6 @@ export default function useState() {
     nextUnsubmittedRecordingId,
     previousUnsubmittedRecordingId,
     markAnnotationSubmitted,
+    currentRecordingId,
   };
 }
