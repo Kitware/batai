@@ -65,12 +65,17 @@ export default defineComponent({
 
 <template>
   <v-expansion-panels v-model="openPanel">
-    <v-checkbox
-      v-if="configuration.mark_annotations_completed_enabled"
-      v-model="showSubmittedRecordings"
-      label="Show submitted recordings"
-      hide-details
-    />
+    <v-col v-if="configuration.mark_annotations_completed_enabled">
+      <v-row>
+        <v-col>
+          <v-checkbox
+            v-model="showSubmittedRecordings"
+            label="Show submitted recordings"
+            hide-details
+          />
+        </v-col>
+      </v-row>
+    </v-col>
     <v-expansion-panel>
       <v-expansion-panel-title>My Recordings</v-expansion-panel-title>
       <v-expansion-panel-text>

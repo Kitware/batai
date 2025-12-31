@@ -51,7 +51,7 @@ export default defineComponent({
       default: () => undefined,
     },
   },
-  emits: ['update:annotation', 'delete:annotation'],
+  emits: ['update:annotation', 'delete:annotation', 'submit:annotation'],
   setup(props, { emit }) {
     const { configuration, currentUser } = useState();
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
@@ -105,8 +105,8 @@ export default defineComponent({
 
     const submitAnnotation = async () => {
       if (props.annotation && props.recordingId) {
-        await submitFileAnnotation(props.annotation.id);
-        emit('update:annotation');
+        const response = await submitFileAnnotation(props.annotation.id);
+        emit('submit:annotation', props.annotation, response.data.submitted);
       }
     };
 
