@@ -57,6 +57,7 @@ export default defineComponent({
     };
 
     watch(() => props.recordingId, async () => {
+      selectedAnnotation.value = null;
       await loadFileAnnotations();
     });
 
