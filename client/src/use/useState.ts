@@ -1,10 +1,11 @@
-import { ref, Ref, watch } from "vue";
+import { computed, ref, Ref, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import {
   Configuration,
   getConfiguration,
+  getCurrentUser,
   OtherUserAnnotations,
   Recording,
   SpectrogramAnnotation,
@@ -60,6 +61,9 @@ const configuration: Ref<Configuration> = ref({
   default_color_scheme: "inferno",
   default_spectrogram_background_color: "rgb(0, 0, 0)",
   is_admin: false,
+  mark_annotations_completed_enabled: false,
+  non_admin_upload_enabled: true,
+  show_my_recordings: true,
 });
 const scaledWidth = ref(0);
 const scaledHeight = ref(0);
@@ -138,6 +142,11 @@ export default function useState() {
     configuration.value = (await getConfiguration()).data;
   }
 
+  async function loadCurrentUser() {
+    const userInfo = (await getCurrentUser()).data;
+    currentUser.value = userInfo.name;
+  }
+
   /**
    * Function used to determine whether or not we are currently looking
    * at an NABat-specific view.
@@ -148,6 +157,66 @@ export default function useState() {
     const router = useRouter();
     return router.currentRoute.value.fullPath.includes('nabat');
   }
+
+  const showSubmittedRecordings = ref(false);
+
+  const submittedMyRecordings = computed(() => {
+    const submittedByMe = recordingList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length > 0;
+    });
+    return submittedByMe;
+  });
+
+  const submittedSharedRecordings = computed(() => {
+    const submittedByMe = sharedList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length > 0;
+    });
+    return submittedByMe;
+  });
+
+  const unsubmittedMyRecordings = computed(() => {
+    const unsubmitted = recordingList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length === 0;
+    });
+    return unsubmitted;
+  });
+
+  const unsubmittedSharedRecordings = computed(() => {
+    const unsubmitted = sharedList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length === 0;
+    });
+    return unsubmitted;
+  });
+
+  // Use state to determine which recordings should be shown to the user
+  const myRecordingsDisplay = computed(() => {
+    if (!configuration.value.mark_annotations_completed_enabled) {
+      return recordingList.value;
+    } else {
+      return showSubmittedRecordings.value ? recordingList.value : unsubmittedMyRecordings.value;
+    }
+  });
+
+  const sharedRecordingsDisplay = computed(() => {
+    if (!configuration.value.mark_annotations_completed_enabled) {
+      return sharedList.value;
+    } else {
+      return showSubmittedRecordings.value ? sharedList.value : unsubmittedSharedRecordings.value;
+    }
+  });
+
 
 
   return {
@@ -172,6 +241,7 @@ export default function useState() {
     currentUser,
     setSelectedId,
     loadConfiguration,
+    loadCurrentUser,
     isNaBat,
     // State Passing Elements
     annotations,
@@ -191,5 +261,12 @@ export default function useState() {
     scaledHeight,
     fixedAxes,
     toggleFixedAxes,
+    showSubmittedRecordings,
+    submittedMyRecordings,
+    submittedSharedRecordings,
+    unsubmittedMyRecordings,
+    unsubmittedSharedRecordings,
+    myRecordingsDisplay,
+    sharedRecordingsDisplay,
   };
 }

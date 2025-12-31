@@ -1,15 +1,21 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, onMounted, computed } from 'vue';
-import { getRecordings } from '../api/api';
+import { FileAnnotation, getRecordings, Recording, Species } from '../api/api';
 import useState from '@use/useState';
 import  { EditingRecording } from './UploadRecording.vue';
 
 export default defineComponent({
-    components: {
-    },
   setup() {
 
-    const { sharedList, recordingList } = useState();
+    const {
+      sharedList,
+      recordingList,
+      currentUser,
+      configuration,
+      showSubmittedRecordings,
+      myRecordingsDisplay,
+      sharedRecordingsDisplay,
+    } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
 
     const fetchRecordings = async () => {
@@ -30,6 +36,16 @@ export default defineComponent({
         return sharedList.value;
     });
 
+    const userSubmittedAnnotation = (recording: Recording) => {
+      const userSubmittedAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      if (userSubmittedAnnotations.length === 0 || userSubmittedAnnotations[0].species.length === 0) {
+        return undefined;
+      }
+      return userSubmittedAnnotations[0].species.map((specie: Species) => specie.species_code).join(', ');
+    };
+
     return {
         recordingList,
         sharedList,
@@ -37,6 +53,11 @@ export default defineComponent({
         filtered,
         editingRecording,
         openPanel,
+        userSubmittedAnnotation,
+        configuration,
+        myRecordingsDisplay,
+        sharedRecordingsDisplay,
+        showSubmittedRecordings,
      };
   },
 });
@@ -44,11 +65,17 @@ export default defineComponent({
 
 <template>
   <v-expansion-panels v-model="openPanel">
+    <v-checkbox
+      v-if="configuration.mark_annotations_completed_enabled"
+      v-model="showSubmittedRecordings"
+      label="Show submitted recordings"
+      hide-details
+    />
     <v-expansion-panel>
       <v-expansion-panel-title>My Recordings</v-expansion-panel-title>
       <v-expansion-panel-text>
         <div
-          v-for="item in recordingList"
+          v-for="item in myRecordingsDisplay"
           :key="`public_${item.id}`"
         >
           <v-card class="pa-2 my-2">
@@ -81,6 +108,15 @@ export default defineComponent({
                 <div>
                   <b class="pr-1">Annotations:</b>{{ item.userAnnotations }}
                 </div>
+              </v-col>
+            </v-row>
+            <v-row
+              v-if="configuration.mark_annotations_completed_enabled && userSubmittedAnnotation(item)"
+              dense
+            >
+              <v-col>
+                <b>My label: </b>
+                <span>{{ userSubmittedAnnotation(item) }}</span>
               </v-col>
             </v-row>
           </v-card>
