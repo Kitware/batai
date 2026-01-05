@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent, onMounted, PropType, Ref } from "vue";
+import { computed, defineComponent, onMounted, PropType, Ref, watch } from "vue";
 import { ref } from "vue";
 import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "@api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
@@ -38,7 +38,7 @@ export default defineComponent({
     const annotations: Ref<FileAnnotation[]> = ref([]);
     const detailsDialog = ref(false);
     const detailRecordingId = ref(-1);
-    const { configuration, isNaBat, currentUser } = useState();
+    const { configuration, isNaBat, currentUser, markAnnotationSubmitted } = useState();
 
     const setSelectedId = (annotation: FileAnnotation) => {
       selectedAnnotation.value = annotation;
@@ -55,6 +55,11 @@ export default defineComponent({
         annotations.value = (await getFileAnnotations(props.recordingId)).data;
       }
     };
+
+    watch(() => props.recordingId, async () => {
+      selectedAnnotation.value = null;
+      await loadFileAnnotations();
+    });
 
     onMounted(async () => {
       await loadFileAnnotations();
@@ -100,6 +105,15 @@ export default defineComponent({
       }
     };
 
+    function handleSubmitAnnotation(annotation: FileAnnotation, submitSuccess: boolean) {
+      if (submitSuccess) {
+        annotation.submitted = true;
+        // Also update submitted status on the recording object
+        // This forces recomputation of allRecordings
+        markAnnotationSubmitted(props.recordingId, annotation.id);
+      }
+    }
+
     const loadDetails = async (id: number) => {
       detailRecordingId.value = id;
       detailsDialog.value = true;
@@ -143,6 +157,7 @@ export default defineComponent({
       disableNaBatAnnotations,
       currentNaBatUser,
       userSubmittedAnnotationId,
+      handleSubmitAnnotation,
     };
   },
 });
@@ -245,6 +260,7 @@ export default defineComponent({
       class="mt-4"
       @update:annotation="updatedAnnotation()"
       @delete:annotation="updatedAnnotation(true)"
+      @submit:annotation="handleSubmitAnnotation"
     />
     <v-dialog
       v-model="detailsDialog"

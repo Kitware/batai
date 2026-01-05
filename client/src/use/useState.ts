@@ -11,6 +11,7 @@ import {
   SpectrogramAnnotation,
   SpectrogramSequenceAnnotation,
   RecordingTag,
+  FileAnnotation,
 } from "../api/api";
 import {
   interpolateCividis,
@@ -47,6 +48,7 @@ const sequenceAnnotations: Ref<SpectrogramSequenceAnnotation[]> = ref([]);
 const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
 const sharedList: Ref<Recording[]> = ref([]);
 const recordingList: Ref<Recording[]> = ref([]);
+const currentRecordingId: Ref<number | undefined> = ref(undefined);
 const recordingTagList: Ref<RecordingTag[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
 const scaledVals: Ref<{ x: number; y: number }> = ref({ x: 1, y: 1 });
@@ -217,7 +219,74 @@ export default function useState() {
     }
   });
 
+  function hasSubmittedAnnotation(recording: Recording): boolean {
+    return recording.fileAnnotations.some((annotation: FileAnnotation) => (
+      annotation.owner === currentUser.value && annotation.submitted
+    ));
+  }
 
+  const allRecordings = computed(() => {
+    const recordings = recordingList.value.concat(sharedList.value);
+    return recordings.map((recording: Recording) => {
+      const isSubmitted = recording.fileAnnotations.some((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return {
+        ...recording,
+        submitted: isSubmitted,
+      };
+    });
+  });
+
+  function markAnnotationSubmitted(recordingId: number, annotationId: number) {
+    const recording = allRecordings.value.find((recording: Recording) => recording.id === recordingId);
+    if (!recording) return;
+    const annotation = recording.fileAnnotations.find((annotation: FileAnnotation) => annotation.id === annotationId);
+    if (!annotation) return;
+    annotation.submitted = true;
+  }
+
+  const nextUnsubmittedRecordingId = computed(() => {
+    if (allRecordings.value.length === 0) {
+      return undefined;
+    }
+    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentRecordingId.value) || 0;
+
+    for (let i = startingIndex + 1; i < allRecordings.value.length; i++) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    for (let i = 0; i < startingIndex; i++) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    return undefined;
+  });
+
+  const previousUnsubmittedRecordingId = computed(() =>{
+    if (allRecordings.value.length === 0) {
+      return undefined;
+    }
+    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentRecordingId.value) || 0;
+
+    for (let i = startingIndex -1; i >= 0; i--) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    for (let i = allRecordings.value.length - 1; i > startingIndex; i--) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    return undefined;
+  });
 
   return {
     annotationState,
@@ -268,5 +337,9 @@ export default function useState() {
     unsubmittedSharedRecordings,
     myRecordingsDisplay,
     sharedRecordingsDisplay,
+    nextUnsubmittedRecordingId,
+    previousUnsubmittedRecordingId,
+    markAnnotationSubmitted,
+    currentRecordingId,
   };
 }

@@ -8,6 +8,7 @@ import {
   ref,
   watch,
 } from "vue";
+import { useRouter } from "vue-router";
 import {
   getSpecies,
   getAnnotations,
@@ -70,7 +71,11 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
+      nextUnsubmittedRecordingId,
+      previousUnsubmittedRecordingId,
+      currentRecordingId,
     } = useState();
+    const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const speciesList: Ref<Species[]> = ref([]);
@@ -117,6 +122,7 @@ export default defineComponent({
     const loading = ref(false);
     const loadData = async () => {
       loading.value = true;
+      currentRecordingId.value = parseInt(props.id);
       loadedImage.value = false;
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
@@ -264,7 +270,16 @@ export default defineComponent({
       viewCompressedOverlay.value = !viewCompressedOverlay.value;
     };
 
+    function goToNextUnreviewed() {
+      router.push({path: `/recording/${nextUnsubmittedRecordingId.value}/spectrogram`, replace: true });
+    }
+
+    function goToPreviousUnreviewed() {
+      router.push({ path: `/recording/${previousUnsubmittedRecordingId.value}/spectrogram`, replace: true });
+    }
+
     return {
+      configuration,
       annotationState,
       compressed,
       loadedImage,
@@ -308,6 +323,10 @@ export default defineComponent({
       colorScale,
       scaledVals,
       recordingInfo,
+      // Vetting
+      goToNextUnreviewed,
+      goToPreviousUnreviewed,
+      nextUnsubmittedRecordingId,
     };
   },
 });
@@ -614,6 +633,67 @@ export default defineComponent({
           </v-row>
         </v-card-title>
         <v-card-text class="pa-0">
+          <div
+            v-if="configuration.mark_annotations_completed_enabled"
+          >
+            <v-col>
+              <v-row>
+                <v-col>
+                  <span class="text-h6">
+                    Vetting Controls
+                  </span>
+                  <v-tooltip>
+                    <template #activator="{ props }">
+                      <v-icon
+                        v-bind="props"
+                        class="pb-2"
+                        size="medium"
+                      >
+                        mdi-help-circle
+                      </v-icon>
+                    </template>
+                    Navigate between unreviewed files
+                  </v-tooltip>
+                </v-col>
+              </v-row>
+              <v-row v-if="nextUnsubmittedRecordingId">
+                <v-col>
+                  <v-btn
+                    flat
+                    color="primary"
+                    @click="goToPreviousUnreviewed"
+                  >
+                    Prev
+                    <template #prepend>
+                      <v-icon>mdi-arrow-left</v-icon>
+                    </template>
+                  </v-btn>
+                </v-col>
+                <v-spacer />
+                <v-col>
+                  <v-btn
+                    flat
+                    color="primary"
+                    @click="goToNextUnreviewed"
+                  >
+                    Next
+                    <template #append>
+                      <v-icon>mdi-arrow-right</v-icon>
+                    </template>
+                  </v-btn>
+                </v-col>
+              </v-row>
+              <v-row v-else>
+                <v-col>
+                  There are no more files to review
+                </v-col>
+              </v-row>
+              <v-divider
+
+                class="my-2"
+              />
+            </v-col>
+          </div>
           <div v-if="sideTab === 'annotations'">
             <annotation-list
               :annotations="annotations"
