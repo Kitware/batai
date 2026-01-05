@@ -217,22 +217,27 @@ export default defineComponent({
       return filterTagSet.intersection(itemTagSet).size > 0;
     };
 
-    function submittedForCurrentUser(recording: Recording) {
-      const userSubmittedAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+    function currentUserSubmission(recording: Recording) {
+      const userSubmittedAnnotation = recording.fileAnnotations.find((annotation: FileAnnotation) => (
         annotation.owner === currentUser.value && annotation.submitted
       ));
-      return userSubmittedAnnotations.length > 0;
+      return userSubmittedAnnotation?.species[0]?.species_code;
     }
 
-    function addSubmittedColumn() {
+    function addSubmittedColumns() {
       if (configuration.value.mark_annotations_completed_enabled) {
         const submittedHeader = {
           title: 'Submitted',
           key: 'submitted',
-          value: submittedForCurrentUser,
+          value: currentUserSubmission,
         };
-        headers.value.push(submittedHeader);
-        sharedHeaders.value.push(submittedHeader);
+        const myLabelHeader = {
+          title: 'My Submitted Label',
+          key: 'submittedLabel',
+          value: currentUserSubmission,
+        };
+        headers.value.push(submittedHeader, myLabelHeader);
+        sharedHeaders.value.push(submittedHeader, myLabelHeader);
       }
     }
 
@@ -248,7 +253,7 @@ export default defineComponent({
       await loadCurrentUser();
       await fetchRecordingTags();
       await fetchRecordings();
-      addSubmittedColumn();
+      addSubmittedColumns();
     });
 
     const uploadDone = () => {
@@ -319,7 +324,7 @@ export default defineComponent({
         recordingToDelete,
         editingRecording,
         dataLoading,
-        submittedForCurrentUser,
+        currentUserSubmission,
         configuration,
         submittedMyRecordings,
         submittedSharedRecordings,
@@ -539,7 +544,7 @@ export default defineComponent({
           #item.submitted="{ item }"
         >
           <v-icon
-            v-if="submittedForCurrentUser(item)"
+            v-if="currentUserSubmission(item)"
             color="success"
           >
             mdi-check
@@ -714,7 +719,7 @@ export default defineComponent({
           #item.submitted="{ item }"
         >
           <v-icon
-            v-if="submittedForCurrentUser(item)"
+            v-if="currentUserSubmission(item)"
             color="success"
           >
             mdi-check
