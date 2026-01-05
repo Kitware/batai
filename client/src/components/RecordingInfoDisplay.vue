@@ -16,6 +16,10 @@ export default defineComponent({
     disableButton: {
       type: Boolean,
       default: false,
+    },
+    minimalMetadata: {
+      type: Boolean,
+      default: false,
     }
   },
   emits: ['close'],
@@ -42,16 +46,16 @@ export default defineComponent({
       <v-row>
         <div><b>Time:</b><span>{{ recordingInfo.recorded_date }}</span> <span> {{ recordingInfo.recorded_time }}</span></div>
       </v-row>
-      <v-row>
+      <v-row v-if="!minimalMetadata">
         <div><b>Equipment:</b><span>{{ recordingInfo.equipment || 'None' }}</span></div>
       </v-row>
-      <v-row>
+      <v-row v-if="!minimalMetadata">
         <div><b>Comments:</b><span>{{ recordingInfo.comments || 'None' }}</span></div>
       </v-row>
       <v-row>
         <div><b>GRTS CellId:</b><span>{{ recordingInfo.grts_cell_id }}</span></div>
       </v-row>
-      <v-row v-if="recordingInfo.recording_location">
+      <v-row v-if="recordingInfo.recording_location && !minimalMetadata">
         <v-spacer />
         <map-location
           :editor="false"
@@ -60,7 +64,7 @@ export default defineComponent({
         />
         <v-spacer />
       </v-row>
-      
+
       <div
         v-if="recordingInfo.site_name"
         class="mt-5"

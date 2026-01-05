@@ -241,6 +241,13 @@ export default defineComponent({
       }
     }
 
+    function hideDetailedMetadataColumns() {
+      if (!configuration.value.mark_annotations_completed_enabled) return;
+      const filterDetailedMetadataFunction = (val: { key: string }) => !['recording_location', 'comments', 'details'].includes(val.key);
+      headers.value = headers.value.filter(filterDetailedMetadataFunction);
+      sharedHeaders.value = sharedHeaders.value.filter(filterDetailedMetadataFunction);
+    }
+
     const recordingListStyles = computed(() => {
       const sectionHeight = configuration.value.mark_annotations_completed_enabled ? '35vh' : '40vh';
       return {
@@ -254,6 +261,7 @@ export default defineComponent({
       await fetchRecordingTags();
       await fetchRecordings();
       addSubmittedColumns();
+      hideDetailedMetadataColumns();
     });
 
     const uploadDone = () => {
