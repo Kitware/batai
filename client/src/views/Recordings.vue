@@ -243,7 +243,9 @@ export default defineComponent({
 
     function hideDetailedMetadataColumns() {
       if (!configuration.value.mark_annotations_completed_enabled) return;
-      const filterDetailedMetadataFunction = (val: { key: string }) => !['recording_location', 'comments', 'details'].includes(val.key);
+      const filterDetailedMetadataFunction = (val: { key: string }) => (
+        !['recording_location', 'comments', 'details', 'annotation'].includes(val.key)
+      );
       headers.value = headers.value.filter(filterDetailedMetadataFunction);
       sharedHeaders.value = sharedHeaders.value.filter(filterDetailedMetadataFunction);
     }
@@ -527,6 +529,7 @@ export default defineComponent({
             </template>
             <recording-info-display
               :recording-info="item"
+              :minimal-metadata="configuration.mark_annotations_completed_enabled"
               disable-button
             />
           </v-menu>
