@@ -244,7 +244,7 @@ export default defineComponent({
     function hideDetailedMetadataColumns() {
       if (!configuration.value.mark_annotations_completed_enabled) return;
       const filterDetailedMetadataFunction = (val: { key: string }) => (
-        !['recording_location', 'comments', 'details', 'annotation'].includes(val.key)
+        !['comments', 'details', 'annotation'].includes(val.key)
       );
       headers.value = headers.value.filter(filterDetailedMetadataFunction);
       sharedHeaders.value = sharedHeaders.value.filter(filterDetailedMetadataFunction);
@@ -505,6 +505,7 @@ export default defineComponent({
                 :editor="false"
                 :size="{width: 400, height: 400}"
                 :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
+                :grts-cell-id="configuration.mark_annotations_completed_enabled ? item.grts_cell_id || undefined : undefined"
               />
             </v-card>
           </v-menu>
@@ -681,6 +682,7 @@ export default defineComponent({
                 :editor="false"
                 :size="{width: 400, height: 400}"
                 :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
+                :grts-cell-id="configuration.mark_annotations_completed_enabled ? item.grts_cell_id || undefined : undefined"
               />
             </v-card>
           </v-menu>

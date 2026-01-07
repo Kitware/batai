@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { computed, defineComponent, PropType } from 'vue';
 import { Recording } from '../api/api';
 import MapLocation from './MapLocation.vue';
 
@@ -23,9 +23,18 @@ export default defineComponent({
     }
   },
   emits: ['close'],
-  setup() {
+  setup(props) {
+    const location = computed(() => {
+      if (!props.minimalMetadata && props.recordingInfo.recording_location) {
+        return {
+          x: props.recordingInfo.recording_location.coordinates[0],
+          y:props.recordingInfo.recording_location.coordinates[1]
+        };
+      }
+      return undefined;
+    });
     return {
-
+      location,
     };
   },
 });
@@ -55,12 +64,13 @@ export default defineComponent({
       <v-row>
         <div><b>GRTS CellId:</b><span>{{ recordingInfo.grts_cell_id }}</span></div>
       </v-row>
-      <v-row v-if="recordingInfo.recording_location && !minimalMetadata">
+      <v-row v-if="recordingInfo.recording_location">
         <v-spacer />
         <map-location
           :editor="false"
           :size="{width: 400, height: 400}"
-          :location="{ x: recordingInfo.recording_location.coordinates[0], y:recordingInfo.recording_location.coordinates[1]}"
+          :location="location"
+          :grts-cell-id="recordingInfo.grts_cell_id || undefined"
         />
         <v-spacer />
       </v-row>

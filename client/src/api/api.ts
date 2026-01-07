@@ -258,6 +258,18 @@ interface GRTSCellCenter {
   error?: string;
 }
 
+interface GRTSCellBbox {
+  type: string;
+  geometry: {
+    type: string;
+    coordinates: number[][];
+  };
+  properties: {
+    grts_cell_id: number;
+    annotationType: string;
+  };
+}
+
 export interface RecordingTag {
   id: number;
   text: string;
@@ -367,6 +379,11 @@ async function getOtherUserAnnotations(recordingId: string) {
 async function getCellLocation(cellId: number, quadrant?: "SW" | "NE" | "NW" | "SE") {
   return axiosInstance.get<GRTSCellCenter>(`/grts/${cellId}`, { params: { quadrant } });
 }
+
+async function getCellBbox(cellId: number) {
+  return await axiosInstance.get<GRTSCellBbox>(`/grts/${cellId}/bbox`);
+}
+
 async function getFileAnnotations(recordingId: number) {
   return axiosInstance.get<FileAnnotation[]>(`recording/${recordingId}/recording-annotations`);
 }
@@ -539,6 +556,7 @@ export {
   deleteAnnotation,
   deleteSequenceAnnotation,
   getCellLocation,
+  getCellBbox,
   getCellfromLocation,
   getGuanoMetadata,
   getFileAnnotations,
