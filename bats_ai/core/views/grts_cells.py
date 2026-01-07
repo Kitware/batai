@@ -81,3 +81,42 @@ def get_cell_center(request: HttpRequest, id: int, quadrant: str = None):
         return JsonResponse({'latitude': center_latitude, 'longitude': center_longitude})
     except GRTSCells.DoesNotExist:
         return JsonResponse({'error': f'Cell with cellId={id} does not exist'}, status=200)
+
+
+@router.get('/{id}/bbox')
+def get_grts_cell_bbox(request: HttpRequest, id: int):
+    try:
+        cells = GRTSCells.objects.filter(grts_cell_id=id)
+        custom_order = GRTSCells.sort_order()
+
+        def custom_sort_key(cell):
+            return custom_order.index(cell.sample_frame_id)
+
+        sorted_cells = sorted(cells, key=custom_sort_key)
+        cell = sorted_cells[0]
+        geom = cell.geom_4326
+
+        min_x, min_y, max_x, max_y = geom.extent
+
+        geojson = {
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [
+                    [min_x, min_y],
+                    [min_x, max_y],
+                    [max_x, max_y],
+                    [max_x, min_y],
+                ],
+            },
+            'properties': {
+                'grts_cell_id': id,
+                'annotationType': 'rectangle',
+            },
+        }
+        return JsonResponse(geojson)
+    except (GRTSCells.DoesNotExist, IndexError):
+        return JsonResponse(
+            {'error': f'Cell with id {id} does not exist'},
+            status=200
+        )
