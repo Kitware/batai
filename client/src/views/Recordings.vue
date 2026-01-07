@@ -217,6 +217,16 @@ export default defineComponent({
       return filterTagSet.intersection(itemTagSet).size > 0;
     };
 
+    function currentUserSubmissionStatus(recording: Recording) {
+      const userAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.model === 'User Defined'
+      ));
+      if (userAnnotations.find((annotation: FileAnnotation) => annotation.submitted)) {
+        return 1;
+      }
+      return userAnnotations.length ? 0 : -1;
+    }
+
     function currentUserSubmission(recording: Recording) {
       const userSubmittedAnnotation = recording.fileAnnotations.find((annotation: FileAnnotation) => (
         annotation.owner === currentUser.value && annotation.submitted
@@ -227,9 +237,9 @@ export default defineComponent({
     function addSubmittedColumns() {
       if (configuration.value.mark_annotations_completed_enabled) {
         const submittedHeader = {
-          title: 'Submitted',
+          title: 'Submission Status',
           key: 'submitted',
-          value: currentUserSubmission,
+          value: currentUserSubmissionStatus,
         };
         const myLabelHeader = {
           title: 'My Submitted Label',
@@ -244,7 +254,7 @@ export default defineComponent({
     function hideDetailedMetadataColumns() {
       if (!configuration.value.mark_annotations_completed_enabled) return;
       const filterDetailedMetadataFunction = (val: { key: string }) => (
-        !['comments', 'details', 'annotation'].includes(val.key)
+        !['comments', 'details', 'annotation', 'userAnnotations'].includes(val.key)
       );
       headers.value = headers.value.filter(filterDetailedMetadataFunction);
       sharedHeaders.value = sharedHeaders.value.filter(filterDetailedMetadataFunction);
@@ -259,11 +269,11 @@ export default defineComponent({
     });
 
     onMounted(async () => {
+      addSubmittedColumns();
+      hideDetailedMetadataColumns();
       await loadCurrentUser();
       await fetchRecordingTags();
       await fetchRecordings();
-      addSubmittedColumns();
-      hideDetailedMetadataColumns();
     });
 
     const uploadDone = () => {
@@ -335,6 +345,7 @@ export default defineComponent({
         editingRecording,
         dataLoading,
         currentUserSubmission,
+        currentUserSubmissionStatus,
         configuration,
         submittedMyRecordings,
         submittedSharedRecordings,
@@ -556,16 +567,22 @@ export default defineComponent({
           #item.submitted="{ item }"
         >
           <v-icon
-            v-if="currentUserSubmission(item)"
+            v-if="currentUserSubmissionStatus(item) === 1"
             color="success"
           >
             mdi-check
           </v-icon>
           <v-icon
-            v-else
+            v-else-if="currentUserSubmissionStatus(item) === -1"
             color="error"
           >
             mdi-close
+          </v-icon>
+          <v-icon
+            v-else
+            color="warning"
+          >
+            mdi-circle-outline
           </v-icon>
         </template>
         <template #bottom />
@@ -732,16 +749,22 @@ export default defineComponent({
           #item.submitted="{ item }"
         >
           <v-icon
-            v-if="currentUserSubmission(item)"
+            v-if="currentUserSubmissionStatus(item) === 1"
             color="success"
           >
             mdi-check
           </v-icon>
           <v-icon
-            v-else
+            v-else-if="currentUserSubmissionStatus(item) === -1"
             color="error"
           >
             mdi-close
+          </v-icon>
+          <v-icon
+            v-else
+            color="warning"
+          >
+            mdi-circle-outline
           </v-icon>
         </template>
         <template #bottom />
