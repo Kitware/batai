@@ -91,7 +91,7 @@ export default defineComponent({
           key:'comments'
         },
         {
-          title:'Users Annotated',
+          title:'User Pulse Annotations',
           key:'userAnnotations',
         },
         {
