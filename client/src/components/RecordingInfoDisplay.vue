@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { computed, defineComponent, PropType } from 'vue';
 import { Recording } from '../api/api';
 import MapLocation from './MapLocation.vue';
 
@@ -16,12 +16,25 @@ export default defineComponent({
     disableButton: {
       type: Boolean,
       default: false,
+    },
+    minimalMetadata: {
+      type: Boolean,
+      default: false,
     }
   },
   emits: ['close'],
-  setup() {
+  setup(props) {
+    const location = computed(() => {
+      if (!props.minimalMetadata && props.recordingInfo.recording_location) {
+        return {
+          x: props.recordingInfo.recording_location.coordinates[0],
+          y:props.recordingInfo.recording_location.coordinates[1]
+        };
+      }
+      return undefined;
+    });
     return {
-
+      location,
     };
   },
 });
@@ -42,10 +55,10 @@ export default defineComponent({
       <v-row>
         <div><b>Time:</b><span>{{ recordingInfo.recorded_date }}</span> <span> {{ recordingInfo.recorded_time }}</span></div>
       </v-row>
-      <v-row>
+      <v-row v-if="!minimalMetadata">
         <div><b>Equipment:</b><span>{{ recordingInfo.equipment || 'None' }}</span></div>
       </v-row>
-      <v-row>
+      <v-row v-if="!minimalMetadata">
         <div><b>Comments:</b><span>{{ recordingInfo.comments || 'None' }}</span></div>
       </v-row>
       <v-row>
@@ -56,11 +69,12 @@ export default defineComponent({
         <map-location
           :editor="false"
           :size="{width: 400, height: 400}"
-          :location="{ x: recordingInfo.recording_location.coordinates[0], y:recordingInfo.recording_location.coordinates[1]}"
+          :location="location"
+          :grts-cell-id="recordingInfo.grts_cell_id || undefined"
         />
         <v-spacer />
       </v-row>
-      
+
       <div
         v-if="recordingInfo.site_name"
         class="mt-5"

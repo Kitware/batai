@@ -1,15 +1,17 @@
-import { ref, Ref, watch } from "vue";
+import { computed, ref, Ref, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import {
   Configuration,
   getConfiguration,
+  getCurrentUser,
   OtherUserAnnotations,
   Recording,
   SpectrogramAnnotation,
   SpectrogramSequenceAnnotation,
   RecordingTag,
+  FileAnnotation,
 } from "../api/api";
 import {
   interpolateCividis,
@@ -46,6 +48,7 @@ const sequenceAnnotations: Ref<SpectrogramSequenceAnnotation[]> = ref([]);
 const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
 const sharedList: Ref<Recording[]> = ref([]);
 const recordingList: Ref<Recording[]> = ref([]);
+const currentRecordingId: Ref<number | undefined> = ref(undefined);
 const recordingTagList: Ref<RecordingTag[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
 const scaledVals: Ref<{ x: number; y: number }> = ref({ x: 1, y: 1 });
@@ -60,6 +63,9 @@ const configuration: Ref<Configuration> = ref({
   default_color_scheme: "inferno",
   default_spectrogram_background_color: "rgb(0, 0, 0)",
   is_admin: false,
+  mark_annotations_completed_enabled: false,
+  non_admin_upload_enabled: true,
+  show_my_recordings: true,
 });
 const scaledWidth = ref(0);
 const scaledHeight = ref(0);
@@ -138,6 +144,11 @@ export default function useState() {
     configuration.value = (await getConfiguration()).data;
   }
 
+  async function loadCurrentUser() {
+    const userInfo = (await getCurrentUser()).data;
+    currentUser.value = userInfo.name;
+  }
+
   /**
    * Function used to determine whether or not we are currently looking
    * at an NABat-specific view.
@@ -149,6 +160,133 @@ export default function useState() {
     return router.currentRoute.value.fullPath.includes('nabat');
   }
 
+  const showSubmittedRecordings = ref(false);
+
+  const submittedMyRecordings = computed(() => {
+    const submittedByMe = recordingList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length > 0;
+    });
+    return submittedByMe;
+  });
+
+  const submittedSharedRecordings = computed(() => {
+    const submittedByMe = sharedList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length > 0;
+    });
+    return submittedByMe;
+  });
+
+  const unsubmittedMyRecordings = computed(() => {
+    const unsubmitted = recordingList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length === 0;
+    });
+    return unsubmitted;
+  });
+
+  const unsubmittedSharedRecordings = computed(() => {
+    const unsubmitted = sharedList.value.filter((recording: Recording) => {
+      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return myAnnotations.length === 0;
+    });
+    return unsubmitted;
+  });
+
+  // Use state to determine which recordings should be shown to the user
+  const myRecordingsDisplay = computed(() => {
+    if (!configuration.value.mark_annotations_completed_enabled) {
+      return recordingList.value;
+    } else {
+      return showSubmittedRecordings.value ? recordingList.value : unsubmittedMyRecordings.value;
+    }
+  });
+
+  const sharedRecordingsDisplay = computed(() => {
+    if (!configuration.value.mark_annotations_completed_enabled) {
+      return sharedList.value;
+    } else {
+      return showSubmittedRecordings.value ? sharedList.value : unsubmittedSharedRecordings.value;
+    }
+  });
+
+  function hasSubmittedAnnotation(recording: Recording): boolean {
+    return recording.fileAnnotations.some((annotation: FileAnnotation) => (
+      annotation.owner === currentUser.value && annotation.submitted
+    ));
+  }
+
+  const allRecordings = computed(() => {
+    const recordings = recordingList.value.concat(sharedList.value);
+    return recordings.map((recording: Recording) => {
+      const isSubmitted = recording.fileAnnotations.some((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return {
+        ...recording,
+        submitted: isSubmitted,
+      };
+    });
+  });
+
+  function markAnnotationSubmitted(recordingId: number, annotationId: number) {
+    const recording = allRecordings.value.find((recording: Recording) => recording.id === recordingId);
+    if (!recording) return;
+    const annotation = recording.fileAnnotations.find((annotation: FileAnnotation) => annotation.id === annotationId);
+    if (!annotation) return;
+    annotation.submitted = true;
+  }
+
+  const nextUnsubmittedRecordingId = computed(() => {
+    if (allRecordings.value.length === 0) {
+      return undefined;
+    }
+    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentRecordingId.value) || 0;
+
+    for (let i = startingIndex + 1; i < allRecordings.value.length; i++) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    for (let i = 0; i < startingIndex; i++) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    return undefined;
+  });
+
+  const previousUnsubmittedRecordingId = computed(() =>{
+    if (allRecordings.value.length === 0) {
+      return undefined;
+    }
+    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentRecordingId.value) || 0;
+
+    for (let i = startingIndex -1; i >= 0; i--) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    for (let i = allRecordings.value.length - 1; i > startingIndex; i--) {
+      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
+        return allRecordings.value[i].id;
+      }
+    }
+
+    return undefined;
+  });
 
   return {
     annotationState,
@@ -172,6 +310,7 @@ export default function useState() {
     currentUser,
     setSelectedId,
     loadConfiguration,
+    loadCurrentUser,
     isNaBat,
     // State Passing Elements
     annotations,
@@ -191,5 +330,16 @@ export default function useState() {
     scaledHeight,
     fixedAxes,
     toggleFixedAxes,
+    showSubmittedRecordings,
+    submittedMyRecordings,
+    submittedSharedRecordings,
+    unsubmittedMyRecordings,
+    unsubmittedSharedRecordings,
+    myRecordingsDisplay,
+    sharedRecordingsDisplay,
+    nextUnsubmittedRecordingId,
+    previousUnsubmittedRecordingId,
+    markAnnotationSubmitted,
+    currentRecordingId,
   };
 }
