@@ -288,6 +288,8 @@ export default function useState() {
     return undefined;
   });
 
+  const reviewerMaterials = ref('');
+
   return {
     annotationState,
     creationType,
@@ -341,5 +343,6 @@ export default function useState() {
     previousUnsubmittedRecordingId,
     markAnnotationSubmitted,
     currentRecordingId,
+    reviewerMaterials,
   };
 }
