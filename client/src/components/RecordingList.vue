@@ -79,7 +79,7 @@ export default defineComponent({
         </v-col>
       </v-row>
     </v-col>
-    <v-expansion-panel>
+    <v-expansion-panel v-if="configuration.is_admin || configuration.non_admin_upload_enabled">
       <v-expansion-panel-title>My Recordings</v-expansion-panel-title>
       <v-expansion-panel-text>
         <div

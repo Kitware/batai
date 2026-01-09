@@ -12,6 +12,7 @@ import {
   Recording,
   FileAnnotation,
   getRecordingTags,
+  getConfiguration,
 } from '../api/api';
 import UploadRecording, { EditingRecording } from '@components/UploadRecording.vue';
 import MapLocation from '@components/MapLocation.vue';
@@ -260,12 +261,28 @@ export default defineComponent({
       sharedHeaders.value = sharedHeaders.value.filter(filterDetailedMetadataFunction);
     }
 
-    const recordingListStyles = computed(() => {
+    const myRecordingListStyles = computed(() => {
       const sectionHeight = configuration.value.mark_annotations_completed_enabled ? '35vh' : '40vh';
       return {
         'height': sectionHeight,
         'max-height': sectionHeight,
       };
+    });
+
+    const sharedRecordingListStyles = computed(() => {
+      let sectionHeight: string;
+      if (configuration.value.mark_annotations_completed_enabled) {
+        sectionHeight = '35vh';
+      } else {
+        sectionHeight = '40vh';
+      }
+      if (!configuration.value.is_admin && !configuration.value.non_admin_upload_enabled) {
+        sectionHeight = '75vh';
+      }
+      return {
+        'height': sectionHeight,
+        'max-height': sectionHeight,
+      }
     });
 
     onMounted(async () => {
@@ -349,7 +366,8 @@ export default defineComponent({
         configuration,
         submittedMyRecordings,
         submittedSharedRecordings,
-        recordingListStyles,
+        myRecordingListStyles,
+        sharedRecordingListStyles,
         showSubmittedRecordings,
         myRecordingsDisplay,
         sharedRecordingsDisplay,
@@ -361,20 +379,19 @@ export default defineComponent({
 <template>
   <v-card>
     <v-card-title>
-      <v-row class="py-2">
-        <div>
+      <v-row>
+        <div v-if="configuration.is_admin || configuration.non_admin_upload_enabled">
           My Recordings
         </div>
         <v-spacer />
         <div class="d-flex justify-center align-center">
           <v-checkbox
-            v-if="configuration.mark_annotations_completed_enabled"
             v-model="showSubmittedRecordings"
             class="mr-4"
             label="Show submitted recordings"
             hide-details
           />
-          <v-menu>
+          <v-menu v-if="configuration.is_admin || configuration.non_admin_upload_enabled">
             <template #activator="{ props }">
               <v-btn
                 color="primary"
@@ -424,6 +441,7 @@ export default defineComponent({
         </v-card>
       </v-dialog>
       <v-data-table
+        v-if="configuration.is_admin || configuration.non_admin_upload_enabled"
         v-model:items-per-page="itemsPerPage"
         :headers="headers"
         :items="myRecordingsDisplay"
@@ -433,7 +451,7 @@ export default defineComponent({
         density="compact"
         :loading="dataLoading"
         class="elevation-1 my-recordings"
-        :style="recordingListStyles"
+        :style="myRecordingListStyles"
       >
         <template #top>
           <div max-height="100px">
@@ -642,7 +660,7 @@ export default defineComponent({
         :loading="dataLoading"
         density="compact"
         class="elevation-1 shared-recordings"
-        :style="recordingListStyles"
+        :style="sharedRecordingListStyles"
       >
         <template #top>
           <div max-height="100px">
