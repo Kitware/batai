@@ -18,6 +18,7 @@ import {
   getSpectrogramCompressed,
   getOtherUserAnnotations,
   getSequenceAnnotations,
+  createOrUpdateVettingDetailsForUser,
 } from "../api/api";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
@@ -75,6 +76,7 @@ export default defineComponent({
       nextUnsubmittedRecordingId,
       previousUnsubmittedRecordingId,
       currentRecordingId,
+      currentUserId,
       reviewerMaterials,
     } = useState();
     const router = useRouter();
@@ -283,7 +285,8 @@ export default defineComponent({
     const referenceDialog = ref(false);
 
     function _saveReviewerMaterials() {
-      console.log(reviewerMaterials.value);
+      if (!currentUserId.value) return;
+      createOrUpdateVettingDetailsForUser(currentUserId.value, reviewerMaterials.value);
     }
 
     const saveReviewerMaterials = debounce(_saveReviewerMaterials, 500);
