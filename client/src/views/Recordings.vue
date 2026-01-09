@@ -37,7 +37,6 @@ export default defineComponent({
       recordingTagList,
       currentUser,
       configuration,
-      loadCurrentUser,
       showSubmittedRecordings,
       submittedMyRecordings,
       submittedSharedRecordings,
@@ -271,7 +270,6 @@ export default defineComponent({
     onMounted(async () => {
       addSubmittedColumns();
       hideDetailedMetadataColumns();
-      await loadCurrentUser();
       await fetchRecordingTags();
       await fetchRecordings();
     });

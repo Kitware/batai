@@ -18,6 +18,7 @@ from .sequence_annotations import SequenceAnnotationsAdmin
 from .species import SpeciesAdmin
 from .spectrogram import SpectrogramAdmin
 from .spectrogram_image import SpectrogramImageAdmin
+from .vetting_details import VettingDetailsAdmin
 
 __all__ = [
     'AnnotationsAdmin',
@@ -34,6 +35,7 @@ __all__ = [
     'ConfigurationAdmin',
     'ExportedAnnotationFileAdmin',
     'SpectrogramImageAdmin',
+    'VettingDetailsAdmin',
     # NABat Models
     'NABatRecordingAnnotationAdmin',
     'NABatCompressedSpectrogramAdmin',

@@ -2,7 +2,9 @@ from django.contrib.auth.models import User
 from django.test import Client
 import pytest
 
-from .factories import SuperuserFactory, UserFactory
+from bats_ai.core.models import VettingDetails
+
+from .factories import SuperuserFactory, UserFactory, VettingDetailsFactory
 
 
 @pytest.fixture
@@ -32,3 +34,13 @@ def authorized_client(superuser: User) -> Client:
     client = Client()
     client.force_login(user=superuser)
     return client
+
+
+@pytest.fixture
+def vetting_details(user: User) -> VettingDetails:
+    return VettingDetailsFactory(user=user)
+
+
+@pytest.fixture
+def random_user_vetting_details() -> VettingDetails:
+    return VettingDetailsFactory(user=UserFactory())

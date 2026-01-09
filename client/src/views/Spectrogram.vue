@@ -9,6 +9,7 @@ import {
   watch,
 } from "vue";
 import { useRouter } from "vue-router";
+import { debounce } from "lodash";
 import {
   getSpecies,
   getAnnotations,
@@ -17,6 +18,7 @@ import {
   getSpectrogramCompressed,
   getOtherUserAnnotations,
   getSequenceAnnotations,
+  createOrUpdateVettingDetailsForUser,
 } from "../api/api";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
@@ -74,6 +76,8 @@ export default defineComponent({
       nextUnsubmittedRecordingId,
       previousUnsubmittedRecordingId,
       currentRecordingId,
+      currentUserId,
+      reviewerMaterials,
     } = useState();
     const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
@@ -278,6 +282,15 @@ export default defineComponent({
       router.push({ path: `/recording/${previousUnsubmittedRecordingId.value}/spectrogram`, replace: true });
     }
 
+    const referenceDialog = ref(false);
+
+    function _saveReviewerMaterials() {
+      if (!currentUserId.value) return;
+      createOrUpdateVettingDetailsForUser(currentUserId.value, reviewerMaterials.value);
+    }
+
+    const saveReviewerMaterials = debounce(_saveReviewerMaterials, 500);
+
     return {
       configuration,
       annotationState,
@@ -327,6 +340,9 @@ export default defineComponent({
       goToNextUnreviewed,
       goToPreviousUnreviewed,
       nextUnsubmittedRecordingId,
+      referenceDialog,
+      reviewerMaterials,
+      saveReviewerMaterials,
     };
   },
 });
@@ -654,6 +670,41 @@ export default defineComponent({
                     </template>
                     Navigate between unreviewed files
                   </v-tooltip>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col>
+                  <v-dialog
+                    v-model="referenceDialog"
+                    max-width="50%"
+                  >
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                      >
+                        Add reference materials
+                      </v-btn>
+                    </template>
+                    <v-card>
+                      <v-card-title>
+                        Reference Materials
+                      </v-card-title>
+                      <v-card-text>
+                        <v-textarea
+                          v-model="reviewerMaterials"
+                          placeholder="Describe any reference materials used during labeling"
+                          @update:model-value="saveReviewerMaterials"
+                        />
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-btn
+                          @click="referenceDialog = false"
+                        >
+                          Close
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-dialog>
                 </v-col>
               </v-row>
               <v-row v-if="nextUnsubmittedRecordingId">

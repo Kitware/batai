@@ -12,6 +12,7 @@ import {
   SpectrogramSequenceAnnotation,
   RecordingTag,
   FileAnnotation,
+  getVettingDetailsForUser,
 } from "../api/api";
 import {
   interpolateCividis,
@@ -41,6 +42,7 @@ const colorScheme: Ref<{ value: string; title: string; scheme: (input: number) =
 const backgroundColor = ref("rgb(0, 0, 0)");
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref("");
+const currentUserId: Ref<number | undefined> = ref(undefined);
 const selectedId: Ref<number | null> = ref(null);
 const selectedType: Ref<"pulse" | "sequence"> = ref("pulse");
 const annotations: Ref<SpectrogramAnnotation[]> = ref([]);
@@ -84,6 +86,8 @@ const fixedAxes = ref(true);
 const toggleFixedAxes = () => {
   fixedAxes.value = !fixedAxes.value;
 };
+
+const reviewerMaterials = ref('');
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -147,6 +151,7 @@ export default function useState() {
   async function loadCurrentUser() {
     const userInfo = (await getCurrentUser()).data;
     currentUser.value = userInfo.name;
+    currentUserId.value = userInfo.id;
   }
 
   /**
@@ -288,6 +293,17 @@ export default function useState() {
     return undefined;
   });
 
+  async function loadReviewerMaterials() {
+    // Only make this request if vetting is enabled and a user is logged in
+    if (!configuration.value.mark_annotations_completed_enabled) return;
+    if (currentUserId.value === undefined) return;
+
+    const vettingDetails = await getVettingDetailsForUser(currentUserId.value);
+    if (vettingDetails) {
+      reviewerMaterials.value = vettingDetails.reference_materials;
+    }
+  }
+
   return {
     annotationState,
     creationType,
@@ -308,6 +324,7 @@ export default function useState() {
     setSelectedUsers,
     selectedUsers,
     currentUser,
+    currentUserId,
     setSelectedId,
     loadConfiguration,
     loadCurrentUser,
@@ -341,5 +358,7 @@ export default function useState() {
     previousUnsubmittedRecordingId,
     markAnnotationSubmitted,
     currentRecordingId,
+    reviewerMaterials,
+    loadReviewerMaterials,
   };
 }

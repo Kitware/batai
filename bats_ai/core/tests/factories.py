@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 import factory.django
 
+from bats_ai.core.models import VettingDetails
+
 
 class UserFactory(factory.django.DjangoModelFactory[User]):
     class Meta:
@@ -28,3 +30,12 @@ class SuperuserFactory(factory.django.DjangoModelFactory[User]):
     def _create(cls, model_class, *args, **kwargs):
         manager = cls._get_manager(model_class)
         return manager.create_superuser(*args, **kwargs)
+
+
+class VettingDetailsFactory(factory.django.DjangoModelFactory[VettingDetails]):
+
+    class Meta:
+        model = VettingDetails
+
+    user = factory.SubFactory(UserFactory)
+    reference_materials = factory.Faker('paragraph', nb_sentences=3)

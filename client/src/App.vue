@@ -12,7 +12,15 @@ export default defineComponent({
     const oauthClient = inject<OAuthClient>("oauthClient");
     const router = useRouter();
     const route = useRoute();
-    const { nextShared, sharedList, sideTab, loadConfiguration, configuration } = useState();
+    const {
+      nextShared,
+      sharedList,
+      sideTab,
+      loadConfiguration,
+      configuration ,
+      loadCurrentUser,
+      loadReviewerMaterials,
+    } = useState();
     const getShared = async () => {
       sharedList.value = (await getRecordings(true)).data;
     };
@@ -24,7 +32,9 @@ export default defineComponent({
     const checkLogin = async () => {
       if (oauthClient.isLoggedIn) {
         loginText.value = "Logout";
-        loadConfiguration();
+        await loadConfiguration();
+        await loadCurrentUser();
+        await loadReviewerMaterials();
         if (sharedList.value.length === 0) {
           getShared();
         }

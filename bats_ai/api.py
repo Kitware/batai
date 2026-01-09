@@ -13,6 +13,7 @@ from bats_ai.core.views import (
     RecordingRouter,
     RecordingTagRouter,
     SpeciesRouter,
+    VettingRouter,
 )
 from bats_ai.core.views.nabat import NABatConfigurationRouter, NABatRecordingRouter
 
@@ -46,3 +47,4 @@ api.add_router('/processing-task/', ProcessingTaskRouter)
 api.add_router('/recording-tag/', RecordingTagRouter)
 api.add_router('/nabat/recording/', NABatRecordingRouter)
 api.add_router('/nabat/configuration/', NABatConfigurationRouter)
+api.add_router('/vetting/', VettingRouter)

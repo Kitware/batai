@@ -1,4 +1,5 @@
 import axios from "axios";
+import { AxiosError } from "axios";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
 
 export interface Recording {
@@ -453,7 +454,7 @@ async function patchConfiguration(config: ConfigurationSettings) {
 }
 
 async function getCurrentUser() {
-  return axiosInstance.get<{name: string, email: string}>("/configuration/me");
+  return axiosInstance.get<{name: string, email: string, id: number}>("/configuration/me");
 }
 
 export interface ProcessingTask {
@@ -537,6 +538,36 @@ async function getExportStatus(exportId: number) {
   return result.data;
 }
 
+export interface VettingDetails {
+  id: number;
+  user_id: number;
+  reference_materials: string;
+}
+
+export interface UpdateVettingDetails {
+  reference_Materials: string;
+}
+
+async function getVettingDetailsForUser(userId: number) {
+  try {
+    const result = await axiosInstance.get<VettingDetails>(`/vetting/user/${userId}`);
+    return result.data;
+  } catch (err) {
+    const error = err as AxiosError;
+    if (error.response?.status === 404) {
+      return null;
+    }
+    throw err;
+  }
+}
+
+async function createOrUpdateVettingDetailsForUser(userId: number, referenceMaterials: string) {
+  return await axiosInstance.post<UpdateVettingDetails, VettingDetails>(
+    `/vetting/user/${userId}`,
+    { 'reference_materials': referenceMaterials }
+  );
+}
+
 export {
   uploadRecordingFile,
   getRecordings,
@@ -574,4 +605,6 @@ export {
   getExportStatus,
   getRecordingTags,
   getCurrentUser,
+  getVettingDetailsForUser,
+  createOrUpdateVettingDetailsForUser,
 };
