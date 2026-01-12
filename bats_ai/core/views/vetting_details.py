@@ -1,4 +1,4 @@
-from django.http import Http404, HttpRequest
+from django.http import Http404, HttpRequest, HttpResponseBadRequest
 from ninja import Schema
 from ninja.pagination import RouterPaginated
 
@@ -44,6 +44,11 @@ def update_or_create_vetting_details_for_user(
 ):
     if not (request.user.pk == user_id or request.user.is_staff):
         raise Http404
+
+    if len(payload.reference_materials) > 2000:
+        return HttpResponseBadRequest(
+            'reference_materials exceeds maximum length of 2000 characters'
+        )
 
     details = VettingDetails.objects.filter(user_id=user_id).first()
 

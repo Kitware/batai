@@ -101,3 +101,14 @@ def test_update_vetting_details_other_user(
         content_type='application/json',
     )
     assert resp.status_code == status_code
+
+
+@pytest.mark.django_db
+def test_update_vetting_details_length_constraint(authorized_client, random_user_vetting_details):
+    data = {'reference_materials': 'a' * 2001}
+    resp = authorized_client.post(
+        f'/api/v1/vetting/user/{random_user_vetting_details.user.id}',
+        data=data,
+        content_type='application/json',
+    )
+    assert resp.status_code == 400
