@@ -282,7 +282,7 @@ export default defineComponent({
       return {
         'height': sectionHeight,
         'max-height': sectionHeight,
-      }
+      };
     });
 
     onMounted(async () => {
