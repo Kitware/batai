@@ -606,7 +606,11 @@ export default defineComponent({
         <template #bottom />
       </v-data-table>
       <div
-        v-if="recordingList.length && configuration.mark_annotations_completed_enabled"
+        v-if="
+          recordingList.length
+            && configuration.mark_annotations_completed_enabled
+            && (configuration.is_admin || configuration.non_admin_upload_enabled)
+        "
         class="d-flex justify-center align-center"
       >
         <v-progress-linear
