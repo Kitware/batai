@@ -13,6 +13,7 @@ interface ContourPoint {
 interface LineData {
   coord: number[][];
   strokeColor?: string;
+  level?: number;
 }
 
 export default class ContourLayer {
@@ -33,6 +34,10 @@ export default class ContourLayer {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   features: any[];
 
+  colorScheme: (t: number) => string;
+
+  maxLevel: number;
+
   scaledHeight: number;
 
   scaledWidth: number;
@@ -43,12 +48,15 @@ export default class ContourLayer {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo,
+    colorScheme: (t: number) => string,
   ) {
     this.geoViewerRef = geoViewerRef;
     this.event = event;
     this.spectroInfo = spectroInfo;
     this.scaledHeight = this.spectroInfo.height;
     this.scaledWidth = this.spectroInfo.width;
+    this.colorScheme = colorScheme;
+    this.maxLevel = 0;
     this.init();
   }
 
@@ -85,7 +93,7 @@ export default class ContourLayer {
         const contourPoint = this.getTransformedContourPoint(point, contour.level, contour.index);
         coord.push([contourPoint.x, contourPoint.y]);
       });
-      lineData.push({ coord, strokeColor: 'yellow' });
+      lineData.push({ coord, strokeColor: 'yellow', level: contour.level });
     });
     const lineFeature = this.contourLayer.createFeature('line');
     lineFeature
@@ -93,8 +101,12 @@ export default class ContourLayer {
       .line((item: LineData) => item.coord)
       .position((item: number[]) => ({ x: item[0], y: item[1] }))
       .style({
-        strokeColor: 'yellow',
+        strokeColor: (_vertex: number[], _vertexIndex: number, item: LineData) => {
+          if (!this.colorScheme) return 'yellow';
+          return this.colorScheme((item.level || 0) / this.maxLevel);
+        },
         strokeWidth: 2,
+        closed: true,
       })
       .draw();
     this.features.push(lineFeature);
@@ -110,6 +122,11 @@ export default class ContourLayer {
   }
 
   drawContours(computedPulseAnnotations: ComputedPulseAnnotation[]) {
+    computedPulseAnnotations.forEach((annotation: ComputedPulseAnnotation) => annotation.contours.forEach((contour: Contour) => {
+      if (contour.level > this.maxLevel) {
+        this.maxLevel = contour.level;
+      }
+    }));
     computedPulseAnnotations.forEach((pulseAnnotation: ComputedPulseAnnotation) => this.drawLinesForPulse(pulseAnnotation.contours));
   }
 
@@ -170,6 +187,13 @@ export default class ContourLayer {
       x: timeOffset * pixelsPerMs,
       y: this._getYValueFromFrequency(point[1]),
       z: level
+    };
+  }
+
+  getContourStyle() {
+    return {
+      strokeColor: 'yellow',
+      strokeWidth: 2,
     };
   }
 }

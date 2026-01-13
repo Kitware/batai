@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
 import * as d3 from "d3";
-import { getComputedPulseAnnotations, SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
+import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
 import {
   annotationSpreadAcrossPulsesWarning,
   geojsonToSpectro,
@@ -23,6 +23,7 @@ import AxesLayer from "./layers/axesLayer";
 import ContourLayer from "./layers/contourLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
+
 export default defineComponent({
   name: "LayerManager",
   props: {
@@ -470,6 +471,7 @@ export default defineComponent({
         props.geoViewerRef,
         event,
         props.spectroInfo,
+        colorScheme.value.scheme,
       );
       contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (viewContours.value) {
