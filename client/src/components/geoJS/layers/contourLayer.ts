@@ -114,7 +114,9 @@ export default class ContourLayer {
 
   drawPolygonsForPulse(pulse: Contour[]) {
     const polyData: number[][][] = [];
-    pulse.forEach((contour: Contour) => {
+    pulse.sort((a: Contour, b: Contour) => {
+      return a.level - b.level;
+    }).forEach((contour: Contour) => {
       const newPoly: number[][] = [];
       contour.curve.forEach((point: number[]) => {
         const contourPoint = this.getTransformedContourPoint(point, contour.level, contour.index);
@@ -128,13 +130,11 @@ export default class ContourLayer {
       .position((item: number[]) => ({ x: item[0], y: item[1] }))
       .style({
         uniformPolygon: true,
-        stroke: true,
-        strokeWidth: 2,
-        strokeColor: (vertex: number[]) => this.colorScheme((vertex[2] || 0 ) / this.maxLevel),
+        stroke: false,
         fillColor: (_val: number, _idx: number, coords: number[][]) => {
           return this.colorScheme((coords[0][2] ||0) / this.maxLevel);
         },
-        fillOpacity: 0.8,
+        fillOpacity: 1.0,
       })
       .draw();
     this.features.push(polygonFeature);
