@@ -141,7 +141,7 @@ export default defineComponent({
       spectrogramData.value = response.data;
       if (spectrogramData.value.vectors.length) {
         const urls = viewContours
-          ? spectrogramData.value.vectors
+          ? spectrogramData.value.urls // vectors
           : spectrogramData.value.urls;
         images.value = [];
         allImagesLoaded.value = [];

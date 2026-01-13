@@ -137,14 +137,14 @@ export default class ContourLayer {
         fillOpacity: 0.8,
       })
       .draw();
+    this.features.push(polygonFeature);
   }
 
   removeFeatures() {
     if (!this.contourLayer) return;
-    console.log(this.contourLayer.features());
-    this.contourLayer.clear();
-    console.log('cleared layer');
-    console.log(this.contourLayer.features());
+    this.features.forEach((feature) => {
+      feature.data([]).draw();
+   });
     this.contourLayer.draw();
   }
 

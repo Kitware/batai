@@ -467,17 +467,18 @@ export default defineComponent({
         await loadContours(new Number(props.recordingId) as number);
       }
       // initialize the layer/destroy the layer idk
-      contourLayer = new ContourLayer(
-        props.geoViewerRef,
-        event,
-        props.spectroInfo,
-        colorScheme.value.scheme,
-      );
+      if (!contourLayer) {
+        contourLayer = new ContourLayer(
+          props.geoViewerRef,
+          event,
+          props.spectroInfo,
+          colorScheme.value.scheme,
+        );
+      }
       contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (viewContours.value) {
         contourLayer.drawContours(computedPulseAnnotations.value);
       } else {
-        console.log('removing features');
         contourLayer.removeFeatures();
       }
     });
