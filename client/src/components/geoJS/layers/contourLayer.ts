@@ -112,6 +112,33 @@ export default class ContourLayer {
     this.features.push(lineFeature);
   }
 
+  drawPolygonsForPulse(pulse: Contour[]) {
+    const polyData: number[][][] = [];
+    pulse.forEach((contour: Contour) => {
+      const newPoly: number[][] = [];
+      contour.curve.forEach((point: number[]) => {
+        const contourPoint = this.getTransformedContourPoint(point, contour.level, contour.index);
+        newPoly.push([contourPoint.x, contourPoint.y, contour.level]);
+      });
+      polyData.push(newPoly);
+    });
+    const polygonFeature = this.contourLayer.createFeature('polygon');
+    polygonFeature
+      .data(polyData)
+      .position((item: number[]) => ({ x: item[0], y: item[1] }))
+      .style({
+        uniformPolygon: true,
+        stroke: true,
+        strokeWidth: 2,
+        strokeColor: (vertex: number[]) => this.colorScheme((vertex[2] || 0 ) / this.maxLevel),
+        fillColor: (_val: number, _idx: number, coords: number[][]) => {
+          return this.colorScheme((coords[0][2] ||0) / this.maxLevel);
+        },
+        fillOpacity: 0.8,
+      })
+      .draw();
+  }
+
   removeFeatures() {
     if (!this.contourLayer) return;
     console.log(this.contourLayer.features());
@@ -127,7 +154,7 @@ export default class ContourLayer {
         this.maxLevel = contour.level;
       }
     }));
-    computedPulseAnnotations.forEach((pulseAnnotation: ComputedPulseAnnotation) => this.drawLinesForPulse(pulseAnnotation.contours));
+    computedPulseAnnotations.forEach((pulseAnnotation: ComputedPulseAnnotation) => this.drawPolygonsForPulse(pulseAnnotation.contours));
   }
 
    getTransformedContourPoint(point: number[], level: number, index: number): ContourPoint {
