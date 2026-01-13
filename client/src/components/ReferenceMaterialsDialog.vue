@@ -62,16 +62,16 @@ watch(reviewerMaterials, () => reviewerMaterialsDisplay.value = reviewerMaterial
       </v-card-text>
       <v-card-actions>
         <v-btn
+          @click="referenceDialog = false"
+        >
+          Close
+        </v-btn>
+        <v-btn
           color="primary"
           :disabled="!valid"
           @click="saveReviewerMaterials"
         >
           Save
-        </v-btn>
-        <v-btn
-          @click="referenceDialog = false"
-        >
-          Close
         </v-btn>
       </v-card-actions>
     </v-card>
