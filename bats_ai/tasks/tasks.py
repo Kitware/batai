@@ -2,7 +2,6 @@ import logging
 import os
 import tempfile
 
-from PIL import Image
 from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
@@ -20,13 +19,6 @@ from bats_ai.utils.spectrogram_utils import generate_spectrogram_assets, predict
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
-
-
-@shared_task
-def image_compute_checksum(image_id: int):
-    image = Image.objects.get(pk=image_id)
-    image.compute_checksum()
-    image.save()
 
 
 @shared_task
