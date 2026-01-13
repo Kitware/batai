@@ -17,8 +17,8 @@ from bats_ai.core.models.nabat import (
     NABatRecording,
     NABatRecordingAnnotation,
 )
+from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
 from bats_ai.core.views.species import SpeciesSchema
-from bats_ai.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
 
 logger = logging.getLogger(__name__)
 router = RouterPaginated()
