@@ -48,7 +48,7 @@ watch(reviewerMaterials, () => reviewerMaterialsDisplay.value = reviewerMaterial
             v-model="reviewerMaterialsDisplay"
             placeholder="Describe any reference materials used during labeling"
             :rules="[
-              v => v.length <= 20 || 'Only 2000 characters are allowed'
+              v => v.length <= 2000 || 'Only 2000 characters are allowed'
             ]"
             counter="2000"
           />
