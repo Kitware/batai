@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent, PropType } from "vue";
+import { computed, defineComponent, PropType, CSSProperties } from "vue";
 import { SpectroInfo } from './geoJS/geoJSUtils';
 import useState from "@use/useState";
 import { watch, ref } from "vue";
@@ -32,51 +32,77 @@ export default defineComponent({
   },
   emits: ['select', 'update:annotation', 'delete:annotation'],
   setup() {
-    const { creationType, annotationState, setAnnotationState, annotations, sequenceAnnotations, selectedId, selectedType, setSelectedId, sideTab, configuration } = useState();
+    const {
+      creationType,
+      annotationState,
+      setAnnotationState,
+      annotations,
+      sequenceAnnotations,
+      selectedId,
+      selectedType,
+      setSelectedId,
+      sideTab,
+      configuration,
+    } = useState();
     const tab = ref('recording');
     const scrollToId = (id: number) => {
-    const el = document.getElementById(`annotation-${id}`);
-    if (el) {
-      el.scrollIntoView({block: 'end', behavior: 'smooth'});
-    }
-  };
-  watch(selectedId, () => {
-    tab.value = selectedType.value;
-    if (selectedId.value !== null) {
-      scrollToId(selectedId.value);
-    }
-  });
-  watch(selectedType, () => {
-    tab.value = selectedType.value;
-  });
-  const pulseEnabled = computed(() => configuration.value.display_pulse_annotations);
-  const sequenceEnabled = computed(() => configuration.value.display_sequence_annotations);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tabSwitch = (event: any) => {
-    // On tab switches we want to deselect the curret annotation
-    if (['sequence', 'pulse'].includes(event)) {
-      tab.value = event as 'sequence' | 'pulse';
-      selectedType.value = event as 'sequence' | 'pulse';
-      selectedId.value = null;
-    } else {
-      tab.value = 'recording';
-    }
-  };
+      const el = document.getElementById(`annotation-${id}`);
+      if (el) {
+        el.scrollIntoView({block: 'end', behavior: 'smooth'});
+      }
+    };
+    watch(selectedId, () => {
+      tab.value = selectedType.value;
+      if (selectedId.value !== null) {
+        scrollToId(selectedId.value);
+      }
+    });
+    watch(selectedType, () => {
+      tab.value = selectedType.value;
+    });
+    const pulseEnabled = computed(() => configuration.value.display_pulse_annotations);
+    const sequenceEnabled = computed(() => configuration.value.display_sequence_annotations);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tabSwitch = (event: any) => {
+      // On tab switches we want to deselect the curret annotation
+      if (['sequence', 'pulse'].includes(event)) {
+        tab.value = event as 'sequence' | 'pulse';
+        selectedType.value = event as 'sequence' | 'pulse';
+        selectedId.value = null;
+      } else {
+        tab.value = 'recording';
+      }
+    };
+
+    const styles = computed<CSSProperties>(() => {
+      const appBarHeight = 64;
+      const sidebarOptionsHeight = 36;
+      const vettingOptionsHeight = 161;
+      let offset = appBarHeight + sidebarOptionsHeight;
+      if (configuration.value.mark_annotations_completed_enabled) {
+        offset += vettingOptionsHeight;
+      }
+      return {
+        'max-height': `calc(100vh - ${offset}px)`,
+        'overflow-y': 'auto'
+      };
+    });
 
     return {
-        annotationState,
-        annotations,
-        creationType,
-        sequenceAnnotations,
-        selectedId,
-        selectedType,
-        setAnnotationState,
-        setSelectedId,
-        tabSwitch,
-        tab,
-        sideTab,
-        pulseEnabled,
-        sequenceEnabled,
+      annotationState,
+      annotations,
+      creationType,
+      sequenceAnnotations,
+      selectedId,
+      selectedType,
+      setAnnotationState,
+      setSelectedId,
+      tabSwitch,
+      tab,
+      sideTab,
+      pulseEnabled,
+      sequenceEnabled,
+      styles,
     };
   },
 });
@@ -85,7 +111,7 @@ export default defineComponent({
 <template>
   <div
     class="pa-2"
-    :class="{'annotation-list': ['pulse','sequence'].includes(tab),'recording-list': !['pulse','sequence'].includes(tab)}"
+    :style="styles"
   >
     <v-row dense>
       <v-tabs
@@ -256,7 +282,7 @@ export default defineComponent({
         </v-list>
       </v-window-item>
       <v-window-item value="recording">
-        <RecordingAnnotations 
+        <RecordingAnnotations
           :species="species"
           :recording-id="parseInt(recordingId)"
         />
@@ -298,13 +324,4 @@ export default defineComponent({
 .selected {
     background-color: cyan;
 }
-.annotation-list {
-  max-height: 60vh;
-  overflow-y: auto;
-}
-.recording-list {
-  max-height: 85vh;
-  overflow-y: auto;
-}
-
 </style>
