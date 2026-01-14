@@ -231,7 +231,7 @@ export default defineComponent({
       const userSubmittedAnnotation = recording.fileAnnotations.find((annotation: FileAnnotation) => (
         annotation.owner === currentUser.value && annotation.submitted
       ));
-      return userSubmittedAnnotation?.species[0]?.species_code;
+      return userSubmittedAnnotation?.species[0]?.species_code || '';
     }
 
     function addSubmittedColumns() {
