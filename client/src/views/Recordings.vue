@@ -285,10 +285,10 @@ export default defineComponent({
     });
 
     onMounted(async () => {
-      addSubmittedColumns();
-      hideDetailedMetadataColumns();
       await fetchRecordingTags();
       await fetchRecordings();
+      addSubmittedColumns();
+      hideDetailedMetadataColumns();
     });
 
     const uploadDone = () => {
