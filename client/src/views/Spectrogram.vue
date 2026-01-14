@@ -25,8 +25,9 @@ import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import RecordingList from "@components/RecordingList.vue";
 import OtherUserAnnotationsDialog from "@/components/OtherUserAnnotationsDialog.vue";
 import ColorSchemeDialog from "@/components/ColorSchemeDialog.vue";
-import useState from "@use/useState";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
+import ReferenceMaterialsDialog from "@/components/ReferenceMaterialsDialog.vue";
+import useState from "@use/useState";
 export default defineComponent({
   name: "Spectrogram",
   components: {
@@ -37,6 +38,7 @@ export default defineComponent({
     RecordingList,
     OtherUserAnnotationsDialog,
     ColorSchemeDialog,
+    ReferenceMaterialsDialog,
   },
   props: {
     id: {
@@ -654,6 +656,11 @@ export default defineComponent({
                     </template>
                     Navigate between unreviewed files
                   </v-tooltip>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col>
+                  <reference-materials-dialog />
                 </v-col>
               </v-row>
               <v-row v-if="nextUnsubmittedRecordingId">
