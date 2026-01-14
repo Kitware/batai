@@ -2,10 +2,10 @@ import logging
 import os
 import tempfile
 
-from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 
+from bats_ai.celery import app
 from bats_ai.core.models import (
     CompressedSpectrogram,
     Configuration,
@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
 
 
-@shared_task
+@app.task
 def recording_compute_spectrogram(recording_id: int):
     recording = Recording.objects.get(pk=recording_id)
 
