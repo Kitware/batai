@@ -35,7 +35,6 @@ class Configuration(models.Model):
     # Fields used for community vetting focused deployment of BatAI
     non_admin_upload_enabled = models.BooleanField(default=True)
     mark_annotations_completed_enabled = models.BooleanField(default=False)
-    show_my_recordings = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         # Ensure only one instance of Configuration exists

@@ -67,7 +67,6 @@ const configuration: Ref<Configuration> = ref({
   is_admin: false,
   mark_annotations_completed_enabled: false,
   non_admin_upload_enabled: true,
-  show_my_recordings: true,
 });
 const scaledWidth = ref(0);
 const scaledHeight = ref(0);

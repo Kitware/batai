@@ -27,7 +27,6 @@ export default defineComponent({
       defaultBackgroundColor: configuration.value.default_spectrogram_background_color,
       nonAdminUploadEnabled: configuration.value.non_admin_upload_enabled,
       markAnnotationsCompletedEnabled: configuration.value.mark_annotations_completed_enabled,
-      showMyRecordings: configuration.value.show_my_recordings,
     });
     const spectrogramViewOptions = [
       { title: 'Compressed', value: 'compressed' },
@@ -42,7 +41,6 @@ export default defineComponent({
       settings.defaultBackgroundColor = configuration.value.default_spectrogram_background_color;
       settings.nonAdminUploadEnabled = configuration.value.non_admin_upload_enabled;
       settings.markAnnotationsCompletedEnabled = configuration.value.mark_annotations_completed_enabled;
-      settings.showMyRecordings = configuration.value.show_my_recordings;
     });
     // Function to save the settings
     const saveSettings = async () => {
@@ -57,7 +55,6 @@ export default defineComponent({
         spectrogram_view: settings.spectrogramView,
         non_admin_upload_enabled: settings.nonAdminUploadEnabled,
         mark_annotations_completed_enabled: settings.markAnnotationsCompletedEnabled,
-        show_my_recordings: settings.showMyRecordings,
       });
       loadConfiguration();
     };
@@ -209,13 +206,6 @@ export default defineComponent({
               v-model="settings.markAnnotationsCompletedEnabled"
               :color="settings.markAnnotationsCompletedEnabled ? 'primary' : ''"
               label="Enable submitting file-level annotations by marking them complete"
-            />
-          </v-row>
-          <v-row>
-            <v-switch
-              v-model="settings.showMyRecordings"
-              :color="settings.showMyRecordings ? 'primary' : ''"
-              label="Show a separate list for a user's own recordings"
             />
           </v-row>
         </v-card-text>

@@ -24,7 +24,6 @@ class ConfigurationSchema(Schema):
     default_spectrogram_background_color: str
     non_admin_upload_enabled: bool
     mark_annotations_completed_enabled: bool
-    show_my_recordings: bool
 
 
 # Endpoint to retrieve the configuration status
@@ -43,7 +42,6 @@ def get_configuration(request):
         default_spectrogram_background_color=config.default_spectrogram_background_color,
         non_admin_upload_enabled=config.non_admin_upload_enabled,
         mark_annotations_completed_enabled=config.mark_annotations_completed_enabled,
-        show_my_recordings=config.show_my_recordings,
         is_admin=request.user.is_authenticated and request.user.is_superuser,
     )
 
