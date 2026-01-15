@@ -59,6 +59,9 @@ export default defineComponent({
         markerFeature.value = markerLayer.value.createFeature("marker");
         bboxFeature.value = bboxLayer.value.createFeature("polygon");
         uiLayer.value.createWidget('slider');
+        uiLayer.value.createWidget('scale', {
+          position: { bottom: 10, left: 10},
+        });
 
 
         if (props.grtsCellId !== undefined) {

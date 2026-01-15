@@ -32,7 +32,6 @@ export default defineComponent({
     const checkLogin = async () => {
       if (oauthClient.isLoggedIn) {
         loginText.value = "Logout";
-        await loadConfiguration();
         await loadCurrentUser();
         await loadReviewerMaterials();
         if (sharedList.value.length === 0) {
@@ -52,7 +51,8 @@ export default defineComponent({
         oauthClient.redirectToLogin();
       }
     };
-    onMounted(() => {
+    onMounted(async () => {
+      await loadConfiguration();
       checkLogin();
     });
     router.afterEach((guard) => {

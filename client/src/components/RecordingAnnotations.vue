@@ -309,14 +309,4 @@ export default defineComponent({
 .selected {
   background-color: cyan;
 }
-
-.annotation-list {
-  max-height: 85vh;
-  overflow-y: auto;
-}
-
-.recording-list {
-  max-height: 85vh;
-  overflow-y: auto;
-}
 </style>

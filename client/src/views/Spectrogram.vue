@@ -639,8 +639,8 @@ export default defineComponent({
             v-if="configuration.mark_annotations_completed_enabled"
           >
             <v-col>
-              <v-row>
-                <v-col>
+              <v-row dense>
+                <v-col dense>
                   <span class="text-h6">
                     Vetting Controls
                   </span>
@@ -658,12 +658,15 @@ export default defineComponent({
                   </v-tooltip>
                 </v-col>
               </v-row>
-              <v-row>
+              <v-row dense>
                 <v-col>
                   <reference-materials-dialog />
                 </v-col>
               </v-row>
-              <v-row v-if="nextUnsubmittedRecordingId">
+              <v-row
+                v-if="nextUnsubmittedRecordingId"
+                dense
+              >
                 <v-col>
                   <v-btn
                     flat
@@ -701,24 +704,21 @@ export default defineComponent({
               />
             </v-col>
           </div>
-          <div v-if="sideTab === 'annotations'">
-            <annotation-list
-              :annotations="annotations"
-              :sequence-annotations="sequenceAnnotations"
-              :selected-annotation="selectedAnnotation"
-              :species="speciesList"
-              :recording-id="id"
-              @select="processSelection($event)"
-              @update:annotation="getAnnotationsList()"
-              @delete:annotation="
-                getAnnotationsList();
-                selectedId = null;
-              "
-            />
-          </div>
-          <div v-else-if="sideTab === 'recordings'">
-            <recording-list />
-          </div>
+          <annotation-list
+            v-if="sideTab === 'annotations'"
+            :annotations="annotations"
+            :sequence-annotations="sequenceAnnotations"
+            :selected-annotation="selectedAnnotation"
+            :species="speciesList"
+            :recording-id="id"
+            @select="processSelection($event)"
+            @update:annotation="getAnnotationsList()"
+            @delete:annotation="
+              getAnnotationsList();
+              selectedId = null;
+            "
+          />
+          <recording-list v-else />
         </v-card-text>
       </v-card>
     </v-col>

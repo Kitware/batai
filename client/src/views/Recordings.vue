@@ -231,7 +231,7 @@ export default defineComponent({
       const userSubmittedAnnotation = recording.fileAnnotations.find((annotation: FileAnnotation) => (
         annotation.owner === currentUser.value && annotation.submitted
       ));
-      return userSubmittedAnnotation?.species[0]?.species_code;
+      return userSubmittedAnnotation?.species[0]?.species_code || '';
     }
 
     function addSubmittedColumns() {
@@ -285,10 +285,10 @@ export default defineComponent({
     });
 
     onMounted(async () => {
-      addSubmittedColumns();
-      hideDetailedMetadataColumns();
       await fetchRecordingTags();
       await fetchRecordings();
+      addSubmittedColumns();
+      hideDetailedMetadataColumns();
     });
 
     const uploadDone = () => {
@@ -582,24 +582,39 @@ export default defineComponent({
           v-if="configuration.mark_annotations_completed_enabled"
           #item.submitted="{ item }"
         >
-          <v-icon
-            v-if="currentUserSubmissionStatus(item) === 1"
-            color="success"
-          >
-            mdi-check
-          </v-icon>
-          <v-icon
-            v-else-if="currentUserSubmissionStatus(item) === -1"
-            color="error"
-          >
-            mdi-close
-          </v-icon>
-          <v-icon
-            v-else
-            color="warning"
-          >
-            mdi-circle-outline
-          </v-icon>
+          <v-tooltip v-if="currentUserSubmissionStatus(item) === 1">
+            <template #activator="{ props }">
+              <v-icon
+                v-bind="props"
+                color="success"
+              >
+                mdi-check
+              </v-icon>
+            </template>
+            You have submitted an annotation for this recording
+          </v-tooltip>
+          <v-tooltip v-else-if="currentUserSubmissionStatus(item) === 0">
+            <template #activator="{ props }">
+              <v-icon
+                v-bind="props"
+                color="warning"
+              >
+                mdi-circle-outline
+              </v-icon>
+            </template>
+            You have created an annotation, but it has not been submitted
+          </v-tooltip>
+          <v-tooltip v-else>
+            <template #activator="{ props }">
+              <v-icon
+                v-bind="props"
+                color="error"
+              >
+                mdi-close
+              </v-icon>
+            </template>
+            You have not created an annotation for this recording
+          </v-tooltip>
         </template>
         <template #bottom />
       </v-data-table>
