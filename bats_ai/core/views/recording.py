@@ -22,13 +22,13 @@ from bats_ai.core.models import (
     SequenceAnnotations,
     Species,
 )
+from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 from bats_ai.core.views.recording_tag import RecordingTagSchema
 from bats_ai.core.views.sequence_annotations import (
     SequenceAnnotationSchema,
     UpdateSequenceAnnotationSchema,
 )
 from bats_ai.core.views.species import SpeciesSchema
-from bats_ai.tasks.tasks import recording_compute_spectrogram
 from bats_ai.utils.spectrogram_utils import predict_from_compressed
 
 logger = logging.getLogger(__name__)

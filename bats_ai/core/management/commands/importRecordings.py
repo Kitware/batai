@@ -8,8 +8,8 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from bats_ai.core.models import Recording
+from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 from bats_ai.core.utils.guano_utils import extract_guano_metadata
-from bats_ai.tasks.tasks import recording_compute_spectrogram
 
 logger = logging.getLogger(__name__)
 

@@ -15,8 +15,8 @@ from ninja.pagination import paginate
 
 from bats_ai.core.models import ExportedAnnotationFile, ProcessingTask, ProcessingTaskType
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
-from bats_ai.tasks.nabat.nabat_export_task import export_nabat_annotations_task
-from bats_ai.tasks.nabat.nabat_update_species import update_nabat_species
+from bats_ai.core.tasks.nabat.nabat_export_task import export_nabat_annotations_task
+from bats_ai.core.tasks.nabat.nabat_update_species import update_nabat_species
 
 logger = logging.getLogger(__name__)
 
