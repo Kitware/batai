@@ -1,0 +1,9 @@
+_commit: v0.44.0
+_src_path: gh:kitware-resonant/cookiecutter-resonant
+core_app_name: core
+include_example_code: false
+project_name: bats-ai
+project_slug: bats-ai
+python_package_name: bats_ai
+site_domain: www.bats-ai.test
+use_asgi: false
