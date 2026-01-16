@@ -289,7 +289,7 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
       this.lineData.push(line);
 
       this.textData.push({
-        text: `${(tick.value / 1000).toFixed(0)}KHz`,
+        text: `${(tick.value / 1000).toFixed(0)}kHz`,
         x: gcsTextStart,
         y,
         textAlign: 'left',

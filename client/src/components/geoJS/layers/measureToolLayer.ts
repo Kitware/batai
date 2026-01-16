@@ -164,7 +164,7 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     const frequency = height - this.yValue >= 0
       ? ((height - newY) * (this.spectroInfo.high_freq - this.spectroInfo.low_freq)) / height / 1000 + this.spectroInfo.low_freq / 1000
       : -1;
-    const textValue = `${frequency.toFixed(1)}KHz`;
+    const textValue = `${frequency.toFixed(1)}kHz`;
     const { x: textX, y: textY } = this._getTextCoordinates();
     this.textData = [
       {

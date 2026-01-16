@@ -15,7 +15,7 @@ export default defineComponent({
   },
   setup() {
     // Reactive state for the settings
-    const tab: Ref<'admin' | 'nabat'> = ref('admin');
+    const tab: Ref<'admin' | 'nabat' | 'vetting'> = ref('admin');
     const { colorSchemes, configuration, loadConfiguration } = useState();
     const settings = reactive({
       displayPulseAnnotations: configuration.value.display_pulse_annotations,
@@ -25,6 +25,8 @@ export default defineComponent({
       spectrogramView: configuration.value.spectrogram_view,
       defaultColorScheme: configuration.value.default_color_scheme,
       defaultBackgroundColor: configuration.value.default_spectrogram_background_color,
+      nonAdminUploadEnabled: configuration.value.non_admin_upload_enabled,
+      markAnnotationsCompletedEnabled: configuration.value.mark_annotations_completed_enabled,
     });
     const spectrogramViewOptions = [
       { title: 'Compressed', value: 'compressed' },
@@ -37,7 +39,8 @@ export default defineComponent({
       settings.spectrogramXStretch = configuration.value.spectrogram_x_stretch;
       settings.defaultColorScheme = configuration.value.default_color_scheme;
       settings.defaultBackgroundColor = configuration.value.default_spectrogram_background_color;
-      settings.spectrogramView = configuration.value.spectrogram_view;
+      settings.nonAdminUploadEnabled = configuration.value.non_admin_upload_enabled;
+      settings.markAnnotationsCompletedEnabled = configuration.value.mark_annotations_completed_enabled;
     });
     // Function to save the settings
     const saveSettings = async () => {
@@ -50,6 +53,8 @@ export default defineComponent({
         default_color_scheme: settings.defaultColorScheme,
         default_spectrogram_background_color: settings.defaultBackgroundColor,
         spectrogram_view: settings.spectrogramView,
+        non_admin_upload_enabled: settings.nonAdminUploadEnabled,
+        mark_annotations_completed_enabled: settings.markAnnotationsCompletedEnabled,
       });
       loadConfiguration();
     };
@@ -82,6 +87,12 @@ export default defineComponent({
         size="small"
       >
         NABat Admin
+      </v-tab>
+      <v-tab
+        value="vetting"
+        size="small"
+      >
+        Vetting
       </v-tab>
     </v-tabs>
 
@@ -179,6 +190,37 @@ export default defineComponent({
       </v-window-item>
       <v-window-item value="nabat">
         <NABatAdmin />
+      </v-window-item>
+      <v-window-item value="vetting">
+        <v-card-title>Vetting</v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-switch
+              v-model="settings.nonAdminUploadEnabled"
+              :color="settings.nonAdminUploadEnabled ? 'primary': ''"
+              label="Allow uploads by non-admin users"
+            />
+          </v-row>
+          <v-row>
+            <v-switch
+              v-model="settings.markAnnotationsCompletedEnabled"
+              :color="settings.markAnnotationsCompletedEnabled ? 'primary' : ''"
+              label="Enable submitting file-level annotations by marking them complete"
+            />
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-row>
+            <v-btn
+              color="primary"
+              variant="outlined"
+              class="mx-2"
+              @click="saveSettings"
+            >
+              Save
+            </v-btn>
+          </v-row>
+        </v-card-actions>
       </v-window-item>
     </v-window>
   </v-card>

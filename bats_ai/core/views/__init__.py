@@ -9,6 +9,7 @@ from .recording_annotation import router as RecordingAnnotationRouter
 from .recording_tag import router as RecordingTagRouter
 from .sequence_annotations import router as SequenceAnnotationRouter
 from .species import router as SpeciesRouter
+from .vetting_details import router as VettingRouter
 
 __all__ = [
     'RecordingRouter',
@@ -22,4 +23,5 @@ __all__ = [
     'ProcessingTaskRouter',
     'ExportAnnotationRouter',
     'RecordingTagRouter',
+    'VettingRouter',
 ]

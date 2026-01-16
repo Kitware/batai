@@ -8,6 +8,7 @@ import {
   ref,
   watch,
 } from "vue";
+import { useRouter } from "vue-router";
 import {
   getSpecies,
   getAnnotations,
@@ -24,8 +25,9 @@ import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import RecordingList from "@components/RecordingList.vue";
 import OtherUserAnnotationsDialog from "@/components/OtherUserAnnotationsDialog.vue";
 import ColorSchemeDialog from "@/components/ColorSchemeDialog.vue";
-import useState from "@use/useState";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
+import ReferenceMaterialsDialog from "@/components/ReferenceMaterialsDialog.vue";
+import useState from "@use/useState";
 export default defineComponent({
   name: "Spectrogram",
   components: {
@@ -36,6 +38,7 @@ export default defineComponent({
     RecordingList,
     OtherUserAnnotationsDialog,
     ColorSchemeDialog,
+    ReferenceMaterialsDialog,
   },
   props: {
     id: {
@@ -70,7 +73,11 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
+      nextUnsubmittedRecordingId,
+      previousUnsubmittedRecordingId,
+      currentRecordingId,
     } = useState();
+    const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const speciesList: Ref<Species[]> = ref([]);
@@ -117,6 +124,7 @@ export default defineComponent({
     const loading = ref(false);
     const loadData = async () => {
       loading.value = true;
+      currentRecordingId.value = parseInt(props.id);
       loadedImage.value = false;
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
@@ -162,8 +170,8 @@ export default defineComponent({
       }
       const speciesResponse = await getSpecies();
       // Removing NOISE species from list and any duplicates
-      speciesList.value = speciesResponse.data.filter(
-        (value, index, self) => value.species_code !== "NOISE" && index === self.findIndex((t) => t.species_code === value.species_code)
+      speciesList.value = speciesResponse.data .filter(
+        (value, index, self) => index === self.findIndex((t) => t.species_code === value.species_code)
       );
       if (response.data.otherUsers && spectroInfo.value) {
         // We have other users so we should grab the other user annotations
@@ -264,7 +272,16 @@ export default defineComponent({
       viewCompressedOverlay.value = !viewCompressedOverlay.value;
     };
 
+    function goToNextUnreviewed() {
+      router.push({path: `/recording/${nextUnsubmittedRecordingId.value}/spectrogram`, replace: true });
+    }
+
+    function goToPreviousUnreviewed() {
+      router.push({ path: `/recording/${previousUnsubmittedRecordingId.value}/spectrogram`, replace: true });
+    }
+
     return {
+      configuration,
       annotationState,
       compressed,
       loadedImage,
@@ -308,6 +325,10 @@ export default defineComponent({
       colorScale,
       scaledVals,
       recordingInfo,
+      // Vetting
+      goToNextUnreviewed,
+      goToPreviousUnreviewed,
+      nextUnsubmittedRecordingId,
     };
   },
 });
@@ -614,24 +635,90 @@ export default defineComponent({
           </v-row>
         </v-card-title>
         <v-card-text class="pa-0">
-          <div v-if="sideTab === 'annotations'">
-            <annotation-list
-              :annotations="annotations"
-              :sequence-annotations="sequenceAnnotations"
-              :selected-annotation="selectedAnnotation"
-              :species="speciesList"
-              :recording-id="id"
-              @select="processSelection($event)"
-              @update:annotation="getAnnotationsList()"
-              @delete:annotation="
-                getAnnotationsList();
-                selectedId = null;
-              "
-            />
+          <div
+            v-if="configuration.mark_annotations_completed_enabled"
+          >
+            <v-col>
+              <v-row dense>
+                <v-col dense>
+                  <span class="text-h6">
+                    Vetting Controls
+                  </span>
+                  <v-tooltip>
+                    <template #activator="{ props }">
+                      <v-icon
+                        v-bind="props"
+                        class="pb-2"
+                        size="medium"
+                      >
+                        mdi-help-circle
+                      </v-icon>
+                    </template>
+                    Navigate between unreviewed files
+                  </v-tooltip>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <reference-materials-dialog />
+                </v-col>
+              </v-row>
+              <v-row
+                v-if="nextUnsubmittedRecordingId"
+                dense
+              >
+                <v-col>
+                  <v-btn
+                    flat
+                    color="primary"
+                    @click="goToPreviousUnreviewed"
+                  >
+                    Prev
+                    <template #prepend>
+                      <v-icon>mdi-arrow-left</v-icon>
+                    </template>
+                  </v-btn>
+                </v-col>
+                <v-spacer />
+                <v-col>
+                  <v-btn
+                    flat
+                    color="primary"
+                    @click="goToNextUnreviewed"
+                  >
+                    Next
+                    <template #append>
+                      <v-icon>mdi-arrow-right</v-icon>
+                    </template>
+                  </v-btn>
+                </v-col>
+              </v-row>
+              <v-row v-else>
+                <v-col>
+                  There are no more files to review
+                </v-col>
+              </v-row>
+              <v-divider
+
+                class="my-2"
+              />
+            </v-col>
           </div>
-          <div v-else-if="sideTab === 'recordings'">
-            <recording-list />
-          </div>
+          <annotation-list
+            v-if="sideTab === 'annotations'"
+            :annotations="annotations"
+            :sequence-annotations="sequenceAnnotations"
+            :selected-annotation="selectedAnnotation"
+            :species="speciesList"
+            :recording-id="id"
+            @select="processSelection($event)"
+            @update:annotation="getAnnotationsList()"
+            @delete:annotation="
+              getAnnotationsList();
+              selectedId = null;
+            "
+          />
+          <recording-list v-else />
         </v-card-text>
       </v-card>
     </v-col>

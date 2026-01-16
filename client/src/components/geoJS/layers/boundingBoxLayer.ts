@@ -118,14 +118,14 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
         textBaseline: 'top',
       },
       {
-        text: `${(lowFreq / 1000).toFixed(1)}KHz`,
+        text: `${(lowFreq / 1000).toFixed(1)}kHz`,
         x: coordinates[3][0] + 5,
         y: coordinates[3][1],
         textAlign: 'start',
         textBaseline: 'middle',
       },
       {
-        text: `${(highFreq / 1000).toFixed(1)}KHz`,
+        text: `${(highFreq / 1000).toFixed(1)}kHz`,
         x: coordinates[2][0] + 5,
         y: coordinates[2][1],
         textAlign: 'start',

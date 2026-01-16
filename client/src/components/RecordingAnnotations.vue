@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent, onMounted, PropType, Ref } from "vue";
+import { computed, defineComponent, onMounted, PropType, Ref, watch } from "vue";
 import { ref } from "vue";
 import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "@api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
@@ -38,7 +38,7 @@ export default defineComponent({
     const annotations: Ref<FileAnnotation[]> = ref([]);
     const detailsDialog = ref(false);
     const detailRecordingId = ref(-1);
-    const { configuration, isNaBat } = useState();
+    const { configuration, isNaBat, currentUser, markAnnotationSubmitted } = useState();
 
     const setSelectedId = (annotation: FileAnnotation) => {
       selectedAnnotation.value = annotation;
@@ -56,6 +56,11 @@ export default defineComponent({
       }
     };
 
+    watch(() => props.recordingId, async () => {
+      selectedAnnotation.value = null;
+      await loadFileAnnotations();
+    });
+
     onMounted(async () => {
       await loadFileAnnotations();
       if (props.type  === 'nabat') {
@@ -68,7 +73,6 @@ export default defineComponent({
           }
         }
       }
-
     });
 
     const addAnnotation = async () => {
@@ -101,12 +105,30 @@ export default defineComponent({
       }
     };
 
+    function handleSubmitAnnotation(annotation: FileAnnotation, submitSuccess: boolean) {
+      if (submitSuccess) {
+        annotation.submitted = true;
+        // Also update submitted status on the recording object
+        // This forces recomputation of allRecordings
+        markAnnotationSubmitted(props.recordingId, annotation.id);
+      }
+    }
+
     const loadDetails = async (id: number) => {
       detailRecordingId.value = id;
       detailsDialog.value = true;
     };
 
     const isAdmin = computed(() => configuration.value.is_admin);
+
+    const userSubmittedAnnotationId = computed(() => {
+      if (!configuration.value.mark_annotations_completed_enabled) {
+        return undefined;
+      }
+      const userAnnotations = annotations.value.filter((annotation: FileAnnotation) => annotation.owner === currentUser.value);
+      const submittedAnnotation = userAnnotations.find((annotation: FileAnnotation) => annotation.submitted);
+      return submittedAnnotation?.id;
+    });
 
     const disableNaBatAnnotations = computed(() => {
       const currentUserAnnotations = annotations.value.filter((item) => item.owner === currentNaBatUser.value);
@@ -134,6 +156,8 @@ export default defineComponent({
       detailRecordingId,
       disableNaBatAnnotations,
       currentNaBatUser,
+      userSubmittedAnnotationId,
+      handleSubmitAnnotation,
     };
   },
 });
@@ -142,8 +166,22 @@ export default defineComponent({
 <template>
   <div>
     <v-row class="pa-4">
-      <v-col v-if="!isNaBat()">
-        Annotations
+      <v-col
+        v-if="!isNaBat()"
+        cols="6"
+      >
+        <v-row>
+          Annotations
+        </v-row>
+        <v-row
+          v-if="userSubmittedAnnotationId"
+          class="mt-8"
+        >
+          <b>File Reviewed</b>
+          <v-icon color="success">
+            mdi-check
+          </v-icon>
+        </v-row>
       </v-col>
       <v-spacer />
       <v-col v-if="!isNaBat() || !disableNaBatAnnotations">
@@ -183,6 +221,12 @@ export default defineComponent({
           <v-col class="annotation-model">
             <span>{{ annotation.model }} </span>
           </v-col>
+          <v-col v-if="annotation.submitted">
+            Submitted
+            <v-icon color="success">
+              mdi-check
+            </v-icon>
+          </v-col>
         </v-row>
         <v-row
           v-for="item in annotation.species"
@@ -211,10 +255,12 @@ export default defineComponent({
       :recording-id="recordingId"
       :annotation="selectedAnnotation"
       :api-token="apiToken"
+      :submitted-annotation-id="userSubmittedAnnotationId"
       :type="type"
       class="mt-4"
       @update:annotation="updatedAnnotation()"
       @delete:annotation="updatedAnnotation(true)"
+      @submit:annotation="handleSubmitAnnotation"
     />
     <v-dialog
       v-model="detailsDialog"
@@ -262,15 +308,5 @@ export default defineComponent({
 
 .selected {
   background-color: cyan;
-}
-
-.annotation-list {
-  max-height: 85vh;
-  overflow-y: auto;
-}
-
-.recording-list {
-  max-height: 85vh;
-  overflow-y: auto;
 }
 </style>
