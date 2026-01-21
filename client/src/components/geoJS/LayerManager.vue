@@ -455,6 +455,7 @@ export default defineComponent({
         triggerUpdate();
       }
     );
+    watch(() => props.recordingId, () => computedPulseAnnotations.value = []);
     watch(viewContours, async () => {
       if (props.thumbnail) {
         return;
