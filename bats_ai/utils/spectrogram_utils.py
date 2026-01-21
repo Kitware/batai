@@ -32,14 +32,12 @@ FREQ_PAD = 2e3
 
 class SpectrogramAssetResult(TypedDict):
     paths: list[str]
-    vectors: list[str]
     width: int
     height: int
 
 
 class SpectrogramCompressedAssetResult(TypedDict):
     paths: list[str]
-    vectors: list[str]
     width: int
     height: int
     widths: list[float]
@@ -237,19 +235,16 @@ def generate_spectrogram_assets(
         os.path.splitext(os.path.basename(output_base))[0] + '_spectrogram',
     )
     os.makedirs(os.path.dirname(normal_out_path_base), exist_ok=True)
-    normal_paths, vector_paths = save_img(normal_img_resized, normal_out_path_base)
+    normal_paths = save_img(normal_img_resized, normal_out_path_base)
     real_duration = math.ceil(duration * 1e3)
     (
         compressed_img,
         compressed_paths,
-        compressed_vector_paths,
         widths,
         starts,
         stops,
         contours,
-    ) = (
-        generate_compressed(normal_img_resized, real_duration, output_base)
-    )
+    ) = generate_compressed(normal_img_resized, real_duration, output_base)
 
     result = {
         'duration': real_duration,
@@ -257,13 +252,11 @@ def generate_spectrogram_assets(
         'freq_max': freq_high,
         'normal': {
             'paths': normal_paths,
-            'vectors': vector_paths,
             'width': normal_img_resized.shape[1],
             'height': normal_img_resized.shape[0],
         },
         'compressed': {
             'paths': compressed_paths,
-            'vectors': compressed_vector_paths,
             'width': compressed_img.shape[1],
             'height': compressed_img.shape[0],
             'widths': widths,
@@ -272,30 +265,24 @@ def generate_spectrogram_assets(
         },
     }
     if contours:
-        result["contours"] = contours
+        result['contours'] = contours
 
     return result
 
 
 def generate_pulse_contours(segments: list[np.ndarray], widths: list):
-    logger.info(f"Generating pulse contours for {len(segments)} pulses")
+    logger.info(f'Generating pulse contours for {len(segments)} pulses')
     contours = []
     with tempfile.TemporaryDirectory() as tmpdir:
         for index, segment in enumerate(segments):
             # Save the NDArray as a file in the tempdir
-            out_img = Image.fromarray(segment, "RGB")
-            segment_path = f"{tmpdir}/{index}.jpg"
-            out_img.save(segment_path, format="JPEG", optimize=True, quality=80)
+            out_img = Image.fromarray(segment, 'RGB')
+            segment_path = f'{tmpdir}/{index}.jpg'
+            out_img.save(segment_path, format='JPEG', optimize=True, quality=80)
             # Generate marching square contours from temp file
-            np_contours = extract_marching_squares_contours(
-                segment_path,
-                "",
-                save_to_file=False
-            )
-            logger.info(f"Generated {len(np_contours)} for pulse {index}")
-            segment_contours = [
-                {"curve": c[0].tolist(), "level": c[1]} for c in np_contours
-            ]
+            np_contours = extract_marching_squares_contours(segment_path, '', save_to_file=False)
+            logger.info(f'Generated {len(np_contours)} for pulse {index}')
+            segment_contours = [{'curve': c[0].tolist(), 'level': c[1]} for c in np_contours]
             contours.append(segment_contours)
     return contours
 
@@ -407,9 +394,9 @@ def generate_compressed(img: np.ndarray, duration: float, output_base: str):
     compressed_out_path = os.path.join(out_folder, f'{base_name}_compressed')
 
     # save_img should be your existing function to save images and return file paths
-    paths, vector_paths = save_img(compressed_img, compressed_out_path)
+    paths = save_img(compressed_img, compressed_out_path)
 
-    return compressed_img, paths, vector_paths, widths, starts_time, stops_time, contours
+    return compressed_img, paths, widths, starts_time, stops_time, contours
 
 
 def save_img(img: np.ndarray, output_base: str):
@@ -422,7 +409,7 @@ def save_img(img: np.ndarray, output_base: str):
     )
     total = len(chunks)
     output_paths = []
-    output_svg_paths = []
+    # output_svg_paths = []
     for index, chunk in enumerate(chunks):
         out_path = f'{output_base}.{index + 1:02d}_of_{total:02d}.jpg'
         out_img = Image.fromarray(chunk, 'RGB')
@@ -430,12 +417,12 @@ def save_img(img: np.ndarray, output_base: str):
         output_paths.append(out_path)
         logger.info(f'Saved image: {out_path}')
 
-        svg_path = f'{output_base}.{index + 1:02d}_of_{total:02d}.svg'
-        try:
-            extract_marching_squares_contours(out_path, svg_path)
-            output_svg_paths.append(svg_path)
-            logger.info(f'Saved SVG {svg_path}')
-        except Exception as e:
-            logger.error(f'Failed to create SVG for {out_path}. {e}')
+    #         svg_path = f'{output_base}.{index + 1:02d}_of_{total:02d}.svg'
+    #         try:
+    #             extract_marching_squares_contours(out_path, svg_path)
+    #             output_svg_paths.append(svg_path)
+    #             logger.info(f'Saved SVG {svg_path}')
+    #         except Exception as e:
+    #             logger.error(f'Failed to create SVG for {out_path}. {e}')
 
-    return output_paths, output_svg_paths
+    return output_paths  # , output_svg_paths

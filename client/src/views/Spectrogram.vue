@@ -130,14 +130,6 @@ export default defineComponent({
     const loading = ref(false);
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
 
-    /**
-    const createImages = () => {
-      if (!spectrogramData.value) return;
-
-
-    };
-    */
-
     const loadData = async () => {
       loading.value = true;
       currentRecordingId.value = parseInt(props.id);
@@ -147,10 +139,8 @@ export default defineComponent({
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
       spectrogramData.value = response.data;
-      if (spectrogramData.value.vectors.length) {
-        const urls = viewContours
-          ? spectrogramData.value.urls // vectors
-          : spectrogramData.value.urls;
+      if (spectrogramData.value.urls.length) {
+        const urls = spectrogramData.value.urls;
         images.value = [];
         allImagesLoaded.value = [];
         loadedImage.value = false;

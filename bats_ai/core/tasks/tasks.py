@@ -16,7 +16,6 @@ from bats_ai.core.models import (
     Species,
     Spectrogram,
     SpectrogramImage,
-    SpectrogramSvg,
 )
 from bats_ai.utils.spectrogram_utils import generate_spectrogram_assets, predict_from_compressed
 
@@ -54,18 +53,6 @@ def recording_compute_spectrogram(recording_id: int):
                     },
                 )
 
-        for idx, svg_path in enumerate(results['normal']['vectors']):
-            with open(svg_path, 'rb') as f:
-                SpectrogramSvg.objects.get_or_create(
-                    content_type=ContentType.objects.get_for_model(spectrogram),
-                    object_id=spectrogram.id,
-                    index=idx,
-                    defaults={
-                        'type': 'spectrogram',
-                        'image_file': File(f, name=os.path.basename(svg_path)),
-                    },
-                )
-
         # Create or get CompressedSpectrogram
         compressed = results['compressed']
         compressed_obj, _ = CompressedSpectrogram.objects.get_or_create(
@@ -93,22 +80,9 @@ def recording_compute_spectrogram(recording_id: int):
                     },
                 )
 
-        for idx, svg_path in enumerate(compressed['vectors']):
-            with open(svg_path, 'rb') as f:
-                SpectrogramSvg.objects.get_or_create(
-                    content_type=ContentType.objects.get_for_model(compressed_obj),
-                    object_id=compressed_obj.id,
-                    index=idx,
-                    defaults={
-                        'image_file': File(f, name=os.path.basename(svg_path)),
-                        'type': 'compressed',
-                    },
-                )
-
         # Generate computed annotations for contours
         logger.info(
-            "Adding contour and bounding boxes for "
-            f"{len(results.get('contours', []))} pulses"
+            'Adding contour and bounding boxes for ' f'{len(results.get("contours", []))} pulses'
         )
         for idx, contour in enumerate(results.get('contours', [])):
             # Transform contour (x, y) pairs into (time, freq) pairs
@@ -123,26 +97,26 @@ def recording_compute_spectrogram(recording_id: int):
                 new_curve = [
                     [
                         point[0] * time_per_pixel + start_time,
-                        results['freq_max'] - (point[1] * mhz_per_pixel)
+                        results['freq_max'] - (point[1] * mhz_per_pixel),
                     ]
-                    for point in contour_line["curve"]
+                    for point in contour_line['curve']
                 ]
-                transformed_lines.append({
-                    "curve": new_curve,
-                    "level": contour_line["level"],
-                    "index": idx
-                })
+                transformed_lines.append(
+                    {'curve': new_curve, 'level': contour_line['level'], 'index': idx}
+                )
             ComputedPulseAnnotation.objects.get_or_create(
                 index=idx,
                 recording=recording,
                 contours=transformed_lines,
-                bounding_box=Polygon((
-                    (start_time, results['freq_max']),
-                    (end_time, results['freq_max']),
-                    (end_time, results['freq_min']),
-                    (start_time, results['freq_min']),
-                    (start_time, results['freq_max']),
-                )),
+                bounding_box=Polygon(
+                    (
+                        (start_time, results['freq_max']),
+                        (end_time, results['freq_max']),
+                        (end_time, results['freq_min']),
+                        (start_time, results['freq_min']),
+                        (start_time, results['freq_max']),
+                    )
+                ),
             )
 
         config = Configuration.objects.first()

@@ -153,7 +153,7 @@ def polygon_area(points: np.ndarray) -> float:
 
 # This function smooths a contour using spline interpolation.
 def smooth_contour_spline(contour, smoothing_factor=0.1):
-    """Smooth contour using spline interpolation"""
+    """Smooth contour using spline interpolation."""
     # Reshape contour
     if contour.ndim != 2 or contour.shape[1] != 2:
         if contour.size % 2 == 0:
@@ -213,7 +213,7 @@ def save_contours_to_svg(
     colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#F7B267', '#CDB4DB']
 
     if reference_image is not None and reference_image.shape[:2] != (height, width):
-        raise ValueError("reference_image shape does not match image_shape")
+        raise ValueError('reference_image shape does not match image_shape')
 
     def color_from_image(points, fallback_color):
         if reference_image is None:
@@ -254,13 +254,13 @@ def save_contours_to_svg(
             mean_bgr = region.mean(axis=0)
 
         r, g, b = [int(np.clip(c, 0, 255)) for c in mean_bgr[::-1]]
-        return f"#{r:02X}{g:02X}{b:02X}"
+        return f'#{r:02X}{g:02X}{b:02X}'
 
     # Draw lower levels first so higher ones sit on top
     contours_with_levels_sorted = sorted(contours_with_levels, key=lambda x: x[1])
     logger.info(f'Sorted contours length: {len(contours_with_levels_sorted)}')
 
-    for i, (contour, level) in enumerate(contours_with_levels_sorted):
+    for i, (contour, _level) in enumerate(contours_with_levels_sorted):
         # logger.info(f'Attempting to add path for level {level}')
         pts = contour.tolist()
         if len(pts) < 3:
@@ -268,11 +268,11 @@ def save_contours_to_svg(
 
         # Build a simple closed path (straight segments). Beziers look nice for strokes
         # but can self-intersect when filled; straight segments are safer for fills.
-        d = [f"M {pts[0][0]},{pts[0][1]}"]
+        d = [f'M {pts[0][0]},{pts[0][1]}']
         for j in range(1, len(pts)):
-            d.append(f"L {pts[j][0]},{pts[j][1]}")
-        d.append("Z")
-        path_data = " ".join(d)
+            d.append(f'L {pts[j][0]},{pts[j][1]}')
+        d.append('Z')
+        path_data = ' '.join(d)
 
         fallback = colors[i % len(colors)]
         fill_color = color_from_image(np.array(pts), fallback)
@@ -292,7 +292,7 @@ def save_contours_to_svg(
         dwg.add(path)
 
     dwg.save()
-    logger.info(f"Saved smooth filled contours to {output_path}")
+    logger.info(f'Saved smooth filled contours to {output_path}')
 
 
 def extract_marching_squares_contours(
@@ -336,7 +336,7 @@ def extract_marching_squares_contours(
             hist_max_levels=hist_max_levels,
         )
         if verbose:
-            logger.info(f"Marching squares levels ({levels_mode}): {levels}")
+            logger.info(f'Marching squares levels ({levels_mode}): {levels}')
 
     marching_contours = []
 
