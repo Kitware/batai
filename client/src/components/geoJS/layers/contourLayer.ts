@@ -10,12 +10,6 @@ interface ContourPoint {
   z: number;
 }
 
-interface LineData {
-  coord: number[][];
-  strokeColor?: string;
-  level?: number;
-}
-
 export default class ContourLayer {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   geoViewerRef: any;
@@ -29,9 +23,6 @@ export default class ContourLayer {
   contourLayer: any;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  contourFeature: any;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   features: any[];
 
   colorScheme: (t: number) => string;
@@ -42,12 +33,15 @@ export default class ContourLayer {
 
   scaledWidth: number;
 
+  computedPulseAnnotations: ComputedPulseAnnotation[];
+
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo,
+    computedPulseAnnotations: ComputedPulseAnnotation[],
     colorScheme: (t: number) => string,
   ) {
     this.geoViewerRef = geoViewerRef;
@@ -56,6 +50,8 @@ export default class ContourLayer {
     this.scaledHeight = this.spectroInfo.height;
     this.scaledWidth = this.spectroInfo.width;
     this.colorScheme = colorScheme;
+    this.computedPulseAnnotations = computedPulseAnnotations;
+    this.features = [];
     this.maxLevel = 0;
     this.init();
   }
@@ -63,53 +59,20 @@ export default class ContourLayer {
   setScaledDimensions(scaledWidth: number, scaledHeight: number) {
     this.scaledWidth = scaledWidth;
     this.scaledHeight = scaledHeight;
+    this.removeContours();
+    this.drawContours();
   }
 
   init() {
-    this.contourLayer = this.geoViewerRef.createLayer('feature');
-    this.contourFeature = this.contourLayer.createFeature('contour');
-    this.features = [];
+    if (!this.contourLayer) {
+      this.contourLayer = this.geoViewerRef.createLayer('feature');
+    }
   }
 
-  drawContoursForPulse(pulse: Contour[]) {
-    const data: ContourPoint[] = [];
-    pulse.forEach((contour: Contour) => {
-      contour.curve.forEach((point: number[]) => {
-        data.push(this.getTransformedContourPoint(point, contour.level, contour.index));
-      });
-    });
-    const feature = this.contourLayer.createFeature('contour');
-    feature
-      .data(data)
-      .draw();
-    this.features.push(feature);
-  }
-
-  drawLinesForPulse(pulse: Contour[]) {
-    const lineData: LineData[] = [];
-    pulse.forEach((contour: Contour) => {
-      const coord: number[][] = [];
-      contour.curve.forEach((point: number[]) => {
-        const contourPoint = this.getTransformedContourPoint(point, contour.level, contour.index);
-        coord.push([contourPoint.x, contourPoint.y]);
-      });
-      lineData.push({ coord, strokeColor: 'yellow', level: contour.level });
-    });
-    const lineFeature = this.contourLayer.createFeature('line');
-    lineFeature
-      .data(lineData)
-      .line((item: LineData) => item.coord)
-      .position((item: number[]) => ({ x: item[0], y: item[1] }))
-      .style({
-        strokeColor: (_vertex: number[], _vertexIndex: number, item: LineData) => {
-          if (!this.colorScheme) return 'yellow';
-          return this.colorScheme((item.level || 0) / this.maxLevel);
-        },
-        strokeWidth: 2,
-        closed: true,
-      })
-      .draw();
-    this.features.push(lineFeature);
+  destroy() {
+    if (this.contourLayer) {
+      this.geoViewerRef.deleteLayer(this.contourLayer);
+    }
   }
 
   drawPolygonsForPulse(pulse: Contour[]) {
@@ -128,19 +91,12 @@ export default class ContourLayer {
     polygonFeature
       .data(polyData)
       .position((item: number[]) => ({ x: item[0], y: item[1] }))
-      .style({
-        uniformPolygon: true,
-        stroke: false,
-        fillColor: (_val: number, _idx: number, coords: number[][]) => {
-          return this.colorScheme((coords[0][2] ||0) / this.maxLevel);
-        },
-        fillOpacity: 1.0,
-      })
+      .style(this.getContourStyle())
       .draw();
     this.features.push(polygonFeature);
   }
 
-  removeFeatures() {
+  removeContours() {
     if (!this.contourLayer) return;
     this.features.forEach((feature) => {
       feature.data([]).draw();
@@ -148,13 +104,13 @@ export default class ContourLayer {
     this.contourLayer.draw();
   }
 
-  drawContours(computedPulseAnnotations: ComputedPulseAnnotation[]) {
-    computedPulseAnnotations.forEach((annotation: ComputedPulseAnnotation) => annotation.contours.forEach((contour: Contour) => {
+  drawContours() {
+    this.computedPulseAnnotations.forEach((annotation: ComputedPulseAnnotation) => annotation.contours.forEach((contour: Contour) => {
       if (contour.level > this.maxLevel) {
         this.maxLevel = contour.level;
       }
     }));
-    computedPulseAnnotations.forEach((pulseAnnotation: ComputedPulseAnnotation) => this.drawPolygonsForPulse(pulseAnnotation.contours));
+    this.computedPulseAnnotations.forEach((pulseAnnotation: ComputedPulseAnnotation) => this.drawPolygonsForPulse(pulseAnnotation.contours));
   }
 
    getTransformedContourPoint(point: number[], level: number, index: number): ContourPoint {
@@ -219,8 +175,19 @@ export default class ContourLayer {
 
   getContourStyle() {
     return {
-      strokeColor: 'yellow',
-      strokeWidth: 2,
+      uniformPolygon: true,
+      stroke: false,
+      fillColor: (_val: number, _idx: number, coords: number[][]) => {
+        return  this.colorScheme((coords[0][2] || 0) / this.maxLevel);
+      },
+      fillOpacity: 1.0,
     };
+  }
+
+  setColorScheme(colorScheme: (t: number) => string) {
+    this.colorScheme = colorScheme;
+    // Redraw
+    this.removeContours();
+    this.drawContours();
   }
 }

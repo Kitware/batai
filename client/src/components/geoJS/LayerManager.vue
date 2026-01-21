@@ -466,20 +466,20 @@ export default defineComponent({
       if (computedPulseAnnotations.value.length === 0) {
         await loadContours(new Number(props.recordingId) as number);
       }
-      // initialize the layer/destroy the layer idk
       if (!contourLayer) {
         contourLayer = new ContourLayer(
           props.geoViewerRef,
           event,
           props.spectroInfo,
+          computedPulseAnnotations.value,
           colorScheme.value.scheme,
         );
       }
       contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (viewContours.value) {
-        contourLayer.drawContours(computedPulseAnnotations.value);
+        contourLayer.drawContours();
       } else {
-        contourLayer.removeFeatures();
+        contourLayer.removeContours();
       }
     });
     onUnmounted(() => {
@@ -736,6 +736,7 @@ export default defineComponent({
       // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
       legendLayer?.onPan();
       axesLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      contourLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
     });
     watch(viewCompressedOverlay, () => {
       if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
@@ -807,6 +808,9 @@ export default defineComponent({
       }
       if (boundingBoxLayer) {
         boundingBoxLayer.setTextColor(textColor);
+      }
+      if (contourLayer) {
+        contourLayer.setColorScheme(colorScheme.value.scheme);
       }
     }
 
