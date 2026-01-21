@@ -73,7 +73,6 @@ jobs:
       - name: Install system dependencies
         run: >-
           sudo apt-get install --no-install-recommends --yes \
-            libgdal-dev \
             libproj-dev
 
       - name: Checkout repository

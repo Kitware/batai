@@ -43,6 +43,7 @@ dependencies = [
     "opencv-python-headless",
     "tqdm",
     # guano metadata
+    "gdal",
     "guano",
     "django_celery_results",
     # Production-only
@@ -112,6 +113,14 @@ constraint-dependencies = [
   # its compatability with "numpy", which led to incorrect versions of "numpy".
   "numba >= 0.61.0",
 ]
+
+[[tool.uv.index]]
+name = "large_image_wheels"
+url = "https://girder.github.io/large_image_wheels/"
+explicit = true
+
+[tool.uv.sources]
+gdal = { index = "large_image_wheels" }
 
 [tool.black]
 line-length = 100

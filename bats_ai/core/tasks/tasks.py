@@ -2,12 +2,11 @@ import logging
 import os
 import tempfile
 
-from PIL import Image
-from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Polygon
 from django.core.files import File
 
+from bats_ai.celery import app
 from bats_ai.core.models import (
     CompressedSpectrogram,
     ComputedPulseAnnotation,
@@ -25,14 +24,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
 
 
-@shared_task
-def image_compute_checksum(image_id: int):
-    image = Image.objects.get(pk=image_id)
-    image.compute_checksum()
-    image.save()
-
-
-@shared_task
+@app.task
 def recording_compute_spectrogram(recording_id: int):
     recording = Recording.objects.get(pk=recording_id)
 

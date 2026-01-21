@@ -23,13 +23,13 @@ from bats_ai.core.models import (
     SequenceAnnotations,
     Species,
 )
+from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 from bats_ai.core.views.recording_tag import RecordingTagSchema
 from bats_ai.core.views.sequence_annotations import (
     SequenceAnnotationSchema,
     UpdateSequenceAnnotationSchema,
 )
 from bats_ai.core.views.species import SpeciesSchema
-from bats_ai.tasks.tasks import recording_compute_spectrogram
 from bats_ai.utils.spectrogram_utils import predict_from_compressed
 
 logger = logging.getLogger(__name__)
@@ -77,6 +77,7 @@ class RecordingAnnotationSchema(Schema):
     confidence: float
     id: int | None = None
     hasDetails: bool
+    submitted: bool
 
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
@@ -88,6 +89,7 @@ class RecordingAnnotationSchema(Schema):
             model=obj.model,
             id=obj.pk,
             hasDetails=obj.additional_data is not None,
+            submitted=obj.submitted,
         )
 
 
@@ -263,19 +265,21 @@ def delete_recording(
 
 
 @router.get('/')
-def get_recordings(request: HttpRequest, public: bool | None = None):
+def get_recordings(
+    request: HttpRequest, public: bool | None = None, exclude_submitted: bool | None = None
+):
     # Filter recordings based on the owner's id or public=True
     if public is not None and public:
         recordings = (
             Recording.objects.filter(public=True)
             .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
-            .annotate(tags_text=ArrayAgg('tags__text'))
+            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
             .values()
         )
     else:
         recordings = (
             Recording.objects.filter(owner=request.user)
-            .annotate(tags_text=ArrayAgg('tags__text'))
+            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
             .values()
         )
 
@@ -307,6 +311,16 @@ def get_recordings(request: HttpRequest, public: bool | None = None):
         )
         recording['userMadeAnnotations'] = user_has_annotations
 
+    if exclude_submitted:
+        recordings = [
+            recording
+            for recording in recordings
+            if not any(
+                annotation['submitted'] and annotation['owner'] == request.user.username
+                for annotation in recording['fileAnnotations']
+            )
+        ]
+
     return list(recordings)
 
 
@@ -315,7 +329,9 @@ def get_recording(request: HttpRequest, id: int):
     # Filter recordings based on the owner's id or public=True
     try:
         recordings = (
-            Recording.objects.filter(pk=id).annotate(tags_text=ArrayAgg('tags__text')).values()
+            Recording.objects.filter(pk=id)
+            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
+            .values()
         )
         if len(recordings) > 0:
             recording = recordings[0]

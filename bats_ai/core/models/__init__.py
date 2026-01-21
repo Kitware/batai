@@ -3,7 +3,6 @@ from .compressed_spectrogram import CompressedSpectrogram
 from .configuration import Configuration
 from .exported_file import ExportedAnnotationFile
 from .grts_cells import GRTSCells
-from .image import Image
 from .processing_task import ProcessingTask, ProcessingTaskType
 from .pulse_annotation import ComputedPulseAnnotation
 from .recording import Recording, RecordingTag
@@ -14,10 +13,10 @@ from .species import Species
 from .spectrogram import Spectrogram
 from .spectrogram_image import SpectrogramImage
 from .spectrogram_vector import SpectrogramSvg
+from .vetting_details import VettingDetails
 
 __all__ = [
     'Annotations',
-    'Image',
     'Recording',
     'RecordingTag',
     'RecordingAnnotationStatus',
@@ -34,4 +33,5 @@ __all__ = [
     'SpectrogramImage',
     'SpectrogramSvg',
     'ComputedPulseAnnotation',
+    'VettingDetails',
 ]

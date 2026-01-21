@@ -6,6 +6,7 @@ from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 import django_stubs_ext
 from environ import Env
+import osgeo
 from resonant_settings.allauth import *
 from resonant_settings.celery import *
 from resonant_settings.django import *
@@ -123,3 +124,6 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 86400,  # every 24 hours (in seconds)
     },
 }
+
+GDAL_LIBRARY_PATH = osgeo.GDAL_LIBRARY_PATH
+GEOS_LIBRARY_PATH = osgeo.GEOS_LIBRARY_PATH

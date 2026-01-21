@@ -14,6 +14,7 @@ class RecordingAnnotationAdmin(admin.ModelAdmin):
         'additional_data',
         'comments',
         'model',
+        'submitted',
     ]
     list_select_related = True
     filter_horizontal = ('species',)  # or filter_vertical

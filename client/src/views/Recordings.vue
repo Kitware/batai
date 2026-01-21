@@ -9,8 +9,10 @@ import {
 import {
   deleteRecording,
   getRecordings,
-  Recording ,
+  Recording,
+  FileAnnotation,
   getRecordingTags,
+  getConfiguration,
 } from '../api/api';
 import UploadRecording, { EditingRecording } from '@components/UploadRecording.vue';
 import MapLocation from '@components/MapLocation.vue';
@@ -21,22 +23,37 @@ import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.v
 import { FilterFunction, InternalItem } from 'vuetify';
 
 export default defineComponent({
-    components: {
-        UploadRecording,
-        MapLocation,
-        BatchUploadRecording,
-        RecordingInfoDisplay,
-        RecordingAnnotationSummary,
-    },
+  components: {
+    UploadRecording,
+    MapLocation,
+    BatchUploadRecording,
+    RecordingInfoDisplay,
+    RecordingAnnotationSummary,
+  },
   setup() {
     const itemsPerPage = ref(-1);
-    const { sharedList, recordingList, recordingTagList } = useState();
+    const {
+      sharedList,
+      recordingList,
+      recordingTagList,
+      currentUser,
+      configuration,
+      showSubmittedRecordings,
+      submittedMyRecordings,
+      submittedSharedRecordings,
+      myRecordingsDisplay,
+      sharedRecordingsDisplay,
+    } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
     let intervalRef: number | null = null;
 
     const uploadDialog = ref(false);
     const batchUploadDialog = ref(false);
-    const headers = ref([
+    const headers: Ref<{
+      title: string,
+      key: string,
+      value?: (item: Recording) => boolean | string | number,
+    }[]> = ref([
         {
           title:'Name',
           key: 'name',
@@ -74,7 +91,7 @@ export default defineComponent({
           key:'comments'
         },
         {
-          title:'Users Annotated',
+          title:'User Pulse Annotations',
           key:'userAnnotations',
         },
         {
@@ -200,9 +217,78 @@ export default defineComponent({
       return filterTagSet.intersection(itemTagSet).size > 0;
     };
 
+    function currentUserSubmissionStatus(recording: Recording) {
+      const userAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.model === 'User Defined'
+      ));
+      if (userAnnotations.find((annotation: FileAnnotation) => annotation.submitted)) {
+        return 1;
+      }
+      return userAnnotations.length ? 0 : -1;
+    }
+
+    function currentUserSubmission(recording: Recording) {
+      const userSubmittedAnnotation = recording.fileAnnotations.find((annotation: FileAnnotation) => (
+        annotation.owner === currentUser.value && annotation.submitted
+      ));
+      return userSubmittedAnnotation?.species[0]?.species_code || '';
+    }
+
+    function addSubmittedColumns() {
+      if (configuration.value.mark_annotations_completed_enabled) {
+        const submittedHeader = {
+          title: 'Submission Status',
+          key: 'submitted',
+          value: currentUserSubmissionStatus,
+        };
+        const myLabelHeader = {
+          title: 'My Submitted Label',
+          key: 'submittedLabel',
+          value: currentUserSubmission,
+        };
+        headers.value.push(submittedHeader, myLabelHeader);
+        sharedHeaders.value.push(submittedHeader, myLabelHeader);
+      }
+    }
+
+    function hideDetailedMetadataColumns() {
+      if (!configuration.value.mark_annotations_completed_enabled) return;
+      const filterDetailedMetadataFunction = (val: { key: string }) => (
+        !['comments', 'details', 'annotation', 'userAnnotations'].includes(val.key)
+      );
+      headers.value = headers.value.filter(filterDetailedMetadataFunction);
+      sharedHeaders.value = sharedHeaders.value.filter(filterDetailedMetadataFunction);
+    }
+
+    const myRecordingListStyles = computed(() => {
+      const sectionHeight = configuration.value.mark_annotations_completed_enabled ? '35vh' : '40vh';
+      return {
+        'height': sectionHeight,
+        'max-height': sectionHeight,
+      };
+    });
+
+    const sharedRecordingListStyles = computed(() => {
+      let sectionHeight: string;
+      if (configuration.value.mark_annotations_completed_enabled) {
+        sectionHeight = '35vh';
+      } else {
+        sectionHeight = '40vh';
+      }
+      if (!configuration.value.is_admin && !configuration.value.non_admin_upload_enabled) {
+        sectionHeight = '75vh';
+      }
+      return {
+        'height': sectionHeight,
+        'max-height': sectionHeight,
+      };
+    });
+
     onMounted(async () => {
       await fetchRecordingTags();
       await fetchRecordings();
+      addSubmittedColumns();
+      hideDetailedMetadataColumns();
     });
 
     const uploadDone = () => {
@@ -273,6 +359,16 @@ export default defineComponent({
         recordingToDelete,
         editingRecording,
         dataLoading,
+        currentUserSubmission,
+        currentUserSubmissionStatus,
+        configuration,
+        submittedMyRecordings,
+        submittedSharedRecordings,
+        myRecordingListStyles,
+        sharedRecordingListStyles,
+        showSubmittedRecordings,
+        myRecordingsDisplay,
+        sharedRecordingsDisplay,
      };
   },
 });
@@ -281,31 +377,39 @@ export default defineComponent({
 <template>
   <v-card>
     <v-card-title>
-      <v-row class="py-2">
-        <div>
+      <v-row>
+        <div v-if="configuration.is_admin || configuration.non_admin_upload_enabled">
           My Recordings
         </div>
         <v-spacer />
-        <v-menu>
-          <template #activator="{ props }">
-            <v-btn
-              color="primary"
-              v-bind="props"
-            >
-              Upload <v-icon>mdi-chevron-down</v-icon>
-            </v-btn>
-          </template>
-          <v-list>
-            <v-list-item @click="uploadDialog=true">
-              <v-list-item-title>Upload Recording</v-list-item-title>
-            </v-list-item>
-            <v-list-item @click="batchUploadDialog=true">
-              <v-list-item-title>
-                Batch Upload
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
+        <div class="d-flex justify-center align-center">
+          <v-checkbox
+            v-model="showSubmittedRecordings"
+            class="mr-4"
+            label="Show submitted recordings"
+            hide-details
+          />
+          <v-menu v-if="configuration.is_admin || configuration.non_admin_upload_enabled">
+            <template #activator="{ props }">
+              <v-btn
+                color="primary"
+                v-bind="props"
+              >
+                Upload <v-icon>mdi-chevron-down</v-icon>
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item @click="uploadDialog=true">
+                <v-list-item-title>Upload Recording</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="batchUploadDialog=true">
+                <v-list-item-title>
+                  Batch Upload
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </div>
       </v-row>
     </v-card-title>
     <v-card-text>
@@ -335,15 +439,17 @@ export default defineComponent({
         </v-card>
       </v-dialog>
       <v-data-table
+        v-if="configuration.is_admin || configuration.non_admin_upload_enabled"
         v-model:items-per-page="itemsPerPage"
         :headers="headers"
-        :items="recordingList"
+        :items="myRecordingsDisplay"
         :custom-filter="tagFilter"
         filter-keys="['tag']"
         :search="filterTags.length ? 'seach-active' : ''"
         density="compact"
         :loading="dataLoading"
         class="elevation-1 my-recordings"
+        :style="myRecordingListStyles"
       >
         <template #top>
           <div max-height="100px">
@@ -426,6 +532,7 @@ export default defineComponent({
                 :editor="false"
                 :size="{width: 400, height: 400}"
                 :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
+                :grts-cell-id="configuration.mark_annotations_completed_enabled ? item.grts_cell_id || undefined : undefined"
               />
             </v-card>
           </v-menu>
@@ -450,6 +557,7 @@ export default defineComponent({
             </template>
             <recording-info-display
               :recording-info="item"
+              :minimal-metadata="configuration.mark_annotations_completed_enabled"
               disable-button
             />
           </v-menu>
@@ -469,8 +577,66 @@ export default defineComponent({
             mdi-close
           </v-icon>
         </template>
+
+        <template
+          v-if="configuration.mark_annotations_completed_enabled"
+          #item.submitted="{ item }"
+        >
+          <v-tooltip v-if="currentUserSubmissionStatus(item) === 1">
+            <template #activator="{ props }">
+              <v-icon
+                v-bind="props"
+                color="success"
+              >
+                mdi-check
+              </v-icon>
+            </template>
+            You have submitted an annotation for this recording
+          </v-tooltip>
+          <v-tooltip v-else-if="currentUserSubmissionStatus(item) === 0">
+            <template #activator="{ props }">
+              <v-icon
+                v-bind="props"
+                color="warning"
+              >
+                mdi-circle-outline
+              </v-icon>
+            </template>
+            You have created an annotation, but it has not been submitted
+          </v-tooltip>
+          <v-tooltip v-else>
+            <template #activator="{ props }">
+              <v-icon
+                v-bind="props"
+                color="error"
+              >
+                mdi-close
+              </v-icon>
+            </template>
+            You have not created an annotation for this recording
+          </v-tooltip>
+        </template>
         <template #bottom />
       </v-data-table>
+      <div
+        v-if="
+          recordingList.length
+            && configuration.mark_annotations_completed_enabled
+            && (configuration.is_admin || configuration.non_admin_upload_enabled)
+        "
+        class="d-flex justify-center align-center"
+      >
+        <v-progress-linear
+          height="10"
+          color="success"
+          :model-value="submittedMyRecordings.length"
+          min="0"
+          :max="recordingList.length"
+        />
+        <span class="ml-4 text-h6">
+          ({{ submittedMyRecordings.length }}/{{ recordingList.length }})
+        </span>
+      </div>
     </v-card-text>
     <v-dialog
       v-model="uploadDialog"
@@ -504,13 +670,14 @@ export default defineComponent({
       <v-data-table
         v-model:items-per-page="itemsPerPage"
         :headers="sharedHeaders"
-        :items="sharedList"
+        :items="sharedRecordingsDisplay"
         :custom-filter="sharedTagFilter"
         filter-keys="['tag']"
         :search="sharedFilterTags.length ? 'seach-active' : ''"
         :loading="dataLoading"
         density="compact"
         class="elevation-1 shared-recordings"
+        :style="sharedRecordingListStyles"
       >
         <template #top>
           <div max-height="100px">
@@ -567,6 +734,7 @@ export default defineComponent({
                 :editor="false"
                 :size="{width: 400, height: 400}"
                 :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
+                :grts-cell-id="configuration.mark_annotations_completed_enabled ? item.grts_cell_id || undefined : undefined"
               />
             </v-card>
           </v-menu>
@@ -610,21 +778,71 @@ export default defineComponent({
             mdi-close
           </v-icon>
         </template>
+
+        <template
+          v-if="configuration.mark_annotations_completed_enabled"
+          #item.submitted="{ item }"
+        >
+          <v-tooltip v-if="currentUserSubmissionStatus(item) === 1">
+            <template #activator="{ props }">
+              <v-icon
+                v-bind="props"
+                color="success"
+              >
+                mdi-check
+              </v-icon>
+            </template>
+            You have submitted an annotation for this recording
+          </v-tooltip>
+          <v-tooltip v-else-if="currentUserSubmissionStatus(item) === 0">
+            <template #activator="{ props }">
+              <v-icon
+                v-bind="props"
+                color="warning"
+              >
+                mdi-circle-outline
+              </v-icon>
+            </template>
+            You have created an annotation, but it has not been submitted
+          </v-tooltip>
+          <v-tooltip v-else>
+            <template #activator="{ props }">
+              <v-icon
+                v-bind="props"
+                color="error"
+              >
+                mdi-close
+              </v-icon>
+            </template>
+            You have not created an annotation for this recording
+          </v-tooltip>
+        </template>
         <template #bottom />
       </v-data-table>
+      <div
+        v-if="sharedList.length && configuration.mark_annotations_completed_enabled"
+        class="d-flex justify-center align-center"
+      >
+        <v-progress-linear
+          height="10"
+          color="success"
+          :model-value="submittedSharedRecordings.length"
+          min="0"
+          :max="sharedList.length"
+        />
+        <span class="ml-4 text-h6">
+          ({{ submittedSharedRecordings.length }}/{{ sharedList.length }})
+        </span>
+      </div>
     </v-card-text>
   </v-card>
 </template>
 
 <style scoped>
 .my-recordings {
-  height: 40vh;
-  max-height: 40vh;
   overflow-y:scroll;
 }
 .shared-recordings {
-  height: 40vh;
-  max-height: 40vh;
   overflow-y:scroll;
 }
 </style>

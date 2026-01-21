@@ -3,7 +3,6 @@ from .compressed_spectrogram import CompressedSpectrogramAdmin
 from .configuration import ConfigurationAdmin
 from .exported_annotation import ExportedAnnotationFileAdmin
 from .grts_cells import GRTSCellsAdmin
-from .image import ImageAdmin
 from .nabat.admin import (
     NABatCompressedSpectrogramAdmin,
     NABatRecordingAdmin,
@@ -20,10 +19,10 @@ from .species import SpeciesAdmin
 from .spectrogram import SpectrogramAdmin
 from .spectrogram_image import SpectrogramImageAdmin
 from .spectrogram_svg import SpectrogramSvgAdmin
+from .vetting_details import VettingDetailsAdmin
 
 __all__ = [
     'AnnotationsAdmin',
-    'ImageAdmin',
     'RecordingAdmin',
     'SpectrogramAdmin',
     'SequenceAnnotationsAdmin',
@@ -37,6 +36,7 @@ __all__ = [
     'ExportedAnnotationFileAdmin',
     'SpectrogramImageAdmin',
     'SpectrogramSvgAdmin',
+    'VettingDetailsAdmin',
     # NABat Models
     'NABatRecordingAnnotationAdmin',
     'NABatCompressedSpectrogramAdmin',
