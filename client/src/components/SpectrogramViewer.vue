@@ -36,7 +36,8 @@ export default defineComponent({
       scaledVals,
       configuration,
       scaledWidth,
-      scaledHeight
+      scaledHeight,
+      viewContours,
     } = useState();
 
     const containerRef: Ref<HTMLElement | undefined> = ref();
@@ -226,6 +227,16 @@ export default defineComponent({
     };
 
     onUnmounted(() => geoJS.destroyGeoViewer());
+
+    watch(viewContours, () => {
+      // If the user has chosen to look at the contours, hide
+      // the images.
+      if (viewContours.value) {
+        geoJS.clearQuadFeatures(true);
+      } else if (props.images.length) {
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
+      }
+    });
 
     return {
       containerRef,
