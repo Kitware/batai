@@ -120,7 +120,7 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
-batbot = { git = "https://github.com/kitware/batbot" }
+batbot = { path = "../batbot", editable = true }
 
 
 [tool.black]

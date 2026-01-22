@@ -1,10 +1,24 @@
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "batbot",
+#     "click",
+#     "pydantic",
+# ]
+#
+# [tool.uv.sources]
+# batbot = { path = "../../../batbot", editable = true }
+# ///
 from contextlib import contextmanager
 import json
 import os
+from os.path import exists
 from pathlib import Path
 from typing import Any, TypedDict
 
 import batbot
+from batbot import log
+import click
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -193,9 +207,9 @@ def convert_to_compressed_spectrogram_data(metadata: BatbotMetadata) -> Compress
     # If we have segments, use them to determine which parts are kept
     if metadata.segments:
         for segment in metadata.segments:
-            starts_ms.append(segment.start_ms)
-            stops_ms.append(segment.end_ms)
-            time = segment.end_ms - segment.start_ms
+            starts_ms.append(round(segment.start_ms))
+            stops_ms.append(round(segment.end_ms))
+            time = round(segment.end_ms) - round(segment.start_ms)
             segment_times.append(time)
             total_time += time
             # Calculate width in compressed space
@@ -210,9 +224,9 @@ def convert_to_compressed_spectrogram_data(metadata: BatbotMetadata) -> Compress
         widths_px_compressed = [compressed_width]
 
     return CompressedSpectrogramData(
-        starts=starts_ms,
-        stops=stops_ms,
-        widths=widths_px_compressed,
+        starts=[starts_ms],
+        stops=[stops_ms],
+        widths=[widths_px_compressed],
     )
 
 
@@ -282,3 +296,92 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
         },
     }
     return result
+
+
+def pipeline_filepath_validator(ctx, param, value):
+    if not exists(value):
+        log.error(f'Input filepath does not exist: {value}')
+        ctx.exit()
+    return value
+
+
+@click.command('pipeline')
+@click.argument(
+    'filepath',
+    nargs=1,
+    type=str,
+    callback=pipeline_filepath_validator,
+)
+@click.option(
+    '--config',
+    help='Which ML model to use for inference',
+    default=None,
+    type=click.Choice(['usgs']),
+)
+@click.option(
+    '--output',
+    'output_path',
+    help='Path to output Folder',
+    default=None,
+    type=str,
+)
+def pipeline(
+    filepath,
+    config,
+    output_path,
+):
+    """
+    Run the BatBot pipeline on an input WAV filepath.
+
+    An example output of the JSON can be seen below.
+
+    .. code-block:: javascript
+
+            {
+                '/path/to/file.wav': {
+                    'classifier': 0.5,
+                }
+            }
+    """
+    if config is not None:
+        config = config.strip().lower()
+    # classifier_thresh /= 100.0
+
+    results = generate_spectrogram_assets(filepath, output_folder=output_path)
+    # save the assets to a json file
+    with open(Path(output_path) / 'spectrogram_assets.json', 'w') as f:
+        json.dump(results, f, indent=4)
+
+
+@click.command('metadata')
+@click.argument(
+    'metadata_filepath',
+    nargs=1,
+    type=str,
+    callback=pipeline_filepath_validator,
+)
+def metadata(metadata_filepath):
+    """Parse and display BatBot metadata JSON file."""
+    metadata = parse_batbot_metadata(metadata_filepath)
+    print(len(metadata.segments), 'segments found.')
+    convert_to_spectrogram_data(metadata)
+    compressed_data = convert_to_compressed_spectrogram_data(metadata)
+
+    # dump spectrogram assets
+
+    # dump compressed spectrogram assets
+    with open(Path(metadata_filepath).with_suffix('.compressed_spectrogram_data.json'), 'w') as f:
+        json.dump(compressed_data.model_dump(), f, indent=4)
+
+
+@click.group()
+def cli():
+    """Batbot CLI."""
+
+
+cli.add_command(pipeline)
+cli.add_command(metadata)
+
+
+if __name__ == '__main__':
+    cli()

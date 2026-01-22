@@ -1,12 +1,12 @@
+# BatBot Integration Notes
+
 BatBot has some git lfs issues with installing initially
 requires the `UV_GIT_LFS=1` to be set
 As well as `GIT_LFS_SKIP_SMUDGE=1`
 
-
 Batbot data exported:
 Files of the structure: '01of01.compressed.jpg'
 Also for uncompressed is '01of02.jpg' and '02of02.jpg'
-
 
 There us a metadata.json file that is exported out from the code
 
@@ -20,12 +20,28 @@ It needs to be converted into the widths, starts, stops, and length
 
 From there we have the total width and the total time for the invidiual segments we can calulate a pixels/ms
 
-Might need to see if we can change it so that the sytstem instead uses a way where we use the raw time and don't use the invividual widths at all for calculations.  This may require some front end work as well.
+Might need to see if we can change it so that the sytstem instead uses a way where we use the raw time and
+don't use the invividual widths at all for calculations.  This may require some front end work as well.
 
+Tasks:
 
-Taks:
+- ~~Add batbot dependency to UV installation~~
+- ~~Swap spectrogram creation to use batbot pipeline without a config~~
+- ~~Create a converter to calculate the length, starts, stops, widths~~
 
-- Add batbot dependency to UV installation
-- Swap spectrogram creation to use batbot pipeline without a config
-- Create a converter to calculate the length, starts, stops, widths
-- Determine if widths are needed or just a universal 
+Updates:
+
+- batbot is added a dependency
+- tasks.py is updated so that the utilities the new batbot function to create spectrograms
+- inference is disabled
+
+TODO:
+
+- Remove older generation code from the system
+- remove inference code from the system
+- Remove the local installation of batbot once updated from:
+  - docker-compose.overrride.yml
+  - pyproject.toml
+  - uv.lock
+- Can temporarily use my branch on the repo (issue-4-output-folder-option)
+- Update sample script uv dependencies when batbot is published
