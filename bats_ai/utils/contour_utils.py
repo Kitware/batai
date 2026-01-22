@@ -304,7 +304,7 @@ def extract_marching_squares_contours(
     min_area=500,
     smoothing_factor=0.08,
     levels_mode='percentile',
-    percentile_values=(90, 95, 98),
+    percentile_values=(90, 92, 94, 96, 98),
     min_intensity=1.0,
     multi_otsu_classes=4,
     hist_bins=512,
