@@ -173,7 +173,7 @@ wheels = [
 [[package]]
 name = "batbot"
 version = "0.1.0"
-source = { editable = "../batbot" }
+source = { git = "https://github.com/Kitware/batbot#0fdf8b93540662c5f642705c50ce9aa991ba6036" }
 dependencies = [
     { name = "click" },
     { name = "cryptography" },
@@ -193,33 +193,6 @@ dependencies = [
     { name = "sphinx-click" },
     { name = "tqdm" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "click" },
-    { name = "cryptography" },
-    { name = "cython" },
-    { name = "librosa" },
-    { name = "line-profiler" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "opencv-python-headless" },
-    { name = "pillow" },
-    { name = "pooch" },
-    { name = "pyastar2d", git = "https://github.com/bluemellophone/batbot-pyastar2d?rev=master" },
-    { name = "pycodestyle", marker = "extra == 'all'" },
-    { name = "pycodestyle", marker = "extra == 'test'" },
-    { name = "pytest", marker = "extra == 'all'", specifier = ">=6.2.2" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=6.2.2" },
-    { name = "pytest-cov", marker = "extra == 'all'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
-    { name = "rich" },
-    { name = "scikit-image" },
-    { name = "shapely" },
-    { name = "sphinx-click" },
-    { name = "tqdm" },
-]
-provides-extras = ["test", "all"]
 
 [[package]]
 name = "bats-ai"
@@ -309,7 +282,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batbot", editable = "../batbot" },
+    { name = "batbot", git = "https://github.com/Kitware/batbot" },
     { name = "celery" },
     { name = "django", extras = ["argon2"], specifier = ">=4.2,<5" },
     { name = "django-allauth" },

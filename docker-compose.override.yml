@@ -14,7 +14,6 @@ services:
     working_dir: /opt/django-project
     volumes:
       - .:/opt/django-project
-      - ../batbot:/opt/batbot
       - uv_cache:/var/cache/uv
     ports:
       - 8000:8000
@@ -45,7 +44,6 @@ services:
     working_dir: /opt/django-project
     volumes:
       - .:/opt/django-project
-      - ../batbot:/opt/batbot
       - uv_cache:/var/cache/uv
     depends_on:
       postgres:

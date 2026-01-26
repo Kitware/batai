@@ -7,7 +7,7 @@
 # ]
 #
 # [tool.uv.sources]
-# batbot = { path = "../../../batbot", editable = true }
+# batbot = { git = "https://github.com/Kitware/batbot" }
 # ///
 from contextlib import contextmanager
 import json
