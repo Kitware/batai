@@ -78,7 +78,7 @@ export default defineComponent({
       drawingBoundingBox,
       boundingBoxError,
       fixedAxes,
-      viewContours,
+      spectrogramContentMode,
       loadContours,
       computedPulseAnnotations,
     } = useState();
@@ -456,7 +456,7 @@ export default defineComponent({
       }
     );
     watch(() => props.recordingId, () => computedPulseAnnotations.value = []);
-    watch(viewContours, async () => {
+    watch(spectrogramContentMode, async () => {
       if (props.thumbnail) {
         return;
       }
@@ -477,7 +477,7 @@ export default defineComponent({
         );
       }
       contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      if (viewContours.value) {
+      if (spectrogramContentMode.value === 'contour' || spectrogramContentMode.value === 'both') {
         contourLayer.drawContours();
       } else {
         contourLayer.removeContours();

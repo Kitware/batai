@@ -28,6 +28,7 @@ import OtherUserAnnotationsDialog from "@/components/OtherUserAnnotationsDialog.
 import ColorSchemeDialog from "@/components/ColorSchemeDialog.vue";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import ReferenceMaterialsDialog from "@/components/ReferenceMaterialsDialog.vue";
+import SpectrogramImageContentMenu from "@/components/SpectrogramImageContentMenu.vue";
 import useState from "@use/useState";
 export default defineComponent({
   name: "Spectrogram",
@@ -40,6 +41,7 @@ export default defineComponent({
     OtherUserAnnotationsDialog,
     ColorSchemeDialog,
     ReferenceMaterialsDialog,
+    SpectrogramImageContentMenu,
   },
   props: {
     id: {
@@ -74,9 +76,9 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
-      viewContours,
+      spectrogramContentMode,
       contoursLoading,
-      toggleViewContours,
+      setSpectrogramContentMode,
       clearContours,
       nextUnsubmittedRecordingId,
       previousUnsubmittedRecordingId,
@@ -290,6 +292,14 @@ export default defineComponent({
       router.push({ path: `/recording/${previousUnsubmittedRecordingId.value}/spectrogram`, replace: true });
     }
 
+    function toggleContentMode() {
+      if (spectrogramContentMode.value === 'image') {
+        setSpectrogramContentMode('contour');
+      } else {
+        setSpectrogramContentMode('image');
+      }
+    }
+
     return {
       configuration,
       annotationState,
@@ -328,8 +338,8 @@ export default defineComponent({
       boundingBoxError,
       fixedAxes,
       toggleFixedAxes,
-      viewContours,
-      toggleViewContours,
+      spectrogramContentMode,
+      toggleContentMode,
       contoursLoading,
       // Other user selection
       otherUserAnnotations,
@@ -580,28 +590,9 @@ export default defineComponent({
             <div class="mt-4 mr-4">
               <color-scheme-dialog />
             </div>
-            <v-tooltip>
-              <template #activator="{ props: subProps }">
-                <v-icon
-                  v-if="!contoursLoading"
-                  v-bind="subProps"
-                  size="25"
-                  :color="viewContours ? 'blue' : ''"
-                  class="mt-4 mr-2"
-                  @click="toggleViewContours"
-                >
-                  mdi-vector-curve
-                </v-icon>
-                <v-progress-circular
-                  v-else
-                  indeterminate
-                  size="25"
-                  class="mt-4 mr-2"
-                  color="primary"
-                />
-              </template>
-              <span>Toggle between smooth contour and raw image</span>
-            </v-tooltip>
+            <div class="mt-4 mr-2">
+              <spectrogram-image-content-menu />
+            </div>
           </v-row>
         </v-container>
       </v-toolbar>

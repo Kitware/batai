@@ -37,7 +37,7 @@ export default defineComponent({
       configuration,
       scaledWidth,
       scaledHeight,
-      viewContours,
+      spectrogramContentMode,
     } = useState();
 
     const containerRef: Ref<HTMLElement | undefined> = ref();
@@ -228,10 +228,10 @@ export default defineComponent({
 
     onUnmounted(() => geoJS.destroyGeoViewer());
 
-    watch(viewContours, () => {
+    watch(spectrogramContentMode, () => {
       // If the user has chosen to look at the contours, hide
       // the images.
-      if (viewContours.value) {
+      if (spectrogramContentMode.value === 'contour') {
         geoJS.clearQuadFeatures(true);
       } else if (props.images.length) {
           geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);

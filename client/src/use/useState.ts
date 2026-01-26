@@ -16,6 +16,7 @@ import {
   FileAnnotation,
   getVettingDetailsForUser,
 } from "../api/api";
+import { SpectrogramView } from "@/constants";
 import {
   interpolateCividis,
   interpolateViridis,
@@ -89,10 +90,10 @@ const toggleFixedAxes = () => {
 };
 
 const computedPulseAnnotations: Ref<ComputedPulseAnnotation[]> = ref([]);
-const viewContours = ref(false);
+const spectrogramContentMode = ref('image' as SpectrogramView);
 const contoursLoading = ref(false);
-const toggleViewContours = () => {
-  viewContours.value = !viewContours.value;
+const setSpectrogramContentMode = (newVal: SpectrogramView) => {
+  spectrogramContentMode.value = newVal;
 };
 async function loadContours(recordingId: number) {
   contoursLoading.value = true;
@@ -363,9 +364,9 @@ export default function useState() {
     scaledHeight,
     fixedAxes,
     toggleFixedAxes,
-    viewContours,
+    spectrogramContentMode,
     contoursLoading,
-    toggleViewContours,
+    setSpectrogramContentMode,
     loadContours,
     clearContours,
     computedPulseAnnotations,
