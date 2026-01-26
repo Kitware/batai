@@ -89,6 +89,7 @@ def recording_compute_spectrogram(recording_id: int):
                 )
 
         config = Configuration.objects.first()
+        # TODO: Disabled until prediction is in batbot
         if config and config.run_inference_on_upload and False:
             predict_results = predict_from_compressed(compressed_obj)
             label = predict_results['label']

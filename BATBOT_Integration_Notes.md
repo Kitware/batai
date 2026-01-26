@@ -37,7 +37,7 @@ Updates:
 
 TODO:
 
-- Remove older generation code from the system
+- ~~Remove older generation code from the system~~
 - remove inference code from the system
 - Remove the local installation of batbot once updated from:
   - docker-compose.overrride.yml
