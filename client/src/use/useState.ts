@@ -11,9 +11,12 @@ import {
   SpectrogramAnnotation,
   SpectrogramSequenceAnnotation,
   RecordingTag,
+  getComputedPulseAnnotations,
+  ComputedPulseAnnotation,
   FileAnnotation,
   getVettingDetailsForUser,
 } from "../api/api";
+import { SpectrogramView } from "@/constants";
 import {
   interpolateCividis,
   interpolateViridis,
@@ -85,6 +88,21 @@ const fixedAxes = ref(true);
 const toggleFixedAxes = () => {
   fixedAxes.value = !fixedAxes.value;
 };
+
+const computedPulseAnnotations: Ref<ComputedPulseAnnotation[]> = ref([]);
+const spectrogramContentMode = ref('image' as SpectrogramView);
+const contoursLoading = ref(false);
+const setSpectrogramContentMode = (newVal: SpectrogramView) => {
+  spectrogramContentMode.value = newVal;
+};
+async function loadContours(recordingId: number) {
+  contoursLoading.value = true;
+  computedPulseAnnotations.value = await getComputedPulseAnnotations(recordingId);
+  contoursLoading.value = false;
+}
+function clearContours() {
+  computedPulseAnnotations.value = [];
+}
 
 const reviewerMaterials = ref('');
 
@@ -346,6 +364,12 @@ export default function useState() {
     scaledHeight,
     fixedAxes,
     toggleFixedAxes,
+    spectrogramContentMode,
+    contoursLoading,
+    setSpectrogramContentMode,
+    loadContours,
+    clearContours,
+    computedPulseAnnotations,
     showSubmittedRecordings,
     submittedMyRecordings,
     submittedSharedRecordings,

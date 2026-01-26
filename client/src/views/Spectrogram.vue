@@ -14,6 +14,7 @@ import {
   getAnnotations,
   getSpectrogram,
   Species,
+  Spectrogram,
   getSpectrogramCompressed,
   getOtherUserAnnotations,
   getSequenceAnnotations,
@@ -27,6 +28,7 @@ import OtherUserAnnotationsDialog from "@/components/OtherUserAnnotationsDialog.
 import ColorSchemeDialog from "@/components/ColorSchemeDialog.vue";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import ReferenceMaterialsDialog from "@/components/ReferenceMaterialsDialog.vue";
+import SpectrogramImageContentMenu from "@/components/SpectrogramImageContentMenu.vue";
 import useState from "@use/useState";
 export default defineComponent({
   name: "Spectrogram",
@@ -39,6 +41,7 @@ export default defineComponent({
     OtherUserAnnotationsDialog,
     ColorSchemeDialog,
     ReferenceMaterialsDialog,
+    SpectrogramImageContentMenu,
   },
   props: {
     id: {
@@ -73,6 +76,10 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
+      spectrogramContentMode,
+      contoursLoading,
+      setSpectrogramContentMode,
+      clearContours,
       nextUnsubmittedRecordingId,
       previousUnsubmittedRecordingId,
       currentRecordingId,
@@ -121,16 +128,21 @@ export default defineComponent({
       }
     };
 
+
     const loading = ref(false);
+    const spectrogramData: Ref<Spectrogram | null> = ref(null);
+
     const loadData = async () => {
       loading.value = true;
       currentRecordingId.value = parseInt(props.id);
       loadedImage.value = false;
+      clearContours();
       const response = compressed.value
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
-      if (response.data.urls.length) {
-        const urls = response.data.urls;
+      spectrogramData.value = response.data;
+      if (spectrogramData.value.urls.length) {
+        const urls = spectrogramData.value.urls;
         images.value = [];
         allImagesLoaded.value = [];
         loadedImage.value = false;
@@ -153,27 +165,27 @@ export default defineComponent({
         console.error("No URL found for the spectrogram");
       }
       spectroInfo.value = response.data["spectroInfo"];
-      if (response.data['compressed'] && spectroInfo.value) {
-        spectroInfo.value.start_times = response.data.compressed.start_times;
-        spectroInfo.value.end_times = response.data.compressed.end_times;
+      if (spectrogramData.value['compressed'] && spectroInfo.value) {
+        spectroInfo.value.start_times = spectrogramData.value.compressed.start_times;
+        spectroInfo.value.end_times = spectrogramData.value.compressed.end_times;
       }
       annotations.value =
-        response.data["annotations"]?.sort(
+        spectrogramData.value["annotations"]?.sort(
           (a, b) => a.start_time - b.start_time
         ) || [];
       sequenceAnnotations.value =
-        response.data["sequence"]?.sort(
+        spectrogramData.value["sequence"]?.sort(
           (a, b) => a.start_time - b.start_time
         ) || [];
-      if (response.data.currentUser) {
-        currentUser.value = response.data.currentUser;
+      if (spectrogramData.value.currentUser) {
+        currentUser.value = spectrogramData.value.currentUser;
       }
       const speciesResponse = await getSpecies();
       // Removing NOISE species from list and any duplicates
       speciesList.value = speciesResponse.data .filter(
         (value, index, self) => index === self.findIndex((t) => t.species_code === value.species_code)
       );
-      if (response.data.otherUsers && spectroInfo.value) {
+      if (spectrogramData.value.otherUsers && spectroInfo.value) {
         // We have other users so we should grab the other user annotations
         const otherResponse = await getOtherUserAnnotations(props.id);
         otherUserAnnotations.value = otherResponse.data;
@@ -280,6 +292,14 @@ export default defineComponent({
       router.push({ path: `/recording/${previousUnsubmittedRecordingId.value}/spectrogram`, replace: true });
     }
 
+    function toggleContentMode() {
+      if (spectrogramContentMode.value === 'image') {
+        setSpectrogramContentMode('contour');
+      } else {
+        setSpectrogramContentMode('image');
+      }
+    }
+
     return {
       configuration,
       annotationState,
@@ -318,6 +338,9 @@ export default defineComponent({
       boundingBoxError,
       fixedAxes,
       toggleFixedAxes,
+      spectrogramContentMode,
+      toggleContentMode,
+      contoursLoading,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -564,8 +587,11 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
-            <div class="mt-4">
+            <div class="mt-4 mr-4">
               <color-scheme-dialog />
+            </div>
+            <div class="mt-4 mr-2">
+              <spectrogram-image-content-menu />
             </div>
           </v-row>
         </v-container>

@@ -133,6 +133,7 @@ export interface Spectrogram {
   otherUsers?: UserInfo[];
 }
 
+
 export type OtherUserAnnotations = Record<
   string,
   { annotations: SpectrogramAnnotation[]; sequence: SpectrogramSequenceAnnotation[] }
@@ -537,6 +538,23 @@ async function getExportStatus(exportId: number) {
   return result.data;
 }
 
+export interface Contour {
+  curve: number[][];
+  level: number;
+  index: number;
+}
+
+export interface ComputedPulseAnnotation {
+  id: number;
+  index: number;
+  contours: Contour[];
+}
+
+async function getComputedPulseAnnotations(recordingId: number) {
+  const result = await axiosInstance.get<ComputedPulseAnnotation[]>(`/recording/${recordingId}/pulse_data`);
+  return result.data;
+}
+
 export interface VettingDetails {
   id: number;
   user_id: number;
@@ -603,6 +621,7 @@ export {
   getFileAnnotationDetails,
   getExportStatus,
   getRecordingTags,
+  getComputedPulseAnnotations,
   getCurrentUser,
   getVettingDetailsForUser,
   createOrUpdateVettingDetailsForUser,

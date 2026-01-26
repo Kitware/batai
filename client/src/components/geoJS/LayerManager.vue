@@ -20,8 +20,10 @@ import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import MeasureToolLayer from "./layers/measureToolLayer";
 import BoundingBoxLayer from "./layers/boundingBoxLayer";
 import AxesLayer from "./layers/axesLayer";
+import ContourLayer from "./layers/contourLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
+
 export default defineComponent({
   name: "LayerManager",
   props: {
@@ -45,7 +47,11 @@ export default defineComponent({
     scaledHeight: {
       type: Number,
       default: -1,
-    }
+    },
+    recordingId: {
+      type: String as PropType<string | null>,
+      required: true,
+    },
   },
   emits: ["selected", "update:annotation", "create:annotation", "set-cursor"],
   setup(props, { emit }) {
@@ -72,6 +78,9 @@ export default defineComponent({
       drawingBoundingBox,
       boundingBoxError,
       fixedAxes,
+      spectrogramContentMode,
+      loadContours,
+      computedPulseAnnotations,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -91,6 +100,7 @@ export default defineComponent({
     let speciesSequenceLayer: SpeciesSequenceLayer;
     let measureToolLayer: MeasureToolLayer;
     let boundingBoxLayer: BoundingBoxLayer;
+    let contourLayer: ContourLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -445,6 +455,34 @@ export default defineComponent({
         triggerUpdate();
       }
     );
+    watch(() => props.recordingId, () => computedPulseAnnotations.value = []);
+    watch(spectrogramContentMode, async () => {
+      if (props.thumbnail) {
+        return;
+      }
+      if (!props.recordingId || !props.spectroInfo) {
+        console.error('Could not load contours. Could not determine recording ID');
+        return;
+      }
+      if (computedPulseAnnotations.value.length === 0) {
+        await loadContours(new Number(props.recordingId) as number);
+      }
+      if (!contourLayer) {
+        contourLayer = new ContourLayer(
+          props.geoViewerRef,
+          event,
+          props.spectroInfo,
+          computedPulseAnnotations.value,
+          colorScheme.value.scheme,
+        );
+      }
+      contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      if (spectrogramContentMode.value === 'contour' || spectrogramContentMode.value === 'both') {
+        contourLayer.drawContours();
+      } else {
+        contourLayer.removeContours();
+      }
+    });
     onUnmounted(() => {
       if (editAnnotationLayer) {
         editAnnotationLayer.destroy();
@@ -699,6 +737,7 @@ export default defineComponent({
       // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
       legendLayer?.onPan();
       axesLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      contourLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
     });
     watch(viewCompressedOverlay, () => {
       if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
@@ -770,6 +809,9 @@ export default defineComponent({
       }
       if (boundingBoxLayer) {
         boundingBoxLayer.setTextColor(textColor);
+      }
+      if (contourLayer) {
+        contourLayer.setColorScheme(colorScheme.value.scheme);
       }
     }
 
