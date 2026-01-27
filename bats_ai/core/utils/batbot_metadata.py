@@ -128,7 +128,7 @@ class CompressedSpectrogramData(BaseModel):
 
     starts: list[float]
     stops: list[float]
-    widths: list[int]
+    widths: list[float]
 
 
 def parse_batbot_metadata(file_path: str | Path) -> BatbotMetadata:
@@ -201,12 +201,12 @@ def convert_to_compressed_spectrogram_data(metadata: BatbotMetadata) -> Compress
             # Calculate width in compressed space
             # The width in compressed space is proportional to the time duration
         for time in segment_times:
-            width_px = int(round((time / total_time) * compressed_width))
+            width_px = (time / total_time) * compressed_width
             widths_px_compressed.append(width_px)
     else:
         # No segments - the entire image is compressed
         starts_ms = [0]
-        stops_ms = [int(round(duration_ms))]
+        stops_ms = [duration_ms]
         widths_px_compressed = [compressed_width]
 
     return CompressedSpectrogramData(

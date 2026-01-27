@@ -14,9 +14,8 @@ from bats_ai.core.models.nabat import (
     NABatRecordingAnnotation,
     NABatSpectrogram,
 )
-from bats_ai.utils.spectrogram_utils import predict_from_compressed
-
 from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
+from bats_ai.utils.spectrogram_utils import predict_from_compressed
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')

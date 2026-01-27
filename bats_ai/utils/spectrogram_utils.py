@@ -1,26 +1,20 @@
-import io
 import json
 import logging
-import math
 import os
 from pathlib import Path
 from typing import TypedDict
 
-from PIL import Image
 import cv2
-import librosa
-import librosa.display
-import matplotlib.pyplot as plt
 import numpy as np
 import onnx
 import onnxruntime as ort
-import scipy.signal
 import tqdm
 
 from bats_ai.core.models import CompressedSpectrogram
 from bats_ai.core.models.nabat import NABatCompressedSpectrogram
 
 logger = logging.getLogger(__name__)
+
 
 class PredictionOutput(TypedDict):
     label: str
