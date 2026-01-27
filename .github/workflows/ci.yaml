@@ -70,10 +70,6 @@ jobs:
     steps:
       - name: Update Package References
         run: sudo apt-get update
-      - name: Install system dependencies
-        run: >-
-          sudo apt-get install --no-install-recommends --yes \
-            libproj-dev
 
       - name: Checkout repository
         uses: actions/checkout@v4
