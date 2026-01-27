@@ -21,7 +21,6 @@ RUN set -ex \
         gcc \
         g++ \
         libc6-dev \
-        libsndfile1-dev \
         ca-certificates \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
