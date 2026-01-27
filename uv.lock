@@ -173,7 +173,7 @@ wheels = [
 [[package]]
 name = "batbot"
 version = "0.1.0"
-source = { git = "https://github.com/Kitware/batbot#0fdf8b93540662c5f642705c50ce9aa991ba6036" }
+source = { git = "https://github.com/Kitware/batbot?branch=temp-compressed-time-fix#0dba532c90885e1b88c07f6078dc42077cb72775" }
 dependencies = [
     { name = "click" },
     { name = "cryptography" },
@@ -282,7 +282,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batbot", git = "https://github.com/Kitware/batbot" },
+    { name = "batbot", git = "https://github.com/Kitware/batbot?branch=temp-compressed-time-fix" },
     { name = "celery" },
     { name = "django", extras = ["argon2"], specifier = ">=4.2,<5" },
     { name = "django-allauth" },

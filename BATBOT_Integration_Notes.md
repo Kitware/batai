@@ -39,9 +39,10 @@ TODO:
 
 - ~~Remove older generation code from the system~~
 - remove inference code from the system
-- Remove the local installation of batbot once updated from:
-  - docker-compose.overrride.yml
-  - pyproject.toml
-  - uv.lock
-- Can temporarily use my branch on the repo (issue-4-output-folder-option)
-- Update sample script uv dependencies when batbot is published
+- ~~Remove the local installation of batbot once updated from:~~
+  - ~~docker-compose.overrride.yml~~
+  - ~~pyproject.toml~~
+  - ~uv.lock~~
+- ~~Can temporarily use my branch on the repo (issue-4-output-folder-option)~~
+- using `temp-compressed-time-fix` branch because it has alignment fixes for start/stops
+- Update sample script uv dependencies when batbot is published~~

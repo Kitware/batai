@@ -120,7 +120,7 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
-batbot = { git = "https://github.com/Kitware/batbot" }
+batbot = { git = "https://github.com/Kitware/batbot", branch = "temp-compressed-time-fix" }
 
 
 [tool.black]
