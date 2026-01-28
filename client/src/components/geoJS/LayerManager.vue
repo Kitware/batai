@@ -873,7 +873,7 @@ export default defineComponent({
       />
       <feComponentTransfer
         in="luminance"
-        result="transparency-mask">Expand annotationCheck warning on line R874Code has alerts. Press enter to view.
+        result="transparency-mask">
         <feFuncA
           type="table"
           :tableValues="getTransparencyTableValues()"

@@ -7,7 +7,7 @@
 # ]
 #
 # [tool.uv.sources]
-# batbot = { git = "https://github.com/Kitware/batbot" }
+# batbot = { git = "https://github.com/Kitware/batbot", branch = "temp-compressed-time-fix" }
 # ///
 from contextlib import contextmanager
 import json
@@ -142,7 +142,7 @@ class CompressedSpectrogramData(BaseModel):
 
     starts: list[float]
     stops: list[float]
-    widths: list[int]
+    widths: list[float]
 
 
 def parse_batbot_metadata(file_path: str | Path) -> BatbotMetadata:
@@ -197,36 +197,36 @@ def convert_to_compressed_spectrogram_data(metadata: BatbotMetadata) -> Compress
     duration_ms = metadata.duration_ms
 
     # Process each compressed image
-    starts_ms: list[int] = []
-    stops_ms: list[int] = []
-    widths_px_compressed: list[int] = []
-    segment_times: list[int] = []
+    starts_ms: list[float] = []
+    stops_ms: list[float] = []
+    widths_px_compressed: list[float] = []
+    segment_times: list[float] = []
     compressed_width = metadata.size.compressed.width_px
     total_time = 0.0
 
     # If we have segments, use them to determine which parts are kept
     if metadata.segments:
         for segment in metadata.segments:
-            starts_ms.append(round(segment.start_ms))
-            stops_ms.append(round(segment.end_ms))
+            starts_ms.append(segment.start_ms)
+            stops_ms.append(segment.end_ms)
             time = round(segment.end_ms) - round(segment.start_ms)
             segment_times.append(time)
             total_time += time
             # Calculate width in compressed space
             # The width in compressed space is proportional to the time duration
         for time in segment_times:
-            width_px = int(round((time / total_time) * compressed_width))
+            width_px = (time / total_time) * compressed_width
             widths_px_compressed.append(width_px)
     else:
         # No segments - the entire image is compressed
         starts_ms = [0]
-        stops_ms = [int(round(duration_ms))]
+        stops_ms = [duration_ms]
         widths_px_compressed = [compressed_width]
 
     return CompressedSpectrogramData(
-        starts=[starts_ms],
-        stops=[stops_ms],
-        widths=[widths_px_compressed],
+        starts=starts_ms,
+        stops=stops_ms,
+        widths=widths_px_compressed,
     )
 
 
@@ -234,6 +234,7 @@ class SpectrogramAssetResult(TypedDict):
     paths: list[str]
     width: int
     height: int
+    widths: list[float]
 
 
 class SpectrogramCompressedAssetResult(TypedDict):
@@ -249,6 +250,7 @@ class SpectrogramAssets(TypedDict):
     duration: float
     freq_min: int
     freq_max: int
+    noise_filter_threshold: float
     normal: SpectrogramAssetResult
     compressed: SpectrogramCompressedAssetResult
 
@@ -269,22 +271,51 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
     metadata_file = Path(recording_path).with_suffix('.metadata.json').name
     metadata_file = Path(output_folder) / metadata_file
     metadata = parse_batbot_metadata(metadata_file)
+
     # from the metadata we should have the images that are used
-    uncompressed_paths = metadata.spectrogram.uncompressed_path
-    compressed_paths = metadata.spectrogram.compressed_path
+    # Normalize paths so that they are relative to the spectrogram_assets.json
+    # location (i.e., "./<filename>"), avoiding duplicated "sample" directory
+    # segments when other tools join them with the assets file directory.
+    def _normalize_paths(paths: list[str]) -> list[str]:
+        return [f'./{Path(p).name}' for p in paths]
+
+    uncompressed_paths = _normalize_paths(metadata.spectrogram.uncompressed_path)
+    compressed_paths = _normalize_paths(metadata.spectrogram.compressed_path)
 
     metadata.frequencies.min_hz
     metadata.frequencies.max_hz
 
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
+
+    # Calculate widths for uncompressed spectrogram based on segments
+    uncompressed_widths: list[float] = []
+    uncompressed_width = metadata.size.uncompressed.width_px
+    duration_ms = metadata.duration_ms
+
+    if metadata.segments:
+        # Calculate width per segment in uncompressed space based on time duration
+        for segment in metadata.segments:
+            segment_duration = segment.end_ms - segment.start_ms
+            width_px = (segment_duration / duration_ms) * uncompressed_width
+            uncompressed_widths.append(width_px)
+    else:
+        # No segments - entire image is one segment
+        uncompressed_widths = [uncompressed_width]
+
+    # Convert global threshold amplitude (0–255 for 8‑bit images) to a
+    # percentage in the range 0–100 for downstream consumers.
+    noise_threshold_percent = round((metadata.global_threshold_amp / 255.0) * 100.0, 2)
+
     result = {
         'duration': metadata.duration_ms,
         'freq_min': metadata.frequencies.min_hz,
         'freq_max': metadata.frequencies.max_hz,
+        'noise_filter_threshold': noise_threshold_percent,
         'normal': {
             'paths': uncompressed_paths,
             'width': metadata.size.uncompressed.width_px,
             'height': metadata.size.uncompressed.height_px,
+            'widths': uncompressed_widths,
         },
         'compressed': {
             'paths': compressed_paths,
