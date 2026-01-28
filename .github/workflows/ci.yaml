@@ -68,7 +68,6 @@ jobs:
           - 9000:9000
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install uv
