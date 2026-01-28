@@ -68,8 +68,6 @@ jobs:
           - 9000:9000
 
     steps:
-      - name: Update Package References
-        run: sudo apt-get update
 
       - name: Checkout repository
         uses: actions/checkout@v4
