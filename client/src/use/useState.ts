@@ -88,6 +88,8 @@ const toggleFixedAxes = () => {
 
 const reviewerMaterials = ref('');
 
+const transparencyThreshold = ref(0); // 0-100 percentage
+
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
   const setAnnotationState = (state: AnnotationState) => {
@@ -346,6 +348,7 @@ export default function useState() {
     scaledHeight,
     fixedAxes,
     toggleFixedAxes,
+    transparencyThreshold,
     showSubmittedRecordings,
     submittedMyRecordings,
     submittedSharedRecordings,

@@ -49,6 +49,7 @@ dependencies = [
     # Production-only
     "gunicorn",
     "geopandas>=1.1.1",
+    "batbot",
 ]
 
 [project.optional-dependencies]
@@ -119,6 +120,8 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
+batbot = { git = "https://github.com/Kitware/batbot", branch = "temp-compressed-time-fix" }
+
 
 [tool.black]
 line-length = 100

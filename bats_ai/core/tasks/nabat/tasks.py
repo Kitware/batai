@@ -14,7 +14,8 @@ from bats_ai.core.models.nabat import (
     NABatRecordingAnnotation,
     NABatSpectrogram,
 )
-from bats_ai.utils.spectrogram_utils import generate_spectrogram_assets, predict_from_compressed
+from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
+from bats_ai.utils.spectrogram_utils import predict_from_compressed
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
@@ -106,7 +107,8 @@ def generate_spectrograms(
 
         try:
             config = Configuration.objects.first()
-            if config and config.run_inference_on_upload:
+            # TODO: Disabled until prediction is in batbot
+            if config and config.run_inference_on_upload and False:
                 self.update_state(
                     state='Progress',
                     meta={'description': 'Running Prediction on Spectrogram'},

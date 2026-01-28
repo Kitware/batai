@@ -17,10 +17,10 @@ class NABatCompressedSpectrogram(TimeStampedModel, models.Model):
     nabat_recording = models.ForeignKey(NABatRecording, on_delete=models.CASCADE)
     spectrogram = models.ForeignKey(NABatSpectrogram, on_delete=models.CASCADE)
     images = GenericRelation(SpectrogramImage)
-    length = models.IntegerField()
-    starts = ArrayField(ArrayField(models.IntegerField()))
-    stops = ArrayField(ArrayField(models.IntegerField()))
-    widths = ArrayField(ArrayField(models.IntegerField()))
+    length = models.FloatField()
+    starts = ArrayField(ArrayField(models.FloatField()))
+    stops = ArrayField(ArrayField(models.FloatField()))
+    widths = ArrayField(ArrayField(models.FloatField()))
     cache_invalidated = models.BooleanField(default=True)
 
     @property
