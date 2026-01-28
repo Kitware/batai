@@ -4,7 +4,7 @@ import tempfile
 
 import requests
 
-from bats_ai.core.models import Configuration, ProcessingTask, Species, SpectrogramImage
+from bats_ai.core.models import Configuration, ProcessingTask, Species
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
 from bats_ai.utils.spectrogram_utils import (
     generate_nabat_compressed_spectrogram,
