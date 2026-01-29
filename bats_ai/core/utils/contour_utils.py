@@ -366,7 +366,10 @@ def process_spectrogram_assets_for_contours(
     compressed_data = assets.get('compressed', {})
     compressed_paths = compressed_data.get('paths', [])
     widths = compressed_data.get('widths', [])
+    height = compressed_data.get('height', 0)
     starts = compressed_data.get('starts', [])
+    global_freq_min = assets.get('freq_min', 0)
+    global_freq_max = assets.get('freq_max', 0)
     stops = compressed_data.get('stops', [])
     all_segments_data = []
 
@@ -416,19 +419,36 @@ def process_spectrogram_assets_for_contours(
             )
             freq_min = float(np.min(all_y).round(3)) if all_y.size else None
             freq_max = float(np.max(all_y).round(3)) if all_y.size else None
-
+            start_time = starts[seg_idx]
+            stop_time = stops[seg_idx]
+            width = widths[seg_idx]
+            time_per_pixel = (stop_time - start_time) / width
+            mhz_per_pixel = (global_freq_max - global_freq_min) / height
+            transformed_contours = []
+            contour_index = 0
+            for contour, level in seg_contours:
+                # contour is (N, 2): each row is one point [x, y]
+                new_curve = [
+                    [
+                        point[0] * time_per_pixel + start_time,
+                        global_freq_max - (point[1] * mhz_per_pixel),
+                    ]
+                    for point in contour
+                ]
+                transformed_contours.append(
+                    {
+                        'level': float(level),
+                        'curve': new_curve,
+                        'index': seg_idx,
+                    }
+                )
+                contour_index += 1
             segment_obj: dict = {
                 'segment_index': seg_idx,
                 'contour_count': len(seg_contours),
                 'freq_min': freq_min,
                 'freq_max': freq_max,
-                'contours': [
-                    {
-                        'level': float(level),
-                        'curve': contour.round(3).tolist(),
-                    }
-                    for contour, level in seg_contours
-                ],
+                'contours': transformed_contours,
             }
 
             if seg_idx < len(widths):

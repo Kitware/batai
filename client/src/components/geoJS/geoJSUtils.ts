@@ -33,13 +33,16 @@ const useGeoJS = () => {
     }
   };
 
-  const clearQuadFeatures = () => {
+  const clearQuadFeatures = (redraw?: boolean) => {
     quadFeatures.forEach((feature) => {
       if (quadFeatureLayer) {
         quadFeatureLayer.removeFeature(feature);
       }
     });
     quadFeatures.splice(0, quadFeatures.length);
+    if (redraw) {
+      quadFeatureLayer.draw();
+    }
   };
 
   const initializeViewer = (
@@ -223,6 +226,7 @@ const useGeoJS = () => {
     initializeViewer,
     drawImages,
     resetMapDimensions,
+    clearQuadFeatures,
     resetZoom,
     destroyGeoViewer,
   };

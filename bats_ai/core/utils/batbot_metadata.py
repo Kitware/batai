@@ -235,7 +235,8 @@ class SpectrogramCompressedAssetResult(TypedDict):
 
 class SpectrogramContour(TypedDict):
     level: float
-    curve: list[float]
+    curve: list[list[float]]
+    index: int
 
 
 class SpectrogramContourSegment(TypedDict):
