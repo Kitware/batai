@@ -1,6 +1,6 @@
 import pytest
 
-from .factories import UserFactory, VettingDetailsFactory
+from .factories import AccessTokenFactory, UserFactory, VettingDetailsFactory
 
 
 @pytest.mark.parametrize(
@@ -33,7 +33,8 @@ def test_create_vetting_details(client):
     test_text = 'foo'
     data = {'reference_materials': test_text}
     test_user = UserFactory()
-    client.force_login(user=test_user)
+    test_token = AccessTokenFactory(user=test_user)
+    client.defaults['HTTP_AUTHORIZATION'] = f'Bearer {test_token.token}'
     resp = client.post(
         f'/api/v1/vetting/user/{test_user.id}', data=data, content_type='application/json'
     )
@@ -67,8 +68,9 @@ def test_update_vetting_details(client):
     test_text = 'bar'
     data = {'reference_materials': 'bar'}
     test_user = UserFactory()
+    test_token = AccessTokenFactory(user=test_user)
     VettingDetailsFactory(user=test_user, reference_materials='foo')
-    client.force_login(test_user)
+    client.defaults['HTTP_AUTHORIZATION'] = f'Bearer {test_token.token}'
 
     initial_resp = client.get(f'/api/v1/vetting/user/{test_user.id}')
     assert initial_resp.status_code == 200
