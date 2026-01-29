@@ -27,7 +27,7 @@ The onnx model file is in the `/assets` folder and is bind mounted into the cont
 ### Copy templated environment File
 
 Figure out the proper template to use.  This is either
-`./prod/.env.kitware-production.template` or `./prod/.env.aws-production.template`
+`./prod/.env.kitware-production.template` or `./prod/.env.nabat-production.template`
 Copy over the chosen .env file to `./prod/.env.production`
 and change the default passwords for fields
 
@@ -120,8 +120,8 @@ to make sure to start the Django application with the correct configuration.
 As a starting point for configuring your environment, see [dev/.env.prod.s3.template](dev/.env.prod.s3/template)
 for a list of environment variables that you'll need to populate for your deployment.
 
-- `DJANGO_SETTINGS_MODULE` this should be set to `bats_ai.settings.aws_production`. This tells Django which set of
-   settings to use for the web server. The `aws_production` module  will configure S3 settings.
+- `DJANGO_SETTINGS_MODULE` this should be set to `bats_ai.settings.nabat_production`. This tells Django which set of
+   settings to use for the web server. The `nabat_production` module  will configure S3 settings.
 - `DJANGO_DATABASE_URL` this will be a postgres connection string, e.g. `postgres://user:password@postgres:5432/django`
 - `DJANGO_CELERY_BROKER_URL` is used to make sure django can send tasks to the `celery` service.
    For example, if using [RabbitMQ](https://www.rabbitmq.com/), it might look like this: `amqp://rabbitmq:5672`
