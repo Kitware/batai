@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 import logging
-from typing import List, Optional
+from typing import Any
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
@@ -16,6 +16,7 @@ from ninja.pagination import RouterPaginated
 from bats_ai.core.models import (
     Annotations,
     CompressedSpectrogram,
+    PulseMetadata,
     Recording,
     RecordingAnnotation,
     RecordingTag,
@@ -65,7 +66,7 @@ class RecordingUploadSchema(Schema):
     detector: str | None = None
     species_list: str | None = None
     unusual_occurrences: str | None = None
-    tags: Optional[List[str]] = None
+    tags: list[str] | None = None
 
 
 class RecordingAnnotationSchema(Schema):
@@ -127,6 +128,22 @@ class UpdateAnnotationsSchema(Schema):
     comments: str | None
     type: str | None
     id: int | None
+
+
+class PulseMetadataSchema(Schema):
+    id: int | None
+    index: int
+    bounding_box: Any
+    contours: list
+
+    @classmethod
+    def from_orm(cls, obj: PulseMetadata):
+        return cls(
+            id=obj.id,
+            index=obj.index,
+            contours=obj.contours,
+            bounding_box=json.loads(obj.bounding_box.geojson),
+        )
 
 
 @router.post('/')
@@ -538,6 +555,25 @@ def get_annotations(request: HttpRequest, id: int):
                 'error': 'Permission denied. You do not own this recording, and it is not public.'
             }
 
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+
+@router.get('/{id}/pulse_data')
+def get_pulse_data(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+        if recording.owner == request.user or recording.public:
+            computed_pulse_annotation_qs = PulseMetadata.objects.filter(
+                recording=recording
+            ).order_by('index')
+            return [
+                PulseMetadataSchema.from_orm(pulse) for pulse in computed_pulse_annotation_qs.all()
+            ]
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 

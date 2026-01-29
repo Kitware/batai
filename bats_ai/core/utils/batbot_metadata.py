@@ -7,6 +7,8 @@ from typing import Any, TypedDict
 import batbot
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .contour_utils import process_spectrogram_assets_for_contours
+
 
 class SpectrogramMetadata(BaseModel):
     """Metadata about the spectrogram."""
@@ -231,12 +233,34 @@ class SpectrogramCompressedAssetResult(TypedDict):
     stops: list[float]
 
 
+class SpectrogramContour(TypedDict):
+    level: float
+    curve: list[float]
+
+
+class SpectrogramContourSegment(TypedDict):
+    segment_index: int
+    contour_count: int
+    freq_min: float
+    freq_max: float
+    contours: list[SpectrogramContour]
+    width_px: float
+    start_ms: float
+    stop_ms: float
+
+
+class SpectrogramContours(TypedDict):
+    segments: list[SpectrogramContourSegment]
+    total_segments: int
+
+
 class SpectrogramAssets(TypedDict):
     duration: float
     freq_min: int
     freq_max: int
     normal: SpectrogramAssetResult
     compressed: SpectrogramCompressedAssetResult
+    segments: SpectrogramContours | None
 
 
 @contextmanager
@@ -263,7 +287,8 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
     metadata.frequencies.max_hz
 
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
-    result = {
+
+    result: SpectrogramAssets = {
         'duration': metadata.duration_ms,
         'freq_min': metadata.frequencies.min_hz,
         'freq_max': metadata.frequencies.max_hz,
@@ -281,4 +306,8 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
             'stops': compressed_metadata.stops,
         },
     }
+
+    segments_data = process_spectrogram_assets_for_contours(result)
+    result['segments'] = segments_data
+
     return result

@@ -282,8 +282,7 @@ def contours_to_metadata(
         'contours': [
             {
                 'level': float(level),
-                'area': polygon_area(contour),
-                'points': contour.round(3).tolist(),
+                'curve': contour.round(3).tolist(),
             }
             for contour, level in contours
         ],
@@ -495,14 +494,25 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
             # Build per-image JSON with segments array
             segments_output: list[dict] = []
             for seg_idx, seg_contours in enumerate(segment_contours_list):
+                # freq_min/freq_max: min/max y
+                # (frequency axis) over all contour points in this segment
+                all_y = (
+                    np.concatenate([c[:, 1] for c, _ in seg_contours])
+                    if seg_contours
+                    else np.array([])
+                )
+                freq_min = float(np.min(all_y).round(3)) if all_y.size else None
+                freq_max = float(np.max(all_y).round(3)) if all_y.size else None
+
                 segment_obj: dict = {
                     'segment_index': seg_idx,
                     'contour_count': len(seg_contours),
+                    'freq_min': freq_min,
+                    'freq_max': freq_max,
                     'contours': [
                         {
                             'level': float(level),
-                            'area': polygon_area(contour),
-                            'points': contour.round(3).tolist(),
+                            'curve': contour.round(3).tolist(),
                         }
                         for contour, level in seg_contours
                     ],

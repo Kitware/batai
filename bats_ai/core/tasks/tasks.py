@@ -4,12 +4,14 @@ import shutil
 import tempfile
 
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Polygon
 from django.core.files import File
 
 from bats_ai.celery import app
 from bats_ai.core.models import (
     CompressedSpectrogram,
     Configuration,
+    PulseMetadata,
     Recording,
     RecordingAnnotation,
     Species,
@@ -87,6 +89,25 @@ def recording_compute_spectrogram(recording_id: int):
                         'type': 'compressed',
                     },
                 )
+
+        # Create SpectrogramContour objects for each segment
+        for segment in results['segments']['segments']:
+            PulseMetadata.objects.get_or_create(
+                recording=compressed_obj.recording,
+                index=segment['segment_index'],
+                defaults={
+                    'contours': segment['contours'],
+                    'bounding_box': Polygon(
+                        (
+                            (segment['start_ms'], segment['freq_max']),
+                            (segment['stop_ms'], segment['freq_max']),
+                            (segment['stop_ms'], segment['freq_min']),
+                            (segment['start_ms'], segment['freq_min']),
+                            (segment['start_ms'], segment['freq_max']),
+                        )
+                    ),
+                },
+            )
 
         config = Configuration.objects.first()
         # TODO: Disabled until prediction is in batbot
