@@ -57,9 +57,12 @@ class Segment(BaseModel):
     """A detected segment in the spectrogram."""
 
     curve_hz_ms: list[list[float]] = Field(alias='curve.(hz,ms)')
-    start_ms: float = Field(alias='start.ms')
-    end_ms: float = Field(alias='end.ms')
-    duration_ms: float = Field(alias='duration.ms')
+    start_ms: float = Field(alias='segment start.ms')
+    end_ms: float = Field(alias='segment end.ms')
+    duration_ms: float = Field(alias='segment duration.ms')
+    contour_start_ms: float = Field(alias='contour start.ms')
+    contour_end_ms: float = Field(alias='contour end.ms')
+    contour_duration_ms: float = Field(alias='contour duration.ms')
     threshold_amp: int = Field(alias='threshold.amp')
     peak_f_ms: float | None = Field(None, alias='peak f.ms')
     fc_ms: float | None = Field(None, alias='fc.ms')
@@ -275,7 +278,7 @@ def working_directory(path):
 
 
 def generate_spectrogram_assets(recording_path: str, output_folder: str):
-    batbot.pipeline(recording_path, config=None, output_folder=output_folder)
+    batbot.pipeline(recording_path, output_folder=output_folder)
     # There should be a .metadata.json file in the output_base directory by replacing extentions
     metadata_file = Path(recording_path).with_suffix('.metadata.json').name
     metadata_file = Path(output_folder) / metadata_file
