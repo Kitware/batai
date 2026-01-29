@@ -5,5 +5,5 @@ include_example_code: false
 project_name: bats-ai
 project_slug: bats-ai
 python_package_name: bats_ai
-site_domain: www.bats-ai.test
+site_domain: api.bateval.com
 use_asgi: false
