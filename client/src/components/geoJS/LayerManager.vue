@@ -78,7 +78,8 @@ export default defineComponent({
       drawingBoundingBox,
       boundingBoxError,
       fixedAxes,
-      spectrogramContentMode,
+      contoursEnabled,
+      contourOpacity,
       loadContours,
       computedPulseAnnotations,
       transparencyThreshold,
@@ -457,7 +458,7 @@ export default defineComponent({
       }
     );
     watch(() => props.recordingId, () => computedPulseAnnotations.value = []);
-    watch(spectrogramContentMode, async () => {
+    watch(contoursEnabled, async () => {
       if (props.thumbnail) {
         return;
       }
@@ -478,10 +479,18 @@ export default defineComponent({
         );
       }
       contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      if (spectrogramContentMode.value === 'contour' || spectrogramContentMode.value === 'both') {
+      contourLayer.setContourOpacity(contourOpacity.value);
+      if (contoursEnabled.value) {
         contourLayer.drawContours();
       } else {
         contourLayer.removeContours();
+      }
+    });
+    watch(contourOpacity, () => {
+      if (contourLayer && contoursEnabled.value) {
+        contourLayer.setContourOpacity(contourOpacity.value);
+        contourLayer.removeContours();
+        contourLayer.drawContours();
       }
     });
     onUnmounted(() => {
@@ -684,6 +693,13 @@ export default defineComponent({
           compressedOverlayLayer.redraw();
         } else {
           compressedOverlayLayer?.disable();
+        }
+      }
+      if (contourLayer) {
+        contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        if (contoursEnabled.value) {
+          contourLayer.removeContours();
+          contourLayer.drawContours();
         }
       }
       editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
@@ -914,7 +930,8 @@ export default defineComponent({
       />
       <feComponentTransfer
         in="luminance"
-        result="transparency-mask">
+        result="transparency-mask"
+      >
         <feFuncA
           type="table"
           :tableValues="getTransparencyTableValues()"

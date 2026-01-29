@@ -130,10 +130,11 @@ const useGeoJS = () => {
     }
   };
 
-  const drawImages = (images: HTMLImageElement[], width = 0, height = 0, resetCam = true) => {
+  const drawImages = (images: HTMLImageElement[], width = 0, height = 0, resetCam = true, imageOpacity = 1) => {
     let previousWidth = 0;
     let totalBaseWidth = 0;
     images.forEach((image) => (totalBaseWidth += image.naturalWidth));
+    quadFeatureLayer.node().css("opacity", String(imageOpacity));
     images.forEach((image, index) => {
       const scaledWidth = width / totalBaseWidth;
       const currentWidth = image.width * scaledWidth;

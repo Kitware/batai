@@ -37,7 +37,8 @@ export default defineComponent({
       configuration,
       scaledWidth,
       scaledHeight,
-      spectrogramContentMode,
+      contoursEnabled,
+      imageOpacity,
     } = useState();
 
     const containerRef: Ref<HTMLElement | undefined> = ref();
@@ -116,6 +117,8 @@ export default defineComponent({
       emit("hoverData", { time, freq });
     };
 
+    const effectiveImageOpacity = () => (contoursEnabled.value ? imageOpacity.value : 1);
+
     function initializeViewerAndImages() {
       updateScaledDimensions();
       if (containerRef.value && !geoJS.getGeoViewer().value) {
@@ -123,7 +126,7 @@ export default defineComponent({
         geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
       }
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity());
       }
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
@@ -132,7 +135,7 @@ export default defineComponent({
         scaledVals.value = { x: configuration.value.spectrogram_x_stretch, y: 1 };
         updateScaledDimensions();
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
         }
       }
     }
@@ -156,7 +159,7 @@ export default defineComponent({
         right: scaledWidth.value,
       });
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity());
       }
     });
 
@@ -214,27 +217,23 @@ export default defineComponent({
         if (scaledVals.value.x < 1) scaledVals.value.x = 1;
         updateScaledDimensions();
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
         }
       } else if (event.shiftKey) {
         scaledVals.value.y += event.deltaY > 0 ? -incrementY : incrementY;
         if (scaledVals.value.y < 1) scaledVals.value.y = 1;
         updateScaledDimensions();
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
         }
       }
     };
 
     onUnmounted(() => geoJS.destroyGeoViewer());
 
-    watch(spectrogramContentMode, () => {
-      // If the user has chosen to look at the contours, hide
-      // the images.
-      if (spectrogramContentMode.value === 'contour') {
-        geoJS.clearQuadFeatures(true);
-      } else if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
+    watch([contoursEnabled, imageOpacity], () => {
+      if (props.images.length) {
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
       }
     });
 

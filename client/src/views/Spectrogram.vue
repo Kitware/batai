@@ -78,9 +78,7 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
-      spectrogramContentMode,
       contoursLoading,
-      setSpectrogramContentMode,
       clearContours,
       nextUnsubmittedRecordingId,
       previousUnsubmittedRecordingId,
@@ -291,13 +289,6 @@ export default defineComponent({
       router.push({ path: `/recording/${previousUnsubmittedRecordingId.value}/spectrogram`, replace: true });
     }
 
-    function toggleContentMode() {
-      if (spectrogramContentMode.value === 'image') {
-        setSpectrogramContentMode('contour');
-      } else {
-        setSpectrogramContentMode('image');
-      }
-    }
     return {
       configuration,
       annotationState,
@@ -336,8 +327,6 @@ export default defineComponent({
       boundingBoxError,
       fixedAxes,
       toggleFixedAxes,
-      spectrogramContentMode,
-      toggleContentMode,
       contoursLoading,
       // Other user selection
       otherUserAnnotations,
@@ -588,8 +577,8 @@ export default defineComponent({
             <div class="mt-4">
               <color-scheme-dialog />
             </div>
-            <div class="mt-4">
-              <spectrogram-image-content-menu />
+            <div class="mt-4 mx-2">
+              <spectrogram-image-content-menu :compressed="compressed" />
             </div>
             <div class="mt-4 mr-3">
               <transparency-filter-control />

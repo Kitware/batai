@@ -29,6 +29,8 @@ export default class ContourLayer {
 
   maxLevel: number;
 
+  contourOpacity: number;
+
   scaledHeight: number;
 
   scaledWidth: number;
@@ -53,6 +55,7 @@ export default class ContourLayer {
     this.computedPulseAnnotations = computedPulseAnnotations;
     this.features = [];
     this.maxLevel = 0;
+    this.contourOpacity = 1.0;
     this.init();
   }
 
@@ -180,8 +183,12 @@ export default class ContourLayer {
       fillColor: (_val: number, _idx: number, coords: number[][]) => {
         return  this.colorScheme((coords[0][2] || 0) / this.maxLevel);
       },
-      fillOpacity: 1.0,
+      fillOpacity: this.contourOpacity,
     };
+  }
+
+  setContourOpacity(opacity: number) {
+    this.contourOpacity = opacity;
   }
 
   setColorScheme(colorScheme: (t: number) => string) {

@@ -16,7 +16,6 @@ import {
   ComputedPulseAnnotation,
   getVettingDetailsForUser,
 } from "../api/api";
-import { SpectrogramView } from "@/constants";
 import {
   interpolateCividis,
   interpolateViridis,
@@ -90,10 +89,15 @@ const toggleFixedAxes = () => {
 };
 
 const computedPulseAnnotations: Ref<ComputedPulseAnnotation[]> = ref([]);
-const spectrogramContentMode = ref('image' as SpectrogramView);
+const contoursEnabled = ref(false);
+const imageOpacity = ref(1.0);
+const contourOpacity = ref(1.0);
 const contoursLoading = ref(false);
-const setSpectrogramContentMode = (newVal: SpectrogramView) => {
-  spectrogramContentMode.value = newVal;
+const setContoursEnabled = (value: boolean) => {
+  contoursEnabled.value = value;
+};
+const toggleContoursEnabled = () => {
+  contoursEnabled.value = !contoursEnabled.value;
 };
 async function loadContours(recordingId: number) {
   contoursLoading.value = true;
@@ -367,9 +371,12 @@ export default function useState() {
     fixedAxes,
     toggleFixedAxes,
     transparencyThreshold,
-    spectrogramContentMode,
+    contoursEnabled,
+    imageOpacity,
+    contourOpacity,
     contoursLoading,
-    setSpectrogramContentMode,
+    setContoursEnabled,
+    toggleContoursEnabled,
     loadContours,
     clearContours,
     computedPulseAnnotations,
