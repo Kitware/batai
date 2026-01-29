@@ -13,7 +13,6 @@ from resonant_settings.django import *
 from resonant_settings.django_extensions import *
 from resonant_settings.logging import *
 from resonant_settings.oauth_toolkit import *
-from resonant_settings.rest_framework import *
 
 django_stubs_ext.monkeypatch()
 
