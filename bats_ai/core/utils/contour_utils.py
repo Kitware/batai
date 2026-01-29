@@ -412,6 +412,7 @@ def process_spectrogram_assets_for_contours(
 
         # Build per-image JSON with segments array
         segments_output: list[dict] = []
+        width_to_this_seg = 0
         for seg_idx, seg_contours in enumerate(segment_contours_list):
             # freq_min/freq_max: min/max y (frequency axis) over all contour points in this segment
             all_y = (
@@ -430,7 +431,7 @@ def process_spectrogram_assets_for_contours(
                 # contour is (N, 2): each row is one point [x, y]
                 new_curve = [
                     [
-                        point[0] * time_per_pixel + start_time,
+                        (point[0] - width_to_this_seg) * time_per_pixel + start_time,
                         global_freq_max - (point[1] * mhz_per_pixel),
                     ]
                     for point in contour
@@ -458,6 +459,7 @@ def process_spectrogram_assets_for_contours(
             if seg_idx < len(stops):
                 segment_obj['stop_ms'] = stops[seg_idx]
 
+            width_to_this_seg += widths[seg_idx]
             segments_output.append(segment_obj)
         # Collect for combined output
         all_segments_data.extend(segments_output)
