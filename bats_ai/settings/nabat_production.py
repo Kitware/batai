@@ -17,3 +17,11 @@ CSRF_TRUSTED_ORIGINS = [f'https://{BASE_HOST}', f'https://{BASE_HOST}']
 CORS_ALLOWED_ORIGINS = [f'https://{BASE_HOST}', f'https://{BASE_HOST}']
 
 SECURE_SSL_REDIRECT = False
+
+# Can be set to mount all URLs at a subpath
+_proxy_subpath: str | None = env.str('DJANGO_BATAI_URL_PATH', default=None)
+if _proxy_subpath:
+    _proxy_subpath = f'/{_proxy_subpath.strip("/")}'
+    FORCE_SCRIPT_NAME = _proxy_subpath
+    # Work around https://code.djangoproject.com/ticket/36653
+    STORAGES['staticfiles'].setdefault('OPTIONS', {})['base_url'] = f'{_proxy_subpath}/{STATIC_URL}'
