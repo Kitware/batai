@@ -1,6 +1,6 @@
 data "aws_route53_zone" "this" {
   # This must be created by hand in the AWS console
-  name = "bats-ai.test"
+  name = "bateval.com"
 }
 
 data "heroku_team" "this" {
