@@ -47,6 +47,7 @@ dependencies = [
     "guano",
     "django_celery_results",
     # Production-only
+    "sentry-sdk[celery,django,pure_eval]",
     "gunicorn",
     "geopandas>=1.1.1",
 ]
