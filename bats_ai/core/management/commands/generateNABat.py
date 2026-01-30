@@ -12,7 +12,11 @@ from scipy.io import wavfile
 
 from bats_ai.core.models import Species
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
-from bats_ai.core.tasks.nabat.tasks import generate_compress_spectrogram, generate_spectrogram
+from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
+from bats_ai.utils.spectrogram_utils import (
+    generate_nabat_compressed_spectrogram,
+    generate_nabat_spectrogram,
+)
 
 fake = Faker()
 
@@ -117,10 +121,13 @@ class Command(BaseCommand):
                     nabat_manual_species=random.choice(species),
                 )
 
-                with open(wav_path, 'rb') as wav_file:
-                    spectrogram = generate_spectrogram(nabat_recording, wav_file)
+                results = generate_spectrogram_assets(str(wav_path), tmp_dir)
+                spectrogram = generate_nabat_spectrogram(nabat_recording, results)
 
-                generate_compress_spectrogram(nabat_recording.pk, spectrogram.pk)
+                compressed_results = results['compressed']
+                generate_nabat_compressed_spectrogram(
+                    nabat_recording, spectrogram, compressed_results
+                )
 
                 # Optionally add annotations
                 if annotation_config:

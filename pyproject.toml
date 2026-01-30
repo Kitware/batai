@@ -7,7 +7,7 @@ name = "bats-ai"
 version = "0.0.0"
 requires-python = ">=3.10"
 license = "Apache-2.0"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE"]
 classifiers = ["Private :: Do Not Upload"]
 dependencies = [
     # Runtime dependendencies, always needed
@@ -47,6 +47,7 @@ dependencies = [
     "guano",
     "django_celery_results",
     # Production-only
+    "sentry-sdk[celery,django,pure_eval]",
     "gunicorn",
     "geopandas>=1.1.1",
     "batbot",
@@ -87,13 +88,11 @@ format = [
   "black",
   "isort",
 ]
-
 type = [
   "mypy",
   "celery-types",
   "django-stubs[compatible-mypy]",
 ]
-
 test = [
   "factory-boy",
   "pytest",
@@ -106,7 +105,9 @@ test = [
 ]
 
 [tool.hatch.build]
-packages = ["bats_ai"]
+packages = [
+  "bats-ai",
+]
 
 [tool.uv]
 constraint-dependencies = [
@@ -157,7 +158,7 @@ django_settings_module = "bats_ai.settings.testing"
 
 [tool.pytest.ini_options]
 addopts = [
-  # Test utilies should be imported absolutely from the pythonpath,
+  # Test utilities should be imported absolutely from the pythonpath,
   # so use the Pytest-recommended "importlib" mode
   "--import-mode=importlib",
   "--strict-config",

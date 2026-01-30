@@ -291,7 +291,6 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
     metadata.frequencies.max_hz
 
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
-
     result: SpectrogramAssets = {
         'duration': metadata.duration_ms,
         'freq_min': metadata.frequencies.min_hz,
