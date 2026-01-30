@@ -1,0 +1,55 @@
+locals {
+  www_env_vars = {
+    VITE_APP_API_ROOT       = "https://${module.django.fqdn}"
+    VITE_APP_LOGIN_REDIRECT = "https://${module.django.fqdn}/"
+  }
+}
+
+data "cloudflare_accounts" "this" {
+  name = "Kitware"
+}
+
+resource "cloudflare_pages_project" "www" {
+  account_id        = data.cloudflare_accounts.this.accounts[0].id
+  name              = "bats-ai"
+  production_branch = "master"
+
+  source {
+    type = "github"
+    config {
+      production_branch = "master"
+      owner             = "Kitware"
+      repo_name         = "batai"
+    }
+  }
+
+  build_config {
+    build_caching   = true
+    root_dir        = "client"
+    build_command   = "npm run build"
+    destination_dir = "dist"
+  }
+
+  deployment_configs {
+    preview {
+      environment_variables = local.www_env_vars
+    }
+    production {
+      environment_variables = local.www_env_vars
+    }
+  }
+}
+
+resource "cloudflare_pages_domain" "www" {
+  account_id   = data.cloudflare_accounts.this.accounts[0].id
+  project_name = cloudflare_pages_project.www.name
+  domain       = aws_route53_record.www.fqdn
+}
+
+resource "aws_route53_record" "www" {
+  zone_id = data.aws_route53_zone.this.zone_id
+  name    = "www"
+  type    = "CNAME"
+  ttl     = 300
+  records = [cloudflare_pages_project.www.subdomain]
+}
