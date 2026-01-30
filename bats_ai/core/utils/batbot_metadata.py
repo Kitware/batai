@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any, TypedDict
@@ -8,6 +9,8 @@ import batbot
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .contour_utils import process_spectrogram_assets_for_contours
+
+logger = logging.getLogger(__name__)
 
 
 class SpectrogramMetadata(BaseModel):
@@ -255,6 +258,17 @@ class SpectrogramContourSegment(TypedDict):
     stop_ms: float
 
 
+class BatBotMetadataCurve(TypedDict):
+    segment_index: int
+    curve_hz_ms: list[float]
+    char_freq_ms: float
+    char_freq_hz: float
+    knee_ms: float
+    knee_hz: float
+    heel_ms: float
+    heel_hz: float
+
+
 class SpectrogramContours(TypedDict):
     segments: list[SpectrogramContourSegment]
     total_segments: int
@@ -266,7 +280,7 @@ class SpectrogramAssets(TypedDict):
     freq_max: int
     normal: SpectrogramAssetResult
     compressed: SpectrogramCompressedAssetResult
-    segments: SpectrogramContours | None
+    contours: SpectrogramContours | None
 
 
 @contextmanager
@@ -277,6 +291,25 @@ def working_directory(path):
         yield
     finally:
         os.chdir(previous)
+
+
+def convert_to_segment_data(
+    metadata: BatbotMetadata,
+) -> list[BatBotMetadataCurve]:
+    segment_data: list[BatBotMetadataCurve] = []
+    for index, segment in enumerate(metadata.segments):
+        segment_data_item: BatBotMetadataCurve = {
+            'segment_index': index,
+            'curve_hz_ms': segment.curve_hz_ms,
+            'char_freq_ms': segment.fc_ms,
+            'char_freq_hz': segment.fc_hz,
+            'knee_ms': segment.hi_fc_knee_ms,
+            'knee_hz': segment.hi_fc_knee_hz,
+            'heel_ms': segment.lo_fc_heel_ms,
+            'heel_hz': segment.lo_fc_heel_hz,
+        }
+        segment_data.append(segment_data_item)
+    return segment_data
 
 
 def generate_spectrogram_assets(recording_path: str, output_folder: str):
@@ -294,6 +327,7 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
     metadata.frequencies.max_hz
 
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
+    segment_curve_data = convert_to_segment_data(metadata)
     result: SpectrogramAssets = {
         'duration': metadata.duration_ms,
         'freq_min': metadata.frequencies.min_hz,
@@ -311,10 +345,11 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
             'widths': compressed_metadata.widths,
             'starts': compressed_metadata.starts,
             'stops': compressed_metadata.stops,
+            'segments': segment_curve_data,
         },
     }
 
-    segments_data = process_spectrogram_assets_for_contours(result)
-    result['segments'] = segments_data
+    contour_segments_data = process_spectrogram_assets_for_contours(result)
+    result['compressed']['contours'] = contour_segments_data
 
     return result

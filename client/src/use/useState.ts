@@ -12,8 +12,10 @@ import {
   SpectrogramSequenceAnnotation,
   RecordingTag,
   FileAnnotation,
-  getComputedPulseAnnotations,
-  ComputedPulseAnnotation,
+  getComputedPulseContour,
+  ComputedPulseContour,
+  getPulseMetadata,
+  PulseMetadata,
   getVettingDetailsForUser,
 } from "../api/api";
 import {
@@ -88,7 +90,7 @@ const toggleFixedAxes = () => {
   fixedAxes.value = !fixedAxes.value;
 };
 
-const computedPulseAnnotations: Ref<ComputedPulseAnnotation[]> = ref([]);
+const computedPulseContours: Ref<ComputedPulseContour[]> = ref([]);
 // Show contours is always false; not persisted or loaded from localStorage.
 const contoursEnabled = ref(false);
 const imageOpacity = ref(1.0);
@@ -104,12 +106,38 @@ const toggleContoursEnabled = () => {
 };
 async function loadContours(recordingId: number) {
   contoursLoading.value = true;
-  computedPulseAnnotations.value = await getComputedPulseAnnotations(recordingId);
+  computedPulseContours.value = await getComputedPulseContour(recordingId);
   contoursLoading.value = false;
 }
 function clearContours() {
-  computedPulseAnnotations.value = [];
+  computedPulseContours.value = [];
 }
+
+const pulseMetadataList: Ref<PulseMetadata[]> = ref([]);
+const pulseMetadataLoading = ref(false);
+const viewPulseMetadataLayer = ref(false);
+async function loadPulseMetadata(recordingId: number) {
+  pulseMetadataLoading.value = true;
+  try {
+    pulseMetadataList.value = await getPulseMetadata(recordingId);
+  } finally {
+    pulseMetadataLoading.value = false;
+  }
+}
+function clearPulseMetadata() {
+  pulseMetadataList.value = [];
+}
+const toggleViewPulseMetadataLayer = () => {
+  viewPulseMetadataLayer.value = !viewPulseMetadataLayer.value;
+};
+
+// Pulse metadata display style (curve line + heel, char_freq, knee colors and sizes)
+const pulseMetadataLineColor = ref("#00FFFF");
+const pulseMetadataLineSize = ref(2);
+const pulseMetadataHeelColor = ref("#FF0088");
+const pulseMetadataCharFreqColor = ref("#00FF00");
+const pulseMetadataKneeColor = ref("#FF8800");
+const pulseMetadataPointSize = ref(5);
 
 const reviewerMaterials = ref('');
 
@@ -382,7 +410,19 @@ export default function useState() {
     toggleContoursEnabled,
     loadContours,
     clearContours,
-    computedPulseAnnotations,
+    computedPulseContours,
+    pulseMetadataList,
+    pulseMetadataLoading,
+    loadPulseMetadata,
+    clearPulseMetadata,
+    viewPulseMetadataLayer,
+    toggleViewPulseMetadataLayer,
+    pulseMetadataLineColor,
+    pulseMetadataLineSize,
+    pulseMetadataHeelColor,
+    pulseMetadataCharFreqColor,
+    pulseMetadataKneeColor,
+    pulseMetadataPointSize,
     showSubmittedRecordings,
     submittedMyRecordings,
     submittedSharedRecordings,

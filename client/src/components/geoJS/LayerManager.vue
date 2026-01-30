@@ -21,6 +21,7 @@ import MeasureToolLayer from "./layers/measureToolLayer";
 import BoundingBoxLayer from "./layers/boundingBoxLayer";
 import AxesLayer from "./layers/axesLayer";
 import ContourLayer from "./layers/contourLayer";
+import PulseMetadataLayer from "./layers/pulseMetadataLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
 
@@ -81,8 +82,18 @@ export default defineComponent({
       contoursEnabled,
       contourOpacity,
       loadContours,
-      computedPulseAnnotations,
+      computedPulseContours,
       transparencyThreshold,
+      viewPulseMetadataLayer,
+      pulseMetadataList,
+      loadPulseMetadata,
+      clearPulseMetadata,
+      pulseMetadataLineColor,
+      pulseMetadataLineSize,
+      pulseMetadataHeelColor,
+      pulseMetadataCharFreqColor,
+      pulseMetadataKneeColor,
+      pulseMetadataPointSize,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -103,6 +114,7 @@ export default defineComponent({
     let measureToolLayer: MeasureToolLayer;
     let boundingBoxLayer: BoundingBoxLayer;
     let contourLayer: ContourLayer;
+    let pulseMetadataLayer: PulseMetadataLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -457,7 +469,10 @@ export default defineComponent({
         triggerUpdate();
       }
     );
-    watch(() => props.recordingId, () => computedPulseAnnotations.value = []);
+    watch(() => props.recordingId, () => {
+      computedPulseContours.value = [];
+      clearPulseMetadata();
+    });
     watch(contoursEnabled, async () => {
       if (props.thumbnail) {
         return;
@@ -466,7 +481,7 @@ export default defineComponent({
         console.error('Could not load contours. Could not determine recording ID');
         return;
       }
-      if (computedPulseAnnotations.value.length === 0) {
+      if (computedPulseContours.value.length === 0) {
         await loadContours(new Number(props.recordingId) as number);
       }
       if (!contourLayer) {
@@ -474,7 +489,7 @@ export default defineComponent({
           props.geoViewerRef,
           event,
           props.spectroInfo,
-          computedPulseAnnotations.value,
+          computedPulseContours.value,
           colorScheme.value.scheme,
         );
       }
@@ -492,6 +507,66 @@ export default defineComponent({
         contourLayer.updateContourStyle();
       }
     });
+    watch(viewPulseMetadataLayer, async () => {
+      if (props.thumbnail) return;
+      if (!props.recordingId || !props.spectroInfo?.compressedWidth) return;
+      if (viewPulseMetadataLayer.value) {
+        if (pulseMetadataList.value.length === 0) {
+          await loadPulseMetadata(Number(props.recordingId));
+        }
+        if (!pulseMetadataLayer) {
+          pulseMetadataLayer = new PulseMetadataLayer(
+            props.geoViewerRef,
+            props.spectroInfo,
+            pulseMetadataList.value,
+          );
+        }
+        pulseMetadataLayer.spectroInfo = props.spectroInfo;
+        pulseMetadataLayer.setStyle({
+          lineColor: pulseMetadataLineColor.value,
+          lineWidth: pulseMetadataLineSize.value,
+          heelColor: pulseMetadataHeelColor.value,
+          charFreqColor: pulseMetadataCharFreqColor.value,
+          kneeColor: pulseMetadataKneeColor.value,
+          pointRadius: pulseMetadataPointSize.value,
+        });
+        pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
+        pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        pulseMetadataLayer.redraw();
+      } else if (pulseMetadataLayer) {
+        pulseMetadataLayer.disable();
+      }
+    });
+    watch(pulseMetadataList, () => {
+      if (pulseMetadataLayer && viewPulseMetadataLayer.value && props.spectroInfo) {
+        pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
+        pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        pulseMetadataLayer.redraw();
+      }
+    });
+    watch(
+      [
+        pulseMetadataLineColor,
+        pulseMetadataLineSize,
+        pulseMetadataHeelColor,
+        pulseMetadataCharFreqColor,
+        pulseMetadataKneeColor,
+        pulseMetadataPointSize,
+      ],
+      () => {
+        if (pulseMetadataLayer && viewPulseMetadataLayer.value) {
+          pulseMetadataLayer.setStyle({
+            lineColor: pulseMetadataLineColor.value,
+            lineWidth: pulseMetadataLineSize.value,
+            heelColor: pulseMetadataHeelColor.value,
+            charFreqColor: pulseMetadataCharFreqColor.value,
+            kneeColor: pulseMetadataKneeColor.value,
+            pointRadius: pulseMetadataPointSize.value,
+          });
+          pulseMetadataLayer.redraw();
+        }
+      },
+    );
     onUnmounted(() => {
       if (editAnnotationLayer) {
         editAnnotationLayer.destroy();
@@ -516,6 +591,9 @@ export default defineComponent({
       }
       if (speciesSequenceLayer) {
         speciesSequenceLayer.destroy();
+      }
+      if (pulseMetadataLayer) {
+        pulseMetadataLayer.destroy();
       }
     });
 
@@ -699,6 +777,9 @@ export default defineComponent({
         if (contoursEnabled.value) {
           contourLayer.updateContourStyle();
         }
+      }
+      if (pulseMetadataLayer && viewPulseMetadataLayer.value) {
+        pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       }
       editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (editing.value && editingAnnotation.value) {

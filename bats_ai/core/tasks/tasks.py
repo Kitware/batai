@@ -4,7 +4,7 @@ import shutil
 import tempfile
 
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.gis.geos import Polygon
+from django.contrib.gis.geos import LineString, Point, Polygon
 from django.core.files import File
 
 from bats_ai.celery import app
@@ -104,8 +104,9 @@ def recording_compute_spectrogram(recording_id: int):
                 )
 
         # Create SpectrogramContour objects for each segment
-        for segment in results['segments']['segments']:
-            PulseMetadata.objects.get_or_create(
+        segment_index_map = {}
+        for segment in compressed['contours']['segments']:
+            pulse_metadata_obj, _ = PulseMetadata.objects.get_or_create(
                 recording=compressed_obj.recording,
                 index=segment['segment_index'],
                 defaults={
@@ -121,6 +122,30 @@ def recording_compute_spectrogram(recording_id: int):
                     ),
                 },
             )
+            segment_index_map[segment['segment_index']] = pulse_metadata_obj
+        for segment in compressed['segments']:
+            if segment['segment_index'] not in segment_index_map:
+                PulseMetadata.objects.get_or_create(
+                    recording=compressed_obj.recording,
+                    index=segment['segment_index'],
+                    defaults={
+                        'curve': LineString([Point(x[1], x[0]) for x in segment['curve_hz_ms']]),
+                        'char_freq': Point(segment['char_freq_ms'], segment['char_freq_hz']),
+                        'knee': Point(segment['knee_ms'], segment['knee_hz']),
+                        'heel': Point(segment['heel_ms'], segment['heel_hz']),
+                    },
+                )
+            else:
+                pulse_metadata_obj = segment_index_map[segment['segment_index']]
+                pulse_metadata_obj.curve = LineString(
+                    [Point(x[1], x[0]) for x in segment['curve_hz_ms']]
+                )
+                pulse_metadata_obj.char_freq = Point(
+                    segment['char_freq_ms'], segment['char_freq_hz']
+                )
+                pulse_metadata_obj.knee = Point(segment['knee_ms'], segment['knee_hz'])
+                pulse_metadata_obj.heel = Point(segment['heel_ms'], segment['heel_hz'])
+                pulse_metadata_obj.save()
 
         config = Configuration.objects.first()
         # TODO: Disabled until prediction is in batbot
