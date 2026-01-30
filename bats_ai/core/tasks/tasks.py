@@ -90,6 +90,19 @@ def recording_compute_spectrogram(recording_id: int):
                     },
                 )
 
+        # Save mask images (from batbot metadata mask_path)
+        for idx, mask_path in enumerate(compressed.get('masks', [])):
+            with open(mask_path, 'rb') as f:
+                SpectrogramImage.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(compressed_obj),
+                    object_id=compressed_obj.id,
+                    index=idx,
+                    type='masks',
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(mask_path)),
+                    },
+                )
+
         # Create SpectrogramContour objects for each segment
         for segment in results['segments']['segments']:
             PulseMetadata.objects.get_or_create(
