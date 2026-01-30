@@ -1,5 +1,9 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
+from django.utils import timezone
 import factory.django
+from oauth2_provider.models import AccessToken
 
 from bats_ai.core.models import VettingDetails
 
@@ -39,3 +43,13 @@ class VettingDetailsFactory(factory.django.DjangoModelFactory[VettingDetails]):
 
     user = factory.SubFactory(UserFactory)
     reference_materials = factory.Faker('paragraph', nb_sentences=3)
+
+
+class AccessTokenFactory(factory.django.DjangoModelFactory[AccessToken]):
+    class Meta:
+        model = AccessToken
+
+    user = factory.SubFactory(UserFactory)
+    token = factory.Faker('uuid4')
+    scope = 'read write'
+    expires = factory.LazyFunction(lambda: timezone.now() + timedelta(hours=1))

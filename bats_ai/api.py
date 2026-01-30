@@ -1,7 +1,10 @@
 import logging
 
+from django.http import HttpRequest
 from ninja import NinjaAPI
+from ninja.security import HttpBearer
 from oauth2_provider.models import AccessToken
+from oauth2_provider.oauth2_backends import get_oauthlib_core
 
 from bats_ai.core.views import (
     ConfigurationRouter,
@@ -20,21 +23,26 @@ from bats_ai.core.views.nabat import NABatConfigurationRouter, NABatRecordingRou
 logger = logging.getLogger(__name__)
 
 
-def global_auth(request):
-    if request.user.is_anonymous:
-        token = request.headers.get('Authorization', '').replace('Bearer ', '')
-        if len(token) > 0:
-            try:
-                access_token = AccessToken.objects.get(token=token)
-            except AccessToken.DoesNotExist:
-                access_token = None
-            if access_token and access_token.user:
-                if not access_token.user.is_anonymous:
-                    request.user = access_token.user
-    return not request.user.is_anonymous
+class OAuth2Auth(HttpBearer):
+    def __init__(self, scopes: list[str] | None = None) -> None:
+        super().__init__()
+        self.scopes = scopes if scopes is not None else []
+
+    def authenticate(self, request: HttpRequest, token: str) -> AccessToken | None:
+        oauthlib_core = get_oauthlib_core()
+        # This also sets `request.user`,
+        # which Ninja does not: https://github.com/vitalik/django-ninja/issues/76
+        valid, r = oauthlib_core.verify_request(request, scopes=self.scopes)
+
+        if valid:
+            # Any truthy return is success, but give the full AccessToken for Ninja to set as
+            # `request.auth`.
+            request.user = r.access_token.user
+            return r.access_token
+        return None
 
 
-api = NinjaAPI(auth=global_auth)
+api = NinjaAPI(auth=OAuth2Auth())
 
 api.add_router('/recording/', RecordingRouter)
 api.add_router('/species/', SpeciesRouter)
