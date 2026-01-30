@@ -45,11 +45,12 @@ export default defineComponent({
       if (containerRef.value && !geoJS.getGeoViewer().value) {
         geoJS.initializeViewer(containerRef.value, width, height, true);
       }
-      geoJS.resetMapDimensions(width, height);
-      geoJS.getGeoViewer().value.bounds({ left: 0, top: 0, bottom: height, right: width });
+      const finalWidth = scaledWidth.value || width;
+      const finalHeight = scaledHeight.value || height;
+      geoJS.resetMapDimensions(finalWidth, finalHeight, 0.3, true);
 
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value || width, scaledHeight.value || height);
+        geoJS.drawImages(props.images, finalWidth, finalHeight);
       }
       initialized.value = true;
       nextTick(() => createPolyLayer());
@@ -127,15 +128,11 @@ export default defineComponent({
 
     watch([scaledHeight, scaledWidth], () => {
       const { width, height } = getImageDimensions(props.images);
-      geoJS.resetMapDimensions(scaledWidth.value || width, scaledHeight.value || height);
-      geoJS.getGeoViewer().value.bounds({
-        left: 0,
-        top: 0,
-        bottom: scaledHeight.value || height,
-        right: scaledWidth.value || width,
-      });
+      const finalWidth = scaledWidth.value || width;
+      const finalHeight = scaledHeight.value || height;
+      geoJS.resetMapDimensions(finalWidth, finalHeight, 0.3, true);
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value || width, scaledHeight.value | height);
+        geoJS.drawImages(props.images, finalWidth, finalHeight);
       }
     });
 

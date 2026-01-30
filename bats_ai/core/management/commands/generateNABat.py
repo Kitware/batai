@@ -12,10 +12,10 @@ from scipy.io import wavfile
 
 from bats_ai.core.models import Species
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
+from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
 from bats_ai.utils.spectrogram_utils import (
     generate_nabat_compressed_spectrogram,
     generate_nabat_spectrogram,
-    generate_spectrogram_assets,
 )
 
 fake = Faker()

@@ -50,6 +50,7 @@ dependencies = [
     "sentry-sdk[celery,django,pure_eval]",
     "gunicorn",
     "geopandas>=1.1.1",
+    "batbot",
 ]
 
 [project.optional-dependencies]
@@ -120,6 +121,8 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
+batbot = { git = "https://github.com/Kitware/batbot" }
+
 
 [tool.black]
 line-length = 100

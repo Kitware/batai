@@ -72,6 +72,7 @@ export default defineComponent({
       drawingBoundingBox,
       boundingBoxError,
       fixedAxes,
+      transparencyThreshold,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -726,6 +727,33 @@ export default defineComponent({
     const gValues = ref('');
     const bValues = ref('');
 
+    function getTransparencyTableValues() {
+      // transparencyThreshold is expected to be 0-100 (percentage)
+      // Convert to normalized 0-1
+      const t = (transparencyThreshold.value ?? 0) / 100;
+
+      // quick edge cases
+      if (t <= 0) {
+        // threshold 0% → everything visible (alpha=1)
+        return "1";
+      }
+      if (t >= 1) {
+        // threshold 100% → everything transparent (alpha=0)
+        return "0";
+      }
+      // number of discrete steps (higher = sharper but costlier)
+      const numSteps = 100;
+      // which index is the last 'transparent' bucket
+      const thresholdStep = Math.floor(t * (numSteps - 1));
+
+      const values: string[] = [];
+      for (let i = 0; i < numSteps; i++) {
+        // for i <= thresholdStep set transparent (0), else opaque (1)
+        values.push(i <= thresholdStep ? "0" : "1");
+      }
+      return values.join(" ");
+    }
+
     function updateColorFilter() {
       if (!backgroundColor.value.includes(',')) {
         // convert rgb(0 0 0) to rgb(0, 0, 0)
@@ -787,6 +815,7 @@ export default defineComponent({
       rValues,
       gValues,
       bValues,
+      getTransparencyTableValues,
     };
   },
 });
@@ -819,7 +848,7 @@ export default defineComponent({
     height="0"
     style="position: absolute; top: -1px; left: -1px;"
   >
-    <filter id="apply-color-scheme">
+    <filter id="svg-filters">
       <!-- convert to grayscale -->
       <feColorMatrix
         type="saturate"
@@ -827,8 +856,38 @@ export default defineComponent({
         result="grayscale"
       />
 
-      <!-- apply color scheme -->
-      <feComponentTransfer>
+      <feColorMatrix
+        in="grayscale"
+        type="matrix"
+        values="0.2126 0.7152 0.0722 0 0
+                0.2126 0.7152 0.0722 0 0
+                0.2126 0.7152 0.0722 0 0
+                0 0 0 1 0"
+        result="sourceGraphic"
+      />
+      
+      <feColorMatrix
+        in="sourceGraphic"
+        type="luminanceToAlpha"
+        result="luminance"
+      />
+      <feComponentTransfer
+        in="luminance"
+        result="transparency-mask"
+      >
+        <feFuncA
+          type="table"
+          :tableValues="getTransparencyTableValues()"
+        />
+      </feComponentTransfer>
+
+      <feComposite
+        in="grayscale"
+        in2="transparency-mask"
+        operator="in"
+        result="grayscale-with-transparency"
+      />
+      <feComponentTransfer in="grayscale-with-transparency">
         <feFuncR
           type="table"
           :tableValues="rValues"
