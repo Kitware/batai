@@ -16,4 +16,9 @@ module "django" {
   heroku_team_name       = data.heroku_team.this.name
   subdomain_name         = "api"
   django_settings_module = "bats_ai.settings.heroku_production"
+
+  additional_django_vars = {
+    DJANGO_SENTRY_DSN = "https://6949e99cb9fcea56cfbb36954d4de266@o267860.ingest.us.sentry.io/4509271243423744"
+
+  }
 }
