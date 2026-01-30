@@ -268,8 +268,10 @@ def working_directory(path):
         os.chdir(previous)
 
 
-def generate_spectrogram_assets(recording_path: str, output_folder: str):
-    batbot.pipeline(recording_path, output_folder=output_folder)
+def generate_spectrogram_assets(
+    recording_path: str, output_folder: str, debug: bool = False
+) -> SpectrogramAssets:
+    batbot.pipeline(recording_path, output_folder=output_folder, debug=debug)
     # There should be a .metadata.json file in the output_base directory by replacing extentions
     metadata_file = Path(recording_path).with_suffix('.metadata.json').name
     metadata_file = Path(output_folder) / metadata_file
@@ -359,11 +361,13 @@ def pipeline_filepath_validator(ctx, param, value):
     default=None,
     type=str,
 )
-def pipeline(
-    filepath,
-    config,
-    output_path,
-):
+@click.option(
+    '-d',
+    '--debug/',
+    default=False,
+    help='Enable debug mode with more verbose logging',
+)
+def pipeline(filepath, config, output_path, debug):
     """
     Run the BatBot pipeline on an input WAV filepath.
 
@@ -381,7 +385,7 @@ def pipeline(
         config = config.strip().lower()
     # classifier_thresh /= 100.0
 
-    results = generate_spectrogram_assets(filepath, output_folder=output_path)
+    results = generate_spectrogram_assets(filepath, output_folder=output_path, debug=debug)
     # save the assets to a json file
     with open(Path(output_path) / 'spectrogram_assets.json', 'w') as f:
         json.dump(results, f, indent=4)
