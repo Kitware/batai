@@ -9,7 +9,7 @@ data "heroku_team" "this" {
 
 module "django" {
   source  = "kitware-resonant/resonant/heroku"
-  version = "3.1.0"
+  version = "3.1.1"
 
   project_slug           = "bats-ai"
   route53_zone_id        = data.aws_route53_zone.this.zone_id
