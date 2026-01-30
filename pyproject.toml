@@ -51,6 +51,8 @@ dependencies = [
     "gunicorn",
     "geopandas>=1.1.1",
     "batbot",
+    "scikit-image>=0.25.2",
+    "svgwrite>=1.4.3",
 ]
 
 [project.optional-dependencies]
@@ -121,7 +123,7 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
-batbot = { git = "https://github.com/Kitware/batbot" }
+batbot = { git = "https://github.com/Kitware/batbot", branch = "jrp/compressed-mask" }
 
 
 [tool.black]

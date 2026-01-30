@@ -20,6 +20,7 @@ class SpectrogramImage(models.Model):
     SPECTROGRAM_TYPE_CHOICES = [
         ('spectrogram', 'Spectrogram'),
         ('compressed', 'Compressed'),
+        ('masks', 'Masks'),
     ]
     content_object = GenericForeignKey('content_type', 'object_id')
 

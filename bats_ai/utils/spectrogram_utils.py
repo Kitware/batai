@@ -26,6 +26,7 @@ class SpectrogramAssetResult(TypedDict):
 
 class SpectrogramCompressedAssetResult(TypedDict):
     paths: list[str]
+    masks: list[str]
     width: int
     height: int
     widths: list[float]
@@ -187,6 +188,19 @@ def generate_nabat_compressed_spectrogram(
                 defaults={
                     'image_file': File(f, name=os.path.basename(img_path)),
                     'type': 'compressed',
+                },
+            )
+
+    # Save mask images (from batbot metadata mask_path)
+    for idx, mask_path in enumerate(compressed_results.get('masks', [])):
+        with open(mask_path, 'rb') as f:
+            SpectrogramImage.objects.get_or_create(
+                content_type=ContentType.objects.get_for_model(compressed_obj),
+                object_id=compressed_obj.id,
+                index=idx,
+                type='masks',
+                defaults={
+                    'image_file': File(f, name=os.path.basename(mask_path)),
                 },
             )
 

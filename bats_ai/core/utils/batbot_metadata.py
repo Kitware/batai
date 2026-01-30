@@ -7,12 +7,15 @@ from typing import Any, TypedDict
 import batbot
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .contour_utils import process_spectrogram_assets_for_contours
+
 
 class SpectrogramMetadata(BaseModel):
     """Metadata about the spectrogram."""
 
     uncompressed_path: list[str] = Field(alias='uncompressed.path')
     compressed_path: list[str] = Field(alias='compressed.path')
+    mask_path: list[str] = Field(alias='mask.path')
 
 
 class UncompressedSize(BaseModel):
@@ -227,11 +230,34 @@ class SpectrogramAssetResult(TypedDict):
 
 class SpectrogramCompressedAssetResult(TypedDict):
     paths: list[str]
+    masks: list[str]
     width: int
     height: int
     widths: list[float]
     starts: list[float]
     stops: list[float]
+
+
+class SpectrogramContour(TypedDict):
+    level: float
+    curve: list[list[float]]
+    index: int
+
+
+class SpectrogramContourSegment(TypedDict):
+    segment_index: int
+    contour_count: int
+    freq_min: float
+    freq_max: float
+    contours: list[SpectrogramContour]
+    width_px: float
+    start_ms: float
+    stop_ms: float
+
+
+class SpectrogramContours(TypedDict):
+    segments: list[SpectrogramContourSegment]
+    total_segments: int
 
 
 class SpectrogramAssets(TypedDict):
@@ -240,6 +266,7 @@ class SpectrogramAssets(TypedDict):
     freq_max: int
     normal: SpectrogramAssetResult
     compressed: SpectrogramCompressedAssetResult
+    segments: SpectrogramContours | None
 
 
 @contextmanager
@@ -261,6 +288,7 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
     # from the metadata we should have the images that are used
     uncompressed_paths = metadata.spectrogram.uncompressed_path
     compressed_paths = metadata.spectrogram.compressed_path
+    mask_paths = metadata.spectrogram.mask_path
 
     metadata.frequencies.min_hz
     metadata.frequencies.max_hz
@@ -277,6 +305,7 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
         },
         'compressed': {
             'paths': compressed_paths,
+            'masks': mask_paths,
             'width': metadata.size.compressed.width_px,
             'height': metadata.size.compressed.height_px,
             'widths': compressed_metadata.widths,
@@ -284,4 +313,8 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
             'stops': compressed_metadata.stops,
         },
     }
+
+    segments_data = process_spectrogram_assets_for_contours(result)
+    result['segments'] = segments_data
+
     return result

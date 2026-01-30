@@ -10,6 +10,7 @@ from .nabat.admin import (
     NABatSpectrogramAdmin,
 )
 from .processing_task import ProcessingTaskAdmin
+from .pulse_metadata import PulseMetadataAdmin
 from .recording import RecordingAdmin
 from .recording_annotations import RecordingAnnotationAdmin
 from .recording_tag import RecordingTagAdmin
@@ -34,6 +35,7 @@ __all__ = [
     'ExportedAnnotationFileAdmin',
     'SpectrogramImageAdmin',
     'VettingDetailsAdmin',
+    'PulseMetadataAdmin',
     # NABat Models
     'NABatRecordingAnnotationAdmin',
     'NABatCompressedSpectrogramAdmin',

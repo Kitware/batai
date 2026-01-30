@@ -20,6 +20,7 @@ export default defineComponent({
   components: { LayerManager },
   props: {
     images: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
+    maskImages: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
     spectroInfo: { type: Object as PropType<SpectroInfo>, required: true },
     recordingId: { type: String as PropType<string | null>, required: true },
     compressed: { type: Boolean, required: true }
@@ -36,7 +37,11 @@ export default defineComponent({
       scaledVals,
       configuration,
       scaledWidth,
-      scaledHeight
+      scaledHeight,
+      contoursEnabled,
+      imageOpacity,
+      viewMaskOverlay,
+      maskOverlayOpacity,
     } = useState();
 
     const containerRef: Ref<HTMLElement | undefined> = ref();
@@ -115,6 +120,8 @@ export default defineComponent({
       emit("hoverData", { time, freq });
     };
 
+    const effectiveImageOpacity = () => (contoursEnabled.value ? imageOpacity.value : 1);
+
     function initializeViewerAndImages() {
       updateScaledDimensions();
       if (containerRef.value && !geoJS.getGeoViewer().value) {
@@ -122,7 +129,10 @@ export default defineComponent({
         geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
       }
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity());
+      }
+      if (viewMaskOverlay.value && props.maskImages.length) {
+        geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
       }
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
@@ -131,7 +141,10 @@ export default defineComponent({
         scaledVals.value = { x: configuration.value.spectrogram_x_stretch, y: 1 };
         updateScaledDimensions();
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
+        }
+        if (viewMaskOverlay.value && props.maskImages.length) {
+          geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
         }
       }
     }
@@ -155,7 +168,10 @@ export default defineComponent({
         right: scaledWidth.value,
       });
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value);
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity());
+      }
+      if (viewMaskOverlay.value && props.maskImages.length) {
+        geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
       }
     });
 
@@ -213,19 +229,39 @@ export default defineComponent({
         if (scaledVals.value.x < 1) scaledVals.value.x = 1;
         updateScaledDimensions();
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
+        }
+        if (viewMaskOverlay.value && props.maskImages.length) {
+          geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
         }
       } else if (event.shiftKey) {
         scaledVals.value.y += event.deltaY > 0 ? -incrementY : incrementY;
         if (scaledVals.value.y < 1) scaledVals.value.y = 1;
         updateScaledDimensions();
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false);
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
+        }
+        if (viewMaskOverlay.value && props.maskImages.length) {
+          geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
         }
       }
     };
 
     onUnmounted(() => geoJS.destroyGeoViewer());
+
+    watch([contoursEnabled, imageOpacity], () => {
+      if (props.images.length) {
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
+      }
+    });
+
+    watch([viewMaskOverlay, maskOverlayOpacity, () => props.maskImages], () => {
+      if (viewMaskOverlay.value && props.maskImages.length) {
+        geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
+      } else {
+        geoJS.clearMaskQuadFeatures(true);
+      }
+    });
 
     return {
       containerRef,
@@ -267,6 +303,7 @@ export default defineComponent({
       :spectro-info="spectroInfo"
       :scaled-width="scaledWidth"
       :scaled-height="scaledHeight"
+      :recording-id="recordingId"
       @update:annotation="updateAnnotation($event)"
       @create:annotation="createAnnotation($event)"
       @set-cursor="setCursor($event)"
