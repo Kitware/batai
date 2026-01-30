@@ -15,6 +15,7 @@ class SpectrogramMetadata(BaseModel):
 
     uncompressed_path: list[str] = Field(alias='uncompressed.path')
     compressed_path: list[str] = Field(alias='compressed.path')
+    mask_path: list[str] = Field(alias='mask.path')
 
 
 class UncompressedSize(BaseModel):
@@ -229,6 +230,7 @@ class SpectrogramAssetResult(TypedDict):
 
 class SpectrogramCompressedAssetResult(TypedDict):
     paths: list[str]
+    masks: list[str]
     width: int
     height: int
     widths: list[float]
@@ -286,6 +288,7 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
     # from the metadata we should have the images that are used
     uncompressed_paths = metadata.spectrogram.uncompressed_path
     compressed_paths = metadata.spectrogram.compressed_path
+    mask_paths = metadata.spectrogram.mask_path
 
     metadata.frequencies.min_hz
     metadata.frequencies.max_hz
@@ -302,6 +305,7 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
         },
         'compressed': {
             'paths': compressed_paths,
+            'masks': mask_paths,
             'width': metadata.size.compressed.width_px,
             'height': metadata.size.compressed.height_px,
             'widths': compressed_metadata.widths,

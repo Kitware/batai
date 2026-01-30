@@ -7,7 +7,7 @@
 # ]
 #
 # [tool.uv.sources]
-# batbot = { git = "https://github.com/Kitware/batbot" }
+# batbot = { git = "https://github.com/Kitware/batbot", branch = "jrp/compressed-mask" }
 # ///
 from contextlib import contextmanager
 import json
@@ -27,6 +27,7 @@ class SpectrogramMetadata(BaseModel):
 
     uncompressed_path: list[str] = Field(alias='uncompressed.path')
     compressed_path: list[str] = Field(alias='compressed.path')
+    mask_path: list[str] = Field(alias='mask.path')
 
 
 class UncompressedSize(BaseModel):
@@ -286,6 +287,7 @@ def generate_spectrogram_assets(
 
     uncompressed_paths = _normalize_paths(metadata.spectrogram.uncompressed_path)
     compressed_paths = _normalize_paths(metadata.spectrogram.compressed_path)
+    mask_paths = _normalize_paths(metadata.spectrogram.mask_path)
 
     metadata.frequencies.min_hz
     metadata.frequencies.max_hz
@@ -324,6 +326,7 @@ def generate_spectrogram_assets(
         },
         'compressed': {
             'paths': compressed_paths,
+            'masks': mask_paths,
             'width': metadata.size.compressed.width_px,
             'height': metadata.size.compressed.height_px,
             'widths': compressed_metadata.widths,
@@ -364,6 +367,7 @@ def pipeline_filepath_validator(ctx, param, value):
 @click.option(
     '-d',
     '--debug/',
+    is_flag=True,
     default=False,
     help='Enable debug mode with more verbose logging',
 )

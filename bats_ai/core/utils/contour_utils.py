@@ -351,8 +351,8 @@ def extract_contours(
 def process_spectrogram_assets_for_contours(
     assets: dict[str, Any],
     levels_mode: str = 'percentile',
-    percentile_values: list[float] = (90, 92, 94, 96, 98),
-    min_area: float = 500.0,
+    percentile_values: list[float] = (60, 70, 80, 90, 92, 94, 96, 98),
+    min_area: float = 30.0,
     smoothing_factor: float = 0.08,
     min_intensity: float = 1.0,
     multi_otsu_classes: int = 4,
@@ -364,7 +364,8 @@ def process_spectrogram_assets_for_contours(
     apply_noise_filter: bool = False,
 ):
     compressed_data = assets.get('compressed', {})
-    compressed_paths = compressed_data.get('paths', [])
+    compressed_data.get('paths', [])
+    mask_paths = compressed_data.get('masks', [])
     widths = compressed_data.get('widths', [])
     height = compressed_data.get('height', 0)
     starts = compressed_data.get('starts', [])
@@ -374,7 +375,7 @@ def process_spectrogram_assets_for_contours(
     all_segments_data = []
 
     processed_images: set[Path] = set()
-    for path_str in compressed_paths:
+    for path_str in mask_paths:
         img_path = Path(path_str).resolve()
         if not img_path.exists():
             logger.warning('Image path does not exist: %s', img_path)

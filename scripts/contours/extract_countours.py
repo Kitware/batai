@@ -347,10 +347,7 @@ def extract_contours(
                 cv2.imwrite(str(unfiltered_path), gray)
                 print('Wrote unfiltered debug image:', unfiltered_path)
 
-        blurred = cv2.GaussianBlur(gray, (15, 15), 3)
-    else:
-        blurred = cv2.GaussianBlur(gray, (15, 15), 3)
-    data = blurred
+    data = gray
 
     levels = compute_auto_levels(
         data,
@@ -358,6 +355,8 @@ def extract_contours(
         percentile_values=percentile_values,
         **level_kwargs,
     )
+
+    print(levels)
 
     contours = []
     for level in levels:
@@ -392,8 +391,8 @@ def extract_contours(
     type=click.Choice(['percentile', 'histogram', 'multi-otsu']),
     default='percentile',
 )
-@click.option('--percentiles', multiple=True, default=(90, 92, 94, 96, 98))
-@click.option('--min-area', default=500.0)
+@click.option('--percentiles', multiple=True, default=(60, 70, 80, 90, 92, 94, 96, 98))
+@click.option('--min-area', default=30.0)
 @click.option('--smoothing-factor', default=0.08)
 @click.option('--multi-otsu-classes', default=4)
 @click.option('--hist-bins', default=512)
@@ -432,7 +431,8 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
 
         # Get compressed paths and widths/starts/stops
         compressed_data = assets_data.get('compressed', {})
-        compressed_paths = compressed_data.get('paths', [])
+        compressed_data.get('paths', [])
+        mask_paths = compressed_data.get('masks', [])
         widths = compressed_data.get('widths', [])
         starts = compressed_data.get('starts', [])
         stops = compressed_data.get('stops', [])
@@ -442,7 +442,7 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
 
         # Process each unique compressed image
         processed_images: set[Path] = set()
-        for path_str in compressed_paths:
+        for path_str in mask_paths:
             img_path = (assets_dir / path_str).resolve()
             if not img_path.exists():
                 logger.warning('Image path does not exist: %s', img_path)
