@@ -101,6 +101,10 @@ STATIC_ROOT.mkdir(exist_ok=True)
 # Can be set to mount all URLs at a subpath
 BATAI_URL_PATH: str = env.str('DJANGO_BATAI_URL_PATH', default='').strip('/')
 
+BATAI_NABAT_API_URL: str = env.str(
+    'DJANGO_BATAI_NABAT_API_URL', default='https://api.sciencebase.gov/nabat-graphql/graphql'
+)
+
 # Django's docs suggest that STATIC_URL should be a relative path,
 # for convenience serving a site on a subpath.
 STATIC_URL = f'/{BATAI_URL_PATH}/static/' if BATAI_URL_PATH else '/static/'
