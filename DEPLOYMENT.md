@@ -120,7 +120,8 @@ for a list of environment variables that you'll need to populate for your deploy
 - `DJANGO_CELERY_BROKER_URL` is used to make sure django can send tasks to the `celery` service.
    For example, if using [RabbitMQ](https://www.rabbitmq.com/), it might look like this: `amqp://rabbitmq:5672`
 - `AWS_*` and `DJANGO_STORAGE_BUCKET_NAME` are used to make sure the application can connect to your S3 bucket
-- `NABAT_API_URL`: the location of the NABat GraphQL endpoint used to retrieve information about files in NABat.
+- `DJANGO_BATAI_NABAT_API_URL` (optional): the location of the NABat GraphQL endpoint used to
+  retrieve information about files in NABat.
 - `VITE_APP_API_ROUTE`: this tells the Vue application where the backend (Django) API can be found.
 - `DJANGO_BATAI_URL_PATH`: this allows the Django application to be mounted at a subpath in a URL.
    It is used by the Django application itself and the nginx configuration at nginx.subpath.template

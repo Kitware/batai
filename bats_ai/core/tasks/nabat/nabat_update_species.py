@@ -1,6 +1,6 @@
 import logging
-import os
 
+from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 import requests
 
@@ -11,7 +11,6 @@ from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatGetSpecies')
 
-BASE_URL = os.environ.get('NABAT_API_URL', 'https://api.sciencebase.gov/nabat-graphql/graphql')
 QUERY = """
 query GetAllSpeciesOptions {
   allSpecies {
@@ -75,7 +74,7 @@ def update_nabat_species(self):
     processing_task.save()
 
     try:
-        response = requests.post(BASE_URL, json={'query': QUERY})
+        response = requests.post(settings.BATAI_NABAT_API_URL, json={'query': QUERY})
         response.raise_for_status()
     except Exception as e:
         processing_task.status = ProcessingTask.Status.ERROR

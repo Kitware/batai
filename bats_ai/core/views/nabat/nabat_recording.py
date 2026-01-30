@@ -1,8 +1,8 @@
 import base64
 import json
 import logging
-import os
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpRequest, JsonResponse
@@ -39,7 +39,6 @@ def admin_auth(request):
 
 
 SOFTWARE_ID = 81
-BASE_URL = os.environ.get('NABAT_API_URL', 'https://api.sciencebase.gov/nabat-graphql/graphql')
 QUERY = """
 query fetchAcousticAndSurveyEventInfo {
   presignedUrlFromAcousticFile(acousticFileId: "%(acoustic_file_id)s") {
@@ -128,7 +127,9 @@ def get_email_if_authorized(
     headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
     query = QUERY % {'acoustic_file_id': recording_id}
     try:
-        response = requests.post(BASE_URL, json={'query': query}, headers=headers)
+        response = requests.post(
+            settings.BATAI_NABAT_API_URL, json={'query': query}, headers=headers
+        )
     except Exception as e:
         logger.error(f'API request error: {e}')
         return JsonResponse({'error': 'Failed to connect to NABat API'}, status=500)
@@ -184,7 +185,9 @@ def update_nabat_species(species_id: int, api_token: str, recording_id: int, sur
         'species_id': species_id,
     }
     try:
-        response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
+        response = requests.post(
+            settings.BATAI_NABAT_API_URL, json={'query': batch_query}, headers=headers
+        )
         json_response = response.json()
         if json_response.get('errors'):
             logger.error(f'API Error: {json_response["errors"]}')
@@ -241,7 +244,9 @@ def generate_nabat_recording(
         'acoustic_file_id': recording_id,
     }
     try:
-        response = requests.post(BASE_URL, json={'query': batch_query}, headers=headers)
+        response = requests.post(
+            settings.BATAI_NABAT_API_URL, json={'query': batch_query}, headers=headers
+        )
         logger.info(response.json())
     except Exception:
         return JsonResponse(response.json(), status=500)
