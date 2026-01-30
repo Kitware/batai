@@ -231,6 +231,7 @@ dependencies = [
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
     { name = "rich" },
+    { name = "sentry-sdk", extra = ["celery", "django", "pure-eval"] },
     { name = "tqdm" },
     { name = "whitenoise", extra = ["brotli"] },
 ]
@@ -319,6 +320,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"] },
     { name = "pydantic" },
     { name = "rich" },
+    { name = "sentry-sdk", extras = ["celery", "django", "pure-eval"] },
     { name = "tqdm" },
     { name = "watchdog", marker = "extra == 'development'" },
     { name = "werkzeug", marker = "extra == 'development'" },
@@ -1106,14 +1108,14 @@ wheels = [
 
 [[package]]
 name = "django-resonant-settings"
-version = "0.32.1"
+version = "0.44.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django-environ" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8d/81/291ad02ff11ae83add6f97d24a49e98fcfe0e668efdb0f465d215803edbd/django_resonant_settings-0.32.1.tar.gz", hash = "sha256:e213fcc8ab60153ddfe0f88fa8da208292191220d70e9bc6ee40877210b30d2b", size = 17497, upload-time = "2025-07-07T15:38:19.18Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/eb/0a/56cdf3b7e1bce9f110b3182abe8a3e4d8a8413b57a0bd6f3da87bb6d116e/django_resonant_settings-0.44.0.tar.gz", hash = "sha256:8a7f90b7b0f2cbd7373eaff2209c4c67a0efe8dbb328285034be9e29a957a102", size = 18244, upload-time = "2025-12-17T05:25:10.655Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/13/f6/041434dedaeae08dea501ab0e27ae1316103d8e4ee950161232dbb793a3a/django_resonant_settings-0.32.1-py3-none-any.whl", hash = "sha256:069fb792f03bbea32167ded8b3924f81ef4b76328ecaf094abbffbf9e37afe4d", size = 23616, upload-time = "2025-07-07T15:38:18.27Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/15/1fdc2342aa7b06917e9faab5edd90a1ab9dc346d83fe890ce4153201ba07/django_resonant_settings-0.44.0-py3-none-any.whl", hash = "sha256:74b75d93d843821c8813972aa85cfd5ef732c99c0c93ba2cccee619b0e346937", size = 24956, upload-time = "2025-12-17T05:25:11.621Z" },
 ]
 
 [package.optional-dependencies]
@@ -3552,6 +3554,32 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ce/b3/21001cff985a122ba434c33f2c9d7d1dc3b669827e94f4fc4e1fe8b9dfd8/scipy-1.16.0-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:4f720300a3024c237ace1cb11f9a84c38beb19616ba7c4cdcd771047a10a1706", size = 35570990, upload-time = "2025-06-22T16:21:27.797Z" },
     { url = "https://files.pythonhosted.org/packages/e5/d3/7ba42647d6709251cdf97043d0c107e0317e152fa2f76873b656b509ff55/scipy-1.16.0-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:aad603e9339ddb676409b104c48a027e9916ce0d2838830691f39552b38a352e", size = 37950262, upload-time = "2025-06-22T16:21:36.976Z" },
     { url = "https://files.pythonhosted.org/packages/eb/c4/231cac7a8385394ebbbb4f1ca662203e9d8c332825ab4f36ffc3ead09a42/scipy-1.16.0-cp313-cp313t-win_amd64.whl", hash = "sha256:f56296fefca67ba605fd74d12f7bd23636267731a72cb3947963e76b8c0a25db", size = 38515076, upload-time = "2025-06-22T16:21:45.694Z" },
+]
+
+[[package]]
+name = "sentry-sdk"
+version = "2.51.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6f/9f/094bbb6be5cf218ab6712c6528310687f3d3fe8818249fcfe1d74192f7c5/sentry_sdk-2.51.0.tar.gz", hash = "sha256:b89d64577075fd8c13088bc3609a2ce77a154e5beb8cba7cc16560b0539df4f7", size = 407447, upload-time = "2026-01-28T10:29:50.962Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/da/df379404d484ca9dede4ad8abead5de828cdcff35623cd44f0351cf6869c/sentry_sdk-2.51.0-py2.py3-none-any.whl", hash = "sha256:e21016d318a097c2b617bb980afd9fc737e1efc55f9b4f0cdc819982c9717d5f", size = 431426, upload-time = "2026-01-28T10:29:48.868Z" },
+]
+
+[package.optional-dependencies]
+celery = [
+    { name = "celery" },
+]
+django = [
+    { name = "django" },
+]
+pure-eval = [
+    { name = "asttokens" },
+    { name = "executing" },
+    { name = "pure-eval" },
 ]
 
 [[package]]

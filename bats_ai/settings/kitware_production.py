@@ -1,13 +1,13 @@
-from environ import Env
-
-from .production import *
+from .base import *
 
 # Import these afterwards, to override
 from resonant_settings.production.email import *  # isort: skip
-from resonant_settings.testing.minio_storage import *  # isort: skip
+from resonant_settings.development.minio_storage import *  # isort: skip
 
+SECRET_KEY: str = env.str('DJANGO_SECRET_KEY')
 
-env = Env()
+ALLOWED_HOSTS: list[str] = env.list('DJANGO_ALLOWED_HOSTS', cast=str)
+
 SECURE_SSL_REDIRECT = False  # disable because we are using a reverse proxy (traefik that does it)
 
 STORAGES['default'] = {

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from pathlib import Path
+from typing import Any
 
 from django.core.exceptions import ImproperlyConfigured
 import django_stubs_ext
@@ -13,7 +14,6 @@ from resonant_settings.django import *
 from resonant_settings.django_extensions import *
 from resonant_settings.logging import *
 from resonant_settings.oauth_toolkit import *
-from resonant_settings.rest_framework import *
 
 django_stubs_ext.monkeypatch()
 
@@ -22,6 +22,8 @@ env = Env()
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 
 ROOT_URLCONF = 'bats_ai.urls'
+
+WSGI_APPLICATION = 'bats_ai.wsgi.application'
 
 INSTALLED_APPS = [
     # Install local apps first, to ensure any overridden resources are found first
@@ -67,6 +69,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
@@ -78,11 +81,11 @@ DATABASES = {
     'default': {
         **env.db_url('DJANGO_DATABASE_URL', engine='django.contrib.gis.db.backends.postgis'),
         'CONN_MAX_AGE': timedelta(minutes=10).total_seconds(),
-    }
+    },
 }
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-STORAGES = {
+STORAGES: dict[str, dict[str, Any]] = {
     # Inject the "default" storage in particular run configurations
     'staticfiles': {
         # CompressedManifestStaticFilesStorage does not work properly with drf-

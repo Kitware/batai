@@ -5,13 +5,13 @@ from .base import *
 # Import these afterwards, to override
 from resonant_settings.development.celery import *  # isort: skip
 from resonant_settings.development.debug_toolbar import *  # isort: skip
-from resonant_settings.testing.minio_storage import *  # isort: skip
+from resonant_settings.development.minio_storage import *  # isort: skip
 
 INSTALLED_APPS += [
     'debug_toolbar',
     'django_browser_reload',
 ]
-# Force WhiteNoice to serve static files, even when using 'manage.py runserver'
+# Force WhiteNoise to serve static files, even when using 'manage.py runserver_plus'
 staticfiles_index = INSTALLED_APPS.index('django.contrib.staticfiles')
 INSTALLED_APPS.insert(staticfiles_index, 'whitenoise.runserver_nostatic')
 
@@ -53,5 +53,5 @@ OAUTH2_PROVIDER['ALLOWED_REDIRECT_URI_SCHEMES'] = ['http', 'https']
 OAUTH2_PROVIDER['REQUEST_APPROVAL_PROMPT'] = 'force'
 
 SHELL_PLUS_IMPORTS = [
-    'from bats_ai.tasks import tasks',
+    'from bats_ai.core import tasks',
 ]

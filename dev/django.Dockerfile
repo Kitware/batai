@@ -11,17 +11,3 @@ ENV UV_PROJECT_ENVIRONMENT=/var/lib/venv \
   # The uv cache and environment are expected to be mounted on different volumes,
   # so hardlinks won't work
   UV_LINK_MODE=symlink
-
-
-# Install system libraries for Python packages:
-# hadolint ignore=DL3008
-RUN set -ex \
- && apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        gcc \
-        g++ \
-        libc6-dev \
-        libsndfile1-dev \
-        ca-certificates \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
