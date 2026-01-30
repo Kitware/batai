@@ -89,10 +89,13 @@ const toggleFixedAxes = () => {
 };
 
 const computedPulseAnnotations: Ref<ComputedPulseAnnotation[]> = ref([]);
+// Show contours is always false; not persisted or loaded from localStorage.
 const contoursEnabled = ref(false);
 const imageOpacity = ref(1.0);
 const contourOpacity = ref(1.0);
 const contoursLoading = ref(false);
+const viewMaskOverlay = ref(false);
+const maskOverlayOpacity = ref(0.50);
 const setContoursEnabled = (value: boolean) => {
   contoursEnabled.value = value;
 };
@@ -393,5 +396,7 @@ export default function useState() {
     currentRecordingId,
     reviewerMaterials,
     loadReviewerMaterials,
+    viewMaskOverlay,
+    maskOverlayOpacity,
   };
 }

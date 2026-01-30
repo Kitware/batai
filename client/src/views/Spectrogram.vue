@@ -83,9 +83,11 @@ export default defineComponent({
       nextUnsubmittedRecordingId,
       previousUnsubmittedRecordingId,
       currentRecordingId,
+      viewMaskOverlay,
     } = useState();
     const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
+    const maskImages: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
@@ -131,6 +133,7 @@ export default defineComponent({
     const loading = ref(false);
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
     const loadData = async () => {
+      viewMaskOverlay.value = false;
       loading.value = true;
       currentRecordingId.value = parseInt(props.id);
       loadedImage.value = false;
@@ -160,6 +163,14 @@ export default defineComponent({
       } else {
         // TODO Error Out if there is no URL
         console.error("No URL found for the spectrogram");
+      }
+      maskImages.value = [];
+      if (spectrogramData.value.mask_urls?.length) {
+        spectrogramData.value.mask_urls.forEach((url) => {
+          const image = new Image();
+          image.src = url;
+          maskImages.value.push(image);
+        });
       }
       spectroInfo.value = response.data["spectroInfo"];
       if (spectrogramData.value['compressed'] && spectroInfo.value) {
@@ -296,6 +307,7 @@ export default defineComponent({
       loadedImage,
       loading,
       images,
+      maskImages,
       spectroInfo,
       annotations,
       selectedId,
@@ -578,7 +590,10 @@ export default defineComponent({
               <color-scheme-dialog />
             </div>
             <div class="mt-4 mx-2">
-              <spectrogram-image-content-menu :compressed="compressed" />
+              <spectrogram-image-content-menu
+                :compressed="compressed"
+                :has-mask-urls="maskImages.length > 0"
+              />
             </div>
             <div class="mt-4 mr-3">
               <transparency-filter-control />
@@ -589,6 +604,7 @@ export default defineComponent({
       <spectrogram-viewer
         v-if="loadedImage && spectroInfo"
         :images="images"
+        :mask-images="maskImages"
         :spectro-info="spectroInfo"
         :recording-id="id"
         :compressed="compressed"
@@ -602,6 +618,7 @@ export default defineComponent({
       <thumbnail-viewer
         v-if="loadedImage && parentGeoViewerRef"
         :images="images"
+        :mask-images="maskImages"
         :spectro-info="spectroInfo"
         :recording-id="id"
         :parent-geo-viewer-ref="parentGeoViewerRef"

@@ -489,8 +489,7 @@ export default defineComponent({
     watch(contourOpacity, () => {
       if (contourLayer && contoursEnabled.value) {
         contourLayer.setContourOpacity(contourOpacity.value);
-        contourLayer.removeContours();
-        contourLayer.drawContours();
+        contourLayer.updateContourStyle();
       }
     });
     onUnmounted(() => {
@@ -698,8 +697,7 @@ export default defineComponent({
       if (contourLayer) {
         contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
         if (contoursEnabled.value) {
-          contourLayer.removeContours();
-          contourLayer.drawContours();
+          contourLayer.updateContourStyle();
         }
       }
       editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);

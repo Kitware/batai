@@ -80,23 +80,41 @@ export default class ContourLayer {
 
   drawPolygonsForPulse(pulse: Contour[]) {
     const polyData: number[][][] = [];
+    const isCompressed = Boolean(this.spectroInfo.compressedWidth);
     pulse.sort((a: Contour, b: Contour) => {
       return a.level - b.level;
     }).forEach((contour: Contour) => {
       const newPoly: number[][] = [];
       contour.curve.forEach((point: number[]) => {
-        const contourPoint = this.getTransformedContourPoint(point, contour.level, contour.index);
-        newPoly.push([contourPoint.x, contourPoint.y, contour.level]);
+        if (isCompressed) {
+          // Store raw (time, frequency), level, and segment index; scaling done in style
+          newPoly.push([point[0], point[1], contour.level, contour.index]);
+        } else {
+          const contourPoint = this.getTransformedContourPoint(point, contour.level, contour.index);
+          newPoly.push([contourPoint.x, contourPoint.y, contour.level]);
+        }
       });
       polyData.push(newPoly);
     });
     const polygonFeature = this.contourLayer.createFeature('polygon');
     polygonFeature
       .data(polyData)
-      .position((item: number[]) => ({ x: item[0], y: item[1] }))
+      .position((item: number[]) => {
+        if (isCompressed) {
+          return this.getCompressedPosition(item[0], item[1], item[3]);
+        }
+        return { x: item[0], y: item[1] };
+      })
       .style(this.getContourStyle())
       .draw();
     this.features.push(polygonFeature);
+  }
+
+
+  updateContourStyle() {
+    this.features.forEach((feature) => {
+      feature.style(this.getContourStyle()).draw();
+    });
   }
 
   removeContours() {
@@ -116,11 +134,37 @@ export default class ContourLayer {
     this.computedPulseAnnotations.forEach((pulseAnnotation: ComputedPulseAnnotation) => this.drawPolygonsForPulse(pulseAnnotation.contours));
   }
 
-   getTransformedContourPoint(point: number[], level: number, index: number): ContourPoint {
+  getTransformedContourPoint(point: number[], level: number, index: number): ContourPoint {
     if (this.spectroInfo.compressedWidth) {
-      return this._getTransformedContourPointCompressed(point, level, index);
+      const pos = this.getCompressedPosition(point[0], point[1], index);
+      return { x: pos.x, y: pos.y, z: level };
     }
     return this._getTransformedContourPoint(point, level);
+  }
+
+  /** Returns screen (x, y) for compressed data; used by style position callback. */
+  getCompressedPosition(time: number, freq: number, index: number): { x: number; y: number } {
+    if (
+      !this.spectroInfo.start_times
+      || !this.spectroInfo.end_times
+      || !this.spectroInfo.widths
+      || !this.spectroInfo.compressedWidth
+    ) {
+      return { x: 0, y: 0 };
+    }
+    const scaleFactor = this.scaledWidth / this.spectroInfo.compressedWidth;
+    const startTime = this.spectroInfo.start_times[index];
+    const endTime = this.spectroInfo.end_times[index];
+    const targetTime = Math.min(time, endTime);
+    const width = this.spectroInfo.widths[index];
+    let segmentOffset = 0;
+    for (let i = 0; i < index; i++) {
+      segmentOffset += this.spectroInfo.widths[i] * scaleFactor;
+    }
+    const pixelsPerMs = width / (endTime - startTime);
+    const x = segmentOffset + (targetTime - startTime) * pixelsPerMs * scaleFactor;
+    const y = this._getYValueFromFrequency(freq);
+    return { x, y };
   }
 
   _getYValueFromFrequency(freq: number) {
@@ -128,40 +172,6 @@ export default class ContourLayer {
     const height = Math.max(this.scaledHeight, this.spectroInfo.height);
     const pixelsPerMhz = height / freqRange;
     return (this.spectroInfo.high_freq - freq) * pixelsPerMhz;
-  }
-
-  _getTransformedContourPointCompressed(point: number[], level: number, index: number): ContourPoint {
-    if (
-      !this.spectroInfo.start_times
-      || !this.spectroInfo.end_times
-      || !this.spectroInfo.widths
-      || !this.spectroInfo.compressedWidth
-    ) {
-      // Dummy value
-      return { x: 0, y: 0, z: 0 };
-    }
-    const scaleFactor = this.scaledWidth / this.spectroInfo.compressedWidth;
-    // Find the segment containing the target time
-    const startTime = this.spectroInfo.start_times[index];
-    const endTime = this.spectroInfo.end_times[index];
-    // If the time for the given point exceeds the end time of the specified segment, clamp to the segment
-    const targetTime = Math.min(point[0], endTime);
-    // Get the width of the segment
-    const width = this.spectroInfo.widths[index];
-    // Get the offset of the segment
-    let segmentOffset = 0;
-    for (let i = 0; i < index; i++) {
-      segmentOffset += (this.spectroInfo.widths[i] * scaleFactor);
-    }
-    // Find the pixelsPerMs and pixel offset
-    const pixelsPerMs = width / (endTime - startTime);
-    // Calculate final X position for the given time
-    const xVal = segmentOffset + ((targetTime - startTime) * pixelsPerMs * scaleFactor);
-    return {
-      x: xVal,
-      y: this._getYValueFromFrequency(point[1]),
-      z: level
-    };
   }
 
   _getTransformedContourPoint(point: number[], level: number,): ContourPoint {
@@ -180,6 +190,13 @@ export default class ContourLayer {
     return {
       uniformPolygon: true,
       stroke: false,
+      position: (point: number[]) => {
+        if (this.spectroInfo.compressedWidth) {
+          // Compressed: point is [time, frequency, level, segmentIndex]; scale here
+          return this.getCompressedPosition(point[0], point[1], point[3]);
+        }
+        return { x: point[0], y: point[1] };
+      },
       fillColor: (_val: number, _idx: number, coords: number[][]) => {
         return  this.colorScheme((coords[0][2] || 0) / this.maxLevel);
       },
