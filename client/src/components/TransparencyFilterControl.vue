@@ -21,22 +21,22 @@ export default defineComponent({
     open-on-hover
   >
     <template #activator="{ props: menuProps }">
-        <v-badge
+      <v-badge
         :content="`${transparencyThreshold}%`"
         :model-value="transparencyThreshold > 0"
         location="bottom right"
         color="primary"
         :offset-x="10"
-        >
+      >
         <v-icon
-            v-bind="menuProps"
-            size="30"
-            class="mx-3"
-            :color="transparencyThreshold > 0 ? 'blue' : ''"
+          v-bind="menuProps"
+          size="30"
+          class="mx-3"
+          :color="transparencyThreshold > 0 ? 'blue' : ''"
         >
-            mdi-opacity
+          mdi-opacity
         </v-icon>
-        </v-badge>
+      </v-badge>
     </template>
     <v-card
       min-width="200"

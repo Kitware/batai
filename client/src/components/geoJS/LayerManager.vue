@@ -873,7 +873,8 @@ export default defineComponent({
       />
       <feComponentTransfer
         in="luminance"
-        result="transparency-mask">
+        result="transparency-mask"
+      >
         <feFuncA
           type="table"
           :tableValues="getTransparencyTableValues()"
