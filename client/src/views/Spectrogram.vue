@@ -138,6 +138,7 @@ export default defineComponent({
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
     const loadData = async () => {
       viewMaskOverlay.value = false;
+      const tempViewPulseMetadataLayer = viewPulseMetadataLayer.value;
       viewPulseMetadataLayer.value = false;
       clearPulseMetadata();
       loading.value = true;
@@ -166,6 +167,10 @@ export default defineComponent({
             }
           };
         });
+        if (tempViewPulseMetadataLayer) {
+          viewPulseMetadataLayer.value = true;
+        }
+
       } else {
         // TODO Error Out if there is no URL
         console.error("No URL found for the spectrogram");

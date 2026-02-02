@@ -94,6 +94,8 @@ export default defineComponent({
       pulseMetadataCharFreqColor,
       pulseMetadataKneeColor,
       pulseMetadataPointSize,
+      pulseMetadataShowLabels,
+      pulseMetadataDurationFreqLineColor,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -507,36 +509,46 @@ export default defineComponent({
         contourLayer.updateContourStyle();
       }
     });
-    watch(viewPulseMetadataLayer, async () => {
-      if (props.thumbnail) return;
-      if (!props.recordingId || !props.spectroInfo?.compressedWidth) return;
-      if (viewPulseMetadataLayer.value) {
-        if (pulseMetadataList.value.length === 0) {
-          await loadPulseMetadata(Number(props.recordingId));
+    watch(
+      [
+        viewPulseMetadataLayer,
+        () => props.recordingId,
+        () => props.spectroInfo?.compressedWidth,
+      ],
+      async () => {
+        if (props.thumbnail) return;
+        if (!props.recordingId || !props.spectroInfo?.compressedWidth) return;
+        if (viewPulseMetadataLayer.value) {
+          if (pulseMetadataList.value.length === 0) {
+            await loadPulseMetadata(Number(props.recordingId));
+          }
+          if (!pulseMetadataLayer) {
+            pulseMetadataLayer = new PulseMetadataLayer(
+              props.geoViewerRef,
+              props.spectroInfo,
+              pulseMetadataList.value,
+            );
+          }
+          pulseMetadataLayer.spectroInfo = props.spectroInfo;
+          pulseMetadataLayer.setStyle({
+            lineColor: pulseMetadataLineColor.value,
+            lineWidth: pulseMetadataLineSize.value,
+            durationFreqLineColor: pulseMetadataDurationFreqLineColor.value,
+            heelColor: pulseMetadataHeelColor.value,
+            charFreqColor: pulseMetadataCharFreqColor.value,
+            kneeColor: pulseMetadataKneeColor.value,
+            pointRadius: pulseMetadataPointSize.value,
+            showLabels: pulseMetadataShowLabels.value,
+          });
+          pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
+          pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          pulseMetadataLayer.redraw();
+        } else if (pulseMetadataLayer) {
+          pulseMetadataLayer.disable();
         }
-        if (!pulseMetadataLayer) {
-          pulseMetadataLayer = new PulseMetadataLayer(
-            props.geoViewerRef,
-            props.spectroInfo,
-            pulseMetadataList.value,
-          );
-        }
-        pulseMetadataLayer.spectroInfo = props.spectroInfo;
-        pulseMetadataLayer.setStyle({
-          lineColor: pulseMetadataLineColor.value,
-          lineWidth: pulseMetadataLineSize.value,
-          heelColor: pulseMetadataHeelColor.value,
-          charFreqColor: pulseMetadataCharFreqColor.value,
-          kneeColor: pulseMetadataKneeColor.value,
-          pointRadius: pulseMetadataPointSize.value,
-        });
-        pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
-        pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-        pulseMetadataLayer.redraw();
-      } else if (pulseMetadataLayer) {
-        pulseMetadataLayer.disable();
-      }
-    });
+      },
+      { immediate: true },
+    );
     watch(pulseMetadataList, () => {
       if (pulseMetadataLayer && viewPulseMetadataLayer.value && props.spectroInfo) {
         pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
@@ -552,16 +564,20 @@ export default defineComponent({
         pulseMetadataCharFreqColor,
         pulseMetadataKneeColor,
         pulseMetadataPointSize,
+        pulseMetadataShowLabels,
+        pulseMetadataDurationFreqLineColor,
       ],
       () => {
         if (pulseMetadataLayer && viewPulseMetadataLayer.value) {
           pulseMetadataLayer.setStyle({
             lineColor: pulseMetadataLineColor.value,
             lineWidth: pulseMetadataLineSize.value,
+            durationFreqLineColor: pulseMetadataDurationFreqLineColor.value,
             heelColor: pulseMetadataHeelColor.value,
             charFreqColor: pulseMetadataCharFreqColor.value,
             kneeColor: pulseMetadataKneeColor.value,
             pointRadius: pulseMetadataPointSize.value,
+            showLabels: pulseMetadataShowLabels.value,
           });
           pulseMetadataLayer.redraw();
         }

@@ -14,10 +14,9 @@ import {
   FileAnnotation,
   getComputedPulseContour,
   ComputedPulseContour,
-  getPulseMetadata,
-  PulseMetadata,
   getVettingDetailsForUser,
 } from "../api/api";
+import usePulseMetadata from "./usePulseMetadata";
 import {
   interpolateCividis,
   interpolateViridis,
@@ -112,32 +111,6 @@ async function loadContours(recordingId: number) {
 function clearContours() {
   computedPulseContours.value = [];
 }
-
-const pulseMetadataList: Ref<PulseMetadata[]> = ref([]);
-const pulseMetadataLoading = ref(false);
-const viewPulseMetadataLayer = ref(false);
-async function loadPulseMetadata(recordingId: number) {
-  pulseMetadataLoading.value = true;
-  try {
-    pulseMetadataList.value = await getPulseMetadata(recordingId);
-  } finally {
-    pulseMetadataLoading.value = false;
-  }
-}
-function clearPulseMetadata() {
-  pulseMetadataList.value = [];
-}
-const toggleViewPulseMetadataLayer = () => {
-  viewPulseMetadataLayer.value = !viewPulseMetadataLayer.value;
-};
-
-// Pulse metadata display style (curve line + heel, char_freq, knee colors and sizes)
-const pulseMetadataLineColor = ref("#00FFFF");
-const pulseMetadataLineSize = ref(2);
-const pulseMetadataHeelColor = ref("#FF0088");
-const pulseMetadataCharFreqColor = ref("#00FF00");
-const pulseMetadataKneeColor = ref("#FF8800");
-const pulseMetadataPointSize = ref(5);
 
 const reviewerMaterials = ref('');
 
@@ -411,18 +384,7 @@ export default function useState() {
     loadContours,
     clearContours,
     computedPulseContours,
-    pulseMetadataList,
-    pulseMetadataLoading,
-    loadPulseMetadata,
-    clearPulseMetadata,
-    viewPulseMetadataLayer,
-    toggleViewPulseMetadataLayer,
-    pulseMetadataLineColor,
-    pulseMetadataLineSize,
-    pulseMetadataHeelColor,
-    pulseMetadataCharFreqColor,
-    pulseMetadataKneeColor,
-    pulseMetadataPointSize,
+    ...usePulseMetadata(),
     showSubmittedRecordings,
     submittedMyRecordings,
     submittedSharedRecordings,
