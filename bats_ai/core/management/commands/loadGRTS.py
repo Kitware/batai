@@ -1,6 +1,7 @@
 import logging
 import os
 import tempfile
+import urllib
 from urllib.request import urlretrieve
 import zipfile
 
@@ -18,27 +19,29 @@ SHAPEFILES = [
         'https://www.sciencebase.gov/catalog/file/get/5b7753bde4b0f5d578820455?facet=conus_mastersample_10km_GRTS',  # noqa: E501
         14,
         'CONUS',
+        # Backup URL
+        'https://data.kitware.com/api/v1/item/697cc601e7dea9be44ec5aee/download',  # noqa: E501
     ),  # CONUS
-    (
-        'https://www.sciencebase.gov/catalog/file/get/5b7753a8e4b0f5d578820452?facet=akcan_mastersample_10km_GRTS',  # noqa: E501
-        20,
-        'Alaska/Canada',
-    ),  # Alaska/Canada
-    (
-        'https://www.sciencebase.gov/catalog/file/get/5b7753c2e4b0f5d578820457?facet=HI_mastersample_5km_GRTS',  # noqa: E501
-        15,
-        'Hawaii',
-    ),  # Hawaii
-    (
-        'https://www.sciencebase.gov/catalog/file/get/5b7753d3e4b0f5d578820459?facet=mex_mastersample_10km_GRTS',  # noqa: E501
-        12,
-        'Mexico',
-    ),  # Mexico
-    (
-        'https://www.sciencebase.gov/catalog/file/get/5b7753d8e4b0f5d57882045b?facet=PR_mastersample_5km_GRTS',  # noqa: E501
-        21,
-        'Puerto Rico',
-    ),  # Puerto Rico
+    # (
+    #     'https://www.sciencebase.gov/catalog/file/get/5b7753a8e4b0f5d578820452?facet=akcan_mastersample_10km_GRTS',  # noqa: E501
+    #     20,
+    #     'Alaska/Canada',
+    # ),  # Alaska/Canada
+    # (
+    #     'https://www.sciencebase.gov/catalog/file/get/5b7753c2e4b0f5d578820457?facet=HI_mastersample_5km_GRTS',  # noqa: E501
+    #     15,
+    #     'Hawaii',
+    # ),  # Hawaii
+    # (
+    #     'https://www.sciencebase.gov/catalog/file/get/5b7753d3e4b0f5d578820459?facet=mex_mastersample_10km_GRTS',  # noqa: E501
+    #     12,
+    #     'Mexico',
+    # ),  # Mexico
+    # (
+    #     'https://www.sciencebase.gov/catalog/file/get/5b7753d8e4b0f5d57882045b?facet=PR_mastersample_5km_GRTS',  # noqa: E501
+    #     21,
+    #     'Puerto Rico',
+    # ),  # Puerto Rico
 ]
 
 
@@ -56,11 +59,26 @@ class Command(BaseCommand):
         # Track existing IDs to avoid duplicates
         existing_ids = set(GRTSCells.objects.values_list('id', flat=True))
 
-        for url, sample_frame_id, name in SHAPEFILES:
+        for url, sample_frame_id, name, backup_url in SHAPEFILES:
             logger.info(f'Downloading shapefile for Location {name}...')
             with tempfile.TemporaryDirectory() as tmpdir:
                 zip_path = os.path.join(tmpdir, 'file.zip')
-                urlretrieve(url, zip_path)
+                try:
+                    urlretrieve(url, zip_path)
+                except urllib.error.URLError as e:
+                    logger.warning(
+                        f'Failed to download from primary URL: {e}. \
+                            Attempting backup URL...'
+                    )
+                    if backup_url is None:
+                        logger.warning('No backup URL provided, skipping this shapefile.')
+                        continue
+                    try:
+                        urlretrieve(backup_url, zip_path)
+                    except urllib.error.URLError as e2:
+                        raise CommandError(
+                            f'Failed to download from backup URL as well: {e2}'
+                        ) from e2
                 logger.info(f'Downloaded to {zip_path}')
 
                 logger.info('Extracting zip file...')
