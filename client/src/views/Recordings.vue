@@ -5,6 +5,7 @@ import {
   ref,
   Ref,
   onMounted,
+  watch,
 } from 'vue';
 import {
   deleteRecording,
@@ -13,6 +14,7 @@ import {
   FileAnnotation,
   getRecordingTags,
   getConfiguration,
+  type RecordingListParams,
 } from '../api/api';
 import UploadRecording, { EditingRecording } from '@components/UploadRecording.vue';
 import MapLocation from '@components/MapLocation.vue';
@@ -20,7 +22,6 @@ import useState from '@use/useState';
 import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
-import { FilterFunction, InternalItem } from 'vuetify';
 
 export default defineComponent({
   components: {
@@ -31,7 +32,6 @@ export default defineComponent({
     RecordingAnnotationSummary,
   },
   setup() {
-    const itemsPerPage = ref(-1);
     const {
       sharedList,
       recordingList,
@@ -47,126 +47,119 @@ export default defineComponent({
     const editingRecording: Ref<EditingRecording | null> = ref(null);
     let intervalRef: number | null = null;
 
+    const totalMyCount = ref(0);
+    const totalSharedCount = ref(0);
+    const lastMyOptions = ref<{ page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }>({ page: 1, itemsPerPage: 20 });
+    const lastSharedOptions = ref<{ page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }>({ page: 1, itemsPerPage: 20 });
+
     const uploadDialog = ref(false);
     const batchUploadDialog = ref(false);
+    const sortByMy = ref<{ key: string; order: 'asc' | 'desc' }[]>([{ key: 'created', order: 'desc' }]);
+    const sortByShared = ref<{ key: string; order: 'asc' | 'desc' }[]>([{ key: 'created', order: 'desc' }]);
+
     const headers: Ref<{
-      title: string,
-      key: string,
-      value?: (item: Recording) => boolean | string | number,
+      title: string;
+      key: string;
+      value: string;
+      sortable?: boolean;
+      valueFn?: (item: Recording) => boolean | string | number;
     }[]> = ref([
-        {
-          title:'Name',
-          key: 'name',
-        },
-        {
-          title: 'Annotation',
-          key: 'annotation',
-        },
-        {
-          title:'Owner',
-          key:'owner_username',
-        },
-        {
-          title: 'Tags',
-          key: 'tag_text',
-        },
-        {
-          title:'Recorded Date',
-          key:'recorded_date',
-        },
-        {
-          title:'Public',
-          key:'public',
-        },
-        {
-          title:'GRTS CellId',
-          key:'grts_cell_id',
-        },
-        {
-          title: 'Location',
-          key:'recording_location'
-        },
-        {
-          title: 'Details',
-          key:'comments'
-        },
-        {
-          title:'User Pulse Annotations',
-          key:'userAnnotations',
-        },
-        {
-          title:'Edit',
-          key:'edit',
-        },
+        { title: 'Name', key: 'name', value: 'name', sortable: true },
+        { title: 'Annotation', key: 'annotation', value: 'annotation' },
+        { title: 'Owner', key: 'owner_username', value: 'owner_username', sortable: true },
+        { title: 'Tags', key: 'tag_text', value: 'tag_text' },
+        { title: 'Recorded Date', key: 'recorded_date', value: 'recorded_date', sortable: true },
+        { title: 'Public', key: 'public', value: 'public' },
+        { title: 'GRTS CellId', key: 'grts_cell_id', value: 'grts_cell_id' },
+        { title: 'Location', key: 'recording_location', value: 'recording_location' },
+        { title: 'Details', key: 'comments', value: 'comments' },
+        { title: 'User Pulse Annotations', key: 'userAnnotations', value: 'userAnnotations' },
+        { title: 'Edit', key: 'edit', value: 'edit' },
     ]);
 
     const sharedHeaders = ref([
-        {
-          title: 'Name',
-          key: 'name',
-        },
-        {
-          title: 'Annotation',
-          key: 'annotation'
-        },
-        {
-          title: 'Owner',
-          key: 'owner_username',
-        },
-        {
-          title: 'Tags',
-          key: 'tag_text',
-        },
-        {
-          title: 'Recorded Date',
-          key: 'recorded_date',
-        },
-        {
-          title: 'Public',
-          key: 'public',
-        },
-        {
-          title: 'GRTS CellId',
-          key: 'grts_cell_id',
-        },
-        {
-          title: 'Location',
-          key: 'details'
-        },
-        {
-          title: 'Details',
-          key: 'comments'
-        },
-        {
-          title: 'Annotated by Me',
-          key: 'userMadeAnnotations',
-        },
+        { title: 'Name', key: 'name', value: 'name', sortable: true },
+        { title: 'Annotation', key: 'annotation', value: 'annotation' },
+        { title: 'Owner', key: 'owner_username', value: 'owner_username', sortable: true },
+        { title: 'Tags', key: 'tag_text', value: 'tag_text' },
+        { title: 'Recorded Date', key: 'recorded_date', value: 'recorded_date', sortable: true },
+        { title: 'Public', key: 'public', value: 'public' },
+        { title: 'GRTS CellId', key: 'grts_cell_id', value: 'grts_cell_id' },
+        { title: 'Location', key: 'recording_location', value: 'recording_location' },
+        { title: 'Details', key: 'comments', value: 'comments' },
+        { title: 'Annotated by Me', key: 'userMadeAnnotations', value: 'userMadeAnnotations' },
     ]);
     const dataLoading = ref(false);
-    const fetchRecordings = async () => {
+
+    function buildMyParams(options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }): RecordingListParams {
+      const sortByFirst = options.sortBy?.[0];
+      const sortBy = (sortByFirst?.key && ['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'].includes(sortByFirst.key))
+        ? sortByFirst.key
+        : 'created';
+      const sort_direction = sortByFirst?.order === 'asc' ? 'asc' : 'desc';
+      return {
+        page: options.page,
+        limit: options.itemsPerPage,
+        sort_by: sortBy as RecordingListParams['sort_by'],
+        sort_direction,
+        tags: filterTags.value.length ? filterTags.value : undefined,
+        exclude_submitted: configuration.value.mark_annotations_completed_enabled && !showSubmittedRecordings.value ? true : undefined,
+      };
+    }
+
+    function buildSharedParams(options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }): RecordingListParams {
+      const sortByFirst = options.sortBy?.[0];
+      const sortBy = (sortByFirst?.key && ['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'].includes(sortByFirst.key))
+        ? sortByFirst.key
+        : 'created';
+      const sort_direction = sortByFirst?.order === 'asc' ? 'asc' : 'desc';
+      return {
+        public: true,
+        page: options.page,
+        limit: options.itemsPerPage,
+        sort_by: sortBy as RecordingListParams['sort_by'],
+        sort_direction,
+        tags: sharedFilterTags.value.length ? sharedFilterTags.value : undefined,
+      };
+    }
+
+    const fetchMyRecordings = async (options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }) => {
+      const opts = { ...options, sortBy: options.sortBy ?? sortByMy.value };
+      lastMyOptions.value = opts;
       dataLoading.value = true;
-      const recordings = await getRecordings();
-      recordingList.value = recordings.data;
-      // If we have a spectrogram being generated we need to refresh on an interval
-      let missingSpectro = false;
-      for (let i =0; i< recordingList.value.length; i+=1) {
-        if (!recordingList.value[i].hasSpectrogram) {
-          missingSpectro = true;
-          break;
+      try {
+        const res = await getRecordings(false, buildMyParams(opts));
+        recordingList.value = res.data.items;
+        totalMyCount.value = res.data.count;
+        let missingSpectro = false;
+        for (let i = 0; i < recordingList.value.length; i += 1) {
+          if (!recordingList.value[i].hasSpectrogram) {
+            missingSpectro = true;
+            break;
+          }
         }
-      }
-      if (missingSpectro) {
-        if (intervalRef === null) {
-          intervalRef = setInterval(() => fetchRecordings(), 5000);
-        }
-      } else  {
-        if (intervalRef !== null) {
+        if (missingSpectro && intervalRef === null) {
+          intervalRef = setInterval(() => fetchMyRecordings(lastMyOptions.value), 5000);
+        } else if (!missingSpectro && intervalRef !== null) {
           clearInterval(intervalRef);
+          intervalRef = null;
         }
+      } finally {
+        dataLoading.value = false;
       }
-      const shared = await getRecordings(true);
-      sharedList.value = shared.data;
-      dataLoading.value = false;
+    };
+
+    const fetchSharedRecordings = async (options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }) => {
+      const opts = { ...options, sortBy: options.sortBy ?? sortByShared.value };
+      lastSharedOptions.value = opts;
+      dataLoading.value = true;
+      try {
+        const res = await getRecordings(true, buildSharedParams(opts));
+        sharedList.value = res.data.items;
+        totalSharedCount.value = res.data.count;
+      } finally {
+        dataLoading.value = false;
+      }
     };
 
     const fetchRecordingTags = async () => {
@@ -178,44 +171,9 @@ export default defineComponent({
 
     const filterTags: Ref<string[]> = ref([]);
     const sharedFilterTags: Ref<string[]> = ref([]);
-    const recordingTags = computed(() => {
-      const tags = new Set();
-      recordingList.value.forEach((recording: Recording) => {
-        recording.tags_text?.forEach((tag: string) => {
-          if (tag) {
-            tags.add(tag);
-          }
-        });
-      });
-      return Array.from(tags);
-    });
-    const sharedRecordingTags = computed(() => {
-      const tags = new Set();
-      sharedList.value.forEach((recording: Recording) => {
-        recording.tags_text?.forEach((tag: string) => {
-          if (tag) {
-            tags.add(tag);
-          }
-        });
-      });
-      return Array.from(tags);
-    });
-    const tagFilter: FilterFunction = (value: string, search: string, item?: InternalItem<Recording>) => {
-      if (filterTags.value.length === 0) {
-        return true;
-      }
-      const filterTagSet = new Set(filterTags.value);
-      const itemTagSet = new Set(item?.raw.tags_text);
-      return filterTagSet.intersection(itemTagSet).size > 0;
-    };
-    const sharedTagFilter: FilterFunction = (value: string, search: string, item?: InternalItem<Recording>) => {
-      if (filterTags.value.length === 0) {
-        return true;
-      }
-      const filterTagSet = new Set(filterTags.value);
-      const itemTagSet = new Set(item?.raw.tags_text);
-      return filterTagSet.intersection(itemTagSet).size > 0;
-    };
+    const recordingTagOptions = computed(() =>
+      recordingTagList.value.map((t) => t.text).filter(Boolean)
+    );
 
     function currentUserSubmissionStatus(recording: Recording) {
       const userAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
@@ -236,16 +194,8 @@ export default defineComponent({
 
     function addSubmittedColumns() {
       if (configuration.value.mark_annotations_completed_enabled) {
-        const submittedHeader = {
-          title: 'Submission Status',
-          key: 'submitted',
-          value: currentUserSubmissionStatus,
-        };
-        const myLabelHeader = {
-          title: 'My Submitted Label',
-          key: 'submittedLabel',
-          value: currentUserSubmission,
-        };
+        const submittedHeader = { title: 'Submission Status', key: 'submitted', value: 'submitted' };
+        const myLabelHeader = { title: 'My Submitted Label', key: 'submittedLabel', value: 'submittedLabel' };
         headers.value.push(submittedHeader, myLabelHeader);
         sharedHeaders.value.push(submittedHeader, myLabelHeader);
       }
@@ -286,16 +236,22 @@ export default defineComponent({
 
     onMounted(async () => {
       await fetchRecordingTags();
-      await fetchRecordings();
       addSubmittedColumns();
       hideDetailedMetadataColumns();
+      await fetchMyRecordings({ page: 1, itemsPerPage: 20 });
+      await fetchSharedRecordings({ page: 1, itemsPerPage: 20 });
     });
+
+    watch(filterTags, () => fetchMyRecordings(lastMyOptions.value), { deep: true });
+    watch(sharedFilterTags, () => fetchSharedRecordings(lastSharedOptions.value), { deep: true });
+    watch(showSubmittedRecordings, () => fetchMyRecordings(lastMyOptions.value));
 
     const uploadDone = () => {
         uploadDialog.value = false;
         batchUploadDialog.value = false;
         editingRecording.value = null;
-        fetchRecordings();
+        fetchMyRecordings(lastMyOptions.value);
+        fetchSharedRecordings(lastSharedOptions.value);
     };
 
     const editRecording = (item: Recording) => {
@@ -333,24 +289,23 @@ export default defineComponent({
         deleteDialogOpen.value = false;
         await deleteRecording(recordingToDelete.value.id);
         recordingToDelete.value = null;
-        fetchRecordings();
+        fetchMyRecordings(lastMyOptions.value);
+        fetchSharedRecordings(lastSharedOptions.value);
       }
     };
 
     return {
-        itemsPerPage,
         headers,
         sharedHeaders,
         recordingList,
         sharedList,
+        totalMyCount,
+        totalSharedCount,
         uploadDialog,
         batchUploadDialog,
-        tagFilter,
-        sharedTagFilter,
         filterTags,
         sharedFilterTags,
-        recordingTags,
-        sharedRecordingTags,
+        recordingTagOptions,
         uploadDone,
         editRecording,
         deleteOneRecording,
@@ -369,6 +324,10 @@ export default defineComponent({
         showSubmittedRecordings,
         myRecordingsDisplay,
         sharedRecordingsDisplay,
+        fetchMyRecordings,
+        fetchSharedRecordings,
+        sortByMy,
+        sortByShared,
      };
   },
 });
@@ -438,24 +397,25 @@ export default defineComponent({
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <v-data-table
+      <v-data-table-server
         v-if="configuration.is_admin || configuration.non_admin_upload_enabled"
-        v-model:items-per-page="itemsPerPage"
+        v-model:sort-by="sortByMy"
         :headers="headers"
-        :items="myRecordingsDisplay"
-        :custom-filter="tagFilter"
-        filter-keys="['tag']"
-        :search="filterTags.length ? 'seach-active' : ''"
-        density="compact"
+        :items="recordingList"
+        :items-length="totalMyCount"
         :loading="dataLoading"
+        items-per-page="20"
+        :items-per-page-options="[{ value: 10, title: '10' }, { value: 20, title: '20' }, { value: 25, title: '25' }, { value: 50, title: '50' }, { value: 100, title: '100' }]"
+        density="compact"
         class="elevation-1 my-recordings"
         :style="myRecordingListStyles"
+        @update:options="fetchMyRecordings"
       >
         <template #top>
           <div max-height="100px">
             <v-combobox
               v-model="filterTags"
-              :items="recordingTags"
+              :items="recordingTagOptions"
               label="Filter recordings by tags"
               multiple
               chips
@@ -616,25 +576,17 @@ export default defineComponent({
             You have not created an annotation for this recording
           </v-tooltip>
         </template>
-        <template #bottom />
-      </v-data-table>
+      </v-data-table-server>
       <div
         v-if="
-          recordingList.length
+          totalMyCount > 0
             && configuration.mark_annotations_completed_enabled
             && (configuration.is_admin || configuration.non_admin_upload_enabled)
         "
         class="d-flex justify-center align-center"
       >
-        <v-progress-linear
-          height="10"
-          color="success"
-          :model-value="submittedMyRecordings.length"
-          min="0"
-          :max="recordingList.length"
-        />
-        <span class="ml-4 text-h6">
-          ({{ submittedMyRecordings.length }}/{{ recordingList.length }})
+        <span class="text-body-2">
+          Total: {{ totalMyCount }} recording{{ totalMyCount !== 1 ? 's' : '' }}
         </span>
       </div>
     </v-card-text>
@@ -667,27 +619,29 @@ export default defineComponent({
       </v-row>
     </v-card-title>
     <v-card-text>
-      <v-data-table
-        v-model:items-per-page="itemsPerPage"
+      <v-data-table-server
+        v-model:sort-by="sortByShared"
         :headers="sharedHeaders"
-        :items="sharedRecordingsDisplay"
-        :custom-filter="sharedTagFilter"
-        filter-keys="['tag']"
-        :search="sharedFilterTags.length ? 'seach-active' : ''"
+        :items="sharedList"
+        :items-length="totalSharedCount"
         :loading="dataLoading"
+        items-per-page="20"
+        :items-per-page-options="[{ value: 10, title: '10' }, { value: 20, title: '20' }, { value: 25, title: '25' }, { value: 50, title: '50' }, { value: 100, title: '100' }]"
         density="compact"
         class="elevation-1 shared-recordings"
         :style="sharedRecordingListStyles"
+        @update:options="fetchSharedRecordings"
       >
         <template #top>
           <div max-height="100px">
             <v-combobox
               v-model="sharedFilterTags"
-              :items="sharedRecordingTags"
+              :items="recordingTagOptions"
               label="Filter recordings by tags"
               multiple
               chips
               closable-chips
+              clearable
             />
           </div>
         </template>
@@ -817,21 +771,13 @@ export default defineComponent({
             You have not created an annotation for this recording
           </v-tooltip>
         </template>
-        <template #bottom />
-      </v-data-table>
+      </v-data-table-server>
       <div
-        v-if="sharedList.length && configuration.mark_annotations_completed_enabled"
+        v-if="totalSharedCount > 0 && configuration.mark_annotations_completed_enabled"
         class="d-flex justify-center align-center"
       >
-        <v-progress-linear
-          height="10"
-          color="success"
-          :model-value="submittedSharedRecordings.length"
-          min="0"
-          :max="sharedList.length"
-        />
-        <span class="ml-4 text-h6">
-          ({{ submittedSharedRecordings.length }}/{{ sharedList.length }})
+        <span class="text-body-2">
+          Total: {{ totalSharedCount }} recording{{ totalSharedCount !== 1 ? 's' : '' }}
         </span>
       </div>
     </v-card-text>

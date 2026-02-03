@@ -22,7 +22,7 @@ export default defineComponent({
       loadReviewerMaterials,
     } = useState();
     const getShared = async () => {
-      sharedList.value = (await getRecordings(true)).data;
+      sharedList.value = (await getRecordings(true)).data.items;
     };
     if (oauthClient === undefined) {
       throw new Error('Must provide "oauthClient" into component.');

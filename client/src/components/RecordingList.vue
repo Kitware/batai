@@ -19,10 +19,10 @@ export default defineComponent({
     const editingRecording: Ref<EditingRecording | null> = ref(null);
 
     const fetchRecordings = async () => {
-        const recordings = await getRecordings();
-        recordingList.value = recordings.data;
+        const recordings = await getRecordings(false);
+        recordingList.value = recordings.data.items;
         const shared = await getRecordings(true);
-        sharedList.value = shared.data;
+        sharedList.value = shared.data.items;
 
     };
     onMounted(() => fetchRecordings());
