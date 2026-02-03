@@ -11,9 +11,6 @@ This is the simplest configuration for developers to start with.
    and follow the prompts to create your own user
 3. Run `docker compose run --rm django ./manage.py loaddata species` to load species
    data into the database
-4. Run `docker compose run --rm django ./manage.py makeclient \
-                            --username your.super.user@email.address \
-                            --uri http://localhost:3000/`
 
 ### Run Vue Frontend
 
@@ -38,7 +35,7 @@ To non-destructively update your development stack at any time:
 
 ## Dev Tool Endpoints
 
-1. Main Site Interface [http://localhost:3000/](http://localhost:3000/)
+1. Main Site Interface [http://localhost:8080/](http://localhost:8080/)
 2. Site Administration [http://localhost:8000/admin/](http://localhost:8000/admin/)
 3. Swagger API (These are default swagger endpoints using Django-REST) [http://localhost:8000/api/docs/swagger/](http://localhost:8000/api/docs/swagger/)
 4. Django Ninja API [http://localhost:8000/api/v1/docs#/](http://localhost:8000/api/v1/docs#/)

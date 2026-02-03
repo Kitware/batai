@@ -98,17 +98,17 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Django staticfiles auto-creates any intermediate directories, but do so here to prevent warnings.
 STATIC_ROOT.mkdir(exist_ok=True)
 
-# Can be set to mount all URLs at a subpath
-BATAI_URL_PATH: str = env.str('DJANGO_BATAI_URL_PATH', default='').strip('/')
+BATAI_NABAT_API_URL: str = env.str(
+    'DJANGO_BATAI_NABAT_API_URL', default='https://api.sciencebase.gov/nabat-graphql/graphql'
+)
 
 # Django's docs suggest that STATIC_URL should be a relative path,
 # for convenience serving a site on a subpath.
-STATIC_URL = f'/{BATAI_URL_PATH}/static/' if BATAI_URL_PATH else '/static/'
-LOGIN_URL = f'/{BATAI_URL_PATH}/accounts/login/' if BATAI_URL_PATH else '/accounts/login/'
+STATIC_URL = 'static/'
 
 # Make Django and Allauth redirects consistent, but both may be changed.
-LOGIN_REDIRECT_URL = f'/{BATAI_URL_PATH}'
-ACCOUNT_LOGOUT_REDIRECT_URL = f'/{BATAI_URL_PATH}'
+LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
 CORS_ALLOWED_ORIGINS: list[str] = env.list('DJANGO_CORS_ALLOWED_ORIGINS', cast=str, default=[])
 CORS_ALLOWED_ORIGIN_REGEXES: list[str] = env.list(

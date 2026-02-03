@@ -104,6 +104,7 @@ def generate_spectrograms(
         try:
             config = Configuration.objects.first()
             # TODO: Disabled until prediction is in batbot
+            # https://github.com/Kitware/batbot/issues/29
             if config and config.run_inference_on_upload and False:
                 self.update_state(
                     state='Progress',

@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 class NABatSpectrogram(TimeStampedModel, models.Model):
     nabat_recording = models.ForeignKey(NABatRecording, on_delete=models.CASCADE)
     images = GenericRelation(SpectrogramImage)
-    width = models.FloatField()  # pixels
-    height = models.FloatField()  # pixels
+    width = models.IntegerField()  # pixels
+    height = models.IntegerField()  # pixels
     duration = models.FloatField()  # milliseconds
     frequency_min = models.FloatField()  # hz
     frequency_max = models.FloatField()  # hz
