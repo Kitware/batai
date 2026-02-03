@@ -33,14 +33,11 @@ dependencies = [
     "rich",
     "whitenoise[brotli]",
     # Spectrogram Generation
-    "librosa",
-    "matplotlib",
-    "mercantile",
     "numpy",
-    # "onnxruntime-gpu",
+  # "onnxruntime-gpu",
     "onnx",
     "onnxruntime",
-    "opencv-python-headless",
+
     "tqdm",
     # guano metadata
     "gdal",
