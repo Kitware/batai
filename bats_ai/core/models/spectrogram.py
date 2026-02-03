@@ -12,8 +12,8 @@ from .spectrogram_image import SpectrogramImage
 class Spectrogram(TimeStampedModel, models.Model):
     recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
     images = GenericRelation(SpectrogramImage)
-    width = models.FloatField()  # pixels
-    height = models.FloatField()  # pixels
+    width = models.IntegerField()  # pixels
+    height = models.IntegerField()  # pixels
     duration = models.FloatField()  # milliseconds
     frequency_min = models.FloatField()  # hz
     frequency_max = models.FloatField()  # hz

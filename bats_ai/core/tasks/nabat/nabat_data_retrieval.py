@@ -1,7 +1,7 @@
 import json
 import logging
-import os
 
+from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import transaction
@@ -18,7 +18,6 @@ from .tasks import generate_spectrograms
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
 
-BASE_URL = os.environ.get('NABAT_API_URL', 'https://api.sciencebase.gov/nabat-graphql/graphql')
 SOFTWARE_ID = 81
 QUERY = """
 query fetchAcousticAndSurveyEventInfo {
@@ -124,7 +123,7 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
     )
     try:
         response = requests.post(
-            BASE_URL,
+            settings.BATAI_NABAT_API_URL,
             json={'query': batch_query},
             headers=headers,
         )

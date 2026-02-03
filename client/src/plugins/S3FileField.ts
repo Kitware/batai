@@ -5,7 +5,7 @@ let s3ffClient: S3FileFieldClient;
 
 export function createS3ffClient(axiosInstance: Axios) {
   s3ffClient = new S3FileFieldClient({
-    baseUrl: `${import.meta.env.VITE_APP_API_ROOT}/s3-upload`,
+    baseUrl: `${import.meta.env.VITE_APP_API_ROOT}/api/v1/s3-upload`,
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     apiConfig: axiosInstance.defaults, // This argument is optional

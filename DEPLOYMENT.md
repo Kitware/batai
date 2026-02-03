@@ -49,14 +49,8 @@ production docker compose file
    to collect the static files
 7. Run `docker compose -f ./prod/docker-compose.prod.yml up` to start the server
    add `-d` for a silent version to run in the background
-8. **OPTIONAL** Change the `APPLICATION_CLIENT_ID` and the `VITE_APP_OAUTH_CLIENT_ID` in
-   the `./prod/env.production` to a custom ID - this will
-   probably require a `docker compose -f ./prod/docker-compose.prod.yml build` \
-   to build the app afterwards.  This Id is used to indetify the application and
-   isn't required to be changed especially if the building of the client is done
-   outside of deployment.
-9. After creating the basic application log into the django admin `batdetectai.kitware.com/admin`
-10. Test logging in/out and uploading data to the server.
+8. After creating the basic application log into the django admin `batdetectai.kitware.com/admin`
+9. Test logging in/out and uploading data to the server.
 
 ### GRTS Cell Id support
 
@@ -126,8 +120,8 @@ for a list of environment variables that you'll need to populate for your deploy
 - `DJANGO_CELERY_BROKER_URL` is used to make sure django can send tasks to the `celery` service.
    For example, if using [RabbitMQ](https://www.rabbitmq.com/), it might look like this: `amqp://rabbitmq:5672`
 - `AWS_*` and `DJANGO_STORAGE_BUCKET_NAME` are used to make sure the application can connect to your S3 bucket
-- `APPLICATION_CLIENT_ID`: This is used to register the front-end Vue single-page app as an Oauth application.
-- `NABAT_API_URL`: the location of the NABat GraphQL endpoint used to retrieve information about files in NABat.
+- `DJANGO_BATAI_NABAT_API_URL` (optional): the location of the NABat GraphQL endpoint used to
+  retrieve information about files in NABat.
 - `VITE_APP_API_ROUTE`: this tells the Vue application where the backend (Django) API can be found.
 - `DJANGO_BATAI_URL_PATH`: this allows the Django application to be mounted at a subpath in a URL.
    It is used by the Django application itself and the nginx configuration at nginx.subpath.template
