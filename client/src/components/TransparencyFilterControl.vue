@@ -40,6 +40,7 @@ export default defineComponent({
     </template>
     <v-card
       min-width="200"
+      max-width="350"
     >
       <v-card-title class="text-subtitle-1">
         Noise Filter {{ transparencyThreshold }}%
