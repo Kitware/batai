@@ -45,7 +45,7 @@ export default defineComponent({
         Noise Filter {{ transparencyThreshold }}%
       </v-card-title>
       <v-card-text>
-        <p>Removes amplitudes below the percentage</p>
+        <p>Removes low-intensity background noise in the spectrogram</p>
         <v-slider
           v-model="transparencyThreshold"
           min="0"
