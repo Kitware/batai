@@ -40,10 +40,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        import matplotlib
-
-        matplotlib.use('Agg')
-
         directory_path = Path(options['directory'])
         owner_username = options.get('owner')
         is_public = options.get('public', False)
@@ -78,7 +74,11 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f'Using default owner: {owner.username}'))
 
         # Find all WAV files
-        wav_files = list(directory_path.rglob('*.wav', case_sensitive=False))
+        wav_files = list(
+            directory_path.rglob(
+                '*.wav',
+            )
+        )
 
         if not wav_files:
             self.stdout.write(
