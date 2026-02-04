@@ -169,8 +169,8 @@ const useGeoJS = () => {
     const bounds = !thumbnail.value
       ? {
           left: 0, // Making sure the legend is on the screen
-          top: -(originalBounds.bottom - originalDimensions.height) / 2.0,
-          right: mapWidth * 2,
+          top: originalDimensions.height,
+          right: mapWidth,
           bottom: originalBounds.bottom,
         }
       : {
