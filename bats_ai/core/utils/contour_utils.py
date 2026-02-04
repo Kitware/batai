@@ -1,4 +1,3 @@
-import colorsys
 import logging
 from pathlib import Path
 from typing import Any
@@ -8,7 +7,6 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d
 from skimage import measure
 from skimage.filters import threshold_multiotsu
-import svgwrite
 
 logger = logging.getLogger(__name__)
 
@@ -144,82 +142,6 @@ def smooth_contour_spline(contour: np.ndarray, smoothing_factor=0.1) -> np.ndarr
         return contour
 
 
-# -----------------------------------------------------------------------------
-# SVG + JSON
-# -----------------------------------------------------------------------------
-
-
-def save_svg(contours, image_shape, output_path: Path):
-    h, w = image_shape[:2]
-    dwg = svgwrite.Drawing(output_path, size=(w, h))
-
-    for contour, _level in contours:
-        pts = contour.tolist()
-        if len(pts) < 3:
-            continue
-
-        d = [f'M {pts[0][0]},{pts[0][1]}']
-        d += [f'L {x},{y}' for x, y in pts[1:]]
-        d.append('Z')
-
-        dwg.add(
-            dwg.path(
-                d=' '.join(d),
-                fill='none',
-                stroke='black',
-                stroke_width=1.0,
-            )
-        )
-
-    dwg.save()
-
-
-def save_svg_colored(contours, image_shape, output_path: Path):
-    """Save contours to an SVG with stroke color varying by level."""
-    if not contours:
-        return
-
-    # Compute color mapping based on contour levels
-    levels = np.array([float(level) for _c, level in contours], dtype=float)
-    min_level = float(levels.min())
-    max_level = float(levels.max())
-    level_span = max_level - min_level if max_level != min_level else 1.0
-
-    def level_to_color(level: float) -> str:
-        # Normalize to 0–1
-        t = (float(level) - min_level) / level_span
-        # Map 0–1 to a blue→cyan→green→yellow→red style gradient using HSV
-        # Hue 240° (blue) → 0° (red)
-        h = (240.0 - 240.0 * t) / 360.0
-        r, g, b = colorsys.hsv_to_rgb(h, 1.0, 1.0)
-        return f'#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}'
-
-    h, w = image_shape[:2]
-    dwg = svgwrite.Drawing(output_path, size=(w, h))
-
-    for contour, level in contours:
-        pts = contour.tolist()
-        if len(pts) < 3:
-            continue
-
-        d = [f'M {pts[0][0]},{pts[0][1]}']
-        d += [f'L {x},{y}' for x, y in pts[1:]]
-        d.append('Z')
-
-        color = level_to_color(level)
-
-        dwg.add(
-            dwg.path(
-                d=' '.join(d),
-                fill='none',
-                stroke=color,
-                stroke_width=1.0,
-            )
-        )
-
-    dwg.save()
-
-
 def filter_contours_by_segment(
     contours, segment_boundaries: list[tuple[float, float]]
 ) -> list[list[tuple[np.ndarray, float]]]:
@@ -315,7 +237,6 @@ def extract_contours(
     # Convert to grayscale first
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    print(f'Applying noise filter: {apply_noise_filter} with threshold: {noise_threshold}')
     if apply_noise_filter and noise_threshold is not None:
         # Create mask of pixels above threshold in original image
         # print out min and max of gray

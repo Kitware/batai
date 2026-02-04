@@ -106,7 +106,7 @@ def recording_compute_spectrogram(recording_id: int):
         # Create SpectrogramContour objects for each segment
         segment_index_map = {}
         for segment in compressed['contours']['segments']:
-            pulse_metadata_obj, _ = PulseMetadata.objects.get_or_create(
+            pulse_metadata_obj, _ = PulseMetadata.objects.update_or_create(
                 recording=compressed_obj.recording,
                 index=segment['segment_index'],
                 defaults={
@@ -125,7 +125,7 @@ def recording_compute_spectrogram(recording_id: int):
             segment_index_map[segment['segment_index']] = pulse_metadata_obj
         for segment in compressed['segments']:
             if segment['segment_index'] not in segment_index_map:
-                PulseMetadata.objects.get_or_create(
+                PulseMetadata.objects.update_or_create(
                     recording=compressed_obj.recording,
                     index=segment['segment_index'],
                     defaults={

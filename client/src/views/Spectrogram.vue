@@ -81,6 +81,7 @@ export default defineComponent({
       fixedAxes,
       toggleFixedAxes,
       contoursLoading,
+      contoursEnabled,
       clearContours,
       clearPulseMetadata,
       viewPulseMetadataLayer,
@@ -140,6 +141,7 @@ export default defineComponent({
       viewMaskOverlay.value = false;
       const tempViewPulseMetadataLayer = viewPulseMetadataLayer.value;
       viewPulseMetadataLayer.value = false;
+      contoursEnabled.value = false;
       clearPulseMetadata();
       loading.value = true;
       currentRecordingId.value = parseInt(props.id);
@@ -172,7 +174,6 @@ export default defineComponent({
         }
 
       } else {
-        // TODO Error Out if there is no URL
         console.error("No URL found for the spectrogram");
       }
       maskImages.value = [];
