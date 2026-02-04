@@ -1,21 +1,25 @@
 import logging
 import os
+import shutil
 import tempfile
 
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import LineString, Point, Polygon
 from django.core.files import File
 
 from bats_ai.celery import app
 from bats_ai.core.models import (
     CompressedSpectrogram,
     Configuration,
+    PulseMetadata,
     Recording,
     RecordingAnnotation,
     Species,
     Spectrogram,
     SpectrogramImage,
 )
-from bats_ai.utils.spectrogram_utils import generate_spectrogram_assets, predict_from_compressed
+from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
+from bats_ai.utils.spectrogram_utils import predict_from_compressed
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
@@ -26,7 +30,15 @@ def recording_compute_spectrogram(recording_id: int):
     recording = Recording.objects.get(pk=recording_id)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        results = generate_spectrogram_assets(recording.audio_file, tmpdir)
+        # Copy the audio file from FileField to a temporary file
+        audio_filename = os.path.basename(recording.audio_file.name)
+        temp_audio_path = os.path.join(tmpdir, audio_filename)
+
+        with recording.audio_file.open('rb') as source_file:
+            with open(temp_audio_path, 'wb') as dest_file:
+                shutil.copyfileobj(source_file, dest_file)
+
+        results = generate_spectrogram_assets(temp_audio_path, output_folder=tmpdir)
         # Create or get Spectrogram
         spectrogram, _ = Spectrogram.objects.get_or_create(
             recording=recording,
@@ -78,8 +90,67 @@ def recording_compute_spectrogram(recording_id: int):
                     },
                 )
 
+        # Save mask images (from batbot metadata mask_path)
+        for idx, mask_path in enumerate(compressed.get('masks', [])):
+            with open(mask_path, 'rb') as f:
+                SpectrogramImage.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(compressed_obj),
+                    object_id=compressed_obj.id,
+                    index=idx,
+                    type='masks',
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(mask_path)),
+                    },
+                )
+
+        # Create SpectrogramContour objects for each segment
+        segment_index_map = {}
+        for segment in compressed['contours']['segments']:
+            pulse_metadata_obj, _ = PulseMetadata.objects.update_or_create(
+                recording=compressed_obj.recording,
+                index=segment['segment_index'],
+                defaults={
+                    'contours': segment.get('contours', []),
+                    'bounding_box': Polygon(
+                        (
+                            (segment['start_ms'], segment['freq_max']),
+                            (segment['stop_ms'], segment['freq_max']),
+                            (segment['stop_ms'], segment['freq_min']),
+                            (segment['start_ms'], segment['freq_min']),
+                            (segment['start_ms'], segment['freq_max']),
+                        )
+                    ),
+                },
+            )
+            segment_index_map[segment['segment_index']] = pulse_metadata_obj
+        for segment in compressed['segments']:
+            if segment['segment_index'] not in segment_index_map:
+                PulseMetadata.objects.update_or_create(
+                    recording=compressed_obj.recording,
+                    index=segment['segment_index'],
+                    defaults={
+                        'curve': LineString([Point(x[1], x[0]) for x in segment['curve_hz_ms']]),
+                        'char_freq': Point(segment['char_freq_ms'], segment['char_freq_hz']),
+                        'knee': Point(segment['knee_ms'], segment['knee_hz']),
+                        'heel': Point(segment['heel_ms'], segment['heel_hz']),
+                    },
+                )
+            else:
+                pulse_metadata_obj = segment_index_map[segment['segment_index']]
+                pulse_metadata_obj.curve = LineString(
+                    [Point(x[1], x[0]) for x in segment['curve_hz_ms']]
+                )
+                pulse_metadata_obj.char_freq = Point(
+                    segment['char_freq_ms'], segment['char_freq_hz']
+                )
+                pulse_metadata_obj.knee = Point(segment['knee_ms'], segment['knee_hz'])
+                pulse_metadata_obj.heel = Point(segment['heel_ms'], segment['heel_hz'])
+                pulse_metadata_obj.save()
+
         config = Configuration.objects.first()
-        if config and config.run_inference_on_upload:
+        # TODO: Disabled until prediction is in batbot
+        # https://github.com/Kitware/batbot/issues/29
+        if config and config.run_inference_on_upload and False:
             predict_results = predict_from_compressed(compressed_obj)
             label = predict_results['label']
             score = predict_results['score']

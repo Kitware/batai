@@ -2,14 +2,15 @@ import logging
 from pathlib import Path
 import tempfile
 
+from django.contrib.gis.geos import LineString, Point, Polygon
 import requests
 
-from bats_ai.core.models import Configuration, ProcessingTask, Species
+from bats_ai.core.models import Configuration, ProcessingTask, PulseMetadata, Species
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
+from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
 from bats_ai.utils.spectrogram_utils import (
     generate_nabat_compressed_spectrogram,
     generate_nabat_spectrogram,
-    generate_spectrogram_assets,
     predict_from_compressed,
 )
 
@@ -57,10 +58,54 @@ def generate_spectrograms(
         compressed_obj = generate_nabat_compressed_spectrogram(
             nabat_recording, spectrogram, compressed
         )
+        segment_index_map = {}
+        for segment in compressed['contours']['segments']:
+            pulse_metadata_obj, _ = PulseMetadata.objects.get_or_create(
+                recording=compressed_obj.recording,
+                index=segment['segment_index'],
+                defaults={
+                    'contours': segment['contours'],
+                    'bounding_box': Polygon(
+                        (
+                            (segment['start_ms'], segment['freq_max']),
+                            (segment['stop_ms'], segment['freq_max']),
+                            (segment['stop_ms'], segment['freq_min']),
+                            (segment['start_ms'], segment['freq_min']),
+                            (segment['start_ms'], segment['freq_max']),
+                        )
+                    ),
+                },
+            )
+            segment_index_map[segment['segment_index']] = pulse_metadata_obj
+        for segment in compressed['segments']:
+            if segment['segment_index'] not in segment_index_map:
+                PulseMetadata.objects.update_or_create(
+                    recording=compressed_obj.recording,
+                    index=segment['segment_index'],
+                    defaults={
+                        'curve': LineString([Point(x[1], x[0]) for x in segment['curve_hz_ms']]),
+                        'char_freq': Point(segment['char_freq_ms'], segment['char_freq_hz']),
+                        'knee': Point(segment['knee_ms'], segment['knee_hz']),
+                        'heel': Point(segment['heel_ms'], segment['heel_hz']),
+                    },
+                )
+            else:
+                pulse_metadata_obj = segment_index_map[segment['segment_index']]
+                pulse_metadata_obj.curve = LineString(
+                    [Point(x[1], x[0]) for x in segment['curve_hz_ms']]
+                )
+                pulse_metadata_obj.char_freq = Point(
+                    segment['char_freq_ms'], segment['char_freq_hz']
+                )
+                pulse_metadata_obj.knee = Point(segment['knee_ms'], segment['knee_hz'])
+                pulse_metadata_obj.heel = Point(segment['heel_ms'], segment['heel_hz'])
+                pulse_metadata_obj.save()
 
         try:
             config = Configuration.objects.first()
-            if config and config.run_inference_on_upload:
+            # TODO: Disabled until prediction is in batbot
+            # https://github.com/Kitware/batbot/issues/29
+            if config and config.run_inference_on_upload and False:
                 self.update_state(
                     state='Progress',
                     meta={'description': 'Running Prediction on Spectrogram'},

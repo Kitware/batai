@@ -15,11 +15,11 @@ from .spectrogram_image import SpectrogramImage
 class CompressedSpectrogram(TimeStampedModel, models.Model):
     recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
     spectrogram = models.ForeignKey(Spectrogram, on_delete=models.CASCADE)
-    length = models.IntegerField()
+    length = models.FloatField()
     images = GenericRelation(SpectrogramImage)
-    starts = ArrayField(ArrayField(models.IntegerField()))
-    stops = ArrayField(ArrayField(models.IntegerField()))
-    widths = ArrayField(ArrayField(models.IntegerField()))
+    starts = ArrayField(ArrayField(models.FloatField()))
+    stops = ArrayField(ArrayField(models.FloatField()))
+    widths = ArrayField(ArrayField(models.FloatField()))
     cache_invalidated = models.BooleanField(default=True)
 
     @property
@@ -29,9 +29,21 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
         return [default_storage.url(img.image_file.name) for img in images]
 
     @property
+    def mask_url_list(self):
+        """Ordered list of mask image URLs for this spectrogram."""
+        images = self.images.filter(type='masks').order_by('index')
+        return [default_storage.url(img.image_file.name) for img in images]
+
+    @property
     def image_pil_list(self):
         """List of PIL images in order."""
         images = self.images.filter(type='compressed').order_by('index')
+        return [Image.open(img.image_file) for img in images]
+
+    @property
+    def mask_pil_list(self):
+        """List of PIL mask images in order."""
+        images = self.images.filter(type='masks').order_by('index')
         return [Image.open(img.image_file) for img in images]
 
     @property

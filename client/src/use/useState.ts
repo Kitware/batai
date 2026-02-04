@@ -12,8 +12,11 @@ import {
   SpectrogramSequenceAnnotation,
   RecordingTag,
   FileAnnotation,
+  getComputedPulseContour,
+  ComputedPulseContour,
   getVettingDetailsForUser,
 } from "../api/api";
+import usePulseMetadata from "./usePulseMetadata";
 import {
   interpolateCividis,
   interpolateViridis,
@@ -86,7 +89,32 @@ const toggleFixedAxes = () => {
   fixedAxes.value = !fixedAxes.value;
 };
 
+const computedPulseContours: Ref<ComputedPulseContour[]> = ref([]);
+// Show contours is always false; not persisted or loaded from localStorage.
+const contoursEnabled = ref(false);
+const imageOpacity = ref(1.0);
+const contourOpacity = ref(1.0);
+const contoursLoading = ref(false);
+const viewMaskOverlay = ref(false);
+const maskOverlayOpacity = ref(0.50);
+const setContoursEnabled = (value: boolean) => {
+  contoursEnabled.value = value;
+};
+const toggleContoursEnabled = () => {
+  contoursEnabled.value = !contoursEnabled.value;
+};
+async function loadContours(recordingId: number) {
+  contoursLoading.value = true;
+  computedPulseContours.value = await getComputedPulseContour(recordingId);
+  contoursLoading.value = false;
+}
+function clearContours() {
+  computedPulseContours.value = [];
+}
+
 const reviewerMaterials = ref('');
+
+const transparencyThreshold = ref(0); // 0-100 percentage
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
@@ -346,6 +374,17 @@ export default function useState() {
     scaledHeight,
     fixedAxes,
     toggleFixedAxes,
+    transparencyThreshold,
+    contoursEnabled,
+    imageOpacity,
+    contourOpacity,
+    contoursLoading,
+    setContoursEnabled,
+    toggleContoursEnabled,
+    loadContours,
+    clearContours,
+    computedPulseContours,
+    ...usePulseMetadata(),
     showSubmittedRecordings,
     submittedMyRecordings,
     submittedSharedRecordings,
@@ -359,5 +398,7 @@ export default function useState() {
     currentRecordingId,
     reviewerMaterials,
     loadReviewerMaterials,
+    viewMaskOverlay,
+    maskOverlayOpacity,
   };
 }

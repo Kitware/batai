@@ -16,6 +16,7 @@ from ninja.pagination import RouterPaginated
 from bats_ai.core.models import (
     Annotations,
     CompressedSpectrogram,
+    PulseMetadata,
     Recording,
     RecordingAnnotation,
     RecordingTag,
@@ -151,6 +152,52 @@ class UpdateAnnotationsSchema(Schema):
     comments: str | None
     type: str | None
     id: int | None
+
+
+class PulseContourSchema(Schema):
+    id: int | None
+    index: int
+    bounding_box: Any
+    contours: list
+
+    @classmethod
+    def from_orm(cls, obj: PulseMetadata):
+        return cls(
+            id=obj.id,
+            index=obj.index,
+            contours=obj.contours if obj.contours is not None else [],
+            bounding_box=json.loads(obj.bounding_box.geojson),
+        )
+
+
+class PulseMetadataSchema(Schema):
+    id: int | None
+    index: int
+    curve: list[list[float]] | None = None  # list of [time, frequency]
+    char_freq: list[float] | None = None  # point [time, frequency]
+    knee: list[float] | None = None  # point [time, frequency]
+    heel: list[float] | None = None  # point [time, frequency]
+
+    @classmethod
+    def from_orm(cls, obj: PulseMetadata):
+        def point_to_list(pt):
+            if pt is None:
+                return None
+            return [pt.x, pt.y]
+
+        def linestring_to_list(ls):
+            if ls is None:
+                return None
+            return [[c[0], c[1]] for c in ls.coords]
+
+        return cls(
+            id=obj.id,
+            index=obj.index,
+            curve=linestring_to_list(obj.curve),
+            char_freq=point_to_list(obj.char_freq),
+            knee=point_to_list(obj.knee),
+            heel=point_to_list(obj.heel),
+        )
 
 
 @router.post('/')
@@ -576,6 +623,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
 
     spectro_data = {
         'urls': compressed_spectrogram.image_url_list,
+        'mask_urls': compressed_spectrogram.mask_url_list,
         'spectroInfo': {
             'spectroId': compressed_spectrogram.pk,
             'width': compressed_spectrogram.spectrogram.width,
@@ -655,6 +703,44 @@ def get_annotations(request: HttpRequest, id: int):
                 'error': 'Permission denied. You do not own this recording, and it is not public.'
             }
 
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+
+@router.get('/{id}/pulse_contours')
+def get_pulse_contours(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+        if recording.owner == request.user or recording.public:
+            computed_pulse_annotation_qs = PulseMetadata.objects.filter(
+                recording=recording
+            ).order_by('index')
+            return [
+                PulseContourSchema.from_orm(pulse) for pulse in computed_pulse_annotation_qs.all()
+            ]
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+
+
+@router.get('/{id}/pulse_data')
+def get_pulse_data(request: HttpRequest, id: int):
+    try:
+        recording = Recording.objects.get(pk=id)
+        if recording.owner == request.user or recording.public:
+            computed_pulse_annotation_qs = PulseMetadata.objects.filter(
+                recording=recording
+            ).order_by('index')
+            return [
+                PulseMetadataSchema.from_orm(pulse) for pulse in computed_pulse_annotation_qs.all()
+            ]
+        else:
+            return {
+                'error': 'Permission denied. You do not own this recording, and it is not public.'
+            }
     except Recording.DoesNotExist:
         return {'error': 'Recording not found'}
 

@@ -120,6 +120,7 @@ export interface UpdateFileAnnotation {
 
 export interface Spectrogram {
   urls: string[];
+  mask_urls: string[];
   filename?: string;
   annotations?: SpectrogramAnnotation[];
   fileAnnotations: FileAnnotation[];
@@ -609,6 +610,38 @@ async function createOrUpdateVettingDetailsForUser(userId: number, referenceMate
   );
 }
 
+export interface Contour {
+  curve: number[][];
+  level: number;
+  index: number;
+}
+
+export interface ComputedPulseContour {
+  id: number;
+  index: number;
+  contours: Contour[];
+}
+
+async function getComputedPulseContour(recordingId: number) {
+  const result = await axiosInstance.get<ComputedPulseContour[]>(`/recording/${recordingId}/pulse_contours`);
+  return result.data;
+}
+
+export interface PulseMetadata {
+  id: number;
+  index: number;
+  curve: number[][] | null; // list of [time, frequency]
+  char_freq: number[] | null; // point [time, frequency]
+  knee: number[] | null; // point [time, frequency]
+  heel: number[] | null; // point [time, frequency]
+}
+
+async function getPulseMetadata(recordingId: number) {
+  const result = await axiosInstance.get<PulseMetadata[]>(`/recording/${recordingId}/pulse_data`);
+  return result.data;
+}
+
+
 export {
   uploadRecordingFile,
   getRecordings,
@@ -645,6 +678,8 @@ export {
   getFileAnnotationDetails,
   getExportStatus,
   getRecordingTags,
+  getComputedPulseContour,
+  getPulseMetadata,
   getCurrentUser,
   getVettingDetailsForUser,
   createOrUpdateVettingDetailsForUser,

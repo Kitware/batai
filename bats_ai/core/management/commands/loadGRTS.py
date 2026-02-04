@@ -22,6 +22,7 @@ SHAPEFILES = [
         # Backup URL
         'https://data.kitware.com/api/v1/item/697cc601e7dea9be44ec5aee/download',  # noqa: E501
     ),  # CONUS
+    # Removed other regions for now because of sciencebase.gov being down
     # (
     #     'https://www.sciencebase.gov/catalog/file/get/5b7753a8e4b0f5d578820452?facet=akcan_mastersample_10km_GRTS',  # noqa: E501
     #     20,

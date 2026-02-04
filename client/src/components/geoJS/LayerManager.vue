@@ -20,8 +20,11 @@ import SpeciesSequenceLayer from "./layers/speciesSequenceLayer";
 import MeasureToolLayer from "./layers/measureToolLayer";
 import BoundingBoxLayer from "./layers/boundingBoxLayer";
 import AxesLayer from "./layers/axesLayer";
+import ContourLayer from "./layers/contourLayer";
+import PulseMetadataLayer from "./layers/pulseMetadataLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
+
 export default defineComponent({
   name: "LayerManager",
   props: {
@@ -45,7 +48,11 @@ export default defineComponent({
     scaledHeight: {
       type: Number,
       default: -1,
-    }
+    },
+    recordingId: {
+      type: String as PropType<string | null>,
+      required: true,
+    },
   },
   emits: ["selected", "update:annotation", "create:annotation", "set-cursor"],
   setup(props, { emit }) {
@@ -72,6 +79,23 @@ export default defineComponent({
       drawingBoundingBox,
       boundingBoxError,
       fixedAxes,
+      contoursEnabled,
+      contourOpacity,
+      loadContours,
+      computedPulseContours,
+      transparencyThreshold,
+      viewPulseMetadataLayer,
+      pulseMetadataList,
+      loadPulseMetadata,
+      clearPulseMetadata,
+      pulseMetadataLineColor,
+      pulseMetadataLineSize,
+      pulseMetadataHeelColor,
+      pulseMetadataCharFreqColor,
+      pulseMetadataKneeColor,
+      pulseMetadataPointSize,
+      pulseMetadataShowLabels,
+      pulseMetadataDurationFreqLineColor,
     } = useState();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
@@ -91,6 +115,8 @@ export default defineComponent({
     let speciesSequenceLayer: SpeciesSequenceLayer;
     let measureToolLayer: MeasureToolLayer;
     let boundingBoxLayer: BoundingBoxLayer;
+    let contourLayer: ContourLayer;
+    let pulseMetadataLayer: PulseMetadataLayer;
     const displayError = ref(false);
     const errorMsg = ref("");
 
@@ -445,6 +471,118 @@ export default defineComponent({
         triggerUpdate();
       }
     );
+    watch(() => props.recordingId, () => {
+      computedPulseContours.value = [];
+      clearPulseMetadata();
+    });
+    watch(contoursEnabled, async () => {
+      if (props.thumbnail) {
+        return;
+      }
+      if (!props.recordingId || !props.spectroInfo) {
+        console.error('Could not load contours. Could not determine recording ID');
+        return;
+      }
+      if (computedPulseContours.value.length === 0) {
+        await loadContours(new Number(props.recordingId) as number);
+      }
+      if (!contourLayer) {
+        contourLayer = new ContourLayer(
+          props.geoViewerRef,
+          event,
+          props.spectroInfo,
+          computedPulseContours.value,
+          colorScheme.value.scheme,
+        );
+      }
+      contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      contourLayer.setContourOpacity(contourOpacity.value);
+      if (contoursEnabled.value) {
+        contourLayer.drawContours();
+      } else {
+        contourLayer.removeContours();
+      }
+    });
+    watch(contourOpacity, () => {
+      if (contourLayer && contoursEnabled.value) {
+        contourLayer.setContourOpacity(contourOpacity.value);
+        contourLayer.updateContourStyle();
+      }
+    });
+    watch(
+      [
+        viewPulseMetadataLayer,
+        () => props.recordingId,
+        () => props.spectroInfo?.compressedWidth,
+      ],
+      async () => {
+        if (props.thumbnail) return;
+        if (!props.recordingId || !props.spectroInfo?.compressedWidth) return;
+        if (viewPulseMetadataLayer.value) {
+          if (pulseMetadataList.value.length === 0) {
+            await loadPulseMetadata(Number(props.recordingId));
+          }
+          if (!pulseMetadataLayer) {
+            pulseMetadataLayer = new PulseMetadataLayer(
+              props.geoViewerRef,
+              props.spectroInfo,
+              pulseMetadataList.value,
+            );
+          }
+          pulseMetadataLayer.spectroInfo = props.spectroInfo;
+          pulseMetadataLayer.setStyle({
+            lineColor: pulseMetadataLineColor.value,
+            lineWidth: pulseMetadataLineSize.value,
+            durationFreqLineColor: pulseMetadataDurationFreqLineColor.value,
+            heelColor: pulseMetadataHeelColor.value,
+            charFreqColor: pulseMetadataCharFreqColor.value,
+            kneeColor: pulseMetadataKneeColor.value,
+            pointRadius: pulseMetadataPointSize.value,
+            showLabels: pulseMetadataShowLabels.value,
+          });
+          pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
+          pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          pulseMetadataLayer.redraw();
+        } else if (pulseMetadataLayer) {
+          pulseMetadataLayer.disable();
+        }
+      },
+      { immediate: true },
+    );
+    watch(pulseMetadataList, () => {
+      if (pulseMetadataLayer && viewPulseMetadataLayer.value && props.spectroInfo) {
+        pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
+        pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        pulseMetadataLayer.redraw();
+      }
+    });
+    watch(
+      [
+        pulseMetadataLineColor,
+        pulseMetadataLineSize,
+        pulseMetadataHeelColor,
+        pulseMetadataCharFreqColor,
+        pulseMetadataKneeColor,
+        pulseMetadataPointSize,
+        pulseMetadataShowLabels,
+        pulseMetadataDurationFreqLineColor,
+      ],
+      () => {
+        if (pulseMetadataLayer && viewPulseMetadataLayer.value) {
+          pulseMetadataLayer.setStyle({
+            lineColor: pulseMetadataLineColor.value,
+            lineWidth: pulseMetadataLineSize.value,
+            durationFreqLineColor: pulseMetadataDurationFreqLineColor.value,
+            heelColor: pulseMetadataHeelColor.value,
+            charFreqColor: pulseMetadataCharFreqColor.value,
+            kneeColor: pulseMetadataKneeColor.value,
+            pointRadius: pulseMetadataPointSize.value,
+            showLabels: pulseMetadataShowLabels.value,
+          });
+          pulseMetadataLayer.redraw();
+        }
+      },
+    );
     onUnmounted(() => {
       if (editAnnotationLayer) {
         editAnnotationLayer.destroy();
@@ -469,6 +607,9 @@ export default defineComponent({
       }
       if (speciesSequenceLayer) {
         speciesSequenceLayer.destroy();
+      }
+      if (pulseMetadataLayer) {
+        pulseMetadataLayer.destroy();
       }
     });
 
@@ -647,6 +788,15 @@ export default defineComponent({
           compressedOverlayLayer?.disable();
         }
       }
+      if (contourLayer) {
+        contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        if (contoursEnabled.value) {
+          contourLayer.updateContourStyle();
+        }
+      }
+      if (pulseMetadataLayer && viewPulseMetadataLayer.value) {
+        pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      }
       editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       if (editing.value && editingAnnotation.value) {
         setTimeout(() => {
@@ -726,6 +876,33 @@ export default defineComponent({
     const gValues = ref('');
     const bValues = ref('');
 
+    function getTransparencyTableValues() {
+      // transparencyThreshold is expected to be 0-100 (percentage)
+      // Convert to normalized 0-1
+      const t = (transparencyThreshold.value ?? 0) / 100;
+
+      // quick edge cases
+      if (t <= 0) {
+        // threshold 0% → everything visible (alpha=1)
+        return "1";
+      }
+      if (t >= 1) {
+        // threshold 100% → everything transparent (alpha=0)
+        return "0";
+      }
+      // number of discrete steps (higher = sharper but costlier)
+      const numSteps = 100;
+      // which index is the last 'transparent' bucket
+      const thresholdStep = Math.floor(t * (numSteps - 1));
+
+      const values: string[] = [];
+      for (let i = 0; i < numSteps; i++) {
+        // for i <= thresholdStep set transparent (0), else opaque (1)
+        values.push(i <= thresholdStep ? "0" : "1");
+      }
+      return values.join(" ");
+    }
+
     function updateColorFilter() {
       if (!backgroundColor.value.includes(',')) {
         // convert rgb(0 0 0) to rgb(0, 0, 0)
@@ -771,6 +948,9 @@ export default defineComponent({
       if (boundingBoxLayer) {
         boundingBoxLayer.setTextColor(textColor);
       }
+      if (contourLayer) {
+        contourLayer.setColorScheme(colorScheme.value.scheme);
+      }
     }
 
     watch([backgroundColor, colorScheme], updateColorFilter);
@@ -787,6 +967,7 @@ export default defineComponent({
       rValues,
       gValues,
       bValues,
+      getTransparencyTableValues,
     };
   },
 });
@@ -819,7 +1000,7 @@ export default defineComponent({
     height="0"
     style="position: absolute; top: -1px; left: -1px;"
   >
-    <filter id="apply-color-scheme">
+    <filter id="svg-filters">
       <!-- convert to grayscale -->
       <feColorMatrix
         type="saturate"
@@ -827,8 +1008,38 @@ export default defineComponent({
         result="grayscale"
       />
 
-      <!-- apply color scheme -->
-      <feComponentTransfer>
+      <feColorMatrix
+        in="grayscale"
+        type="matrix"
+        values="0.2126 0.7152 0.0722 0 0
+                0.2126 0.7152 0.0722 0 0
+                0.2126 0.7152 0.0722 0 0
+                0 0 0 1 0"
+        result="sourceGraphic"
+      />
+      
+      <feColorMatrix
+        in="sourceGraphic"
+        type="luminanceToAlpha"
+        result="luminance"
+      />
+      <feComponentTransfer
+        in="luminance"
+        result="transparency-mask"
+      >
+        <feFuncA
+          type="table"
+          :tableValues="getTransparencyTableValues()"
+        />
+      </feComponentTransfer>
+
+      <feComposite
+        in="grayscale"
+        in2="transparency-mask"
+        operator="in"
+        result="grayscale-with-transparency"
+      />
+      <feComponentTransfer in="grayscale-with-transparency">
         <feFuncR
           type="table"
           :tableValues="rValues"
