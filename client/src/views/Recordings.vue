@@ -23,6 +23,9 @@ import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
 
+/** Sort fields supported by the recordings list API (RecordingListQuerySchema.sort_by) */
+const SERVER_SORT_FIELDS: readonly string[] = ['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'];
+
 export default defineComponent({
   components: {
     UploadRecording,
@@ -57,6 +60,9 @@ export default defineComponent({
     const sortByMy = ref<{ key: string; order: 'asc' | 'desc' }[]>([{ key: 'created', order: 'desc' }]);
     const sortByShared = ref<{ key: string; order: 'asc' | 'desc' }[]>([{ key: 'created', order: 'desc' }]);
 
+    const myRecordingsLoading = ref(false);
+    const sharedRecordingsLoading = ref(false);
+
     const headers: Ref<{
       title: string;
       key: string;
@@ -64,36 +70,35 @@ export default defineComponent({
       sortable?: boolean;
       valueFn?: (item: Recording) => boolean | string | number;
     }[]> = ref([
-        { title: 'Name', key: 'name', value: 'name', sortable: true },
-        { title: 'Annotation', key: 'annotation', value: 'annotation' },
-        { title: 'Owner', key: 'owner_username', value: 'owner_username', sortable: true },
-        { title: 'Tags', key: 'tag_text', value: 'tag_text' },
-        { title: 'Recorded Date', key: 'recorded_date', value: 'recorded_date', sortable: true },
-        { title: 'Public', key: 'public', value: 'public' },
-        { title: 'GRTS CellId', key: 'grts_cell_id', value: 'grts_cell_id' },
-        { title: 'Location', key: 'recording_location', value: 'recording_location' },
-        { title: 'Details', key: 'comments', value: 'comments' },
-        { title: 'User Pulse Annotations', key: 'userAnnotations', value: 'userAnnotations' },
-        { title: 'Edit', key: 'edit', value: 'edit' },
+        { title: 'Name', key: 'name', value: 'name', sortable: SERVER_SORT_FIELDS.includes('name') },
+        { title: 'Annotation', key: 'annotation', value: 'annotation', sortable: SERVER_SORT_FIELDS.includes('annotation') },
+        { title: 'Owner', key: 'owner_username', value: 'owner_username', sortable: SERVER_SORT_FIELDS.includes('owner_username') },
+        { title: 'Tags', key: 'tag_text', value: 'tag_text', sortable: SERVER_SORT_FIELDS.includes('tag_text') },
+        { title: 'Recorded Date', key: 'recorded_date', value: 'recorded_date', sortable: SERVER_SORT_FIELDS.includes('recorded_date') },
+        { title: 'Public', key: 'public', value: 'public', sortable: SERVER_SORT_FIELDS.includes('public') },
+        { title: 'GRTS CellId', key: 'grts_cell_id', value: 'grts_cell_id', sortable: SERVER_SORT_FIELDS.includes('grts_cell_id') },
+        { title: 'Location', key: 'recording_location', value: 'recording_location', sortable: SERVER_SORT_FIELDS.includes('recording_location') },
+        { title: 'Details', key: 'comments', value: 'comments', sortable: SERVER_SORT_FIELDS.includes('comments') },
+        { title: 'User Pulse Annotations', key: 'userAnnotations', value: 'userAnnotations', sortable: SERVER_SORT_FIELDS.includes('userAnnotations') },
+        { title: 'Edit', key: 'edit', value: 'edit', sortable: false },
     ]);
 
     const sharedHeaders = ref([
-        { title: 'Name', key: 'name', value: 'name', sortable: true },
-        { title: 'Annotation', key: 'annotation', value: 'annotation' },
-        { title: 'Owner', key: 'owner_username', value: 'owner_username', sortable: true },
-        { title: 'Tags', key: 'tag_text', value: 'tag_text' },
-        { title: 'Recorded Date', key: 'recorded_date', value: 'recorded_date', sortable: true },
-        { title: 'Public', key: 'public', value: 'public' },
-        { title: 'GRTS CellId', key: 'grts_cell_id', value: 'grts_cell_id' },
+        { title: 'Name', key: 'name', value: 'name', sortable: SERVER_SORT_FIELDS.includes('name') },
+        { title: 'Annotation', key: 'annotation', value: 'annotation', sortable: SERVER_SORT_FIELDS.includes('annotation') },
+        { title: 'Owner', key: 'owner_username', value: 'owner_username', sortable: SERVER_SORT_FIELDS.includes('owner_username') },
+        { title: 'Tags', key: 'tag_text', value: 'tag_text', sortable: SERVER_SORT_FIELDS.includes('tag_text') },
+        { title: 'Recorded Date', key: 'recorded_date', value: 'recorded_date', sortable: SERVER_SORT_FIELDS.includes('recorded_date') },
+        { title: 'Public', key: 'public', value: 'public', sortable: SERVER_SORT_FIELDS.includes('public') },
+        { title: 'GRTS CellId', key: 'grts_cell_id', value: 'grts_cell_id', sortable: SERVER_SORT_FIELDS.includes('grts_cell_id') },
         { title: 'Location', key: 'recording_location', value: 'recording_location' },
-        { title: 'Details', key: 'comments', value: 'comments' },
-        { title: 'Annotated by Me', key: 'userMadeAnnotations', value: 'userMadeAnnotations' },
+        { title: 'Details', key: 'comments', value: 'comments', sortable: SERVER_SORT_FIELDS.includes('comments') },
+        { title: 'Annotated by Me', key: 'userMadeAnnotations', value: 'userMadeAnnotations', sortable: SERVER_SORT_FIELDS.includes('userMadeAnnotations') },
     ]);
-    const dataLoading = ref(false);
 
     function buildMyParams(options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }): RecordingListParams {
       const sortByFirst = options.sortBy?.[0];
-      const sortBy = (sortByFirst?.key && ['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'].includes(sortByFirst.key))
+      const sortBy = (sortByFirst?.key && (SERVER_SORT_FIELDS as readonly string[]).includes(sortByFirst.key))
         ? sortByFirst.key
         : 'created';
       const sort_direction = sortByFirst?.order === 'asc' ? 'asc' : 'desc';
@@ -109,7 +114,7 @@ export default defineComponent({
 
     function buildSharedParams(options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }): RecordingListParams {
       const sortByFirst = options.sortBy?.[0];
-      const sortBy = (sortByFirst?.key && ['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'].includes(sortByFirst.key))
+      const sortBy = (sortByFirst?.key && (SERVER_SORT_FIELDS as readonly string[]).includes(sortByFirst.key))
         ? sortByFirst.key
         : 'created';
       const sort_direction = sortByFirst?.order === 'asc' ? 'asc' : 'desc';
@@ -126,7 +131,7 @@ export default defineComponent({
     const fetchMyRecordings = async (options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }) => {
       const opts = { ...options, sortBy: options.sortBy ?? sortByMy.value };
       lastMyOptions.value = opts;
-      dataLoading.value = true;
+      myRecordingsLoading.value = true;
       try {
         const res = await getRecordings(false, buildMyParams(opts));
         recordingList.value = res.data.items;
@@ -145,28 +150,26 @@ export default defineComponent({
           intervalRef = null;
         }
       } finally {
-        dataLoading.value = false;
+        myRecordingsLoading.value = false;
       }
     };
 
     const fetchSharedRecordings = async (options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }) => {
       const opts = { ...options, sortBy: options.sortBy ?? sortByShared.value };
       lastSharedOptions.value = opts;
-      dataLoading.value = true;
+      sharedRecordingsLoading.value = true;
       try {
         const res = await getRecordings(true, buildSharedParams(opts));
         sharedList.value = res.data.items;
         totalSharedCount.value = res.data.count;
       } finally {
-        dataLoading.value = false;
+        sharedRecordingsLoading.value = false;
       }
     };
 
     const fetchRecordingTags = async () => {
-      dataLoading.value = true;
       const tags = await getRecordingTags();
       recordingTagList.value = tags.data;
-      dataLoading.value = false;
     };
 
     const filterTags: Ref<string[]> = ref([]);
@@ -251,7 +254,6 @@ export default defineComponent({
         batchUploadDialog.value = false;
         editingRecording.value = null;
         fetchMyRecordings(lastMyOptions.value);
-        fetchSharedRecordings(lastSharedOptions.value);
     };
 
     const editRecording = (item: Recording) => {
@@ -290,7 +292,6 @@ export default defineComponent({
         await deleteRecording(recordingToDelete.value.id);
         recordingToDelete.value = null;
         fetchMyRecordings(lastMyOptions.value);
-        fetchSharedRecordings(lastSharedOptions.value);
       }
     };
 
@@ -313,7 +314,8 @@ export default defineComponent({
         openDeleteRecordingDialog,
         recordingToDelete,
         editingRecording,
-        dataLoading,
+        myRecordingsLoading,
+        sharedRecordingsLoading,
         currentUserSubmission,
         currentUserSubmissionStatus,
         configuration,
@@ -403,9 +405,9 @@ export default defineComponent({
         :headers="headers"
         :items="recordingList"
         :items-length="totalMyCount"
-        :loading="dataLoading"
+        :loading="myRecordingsLoading"
         items-per-page="20"
-        :items-per-page-options="[{ value: 10, title: '10' }, { value: 20, title: '20' }, { value: 25, title: '25' }, { value: 50, title: '50' }, { value: 100, title: '100' }]"
+        :items-per-page-options="[{ value: 10, title: '10' }, { value: 20, title: '20' }, { value: 50, title: '50' }, { value: 100, title: '100' }]"
         density="compact"
         class="elevation-1 my-recordings"
         :style="myRecordingListStyles"
@@ -624,9 +626,9 @@ export default defineComponent({
         :headers="sharedHeaders"
         :items="sharedList"
         :items-length="totalSharedCount"
-        :loading="dataLoading"
+        :loading="sharedRecordingsLoading"
         items-per-page="20"
-        :items-per-page-options="[{ value: 10, title: '10' }, { value: 20, title: '20' }, { value: 25, title: '25' }, { value: 50, title: '50' }, { value: 100, title: '100' }]"
+        :items-per-page-options="[{ value: 10, title: '10' }, { value: 20, title: '20' }, { value: 50, title: '50' }, { value: 100, title: '100' }]"
         density="compact"
         class="elevation-1 shared-recordings"
         :style="sharedRecordingListStyles"
