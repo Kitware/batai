@@ -1,6 +1,7 @@
 locals {
   www_env_vars = {
-    VITE_APP_API_ROOT = "https://${module.django.fqdn}"
+    VITE_APP_API_ROOT   = "https://${module.django.fqdn}"
+    VITE_APP_SENTRY_DSN = "https://a224627951abd0f0606d8578cacef5d6@o267860.ingest.us.sentry.io/4510829950730240"
   }
 }
 
