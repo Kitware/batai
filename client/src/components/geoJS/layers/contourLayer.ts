@@ -121,7 +121,8 @@ export default class ContourLayer {
     if (!this.contourLayer) return;
     this.features.forEach((feature) => {
       feature.data([]).draw();
-   });
+    });
+    this.features = [];
     this.contourLayer.draw();
   }
 

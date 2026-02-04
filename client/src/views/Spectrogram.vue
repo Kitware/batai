@@ -79,6 +79,7 @@ export default defineComponent({
       fixedAxes,
       toggleFixedAxes,
       contoursLoading,
+      contoursEnabled,
       clearContours,
       nextUnsubmittedRecordingId,
       previousUnsubmittedRecordingId,
@@ -134,6 +135,7 @@ export default defineComponent({
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
     const loadData = async () => {
       viewMaskOverlay.value = false;
+      contoursEnabled.value = false;
       loading.value = true;
       currentRecordingId.value = parseInt(props.id);
       loadedImage.value = false;
@@ -161,7 +163,6 @@ export default defineComponent({
           };
         });
       } else {
-        // TODO Error Out if there is no URL
         console.error("No URL found for the spectrogram");
       }
       maskImages.value = [];
