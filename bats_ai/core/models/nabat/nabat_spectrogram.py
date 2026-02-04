@@ -20,9 +20,9 @@ class NABatSpectrogram(TimeStampedModel, models.Model):
     images = GenericRelation(SpectrogramImage)
     width = models.IntegerField()  # pixels
     height = models.IntegerField()  # pixels
-    duration = models.IntegerField()  # milliseconds
-    frequency_min = models.IntegerField()  # hz
-    frequency_max = models.IntegerField()  # hz
+    duration = models.FloatField()  # milliseconds
+    frequency_min = models.FloatField()  # hz
+    frequency_max = models.FloatField()  # hz
 
     @property
     def image_url_list(self):

@@ -25,6 +25,7 @@ import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import RecordingList from "@components/RecordingList.vue";
 import OtherUserAnnotationsDialog from "@/components/OtherUserAnnotationsDialog.vue";
 import ColorSchemeDialog from "@/components/ColorSchemeDialog.vue";
+import TransparencyFilterControl from "@/components/TransparencyFilterControl.vue";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import ReferenceMaterialsDialog from "@/components/ReferenceMaterialsDialog.vue";
 import useState from "@use/useState";
@@ -39,6 +40,7 @@ export default defineComponent({
     OtherUserAnnotationsDialog,
     ColorSchemeDialog,
     ReferenceMaterialsDialog,
+    TransparencyFilterControl,
   },
   props: {
     id: {
@@ -566,6 +568,9 @@ export default defineComponent({
             </v-tooltip>
             <div class="mt-4">
               <color-scheme-dialog />
+            </div>
+            <div class="mt-4 mr-3">
+              <transparency-filter-control />
             </div>
           </v-row>
         </v-container>

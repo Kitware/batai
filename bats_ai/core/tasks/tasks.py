@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import tempfile
 
 from django.contrib.contenttypes.models import ContentType
@@ -15,7 +16,8 @@ from bats_ai.core.models import (
     Spectrogram,
     SpectrogramImage,
 )
-from bats_ai.utils.spectrogram_utils import generate_spectrogram_assets, predict_from_compressed
+from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
+from bats_ai.utils.spectrogram_utils import predict_from_compressed
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
@@ -26,7 +28,15 @@ def recording_compute_spectrogram(recording_id: int):
     recording = Recording.objects.get(pk=recording_id)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        results = generate_spectrogram_assets(recording.audio_file, tmpdir)
+        # Copy the audio file from FileField to a temporary file
+        audio_filename = os.path.basename(recording.audio_file.name)
+        temp_audio_path = os.path.join(tmpdir, audio_filename)
+
+        with recording.audio_file.open('rb') as source_file:
+            with open(temp_audio_path, 'wb') as dest_file:
+                shutil.copyfileobj(source_file, dest_file)
+
+        results = generate_spectrogram_assets(temp_audio_path, output_folder=tmpdir)
         # Create or get Spectrogram
         spectrogram, _ = Spectrogram.objects.get_or_create(
             recording=recording,
@@ -79,7 +89,9 @@ def recording_compute_spectrogram(recording_id: int):
                 )
 
         config = Configuration.objects.first()
-        if config and config.run_inference_on_upload:
+        # TODO: Disabled until prediction is in batbot
+        # https://github.com/Kitware/batbot/issues/29
+        if config and config.run_inference_on_upload and False:
             predict_results = predict_from_compressed(compressed_obj)
             label = predict_results['label']
             score = predict_results['score']

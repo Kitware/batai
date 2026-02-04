@@ -121,7 +121,7 @@ const useGeoJS = () => {
       });
     }
     clearQuadFeatures();
-    quadFeatureLayer.node().css("filter", "url(#apply-color-scheme)");
+    quadFeatureLayer.node().css("filter", "url(#svg-filters)");
     for (let i = 0; i < imageCount; i += 1) {
       quadFeatures.push(quadFeatureLayer.createFeature("quad"));
     }
@@ -169,15 +169,15 @@ const useGeoJS = () => {
     const bounds = !thumbnail.value
       ? {
           left: 0, // Making sure the legend is on the screen
-          top: -(originalBounds.bottom - originalDimensions.height) / 2.0,
-          right: mapWidth * 2,
+          top: originalDimensions.height,
+          right: mapWidth,
           bottom: originalBounds.bottom,
         }
       : {
-          left: 0,
+          left: -geoViewer.value.bounds().right * 0.1,
           top: 0,
-          right: originalDimensions.width,
-          bottom: originalDimensions.height,
+          right: geoViewer.value.bounds().right * 1.1,
+          bottom: geoViewer.value.bounds().bottom,
         };
     const zoomAndCenter = geoViewer.value.zoomAndCenterFromBounds(bounds, 0);
     geoViewer.value.zoom(zoomAndCenter.zoom);
@@ -194,11 +194,14 @@ const useGeoJS = () => {
     });
     const params = geo.util.pixelCoordinateParams(container.value, width, height, width, height);
     const { right, bottom } = params.map.maxBounds;
+    // For thumbnails, use 0.1 margin for left and right, keep default margin for top/bottom
+    const horizontalMargin = thumbnail.value ? 0.1 : margin;
+    const verticalMargin = margin;
     geoViewer.value.maxBounds({
-      left: 0 - right * margin,
-      top: 0 - bottom * margin,
-      right: right * (1 + margin),
-      bottom: bottom * (1 + margin),
+      left: 0 - right * horizontalMargin,
+      top: 0 - bottom * verticalMargin,
+      right: right * (1 + horizontalMargin),
+      bottom: bottom * (1 + verticalMargin),
     });
     originalBounds = geoViewer.value.maxBounds();
     geoViewer.value.zoomRange({

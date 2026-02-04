@@ -15,11 +15,11 @@ from .spectrogram_image import SpectrogramImage
 class CompressedSpectrogram(TimeStampedModel, models.Model):
     recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
     spectrogram = models.ForeignKey(Spectrogram, on_delete=models.CASCADE)
-    length = models.IntegerField()
+    length = models.FloatField()
     images = GenericRelation(SpectrogramImage)
-    starts = ArrayField(ArrayField(models.IntegerField()))
-    stops = ArrayField(ArrayField(models.IntegerField()))
-    widths = ArrayField(ArrayField(models.IntegerField()))
+    starts = ArrayField(ArrayField(models.FloatField()))
+    stops = ArrayField(ArrayField(models.FloatField()))
+    widths = ArrayField(ArrayField(models.FloatField()))
     cache_invalidated = models.BooleanField(default=True)
 
     @property

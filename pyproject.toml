@@ -33,14 +33,11 @@ dependencies = [
     "rich",
     "whitenoise[brotli]",
     # Spectrogram Generation
-    "librosa",
-    "matplotlib",
-    "mercantile",
     "numpy",
-    # "onnxruntime-gpu",
+  # "onnxruntime-gpu",
     "onnx",
     "onnxruntime",
-    "opencv-python-headless",
+
     "tqdm",
     # guano metadata
     "gdal",
@@ -50,6 +47,7 @@ dependencies = [
     "sentry-sdk[celery,django,pure_eval]",
     "gunicorn",
     "geopandas>=1.1.1",
+    "batbot",
 ]
 
 [project.optional-dependencies]
@@ -120,6 +118,8 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
+batbot = { git = "https://github.com/Kitware/batbot" }
+
 
 [tool.black]
 line-length = 100

@@ -6,10 +6,10 @@ import requests
 
 from bats_ai.core.models import Configuration, ProcessingTask, Species
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
+from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
 from bats_ai.utils.spectrogram_utils import (
     generate_nabat_compressed_spectrogram,
     generate_nabat_spectrogram,
-    generate_spectrogram_assets,
     predict_from_compressed,
 )
 
@@ -60,7 +60,9 @@ def generate_spectrograms(
 
         try:
             config = Configuration.objects.first()
-            if config and config.run_inference_on_upload:
+            # TODO: Disabled until prediction is in batbot
+            # https://github.com/Kitware/batbot/issues/29
+            if config and config.run_inference_on_upload and False:
                 self.update_state(
                     state='Progress',
                     meta={'description': 'Running Prediction on Spectrogram'},
