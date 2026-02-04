@@ -63,7 +63,7 @@ export default defineComponent({
     class="d-flex align-center"
   >
     <v-menu
-      if="compressed"
+      v-if="compressed"
       location="top"
       :close-on-content-click="false"
       open-on-hover

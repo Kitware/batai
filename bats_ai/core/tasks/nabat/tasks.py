@@ -79,7 +79,7 @@ def generate_spectrograms(
             segment_index_map[segment['segment_index']] = pulse_metadata_obj
         for segment in compressed['segments']:
             if segment['segment_index'] not in segment_index_map:
-                PulseMetadata.objects.get_or_create(
+                PulseMetadata.objects.update_or_create(
                     recording=compressed_obj.recording,
                     index=segment['segment_index'],
                     defaults={

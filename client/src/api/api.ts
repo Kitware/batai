@@ -588,10 +588,10 @@ async function getComputedPulseContour(recordingId: number) {
 export interface PulseMetadata {
   id: number;
   index: number;
-  curve: number[][]; // list of [time, frequency]
-  char_freq: number[]; // point [time, frequency]
-  knee: number[]; // point [time, frequency]
-  heel: number[]; // point [time, frequency]
+  curve: number[][] | null; // list of [time, frequency]
+  char_freq: number[] | null; // point [time, frequency]
+  knee: number[] | null; // point [time, frequency]
+  heel: number[] | null; // point [time, frequency]
 }
 
 async function getPulseMetadata(recordingId: number) {
