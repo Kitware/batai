@@ -208,10 +208,6 @@ export default class PulseMetadataLayer {
           textAlign: 'end',
         });
       }
-      if (pulse.char_freq && pulse.char_freq.length >= 2) {
-        const pos = this.getCompressedPosition(pulse.char_freq[0], pulse.char_freq[1], index);
-        this.pointData.push({ x: pos.x, y: pos.y, label: 'char_freq' });
-      }
       if (pulse.knee && pulse.knee.length >= 2) {
         const pos = this.getCompressedPosition(pulse.knee[0], pulse.knee[1], index);
         this.pointData.push({ x: pos.x, y: pos.y, label: 'knee' });
