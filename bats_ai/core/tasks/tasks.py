@@ -105,7 +105,7 @@ def recording_compute_spectrogram(recording_id: int):
 
         # Create SpectrogramContour objects for each segment
         for segment in results['segments']['segments']:
-            PulseMetadata.objects.get_or_create(
+            PulseMetadata.objects.update_or_create(
                 recording=compressed_obj.recording,
                 index=segment['segment_index'],
                 defaults={
