@@ -75,6 +75,24 @@ class RecordingPaginatedResponse(Schema):
     count: int
 
 
+class UnsubmittedNeighborsQuerySchema(Schema):
+    """Query params for unsubmitted neighbors (next/previous recording IDs)."""
+
+    current: int
+    sort_by: (
+        Literal['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'] | None
+    ) = 'created'
+    sort_direction: Literal['asc', 'desc'] | None = 'desc'
+    tags: str | None = None  # Comma-separated tag texts; recording must have all listed tags
+
+
+class UnsubmittedNeighborsResponse(Schema):
+    """Response for unsubmitted neighbors: next and previous recording IDs in the vetting order."""
+
+    next_id: int | None
+    previous_id: int | None
+
+
 class RecordingUploadSchema(Schema):
     name: str
     recorded_date: str
@@ -469,6 +487,70 @@ def get_recordings(
         request, page_recordings, annotation_counts, user_has_annotations_ids
     )
     return RecordingPaginatedResponse(items=items, count=count)
+
+
+def _unsubmitted_recording_ids_ordered(
+    request: HttpRequest,
+    sort_by: str = 'created',
+    sort_direction: str = 'desc',
+    tags: str | None = None,
+) -> list[int]:
+    submitted_by_user = RecordingAnnotation.objects.filter(
+        owner=request.user, submitted=True
+    ).values_list('recording_id', flat=True)
+
+    def apply_filters_and_sort(qs: QuerySet[Recording]) -> QuerySet[Recording]:
+        qs = qs.exclude(pk__in=submitted_by_user)
+        if tags and tags.strip():
+            tag_list = [t.strip() for t in tags.split(',') if t.strip()]
+            for tag in tag_list:
+                qs = qs.filter(tags__text=tag)
+            if tag_list:
+                qs = qs.distinct()
+        order_prefix = '' if sort_direction == 'asc' else '-'
+        if sort_by == 'owner_username':
+            qs = qs.order_by(f'{order_prefix}owner__username')
+        else:
+            qs = qs.order_by(f'{order_prefix}{sort_by}')
+        return qs
+
+    my_qs = apply_filters_and_sort(_base_recordings_queryset(request, False))
+    shared_qs = apply_filters_and_sort(_base_recordings_queryset(request, True))
+
+    my_ids = list(my_qs.values_list('id', flat=True))
+    shared_ids = list(shared_qs.values_list('id', flat=True))
+    return my_ids + shared_ids
+
+
+@router.get('/unsubmitted-neighbors/', response=UnsubmittedNeighborsResponse)
+def get_unsubmitted_neighbors(
+    request: HttpRequest,
+    q: Query[UnsubmittedNeighborsQuerySchema],
+):
+    current_id = q.current
+    # Verify user can access the current recording (owner or public)
+    try:
+        rec = Recording.objects.get(pk=current_id)
+    except Recording.DoesNotExist:
+        return UnsubmittedNeighborsResponse(next_id=None, previous_id=None)
+    if rec.owner != request.user and not rec.public:
+        return UnsubmittedNeighborsResponse(next_id=None, previous_id=None)
+
+    sort_by = q.sort_by or 'created'
+    sort_direction = q.sort_direction or 'desc'
+    ids = _unsubmitted_recording_ids_ordered(
+        request, sort_by=sort_by, sort_direction=sort_direction, tags=q.tags
+    )
+
+    try:
+        idx = ids.index(current_id)
+    except ValueError:
+        # Current not in unsubmitted list (e.g. already submitted)
+        return UnsubmittedNeighborsResponse(next_id=None, previous_id=None)
+
+    next_id = ids[idx + 1] if idx + 1 < len(ids) else None
+    previous_id = ids[idx - 1] if idx - 1 >= 0 else None
+    return UnsubmittedNeighborsResponse(next_id=next_id, previous_id=previous_id)
 
 
 @router.get('/{id}/')

@@ -42,8 +42,6 @@ export default defineComponent({
       currentUser,
       configuration,
       showSubmittedRecordings,
-      submittedMyRecordings,
-      submittedSharedRecordings,
       myRecordingsDisplay,
       sharedRecordingsDisplay,
     } = useState();
@@ -125,6 +123,7 @@ export default defineComponent({
         sort_by: sortBy as RecordingListParams['sort_by'],
         sort_direction,
         tags: sharedFilterTags.value.length ? sharedFilterTags.value : undefined,
+        exclude_submitted: configuration.value.mark_annotations_completed_enabled && !showSubmittedRecordings.value ? true : undefined,
       };
     }
 
@@ -166,6 +165,11 @@ export default defineComponent({
         sharedRecordingsLoading.value = false;
       }
     };
+
+    watch(showSubmittedRecordings, () => {
+      fetchMyRecordings(lastMyOptions.value);
+      fetchSharedRecordings(lastSharedOptions.value);
+    });
 
     const fetchRecordingTags = async () => {
       const tags = await getRecordingTags();
@@ -319,8 +323,6 @@ export default defineComponent({
         currentUserSubmission,
         currentUserSubmissionStatus,
         configuration,
-        submittedMyRecordings,
-        submittedSharedRecordings,
         myRecordingListStyles,
         sharedRecordingListStyles,
         showSubmittedRecordings,
@@ -330,7 +332,7 @@ export default defineComponent({
         fetchSharedRecordings,
         sortByMy,
         sortByShared,
-     };
+      };
   },
 });
 </script>

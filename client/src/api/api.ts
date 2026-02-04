@@ -326,6 +326,36 @@ async function getRecordings(getPublic = false, params?: RecordingListParams) {
 async function getRecording(id: string) {
   return axiosInstance.get<Recording>(`/recording/${id}/`);
 }
+
+export interface UnsubmittedNeighborsParams {
+  sort_by?: 'id' | 'name' | 'created' | 'modified' | 'recorded_date' | 'owner_username';
+  sort_direction?: 'asc' | 'desc';
+  /** Comma-separated or array of tag texts; recording must have all listed tags. */
+  tags?: string | string[];
+}
+
+export interface UnsubmittedNeighborsResponse {
+  next_id: number | null;
+  previous_id: number | null;
+}
+
+async function getUnsubmittedNeighbors(
+  currentId: number,
+  params?: UnsubmittedNeighborsParams
+) {
+  const query = new URLSearchParams({ current: String(currentId) });
+  if (params?.sort_by) query.set('sort_by', params.sort_by);
+  if (params?.sort_direction) query.set('sort_direction', params.sort_direction);
+  if (params?.tags !== undefined) {
+    const tagStr = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
+    if (tagStr) query.set('tags', tagStr);
+  }
+  const response = await axiosInstance.get<UnsubmittedNeighborsResponse>(
+    `/recording/unsubmitted-neighbors/?${query.toString()}`
+  );
+  return response;
+}
+
 async function getRecordingTags() {
   return axiosInstance.get<RecordingTag[]>(`/recording-tag/`);
 }
@@ -678,6 +708,7 @@ export {
   getFileAnnotationDetails,
   getExportStatus,
   getRecordingTags,
+  getUnsubmittedNeighbors,
   getComputedPulseContour,
   getPulseMetadata,
   getCurrentUser,

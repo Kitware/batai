@@ -18,6 +18,7 @@ import {
   getSpectrogramCompressed,
   getOtherUserAnnotations,
   getSequenceAnnotations,
+  getUnsubmittedNeighbors,
 } from "../api/api";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
@@ -85,11 +86,11 @@ export default defineComponent({
       clearContours,
       clearPulseMetadata,
       viewPulseMetadataLayer,
-      nextUnsubmittedRecordingId,
-      previousUnsubmittedRecordingId,
       currentRecordingId,
       viewMaskOverlay,
     } = useState();
+    const nextUnsubmittedId = ref<number | null>(null);
+    const previousUnsubmittedId = ref<number | null>(null);
     const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const maskImages: Ref<HTMLImageElement[]> = ref([]);
@@ -212,6 +213,23 @@ export default defineComponent({
         createColorScale(Object.keys(otherUserAnnotations.value));
       }
       loading.value = false;
+
+      if (configuration.value.mark_annotations_completed_enabled) {
+        try {
+          const neighborsRes = await getUnsubmittedNeighbors(parseInt(props.id, 10), {
+            sort_by: 'created',
+            sort_direction: 'desc',
+          });
+          nextUnsubmittedId.value = neighborsRes.data.next_id;
+          previousUnsubmittedId.value = neighborsRes.data.previous_id;
+        } catch {
+          nextUnsubmittedId.value = null;
+          previousUnsubmittedId.value = null;
+        }
+      } else {
+        nextUnsubmittedId.value = null;
+        previousUnsubmittedId.value = null;
+      }
     };
     const setSelection = (annotationId: number) => {
       selectedId.value = annotationId;
@@ -305,11 +323,15 @@ export default defineComponent({
     };
 
     function goToNextUnreviewed() {
-      router.push({path: `/recording/${nextUnsubmittedRecordingId.value}/spectrogram`, replace: true });
+      if (nextUnsubmittedId.value != null) {
+        router.push({ path: `/recording/${nextUnsubmittedId.value}/spectrogram`, replace: true });
+      }
     }
 
     function goToPreviousUnreviewed() {
-      router.push({ path: `/recording/${previousUnsubmittedRecordingId.value}/spectrogram`, replace: true });
+      if (previousUnsubmittedId.value != null) {
+        router.push({ path: `/recording/${previousUnsubmittedId.value}/spectrogram`, replace: true });
+      }
     }
 
     return {
@@ -362,7 +384,8 @@ export default defineComponent({
       // Vetting
       goToNextUnreviewed,
       goToPreviousUnreviewed,
-      nextUnsubmittedRecordingId,
+      nextUnsubmittedId,
+      previousUnsubmittedId,
     };
   },
 });
@@ -715,13 +738,14 @@ export default defineComponent({
                 </v-col>
               </v-row>
               <v-row
-                v-if="nextUnsubmittedRecordingId"
+                v-if="nextUnsubmittedId != null || previousUnsubmittedId != null"
                 dense
               >
                 <v-col>
                   <v-btn
                     flat
                     color="primary"
+                    :disabled="previousUnsubmittedId == null"
                     @click="goToPreviousUnreviewed"
                   >
                     Prev
@@ -735,6 +759,7 @@ export default defineComponent({
                   <v-btn
                     flat
                     color="primary"
+                    :disabled="nextUnsubmittedId == null"
                     @click="goToNextUnreviewed"
                   >
                     Next

@@ -38,7 +38,7 @@ export default defineComponent({
     const annotations: Ref<FileAnnotation[]> = ref([]);
     const detailsDialog = ref(false);
     const detailRecordingId = ref(-1);
-    const { configuration, isNaBat, currentUser, markAnnotationSubmitted } = useState();
+    const { configuration, isNaBat, currentUser } = useState();
 
     const setSelectedId = (annotation: FileAnnotation) => {
       selectedAnnotation.value = annotation;
@@ -108,9 +108,6 @@ export default defineComponent({
     function handleSubmitAnnotation(annotation: FileAnnotation, submitSuccess: boolean) {
       if (submitSuccess) {
         annotation.submitted = true;
-        // Also update submitted status on the recording object
-        // This forces recomputation of allRecordings
-        markAnnotationSubmitted(props.recordingId, annotation.id);
       }
     }
 

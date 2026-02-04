@@ -1,6 +1,6 @@
 <script lang="ts">
-import { defineComponent, ref, Ref, onMounted, computed, CSSProperties } from 'vue';
-import { FileAnnotation, getRecordings, Recording, Species } from '../api/api';
+import { defineComponent, ref, Ref, onMounted, computed, watch, CSSProperties } from 'vue';
+import { FileAnnotation, getRecordings, Recording, Species, type RecordingListParams } from '../api/api';
 import useState from '@use/useState';
 import  { EditingRecording } from './UploadRecording.vue';
 
@@ -18,14 +18,27 @@ export default defineComponent({
     } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
 
-    const fetchRecordings = async () => {
-        const recordings = await getRecordings(false);
-        recordingList.value = recordings.data.items;
-        const shared = await getRecordings(true);
-        sharedList.value = shared.data.items;
+    const buildListParams = (): RecordingListParams => {
+      const excludeSubmitted = configuration.value.mark_annotations_completed_enabled
+        && !showSubmittedRecordings.value;
+      return {
+        page: 1,
+        limit: 20,
+        sort_by: 'created',
+        sort_direction: 'desc',
+        ...(excludeSubmitted ? { exclude_submitted: true } : {}),
+      };
+    };
 
+    const fetchRecordings = async () => {
+      const params = buildListParams();
+      const recordings = await getRecordings(false, params);
+      recordingList.value = recordings.data.items;
+      const shared = await getRecordings(true, { ...params, public: true });
+      sharedList.value = shared.data.items;
     };
     onMounted(() => fetchRecordings());
+    watch(showSubmittedRecordings, () => fetchRecordings());
 
     const openPanel = ref(1);
     const filtered = ref(true);
