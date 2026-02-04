@@ -11,7 +11,6 @@ docker build\
     --build-arg BUILD_ENV=prod\
     --build-arg DJANGO_BATAI_URL_PATH=${DJANGO_BATAI_URL_PATH}\
     --build-arg VITE_APP_API_ROOT=${VITE_APP_API_ROOT}\
-    --build-arg VITE_APP_LOGIN_REDIRECT=${VITE_APP_LOGIN_REDIRECT}\
     -t ${AWS_IMAGE_LATEST}\
     --pull -f ${DOCKER_FILE_LOCATION} .
 ```
