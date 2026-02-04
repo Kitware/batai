@@ -13,7 +13,6 @@ import {
   Recording,
   FileAnnotation,
   getRecordingTags,
-  getConfiguration,
   type RecordingListParams,
 } from '../api/api';
 import UploadRecording, { EditingRecording } from '@components/UploadRecording.vue';
