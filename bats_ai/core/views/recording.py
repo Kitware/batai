@@ -141,7 +141,7 @@ class PulseContourSchema(Schema):
         return cls(
             id=obj.id,
             index=obj.index,
-            contours=obj.contours,
+            contours=obj.contours if obj.contours is not None else [],
             bounding_box=json.loads(obj.bounding_box.geojson),
         )
 

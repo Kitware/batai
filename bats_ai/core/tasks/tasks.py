@@ -110,7 +110,7 @@ def recording_compute_spectrogram(recording_id: int):
                 recording=compressed_obj.recording,
                 index=segment['segment_index'],
                 defaults={
-                    'contours': segment['contours'],
+                    'contours': segment.get('contours', []),
                     'bounding_box': Polygon(
                         (
                             (segment['start_ms'], segment['freq_max']),
