@@ -611,13 +611,13 @@ async function getExportStatus(exportId: number) {
 }
 
 export interface VettingDetails {
-  id: number;
+  id: number | null;
   user_id: number;
   reference_materials: string;
 }
 
 export interface UpdateVettingDetails {
-  reference_Materials: string;
+  reference_materials: string;
 }
 
 async function getVettingDetailsForUser(userId: number) {
