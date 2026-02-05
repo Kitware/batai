@@ -100,7 +100,7 @@ test = [
 
 [tool.hatch.build]
 packages = [
-  "bats-ai",
+  "bats_ai",
 ]
 
 [tool.uv]
