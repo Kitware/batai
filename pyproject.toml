@@ -12,8 +12,7 @@ classifiers = ["Private :: Do Not Upload"]
 dependencies = [
     # Runtime dependendencies, always needed
     "celery",
-    # TODO: move this pinning to the uv lock file
-    "django[argon2]>=4.2, <5",
+    "django[argon2]",
     "django-ninja",
     "django-allauth",
     "django-auth-style",
@@ -171,5 +170,4 @@ filterwarnings = [
   "ignore:Support for class-based `config` is deprecated:pydantic.warnings.PydanticDeprecatedSince20",
   # https://github.com/celery/kombu/issues/1339
   "ignore:SelectableGroups dict interface is deprecated:DeprecationWarning:kombu",
-  "ignore::django.utils.deprecation.RemovedInDjango50Warning", # TODO: is this necessary?
 ]

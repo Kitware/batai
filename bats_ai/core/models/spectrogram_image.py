@@ -17,10 +17,10 @@ def spectrogram_image_upload_to(instance, filename):
 
 
 class SpectrogramImage(models.Model):
-    SPECTROGRAM_TYPE_CHOICES = [
-        ('spectrogram', 'Spectrogram'),
-        ('compressed', 'Compressed'),
-    ]
+    SPECTROGRAM_TYPE_CHOICES = {
+        'spectrogram': 'Spectrogram',
+        'compressed': 'Compressed',
+    }
     content_object = GenericForeignKey('content_type', 'object_id')
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
