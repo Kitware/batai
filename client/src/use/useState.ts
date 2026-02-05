@@ -89,7 +89,7 @@ const toggleFixedAxes = () => {
 };
 
 const computedPulseAnnotations: Ref<ComputedPulseAnnotation[]> = ref([]);
-// Show contours is always false; not persisted or loaded from localStorage.
+// Initial contour state is off; not persisted or loaded from localStorage.
 const contoursEnabled = ref(false);
 const imageOpacity = ref(1.0);
 const contourOpacity = ref(1.0);
