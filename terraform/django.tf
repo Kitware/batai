@@ -17,8 +17,11 @@ module "django" {
   subdomain_name         = "api"
   django_settings_module = "bats_ai.settings.heroku_production"
 
+  django_cors_allowed_origins = [
+    # Can't make this use "aws_route53_record.www.fqdn" because of a circular dependency
+    "https://www.${data.aws_route53_zone.this.name}",
+  ]
   additional_django_vars = {
     DJANGO_SENTRY_DSN = "https://6949e99cb9fcea56cfbb36954d4de266@o267860.ingest.us.sentry.io/4509271243423744"
-
   }
 }

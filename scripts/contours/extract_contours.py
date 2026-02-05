@@ -7,7 +7,11 @@
 #   "scipy",
 #   "scikit-image",
 #   "svgwrite",
+#   "batbot",
 # ]
+#
+# [tool.uv.sources]
+# batbot = { git = "https://github.com/Kitware/batbot" }
 # ///
 
 import colorsys
