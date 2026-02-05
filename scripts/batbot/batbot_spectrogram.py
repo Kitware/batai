@@ -7,7 +7,7 @@
 # ]
 #
 # [tool.uv.sources]
-# batbot = { git = "https://github.com/Kitware/batbot", branch = "jrp/compressed-mask" }
+# batbot = { git = "https://github.com/Kitware/batbot" }
 # ///
 from contextlib import contextmanager
 import json

@@ -34,10 +34,9 @@ dependencies = [
     "whitenoise[brotli]",
     # Spectrogram Generation
     "numpy",
-  # "onnxruntime-gpu",
+    # "onnxruntime-gpu",
     "onnx",
     "onnxruntime",
-
     "tqdm",
     # guano metadata
     "gdal",
@@ -48,7 +47,7 @@ dependencies = [
     "gunicorn",
     "geopandas>=1.1.1",
     "batbot",
-    "scikit-image>=0.25.2"
+    "scikit-image>=0.25.2",
 ]
 
 [project.optional-dependencies]
@@ -119,7 +118,7 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
-batbot = { git = "https://github.com/Kitware/batbot", branch = "jrp/compressed-mask" }
+batbot = { git = "https://github.com/Kitware/batbot" }
 
 
 [tool.black]

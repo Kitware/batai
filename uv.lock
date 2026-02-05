@@ -173,7 +173,7 @@ wheels = [
 [[package]]
 name = "batbot"
 version = "0.1.0"
-source = { git = "https://github.com/Kitware/batbot?branch=jrp%2Fcompressed-mask#6a5a95e84e79bb30ca9a24afd2644c1a32a940b5" }
+source = { git = "https://github.com/Kitware/batbot#669f21cd0de908fe9264e8f4ea82314c6abc7821" }
 dependencies = [
     { name = "click" },
     { name = "cryptography" },
@@ -281,7 +281,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batbot", git = "https://github.com/Kitware/batbot?branch=jrp%2Fcompressed-mask" },
+    { name = "batbot", git = "https://github.com/Kitware/batbot" },
     { name = "celery" },
     { name = "django", extras = ["argon2"], specifier = ">=4.2,<5" },
     { name = "django-allauth" },

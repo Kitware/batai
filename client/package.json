@@ -17,7 +17,7 @@
     "@mdi/font": "^7.4.47",
     "@mdi/js": "^7.4.47",
     "@resonant/oauth-client": "^1.0.3",
-    "@sentry/vue": "^6.16.1",
+    "@sentry/vue": "^10.38.0",
     "@types/d3": "^7.4.0",
     "axios": "^1.6.0",
     "d3": "^7.8.5",
