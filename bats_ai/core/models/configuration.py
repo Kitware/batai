@@ -22,11 +22,11 @@ class Configuration(models.Model):
     run_inference_on_upload = models.BooleanField(default=True)
     spectrogram_x_stretch = models.DecimalField(default=2.5, max_digits=3, decimal_places=2)
     spectrogram_view = models.CharField(
-        max_length=12, choices=SpectrogramViewMode.choices, default=SpectrogramViewMode.COMPRESSED
+        max_length=12, choices=SpectrogramViewMode, default=SpectrogramViewMode.COMPRESSED
     )
     default_color_scheme = models.CharField(
         max_length=20,
-        choices=AvailableColorScheme.choices,
+        choices=AvailableColorScheme,
         default=AvailableColorScheme.INFERNO,
     )
     # 18 characters is just enough for "rgb(255, 255, 255)"
