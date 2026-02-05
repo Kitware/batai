@@ -223,7 +223,7 @@ def main(num_files, outdir, colormap, spectro):
     os.makedirs(outdir, exist_ok=True)
 
     for i in range(num_files):
-        base = f'chirp_{i+1:03}'
+        base = f'chirp_{i + 1:03}'
         wav_path = os.path.join(outdir, f'{base}.wav')
         spectrogram_path = os.path.join(outdir, f'{base}_spec.jpg')
         compressed_path = os.path.join(outdir, f'{base}_compressed.jpg')
@@ -234,7 +234,7 @@ def main(num_files, outdir, colormap, spectro):
 
         with open(annotation_path, 'w') as f:
             f.write('start_time,end_time\n')
-            f.write(f'{duration/3:.2f},{2*duration/3:.2f}\n')  # dummy annotation
+            f.write(f'{duration / 3:.2f},{2 * duration / 3:.2f}\n')  # dummy annotation
         if spectro:
             spec_img, spec_duration = generate_spectrogram(wav_path, spectrogram_path, colormap)
             if spec_img:
