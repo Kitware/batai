@@ -7,7 +7,11 @@
 #   "scipy",
 #   "scikit-image",
 #   "svgwrite",
+#   "batbot",
 # ]
+#
+# [tool.uv.sources]
+# batbot = { git = "https://github.com/Kitware/batbot" }
 # ///
 
 import colorsys
@@ -282,8 +286,7 @@ def contours_to_metadata(
         'contours': [
             {
                 'level': float(level),
-                'area': polygon_area(contour),
-                'points': contour.round(3).tolist(),
+                'curve': contour.round(3).tolist(),
             }
             for contour, level in contours
         ],
@@ -313,6 +316,8 @@ def apply_transparency_mask(mat, threshold_percent):
 
 def extract_contours(
     image_path: Path,
+    output_path: Path | None = None,
+    debug: bool = False,
     *,
     levels_mode: str,
     percentile_values,
@@ -329,15 +334,24 @@ def extract_contours(
     # Convert to grayscale first
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    print(f'Applying noise filter: {apply_noise_filter} with threshold: {noise_threshold}')
     if apply_noise_filter and noise_threshold is not None:
+        print(f'Applying noise filter: {apply_noise_filter} with threshold: {noise_threshold}')
         # Create mask of pixels above threshold in original image
         # print out min and max of gray
-        gray = np.where(gray < noise_threshold, 0, gray)
-        blurred = cv2.GaussianBlur(gray, (15, 15), 3)
-    else:
-        blurred = cv2.GaussianBlur(gray, (15, 15), 3)
-    data = blurred
+        filtered = gray.copy()
+        filtered[filtered < noise_threshold] = 0
+        print(gray.mean())
+        if debug:
+            debug_path = output_path / 'filtered.jpg' if output_path else None
+            unfiltered_path = output_path / 'unfiltered.jpg' if output_path else None
+            if debug_path:
+                cv2.imwrite(str(debug_path), filtered)
+                print('Wrote filtered debug image:', debug_path)
+            if unfiltered_path:
+                cv2.imwrite(str(unfiltered_path), gray)
+                print('Wrote unfiltered debug image:', unfiltered_path)
+
+    data = gray
 
     levels = compute_auto_levels(
         data,
@@ -345,6 +359,8 @@ def extract_contours(
         percentile_values=percentile_values,
         **level_kwargs,
     )
+
+    print(levels)
 
     contours = []
     for level in levels:
@@ -379,8 +395,8 @@ def extract_contours(
     type=click.Choice(['percentile', 'histogram', 'multi-otsu']),
     default='percentile',
 )
-@click.option('--percentiles', multiple=True, default=(90, 92, 94, 96, 98))
-@click.option('--min-area', default=500.0)
+@click.option('--percentiles', multiple=True, default=(60, 70, 80, 90, 92, 94, 96, 98))
+@click.option('--min-area', default=30.0)
 @click.option('--smoothing-factor', default=0.08)
 @click.option('--multi-otsu-classes', default=4)
 @click.option('--hist-bins', default=512)
@@ -419,7 +435,8 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
 
         # Get compressed paths and widths/starts/stops
         compressed_data = assets_data.get('compressed', {})
-        compressed_paths = compressed_data.get('paths', [])
+        compressed_data.get('paths', [])
+        mask_paths = compressed_data.get('masks', [])
         widths = compressed_data.get('widths', [])
         starts = compressed_data.get('starts', [])
         stops = compressed_data.get('stops', [])
@@ -429,7 +446,7 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
 
         # Process each unique compressed image
         processed_images: set[Path] = set()
-        for path_str in compressed_paths:
+        for path_str in mask_paths:
             img_path = (assets_dir / path_str).resolve()
             if not img_path.exists():
                 logger.warning('Image path does not exist: %s', img_path)
@@ -443,6 +460,8 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
             # Extract all contours from the compressed image
             contours, shape = extract_contours(
                 img_path,
+                output_path=out_dir,
+                debug=debug_images,
                 levels_mode=kwargs['levels_mode'],
                 percentile_values=kwargs['percentiles'],
                 min_area=kwargs['min_area'],
@@ -457,31 +476,6 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
                 apply_noise_filter=False,
             )
 
-            # Optionally write debug images (unfiltered and filtered) so that
-            # the effect of the noise filter can be visualized. These are
-            # written into the same output directory as the contour SVG/JSON.
-            if debug_images:
-                img_color = cv2.imread(str(img_path))
-                if img_color is None:
-                    logger.warning('Could not read image for debug output: %s', img_path)
-                else:
-                    gray = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
-                    blurred = cv2.GaussianBlur(gray, (15, 15), 3)
-
-                    unfiltered_path = out_dir / f'{img_path.stem}.unfiltered.jpg'
-                    cv2.imwrite(str(unfiltered_path), blurred)
-                    logger.info('Wrote unfiltered debug image: %s', unfiltered_path)
-
-                    if noise_threshold is not None:
-                        # Match extract_contours behavior: blur first, then mask out pixels
-                        # that were below threshold in original (so zeros don't spread)
-                        mask = gray >= noise_threshold
-                        filtered = cv2.GaussianBlur(gray, (15, 15), 3)
-                        filtered[~mask] = 0
-                        filtered_path = out_dir / f'{img_path.stem}.filtered.jpg'
-                        cv2.imwrite(str(filtered_path), filtered)
-                        logger.info('Wrote filtered debug image: %s', filtered_path)
-
             # Calculate segment boundaries based on widths
             segment_boundaries: list[tuple[float, float]] = []
             cumulative_x = 0.0
@@ -495,14 +489,25 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
             # Build per-image JSON with segments array
             segments_output: list[dict] = []
             for seg_idx, seg_contours in enumerate(segment_contours_list):
+                # freq_min/freq_max: min/max y
+                # (frequency axis) over all contour points in this segment
+                all_y = (
+                    np.concatenate([c[:, 1] for c, _ in seg_contours])
+                    if seg_contours
+                    else np.array([])
+                )
+                freq_min = float(np.min(all_y).round(3)) if all_y.size else None
+                freq_max = float(np.max(all_y).round(3)) if all_y.size else None
+
                 segment_obj: dict = {
                     'segment_index': seg_idx,
                     'contour_count': len(seg_contours),
+                    'freq_min': freq_min,
+                    'freq_max': freq_max,
                     'contours': [
                         {
                             'level': float(level),
-                            'area': polygon_area(contour),
-                            'points': contour.round(3).tolist(),
+                            'curve': contour.round(3).tolist(),
                         }
                         for contour, level in seg_contours
                     ],
@@ -547,6 +552,8 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
             if noise_threshold is not None:
                 contours_nf, _shape_nf = extract_contours(
                     img_path,
+                    debug=debug_images,
+                    output_path=out_dir,
                     levels_mode=kwargs['levels_mode'],
                     percentile_values=kwargs['percentiles'],
                     min_area=kwargs['min_area'],
@@ -591,6 +598,8 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
         img_path = path
         contours, shape = extract_contours(
             img_path,
+            output_path=out_dir,
+            debug=debug_images,
             levels_mode=kwargs['levels_mode'],
             percentile_values=kwargs['percentiles'],
             min_area=kwargs['min_area'],

@@ -11,6 +11,10 @@ const useGeoJS = () => {
   const quadFeatures: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let quadFeatureLayer: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const maskQuadFeatures: any[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let maskQuadFeatureLayer: any;
 
   const thumbnail = ref(false);
 
@@ -33,14 +37,69 @@ const useGeoJS = () => {
     }
   };
 
-  const clearQuadFeatures = () => {
+  const clearQuadFeatures = (redraw?: boolean) => {
     quadFeatures.forEach((feature) => {
       if (quadFeatureLayer) {
         quadFeatureLayer.removeFeature(feature);
       }
     });
     quadFeatures.splice(0, quadFeatures.length);
+    if (redraw) {
+      quadFeatureLayer.draw();
+    }
   };
+
+  const clearMaskQuadFeatures = (redraw?: boolean) => {
+    maskQuadFeatures.forEach((feature) => {
+      if (maskQuadFeatureLayer) {
+        maskQuadFeatureLayer.removeFeature(feature);
+      }
+    });
+    maskQuadFeatures.splice(0, maskQuadFeatures.length);
+    if (redraw && maskQuadFeatureLayer) {
+      maskQuadFeatureLayer.draw();
+    }
+  };
+
+  /**
+   * Positions and draws image quads on a layer. Shared by drawImages and drawMaskImages.
+   */
+  /* eslint-disable @typescript-eslint/no-explicit-any -- geoJS layer/feature types */
+  const drawQuadsToLayer = (
+    layer: any,
+    features: any[],
+    images: HTMLImageElement[],
+    width: number,
+    height: number,
+    opacity: number
+  ) => {
+    if (images.length === 0) return;
+    layer.node().css("opacity", String(opacity));
+    while (features.length > images.length) {
+      const feature = features.pop();
+      if (feature) layer.removeFeature(feature);
+    }
+    let previousWidth = 0;
+    const totalBaseWidth = images.reduce((sum, img) => sum + img.naturalWidth, 0);
+    images.forEach((image, index) => {
+      const scale = width / totalBaseWidth;
+      const currentWidth = image.width * scale;
+      if (features[index] === undefined) {
+        features[index] = layer.createFeature("quad");
+      }
+      features[index]
+        .data([
+          {
+            ul: { x: previousWidth, y: 0 },
+            lr: { x: previousWidth + currentWidth, y: height },
+            image,
+          },
+        ])
+        .draw();
+      previousWidth += currentWidth;
+    });
+  };
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const initializeViewer = (
     sourceContainer: HTMLElement,
@@ -121,33 +180,22 @@ const useGeoJS = () => {
       });
     }
     clearQuadFeatures();
+    if (!maskQuadFeatureLayer) {
+      maskQuadFeatureLayer = geoViewer.value.createLayer("feature", {
+        features: ["quad"],
+        autoshareRenderer: false,
+        renderer: "canvas",
+      });
+      maskQuadFeatureLayer.node().css("filter", "url(#svg-filters)");
+    }
     quadFeatureLayer.node().css("filter", "url(#svg-filters)");
     for (let i = 0; i < imageCount; i += 1) {
       quadFeatures.push(quadFeatureLayer.createFeature("quad"));
     }
   };
 
-  const drawImages = (images: HTMLImageElement[], width = 0, height = 0, resetCam = true) => {
-    let previousWidth = 0;
-    let totalBaseWidth = 0;
-    images.forEach((image) => (totalBaseWidth += image.naturalWidth));
-    images.forEach((image, index) => {
-      const scaledWidth = width / totalBaseWidth;
-      const currentWidth = image.width * scaledWidth;
-      if (quadFeatures[index] === undefined) {
-        quadFeatures[index] = quadFeatureLayer.createFeature("quad");
-      }
-      quadFeatures[index]
-        .data([
-          {
-            ul: { x: previousWidth, y: 0 },
-            lr: { x: previousWidth + currentWidth, y: height },
-            image: image,
-          },
-        ])
-        .draw();
-      previousWidth += currentWidth;
-    });
+  const drawImages = (images: HTMLImageElement[], width = 0, height = 0, resetCam = true, imageOpacity = 1) => {
+    drawQuadsToLayer(quadFeatureLayer, quadFeatures, images, width, height, imageOpacity);
     const margin = 0.3;
     if (resetCam) {
       resetMapDimensions(width, height, margin, resetCam);
@@ -163,6 +211,23 @@ const useGeoJS = () => {
       });
     }
   };
+
+  const drawMaskImages = (images: HTMLImageElement[], width = 0, height = 0, opacity = 0.6) => {
+    if (!geoViewer.value || images.length === 0 || opacity <= 0) {
+      clearMaskQuadFeatures(true);
+      return;
+    }
+    if (!maskQuadFeatureLayer) {
+      maskQuadFeatureLayer = geoViewer.value.createLayer("feature", {
+        features: ["quad"],
+        autoshareRenderer: false,
+        renderer: "canvas",
+      });
+      maskQuadFeatureLayer.node().css("filter", "url(#svg-filters)");
+    }
+    drawQuadsToLayer(maskQuadFeatureLayer, maskQuadFeatures, images, width, height, opacity);
+  };
+
   const resetZoom = () => {
     const { width: mapWidth } = geoViewer.value.camera().viewport;
 
@@ -222,7 +287,10 @@ const useGeoJS = () => {
     getGeoViewer,
     initializeViewer,
     drawImages,
+    drawMaskImages,
     resetMapDimensions,
+    clearQuadFeatures,
+    clearMaskQuadFeatures,
     resetZoom,
     destroyGeoViewer,
   };
@@ -509,7 +577,7 @@ function geojsonToSpectro(
   spectroInfo: SpectroInfo,
   scaledWidth = 0,
   scaledHeight = 0,
-): { warning?: string; start_time: number; end_time: number; low_freq: number; high_freq: number } {
+): { warning?: string; start_time: number; end_time: number; low_freq: number; high_freq: number; error?: string } {
   const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
 

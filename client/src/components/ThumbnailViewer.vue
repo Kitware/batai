@@ -14,6 +14,7 @@ export default defineComponent({
   components: { LayerManager },
   props: {
     images: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
+    maskImages: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
     spectroInfo: { type: Object as PropType<SpectroInfo | undefined>, default: () => undefined },
     annotations: { type: Array as PropType<SpectrogramAnnotation[]>, default: () => [] },
     otherUserAnnotations: { type: Object as PropType<OtherUserAnnotations>, default: () => ({}) },
@@ -34,6 +35,8 @@ export default defineComponent({
       scaledWidth,
       scaledHeight,
       backgroundColor,
+      viewMaskOverlay,
+      maskOverlayOpacity,
     } = useState();
 
     function updateViewerAndImages() {
@@ -51,6 +54,11 @@ export default defineComponent({
 
       if (props.images.length) {
         geoJS.drawImages(props.images, finalWidth, finalHeight);
+      }
+      if (viewMaskOverlay.value && props.maskImages.length) {
+        geoJS.drawMaskImages(props.maskImages, finalWidth, finalHeight, maskOverlayOpacity.value);
+      } else {
+        geoJS.clearMaskQuadFeatures(true);
       }
       initialized.value = true;
       nextTick(() => createPolyLayer());
@@ -134,6 +142,22 @@ export default defineComponent({
       if (props.images.length) {
         geoJS.drawImages(props.images, finalWidth, finalHeight);
       }
+      if (viewMaskOverlay.value && props.maskImages.length) {
+        geoJS.drawMaskImages(props.maskImages, finalWidth, finalHeight, maskOverlayOpacity.value);
+      } else {
+        geoJS.clearMaskQuadFeatures(true);
+      }
+    });
+
+    watch([viewMaskOverlay, maskOverlayOpacity, () => props.maskImages], () => {
+      const { width, height } = getImageDimensions(props.images);
+      const finalWidth = scaledWidth.value || width;
+      const finalHeight = scaledHeight.value || height;
+      if (viewMaskOverlay.value && props.maskImages.length) {
+        geoJS.drawMaskImages(props.maskImages, finalWidth, finalHeight, maskOverlayOpacity.value);
+      } else {
+        geoJS.clearMaskQuadFeatures(true);
+      }
     });
 
     return {
@@ -162,6 +186,7 @@ export default defineComponent({
       :spectro-info="spectroInfo"
       :scaled-width="scaledWidth"
       :scaled-height="scaledHeight"
+      :recording-id="recordingId"
       thumbnail
       @selected="$emit('selected',$event)"
     />

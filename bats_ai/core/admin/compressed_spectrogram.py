@@ -15,6 +15,7 @@ class CompressedSpectrogramAdmin(admin.ModelAdmin):
         'starts',
         'stops',
         'image_url_list_display',
+        'mask_url_list_display',
     ]
     list_display_links = ['pk', 'recording', 'spectrogram']
     list_select_related = True
@@ -28,6 +29,7 @@ class CompressedSpectrogramAdmin(admin.ModelAdmin):
         'starts',
         'stops',
         'image_url_list_display',
+        'mask_url_list_display',
     ]
 
     @admin.display(description='Image URLs')
@@ -36,6 +38,16 @@ class CompressedSpectrogramAdmin(admin.ModelAdmin):
         urls = obj.image_url_list
         if not urls:
             return '(No images)'
+        return format_html_join(
+            '\n', '<div><a href="{}" target="_blank">{}</a></div>', ((url, url) for url in urls)
+        )
+
+    @admin.display(description='Mask URLs')
+    def mask_url_list_display(self, obj):
+        """Render each mask URL as a clickable link in admin detail view."""
+        urls = obj.mask_url_list
+        if not urls:
+            return '(No masks)'
         return format_html_join(
             '\n', '<div><a href="{}" target="_blank">{}</a></div>', ((url, url) for url in urls)
         )

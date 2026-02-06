@@ -4,12 +4,14 @@ import shutil
 import tempfile
 
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Polygon
 from django.core.files import File
 
 from bats_ai.celery import app
 from bats_ai.core.models import (
     CompressedSpectrogram,
     Configuration,
+    PulseMetadata,
     Recording,
     RecordingAnnotation,
     Species,
@@ -87,6 +89,38 @@ def recording_compute_spectrogram(recording_id: int):
                         'type': 'compressed',
                     },
                 )
+
+        # Save mask images (from batbot metadata mask_path)
+        for idx, mask_path in enumerate(compressed.get('masks', [])):
+            with open(mask_path, 'rb') as f:
+                SpectrogramImage.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(compressed_obj),
+                    object_id=compressed_obj.id,
+                    index=idx,
+                    type='masks',
+                    defaults={
+                        'image_file': File(f, name=os.path.basename(mask_path)),
+                    },
+                )
+
+        # Create SpectrogramContour objects for each segment
+        for segment in results['segments']['segments']:
+            PulseMetadata.objects.update_or_create(
+                recording=compressed_obj.recording,
+                index=segment['segment_index'],
+                defaults={
+                    'contours': segment.get('contours', []),
+                    'bounding_box': Polygon(
+                        (
+                            (segment['start_ms'], segment['freq_max']),
+                            (segment['stop_ms'], segment['freq_max']),
+                            (segment['stop_ms'], segment['freq_min']),
+                            (segment['start_ms'], segment['freq_min']),
+                            (segment['start_ms'], segment['freq_max']),
+                        )
+                    ),
+                },
+            )
 
         config = Configuration.objects.first()
         # TODO: Disabled until prediction is in batbot

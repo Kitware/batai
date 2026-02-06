@@ -14,7 +14,6 @@ class VettingDetailsSchema(Schema):
 
     @classmethod
     def from_orm(cls, obj):
-        print(obj)
         return cls(id=obj.id, reference_materials=obj.reference_materials, user_id=obj.user_id)
 
 

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.13' and sys_platform == 'darwin'",
@@ -173,7 +173,7 @@ wheels = [
 [[package]]
 name = "batbot"
 version = "0.1.0"
-source = { git = "https://github.com/Kitware/batbot#570a97db3a1eab6890667b26e77575cc9d40454d" }
+source = { git = "https://github.com/Kitware/batbot#669f21cd0de908fe9264e8f4ea82314c6abc7821" }
 dependencies = [
     { name = "click" },
     { name = "cryptography" },
@@ -227,6 +227,8 @@ dependencies = [
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
     { name = "rich" },
+    { name = "scikit-image", version = "0.25.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scikit-image", version = "0.26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sentry-sdk", extra = ["celery", "django", "pure-eval"] },
     { name = "tqdm" },
     { name = "whitenoise", extra = ["brotli"] },
@@ -312,6 +314,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"] },
     { name = "pydantic" },
     { name = "rich" },
+    { name = "scikit-image", specifier = ">=0.25.2" },
     { name = "sentry-sdk", extras = ["celery", "django", "pure-eval"] },
     { name = "tqdm" },
     { name = "watchdog", marker = "extra == 'development'" },
