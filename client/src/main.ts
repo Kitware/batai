@@ -16,6 +16,12 @@ const SENTRY_DSN = import.meta.env.VITE_APP_SENTRY_DSN as string | undefined;
 const app = createApp(App);
 const Vuetify = createVuetify({});
 
+Sentry.init({
+  app,
+  dsn: SENTRY_DSN,
+  sendDefaultPii: true,
+});
+
 maybeRestoreLogin().then(() => {
   /*
   The router must not be initialized until after the oauth flow is complete, because it
@@ -24,12 +30,7 @@ maybeRestoreLogin().then(() => {
   */
   const router = initRouter();
 
-  Sentry.init({
-    app,
-    dsn: SENTRY_DSN,
-    sendDefaultPii: true,
-    integrations: [Sentry.browserTracingIntegration({ router })],
-  });
+  Sentry.addIntegration(Sentry.browserTracingIntegration({ router }));
 
   app.use(router);
   app.use(Vuetify);
