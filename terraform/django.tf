@@ -21,7 +21,11 @@ module "django" {
     # Can't make this use "aws_route53_record.www.fqdn" because of a circular dependency
     "https://www.${data.aws_route53_zone.this.name}",
   ]
+  django_cors_allowed_origin_regexes = [
+    # Can't base this on "cloudflare_pages_project.www.subdomain" because of a circular dependency
+    "https://[\\w-]+\\.bats-ai\\.pages\\.dev",
+  ]
   additional_django_vars = {
-    DJANGO_SENTRY_DSN = "https://6949e99cb9fcea56cfbb36954d4de266@o267860.ingest.us.sentry.io/4509271243423744"
+    DJANGO_SENTRY_DSN = "https://5bfdd2a77e7e8cbcea9ea873dbf9cbd6@o267860.ingest.us.sentry.io/4510800443015168"
   }
 }
