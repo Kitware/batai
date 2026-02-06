@@ -32,7 +32,6 @@ const routerBase = subpath ? `/${subpath}/` : '/';
 
 function routerInit(){
   const router  = createRouter({
-    base: routerBase,
     history: createWebHistory(routerBase),
     routes: [
       {
