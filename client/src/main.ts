@@ -10,6 +10,9 @@ import initRouter from './router';
 import { axiosInstance } from './api/api';
 import { installPrompt } from './use/prompt-service';
 
+// This is only defined in the release build environment
+const SENTRY_DSN = import.meta.env.VITE_APP_SENTRY_DSN as string | undefined;
+
 const app = createApp(App);
 const Vuetify = createVuetify({});
 
@@ -21,13 +24,12 @@ maybeRestoreLogin().then(() => {
   */
   const router = initRouter();
 
-  if (import.meta.env.VITE_APP_SENTRY_DSN && window.location.hostname !== 'localhost') {
-    Sentry.init({
-      app,
-      dsn: import.meta.env.VITE_APP_SENTRY_DSN as string,
-      release: __COMMIT_HASH__,
-    });
-  }
+  Sentry.init({
+    app,
+    dsn: SENTRY_DSN,
+    sendDefaultPii: true,
+    integrations: [Sentry.browserTracingIntegration({ router })],
+  });
 
   app.use(router);
   app.use(Vuetify);
