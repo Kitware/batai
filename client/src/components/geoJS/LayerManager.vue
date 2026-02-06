@@ -24,6 +24,7 @@ import ContourLayer from "./layers/contourLayer";
 import PulseMetadataLayer from "./layers/pulseMetadataLayer";
 import { cloneDeep } from "lodash";
 import useState from "@use/useState";
+import usePulseMetadata from "@use/usePulseMetadata";
 
 export default defineComponent({
   name: "LayerManager",
@@ -84,6 +85,8 @@ export default defineComponent({
       loadContours,
       computedPulseContours,
       transparencyThreshold,
+    } = useState();
+    const {
       viewPulseMetadataLayer,
       pulseMetadataList,
       loadPulseMetadata,
@@ -96,7 +99,7 @@ export default defineComponent({
       pulseMetadataPointSize,
       pulseMetadataShowLabels,
       pulseMetadataDurationFreqLineColor,
-    } = useState();
+    } = usePulseMetadata();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
     const localAnnotations: Ref<SpectrogramAnnotation[]> = ref(cloneDeep(annotations.value));

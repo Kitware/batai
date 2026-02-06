@@ -32,6 +32,7 @@ import ReferenceMaterialsDialog from "@/components/ReferenceMaterialsDialog.vue"
 import SpectrogramImageContentMenu from "@/components/SpectrogramImageContentMenu.vue";
 import PulseMetadataButton from "@/components/PulseMetadataButton.vue";
 import useState from "@use/useState";
+import usePulseMetadata from "@use/usePulseMetadata";
 export default defineComponent({
   name: "Spectrogram",
   components: {
@@ -83,13 +84,15 @@ export default defineComponent({
       contoursLoading,
       contoursEnabled,
       clearContours,
-      clearPulseMetadata,
-      viewPulseMetadataLayer,
       nextUnsubmittedRecordingId,
       previousUnsubmittedRecordingId,
       currentRecordingId,
       viewMaskOverlay,
     } = useState();
+    const {
+      clearPulseMetadata,
+      viewPulseMetadataLayer,
+    } = usePulseMetadata();
     const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const maskImages: Ref<HTMLImageElement[]> = ref([]);
