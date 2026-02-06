@@ -482,7 +482,6 @@ export default defineComponent({
       if (axesLayer) {
         zIndex = axesLayer.lineLayer.zIndex() - 1;
       }
-      console.log(`Setting contour layer zIndex to ${zIndex}`);
       contourLayer.contourLayer.zIndex(zIndex);
       contourLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       contourLayer.setContourOpacity(contourOpacity.value);
