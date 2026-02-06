@@ -99,9 +99,6 @@ const maskOverlayOpacity = ref(0.50);
 const setContoursEnabled = (value: boolean) => {
   contoursEnabled.value = value;
 };
-const toggleContoursEnabled = () => {
-  contoursEnabled.value = !contoursEnabled.value;
-};
 async function loadContours(recordingId: number) {
   contoursLoading.value = true;
   computedPulseAnnotations.value = await getComputedPulseAnnotations(recordingId);
@@ -379,7 +376,6 @@ export default function useState() {
     contourOpacity,
     contoursLoading,
     setContoursEnabled,
-    toggleContoursEnabled,
     loadContours,
     clearContours,
     computedPulseAnnotations,
