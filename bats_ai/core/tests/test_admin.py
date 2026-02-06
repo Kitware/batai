@@ -1,18 +1,24 @@
+from ninja.testing import TestClient
 import pytest
 
+from bats_ai.core.tests.factories import SuperuserFactory, UserFactory
 
-@pytest.mark.parametrize(
-    'client_fixture,status_code,is_admin',
-    [
-        ('client', 401, None),
-        ('authenticated_client', 200, False),
-        ('authorized_client', 200, True),
-    ],
-)
+
 @pytest.mark.django_db
-def test_is_admin(client_fixture, status_code, is_admin, request):
-    api_client = request.getfixturevalue(client_fixture)
-    resp = api_client.get('/api/v1/configuration/is_admin/')
-    assert resp.status_code == status_code
-    if is_admin is not None:
-        assert resp.json()['is_admin'] == is_admin
+def test_check_is_admin_authenticated(api_client: TestClient):
+    user = UserFactory.create()
+
+    resp = api_client.get('configuration/is_admin/', user=user)
+
+    assert resp.status_code == 200
+    assert resp.data['is_admin'] is False
+
+
+@pytest.mark.django_db
+def test_check_is_admin_superuser(api_client: TestClient):
+    user = SuperuserFactory.create()
+
+    resp = api_client.get('configuration/is_admin/', user=user)
+
+    assert resp.status_code == 200
+    assert resp.data['is_admin'] is True

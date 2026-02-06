@@ -14,22 +14,9 @@ class UserFactory(factory.django.DjangoModelFactory[User]):
     last_name = factory.Faker('last_name')
 
 
-class SuperuserFactory(factory.django.DjangoModelFactory[User]):
-    class Meta:
-        model = User
-        django_get_or_create = ('email',)
-
-    username = factory.SelfAttribute('email')
-    email = factory.Faker('safe_email')
-    first_name = factory.Faker('first_name')
-    last_name = factory.Faker('last_name')
+class SuperuserFactory(UserFactory):
     is_superuser = True
     is_staff = True
-
-    @classmethod
-    def _create(cls, model_class, *args, **kwargs):
-        manager = cls._get_manager(model_class)
-        return manager.create_superuser(*args, **kwargs)
 
 
 class VettingDetailsFactory(factory.django.DjangoModelFactory[VettingDetails]):
