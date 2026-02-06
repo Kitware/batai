@@ -23,7 +23,7 @@ class ProcessingTask(TimeStampedModel):
         max_length=255,  # If we need future states
         blank=True,
         help_text='Processing Status',
-        choices=Status.choices,
+        choices=Status,
     )
     celery_id = models.CharField(
         max_length=255,  # If we need future states

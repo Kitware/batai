@@ -152,7 +152,8 @@ export default defineComponent({
         : await getSpectrogram(props.id);
       spectrogramData.value = response.data;
       if (spectrogramData.value.urls.length) {
-        const urls = spectrogramData.value.urls;        images.value = [];
+        const urls = spectrogramData.value.urls;
+        images.value = [];
         allImagesLoaded.value = [];
         loadedImage.value = false;
         urls.forEach((url) => {

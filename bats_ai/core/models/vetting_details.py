@@ -13,8 +13,7 @@ class VettingDetails(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                # TODO change to 'condition' in Django v6
-                check=Q(reference_materials__length__lte=2000),
+                condition=Q(reference_materials__length__lte=2000),
                 name='reference_materials_max_2000',
             )
         ]

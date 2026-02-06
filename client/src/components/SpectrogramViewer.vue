@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted, onUnmounted, PropType, ref, Ref, watch } from "vue";
+import { computed, defineComponent, onMounted, onUnmounted, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
 import {
   patchAnnotation,
@@ -120,7 +120,7 @@ export default defineComponent({
       emit("hoverData", { time, freq });
     };
 
-    const effectiveImageOpacity = () => (contoursEnabled.value ? imageOpacity.value : 1);
+    const effectiveImageOpacity = computed(() => (contoursEnabled.value ? imageOpacity.value : 1));
 
     function initializeViewerAndImages() {
       updateScaledDimensions();
@@ -129,7 +129,7 @@ export default defineComponent({
         geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
       }
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity());
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity.value);
       }
       if (viewMaskOverlay.value && props.maskImages.length) {
         geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
@@ -141,7 +141,7 @@ export default defineComponent({
         scaledVals.value = { x: configuration.value.spectrogram_x_stretch, y: 1 };
         updateScaledDimensions();
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
         }
         if (viewMaskOverlay.value && props.maskImages.length) {
           geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
@@ -168,7 +168,7 @@ export default defineComponent({
         right: scaledWidth.value,
       });
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity());
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity.value);
       }
       if (viewMaskOverlay.value && props.maskImages.length) {
         geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
@@ -229,7 +229,7 @@ export default defineComponent({
         if (scaledVals.value.x < 1) scaledVals.value.x = 1;
         updateScaledDimensions();
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
         }
         if (viewMaskOverlay.value && props.maskImages.length) {
           geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
@@ -239,7 +239,7 @@ export default defineComponent({
         if (scaledVals.value.y < 1) scaledVals.value.y = 1;
         updateScaledDimensions();
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
+          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
         }
         if (viewMaskOverlay.value && props.maskImages.length) {
           geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
@@ -251,7 +251,7 @@ export default defineComponent({
 
     watch([contoursEnabled, imageOpacity], () => {
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity());
+        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
       }
     });
 
