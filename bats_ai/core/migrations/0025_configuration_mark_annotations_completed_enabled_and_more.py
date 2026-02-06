@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name='vettingdetails',
             constraint=models.CheckConstraint(
-                check=models.Q(('reference_materials__length__lte', 2000)),
+                condition=models.Q(('reference_materials__length__lte', 2000)),
                 name='reference_materials_max_2000',
             ),
         ),

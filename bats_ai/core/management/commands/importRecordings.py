@@ -29,11 +29,13 @@ class Command(BaseCommand):
             help='Username of the owner for the recordings (defaults to first superuser)',
         )
         parser.add_argument(
+            '-p',
             '--public',
             action='store_true',
             help='Make imported recordings public',
         )
         parser.add_argument(
+            '-l',
             '--limit',
             type=int,
             help='Limit the number of WAV files to import (useful for testing)',

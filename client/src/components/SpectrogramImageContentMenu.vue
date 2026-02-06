@@ -43,10 +43,7 @@ function onImageVisibilityChange(visible: boolean | null) {
   } else {
     lastImageOpacity.value = imageOpacity.value;
     imageOpacity.value = 0;
-    uncheckingImage.value = true;
-    nextTick(() => {
-      uncheckingImage.value = false;
-    });
+    uncheckingImage.value = false;
   }
 }
 
@@ -57,9 +54,6 @@ function onContourVisibilityChange(visible: boolean | null) {
     lastContourOpacity.value = contourOpacity.value;
     contourOpacity.value = 0;
     uncheckingContour.value = true;
-    nextTick(() => {
-      uncheckingContour.value = false;
-    });
   }
 }
 

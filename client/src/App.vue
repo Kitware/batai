@@ -12,6 +12,7 @@ export default defineComponent({
     const oauthClient = inject<OAuthClient>("oauthClient");
     const router = useRouter();
     const route = useRoute();
+    const activeTab = ref(route.path.includes("spectrogram") ? "spectrogram" : "recordings");
     const {
       nextShared,
       sharedList,
@@ -60,7 +61,6 @@ export default defineComponent({
         activeTab.value = "spectrogram";
       }
     });
-    const activeTab = ref(route.path.includes("spectrogram") ? "spectrogram" : "recordings");
     const containsSpectro = computed(() => route.path.includes("spectrogram"));
     watch(containsSpectro, () => {
       if (route.path.includes("spectrogram")) {
@@ -91,7 +91,6 @@ export default defineComponent({
       <v-tabs
         v-if="oauthClient.isLoggedIn && activeTab && !isNaBat"
         v-model="activeTab"
-        fixed-tabs
       >
         <v-tab
           to="/"

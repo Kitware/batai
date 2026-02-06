@@ -18,5 +18,5 @@ class RecordingAnnotationStatus(TimeStampedModel, models.Model):
         max_length=255,  # If we need future states
         blank=True,
         help_text='Recording Annotation Status',
-        choices=Status.choices,
+        choices=Status,
     )

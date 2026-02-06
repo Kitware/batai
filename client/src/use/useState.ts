@@ -89,7 +89,7 @@ const toggleFixedAxes = () => {
 };
 
 const computedPulseContours: Ref<ComputedPulseContour[]> = ref([]);
-// Show contours is always false; not persisted or loaded from localStorage.
+// Initial contour state is off; not persisted or loaded from localStorage.
 const contoursEnabled = ref(false);
 const imageOpacity = ref(1.0);
 const contourOpacity = ref(1.0);
@@ -98,9 +98,6 @@ const viewMaskOverlay = ref(false);
 const maskOverlayOpacity = ref(0.50);
 const setContoursEnabled = (value: boolean) => {
   contoursEnabled.value = value;
-};
-const toggleContoursEnabled = () => {
-  contoursEnabled.value = !contoursEnabled.value;
 };
 async function loadContours(recordingId: number) {
   contoursLoading.value = true;
@@ -257,7 +254,6 @@ export default function useState() {
     contourOpacity,
     contoursLoading,
     setContoursEnabled,
-    toggleContoursEnabled,
     loadContours,
     clearContours,
     computedPulseContours,
