@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'darwin'",
@@ -227,13 +227,11 @@ dependencies = [
     { name = "django-cors-headers" },
     { name = "django-environ" },
     { name = "django-extensions" },
-    { name = "django-filter" },
-    { name = "django-minio-storage" },
     { name = "django-ninja" },
     { name = "django-oauth-toolkit" },
     { name = "django-resonant-settings", extra = ["allauth", "celery"] },
-    { name = "django-resonant-utils" },
-    { name = "django-s3-file-field", extra = ["minio", "s3"] },
+    { name = "django-resonant-utils", extra = ["allauth", "s3-storage"] },
+    { name = "django-s3-file-field", extra = ["s3"] },
     { name = "django-storages", extra = ["s3"] },
     { name = "django-stubs-ext" },
     { name = "gdal" },
@@ -258,6 +256,9 @@ development = [
     { name = "django-browser-reload" },
     { name = "django-click" },
     { name = "django-debug-toolbar" },
+    { name = "django-minio-storage" },
+    { name = "django-resonant-utils", extra = ["minio-storage"] },
+    { name = "django-s3-file-field", extra = ["minio"] },
     { name = "faker" },
     { name = "ipython", version = "8.38.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "ipython", version = "9.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -312,13 +313,14 @@ requires-dist = [
     { name = "django-debug-toolbar", marker = "extra == 'development'" },
     { name = "django-environ" },
     { name = "django-extensions" },
-    { name = "django-filter" },
-    { name = "django-minio-storage" },
+    { name = "django-minio-storage", marker = "extra == 'development'" },
     { name = "django-ninja" },
     { name = "django-oauth-toolkit" },
     { name = "django-resonant-settings", extras = ["allauth", "celery"] },
-    { name = "django-resonant-utils" },
-    { name = "django-s3-file-field", extras = ["s3", "minio"] },
+    { name = "django-resonant-utils", extras = ["allauth", "s3-storage"] },
+    { name = "django-resonant-utils", extras = ["minio-storage"], marker = "extra == 'development'" },
+    { name = "django-s3-file-field", extras = ["minio"], marker = "extra == 'development'" },
+    { name = "django-s3-file-field", extras = ["s3"] },
     { name = "django-storages", extras = ["s3"] },
     { name = "django-stubs-ext" },
     { name = "faker", marker = "extra == 'development'" },
@@ -1168,18 +1170,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-filter"
-version = "25.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b5/40/c702a6fe8cccac9bf426b55724ebdf57d10a132bae80a17691d0cf0b9bac/django_filter-25.1.tar.gz", hash = "sha256:1ec9eef48fa8da1c0ac9b411744b16c3f4c31176c867886e4c48da369c407153", size = 143021, upload-time = "2025-02-14T16:30:53.238Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/a6/70dcd68537c434ba7cb9277d403c5c829caf04f35baf5eb9458be251e382/django_filter-25.1-py3-none-any.whl", hash = "sha256:4fa48677cf5857b9b1347fed23e355ea792464e0fe07244d1fdfb8a806215b80", size = 94114, upload-time = "2025-02-14T16:30:50.435Z" },
-]
-
-[[package]]
 name = "django-minio-storage"
 version = "0.5.8"
 source = { registry = "https://pypi.org/simple" }
@@ -1251,6 +1241,17 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9c/44/957ba59dd6d36a63d49dc12c98ac817fd7bc840e858d7b0d48cc997f3b7a/django_resonant_utils-0.16.0.tar.gz", hash = "sha256:0eb954b262732ba5e4b5fea95ee8b5035f8b7d21191a4d05b40c5b51ca060713", size = 12502, upload-time = "2025-07-10T19:31:35.482Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b9/49/394af41df5f9c73cd3703374364be8ce8581c0b0390761498958410dc648/django_resonant_utils-0.16.0-py3-none-any.whl", hash = "sha256:3f7b8b7e284269cac704122ef823be415eaf777d601d51a46369250294c276c4", size = 14201, upload-time = "2025-07-10T19:31:34.29Z" },
+]
+
+[package.optional-dependencies]
+allauth = [
+    { name = "django-allauth" },
+]
+minio-storage = [
+    { name = "django-minio-storage" },
+]
+s3-storage = [
+    { name = "django-storages", extra = ["s3"] },
 ]
 
 [[package]]
