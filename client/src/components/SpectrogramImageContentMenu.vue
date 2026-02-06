@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue';
+import { ref, watch } from 'vue';
 import useState from '@use/useState';
 
 defineProps<{

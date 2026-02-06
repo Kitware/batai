@@ -30,7 +30,9 @@ import TransparencyFilterControl from "@/components/TransparencyFilterControl.vu
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import ReferenceMaterialsDialog from "@/components/ReferenceMaterialsDialog.vue";
 import SpectrogramImageContentMenu from "@/components/SpectrogramImageContentMenu.vue";
+import PulseMetadataButton from "@/components/PulseMetadataButton.vue";
 import useState from "@use/useState";
+import usePulseMetadata from "@use/usePulseMetadata";
 export default defineComponent({
   name: "Spectrogram",
   components: {
@@ -44,6 +46,7 @@ export default defineComponent({
     ReferenceMaterialsDialog,
     SpectrogramImageContentMenu,
     TransparencyFilterControl,
+    PulseMetadataButton,
   },
   props: {
     id: {
@@ -86,6 +89,10 @@ export default defineComponent({
       currentRecordingId,
       viewMaskOverlay,
     } = useState();
+    const {
+      clearPulseMetadata,
+      viewPulseMetadataLayer,
+    } = usePulseMetadata();
     const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const maskImages: Ref<HTMLImageElement[]> = ref([]);
@@ -135,7 +142,10 @@ export default defineComponent({
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
     const loadData = async () => {
       viewMaskOverlay.value = false;
+      const tempViewPulseMetadataLayer = viewPulseMetadataLayer.value;
+      viewPulseMetadataLayer.value = false;
       contoursEnabled.value = false;
+      clearPulseMetadata();
       loading.value = true;
       currentRecordingId.value = parseInt(props.id);
       loadedImage.value = false;
@@ -163,6 +173,10 @@ export default defineComponent({
             }
           };
         });
+        if (tempViewPulseMetadataLayer) {
+          viewPulseMetadataLayer.value = true;
+        }
+
       } else {
         console.error("No URL found for the spectrogram");
       }
@@ -534,7 +548,7 @@ export default defineComponent({
                 <v-btn
                   v-bind="subProps"
                   size="35"
-                  class="mr-5 mt-5"
+                  class="mr-3 mt-5"
                   :color="layerVisibility.includes('freq') ? 'blue' : ''"
                   @click="toggleLayerVisibility('freq')"
                 >
@@ -548,7 +562,7 @@ export default defineComponent({
                 <v-icon
                   v-bind="subProps"
                   size="25"
-                  class="mr-5 mt-5"
+                  class="mr-3 mt-5"
                   :color="gridEnabled ? 'blue' : ''"
                   @click="gridEnabled = !gridEnabled"
                 >
@@ -562,7 +576,7 @@ export default defineComponent({
                 <v-icon
                   v-bind="subProps"
                   size="30"
-                  class="mr-5 mt-5"
+                  class="mr-3 mt-5"
                   :color="compressed ? 'blue' : ''"
                   @click="compressed = !compressed"
                 >
@@ -579,7 +593,7 @@ export default defineComponent({
                 <v-icon
                   v-bind="subProps"
                   size="35"
-                  class="mr-5 mt-5"
+                  class="mr-3 mt-5"
                   :color="viewCompressedOverlay ? 'blue' : ''"
                   @click="toggleCompressedOverlay()"
                 >
@@ -588,16 +602,22 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
-            <div class="mt-4">
+            <div class="mr-1 mt-5">
+              <pulse-metadata-button
+                :recording-id="id"
+                :compressed="compressed"
+              />
+            </div>
+            <div class="mr-1 mt-5">
               <color-scheme-dialog />
             </div>
-            <div class="mt-4 mx-2">
+            <div class="mr-1 mt-5">
               <spectrogram-image-content-menu
                 :compressed="compressed"
                 :has-mask-urls="maskImages.length > 0"
               />
             </div>
-            <div class="mt-4 mr-3">
+            <div class="mr-1 mt-5">
               <transparency-filter-control />
             </div>
           </v-row>
