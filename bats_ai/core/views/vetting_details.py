@@ -8,7 +8,7 @@ router = RouterPaginated()
 
 
 class VettingDetailsSchema(Schema):
-    id: int
+    id: int | None  # Allow null for cases where no details exist
     user_id: int
     reference_materials: str
 
@@ -25,8 +25,8 @@ class UpdateVettingDetailsSchema(Schema):
 def get_vetting_details_for_user(request: HttpRequest, user_id: int):
     details = VettingDetails.objects.filter(user_id=user_id).first()
 
-    if not details:
-        raise Http404()
+    if not details:  # Ensure we return a consistent schema even if no details exist
+        return {'id': None, 'user_id': user_id, 'reference_materials': ''}
 
     if details.user != request.user and not request.user.is_staff:
         # Don't leak user IDs, prefer to return a 404 over a 403
