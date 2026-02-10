@@ -190,8 +190,8 @@ wheels = [
 
 [[package]]
 name = "batbot"
-version = "0.1.0"
-source = { git = "https://github.com/Kitware/batbot#669f21cd0de908fe9264e8f4ea82314c6abc7821" }
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "cryptography" },
@@ -210,6 +210,10 @@ dependencies = [
     { name = "shapely" },
     { name = "sphinx-click" },
     { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bc/41/f1702fa58ab8207e6b3f6059ee5e42e868c5b861059db1abafdc7786f390/batbot-0.1.2.tar.gz", hash = "sha256:92476da8ff3e55abc03c06ee9c2f72100b6efdbbf45e60c62612a71aa2b8c0c7", size = 3903360, upload-time = "2026-02-10T19:49:23.531Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/a0/216db39b5c6cfb4a00bb244419951830454b723c1d097038526f7dd5f840/batbot-0.1.2-py3-none-any.whl", hash = "sha256:56bc086784deb60af3f9649d0798ee7abb776116a5f24cb8bad1e643c9aa9c85", size = 35792, upload-time = "2026-02-10T19:49:22.017Z" },
 ]
 
 [[package]]
@@ -301,7 +305,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batbot", git = "https://github.com/Kitware/batbot" },
+    { name = "batbot" },
     { name = "celery" },
     { name = "django", extras = ["argon2"] },
     { name = "django-allauth" },
@@ -2910,11 +2914,22 @@ wheels = [
 
 [[package]]
 name = "pyastar2d"
-version = "1.1.0"
-source = { git = "https://github.com/bluemellophone/batbot-pyastar2d?rev=master#192535b43a50fc4e0f80d4d731fa799f3559354b" }
+version = "1.1.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "imageio" },
     { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9f/03/8333b690c13f245a10d9b6883b816c3fbb0721453b96a60c90b0648503da/pyastar2d-1.1.1.tar.gz", hash = "sha256:73b6375284851f53112aeb8c5c2abc81576d594928705ca76274360e67b0e6c0", size = 13446, upload-time = "2026-02-05T13:11:39.781Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3f/c5/4e7ea66138a72388805d238cd764ad8b4fbf67d8082edb645921b21686eb/pyastar2d-1.1.1-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:4f7a8b9924d042717acf6efc94251adf40410ca2a46913b01b9d8f396334e196", size = 12098, upload-time = "2026-02-05T13:11:29.095Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/f6/e4c48044964d643b5842de36142aec3f5743ec358a4fcffb7e2f1e3bf8e2/pyastar2d-1.1.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:bfb83a12bc6e9e809e837435448a9b8d649b80118eac094186e07dafdd18c194", size = 12567, upload-time = "2026-02-05T13:11:30.883Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/3d/2b5cb62b8c56a022bd3445ee0cc432a7026856c4ab1e5cac32e45cadcf62/pyastar2d-1.1.1-cp39-abi3-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:cceaa19f7d5e4c68124ac5881950035fac183a6229ca1ae4251f1b5445b145d0", size = 56611, upload-time = "2026-02-05T13:11:32.166Z" },
+    { url = "https://files.pythonhosted.org/packages/38/7b/c695c4d6c584012d534c0acb300b3f5c99685f8ad5a729f71cb86358762b/pyastar2d-1.1.1-cp39-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:460e3e308ee45010b2d810fdc92c1f45a50845a28cdb7a3546205b345aa3bd29", size = 56557, upload-time = "2026-02-05T13:11:33.093Z" },
+    { url = "https://files.pythonhosted.org/packages/57/e5/27aa951b3beed307481ea45ec3f4e63d9d633624f72ec57feab1c4435269/pyastar2d-1.1.1-cp39-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:5dd105ae437fa22245e19723e1ff8885ade43552adfc1f86bdd577194d352037", size = 1031746, upload-time = "2026-02-05T13:11:34.284Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/56/312569fa941ec295e4cc2db56e182967349289a5e822eff2c39895eea22f/pyastar2d-1.1.1-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:e58e1379992a06e67eaf951231c1c6a925e729db3534d0def3e46a12384b5255", size = 1084083, upload-time = "2026-02-05T13:11:36.481Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/c3/970bb1248a9d72e6a6e4dacd0528d0d1ce64cc4b2a42c21d9f9c91f9f2d0/pyastar2d-1.1.1-cp39-abi3-win32.whl", hash = "sha256:c4957107bdb13a4018a66755614d12526a12201d563465aeb8d34ca49ca1d4bc", size = 14751, upload-time = "2026-02-05T13:11:37.804Z" },
+    { url = "https://files.pythonhosted.org/packages/2f/e2/59181215e05a8414d4d269042bc0da61fd7e0c0dca2a22724dc79af7098e/pyastar2d-1.1.1-cp39-abi3-win_amd64.whl", hash = "sha256:f30b3ba6db094c4f4a9c8572c97b65884f6217971e4c75e48b683ee5c09bb0a2", size = 15328, upload-time = "2026-02-05T13:11:38.636Z" },
 ]
 
 [[package]]
