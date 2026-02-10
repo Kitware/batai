@@ -15,7 +15,6 @@ import {
   ComputedPulseContour,
   getVettingDetailsForUser,
 } from "../api/api";
-import usePulseMetadata from "./usePulseMetadata";
 import {
   interpolateCividis,
   interpolateViridis,
@@ -257,7 +256,6 @@ export default function useState() {
     loadContours,
     clearContours,
     computedPulseContours,
-    ...usePulseMetadata(),
     showSubmittedRecordings,
     myRecordingsDisplay,
     sharedRecordingsDisplay,

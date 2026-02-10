@@ -95,7 +95,6 @@ watch(
       pulseMetadataDurationFreqLineColor: pulseMetadataDurationFreqLineColor.value,
     });
   },
-  { deep: true },
 );
 
 export default function usePulseMetadata() {

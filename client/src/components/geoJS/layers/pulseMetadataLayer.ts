@@ -1,6 +1,7 @@
 import { SpectroInfo } from '../geoJSUtils';
 import { PulseMetadata } from '@api/api';
 import { LayerStyle, LineData, TextData } from './types';
+import BaseTextLayer from './baseTextLayer';
 
 /** Point data for char_freq, knee, heel with pixel coords and label. */
 interface PulsePointData {
@@ -31,12 +32,7 @@ const defaultPulseMetadataStyle: PulseMetadataStyle = {
   showLabels: true,
 };
 
-export default class PulseMetadataLayer {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  geoViewerRef: any;
-  spectroInfo: SpectroInfo;
-  scaledWidth: number;
-  scaledHeight: number;
+export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   pulseMetadataList: PulseMetadata[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   featureLayer: any;
@@ -46,23 +42,19 @@ export default class PulseMetadataLayer {
   lineLayer: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pointLayer: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textLayer: any;
   lineData: LineData[] = [];
   pointData: PulsePointData[] = [];
-  labelData: TextData[] = [];
   style: PulseMetadataStyle = { ...defaultPulseMetadataStyle };
 
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo,
     pulseMetadataList: PulseMetadata[],
   ) {
-    this.geoViewerRef = geoViewerRef;
-    this.spectroInfo = spectroInfo;
-    this.scaledWidth = spectroInfo.width;
-    this.scaledHeight = spectroInfo.height;
+    super(geoViewerRef, event, spectroInfo);
     this.pulseMetadataList = pulseMetadataList;
     this.featureLayer = this.geoViewerRef.createLayer('feature', {
       features: ['line', 'point'],
@@ -76,11 +68,11 @@ export default class PulseMetadataLayer {
       .createFeature('text')
       .text((d: TextData) => d.text)
       .position((d: TextData) => ({ x: d.x, y: d.y }));
+    this.setScaledDimensions(spectroInfo.width, spectroInfo.height);
   }
 
   setScaledDimensions(scaledWidth: number, scaledHeight: number) {
-    this.scaledWidth = scaledWidth;
-    this.scaledHeight = scaledHeight;
+    super.setScaledDimensions(scaledWidth, scaledHeight);
     this.formatData();
     this.redraw();
   }
@@ -129,7 +121,7 @@ export default class PulseMetadataLayer {
   formatData() {
     this.lineData = [];
     this.pointData = [];
-    this.labelData = [];
+    this.textData = [];
     if (!this.spectroInfo.compressedWidth || !this.pulseMetadataList.length) {
       return;
     }
@@ -182,7 +174,7 @@ export default class PulseMetadataLayer {
         });
 
         const durationMidX = (bottomLeft.x + bottomRight.x) / 2;
-        this.labelData.push({
+        this.textData.push({
           text: `${durationMs.toFixed(1)} ms`,
           x: durationMidX,
           y: bottomLeft.y + labelOffset,
@@ -191,7 +183,7 @@ export default class PulseMetadataLayer {
           textAlign: 'center',
         });
 
-        this.labelData.push({
+        this.textData.push({
           text: `${(maxFreq / 1000).toFixed(1)} kHz`,
           x: topLeft.x - freqLineOffsetX - labelOffset,
           y: topLeft.y,
@@ -199,7 +191,7 @@ export default class PulseMetadataLayer {
           offsetY: 0,
           textAlign: 'end',
         });
-        this.labelData.push({
+        this.textData.push({
           text: `${(minFreq / 1000).toFixed(1)} kHz`,
           x: bottomLeft.x - freqLineOffsetX - labelOffset,
           y: bottomLeft.y,
@@ -212,7 +204,7 @@ export default class PulseMetadataLayer {
         const pos = this.getCompressedPosition(pulse.knee[0], pulse.knee[1], index);
         this.pointData.push({ x: pos.x, y: pos.y, label: 'knee' });
         const kneeFreqKhz = (pulse.knee[1] / 1000).toFixed(1);
-        this.labelData.push({
+        this.textData.push({
           text: `Knee ${kneeFreqKhz} kHz`,
           x: pos.x + 8,
           y: pos.y,
@@ -222,7 +214,7 @@ export default class PulseMetadataLayer {
         const pos = this.getCompressedPosition(pulse.heel[0], pulse.heel[1], index);
         this.pointData.push({ x: pos.x, y: pos.y, label: 'heel' });
         const heelFreqKhz = (pulse.heel[1] / 1000).toFixed(1);
-        this.labelData.push({
+        this.textData.push({
           text: `Heel ${heelFreqKhz} kHz`,
           x: pos.x + 8,
           y: pos.y,
@@ -232,7 +224,7 @@ export default class PulseMetadataLayer {
         const pos = this.getCompressedPosition(pulse.char_freq[0], pulse.char_freq[1], index);
         this.pointData.push({ x: pos.x, y: pos.y, label: 'char_freq' });
         const charFreqKhz = (pulse.char_freq[1] / 1000).toFixed(1);
-        this.labelData.push({
+        this.textData.push({
           text: `Char ${charFreqKhz} kHz`,
           x: pos.x + 8,
           y: pos.y,
@@ -276,7 +268,7 @@ export default class PulseMetadataLayer {
     };
   }
 
-  createLabelStyle(): LayerStyle<TextData> {
+  createTextStyle(): LayerStyle<TextData> {
     return {
       fontSize: '12px',
       color: () => '#FFFFFF',
@@ -287,6 +279,7 @@ export default class PulseMetadataLayer {
       textAlign: (d: TextData) => d.textAlign ?? 'start',
       textBaseline: 'middle',
       offset: (d: TextData) => ({ x: d.offsetX ?? 0, y: d.offsetY ?? 0 }),
+      textScaled: this.textScaled,
     };
   }
 
@@ -303,10 +296,7 @@ export default class PulseMetadataLayer {
       .style(this.createPointStyle())
       .draw();
     if (this.style.showLabels) {
-      this.textLayer
-        .data(this.labelData)
-        .style(this.createLabelStyle())
-        .draw();
+      this.textLayer.data(this.textData).style(this.createTextStyle()).draw();
     } else {
       this.textLayer.data([]).draw();
     }
@@ -315,7 +305,7 @@ export default class PulseMetadataLayer {
   disable() {
     this.lineLayer.data([]).draw();
     this.pointLayer.data([]).draw();
-    this.textLayer.data([]).draw();
+    super.disable();
   }
 
   destroy() {

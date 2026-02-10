@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
-import useState from "@use/useState";
+import usePulseMetadata from "@use/usePulseMetadata";
 
 export default defineComponent({
   name: "PulseMetadataButton",
@@ -30,7 +30,7 @@ export default defineComponent({
       pulseMetadataPointSize,
       pulseMetadataShowLabels,
       pulseMetadataDurationFreqLineColor,
-    } = useState();
+    } = usePulseMetadata();
 
     const togglePulseMetadata = async () => {
       if (pulseMetadataList.value.length === 0 && props.recordingId != null) {
