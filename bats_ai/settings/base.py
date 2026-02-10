@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'django_extensions',
-    'django_filters',
     'oauth2_provider',
     'resonant_utils',
     's3_file_field',
