@@ -3,6 +3,7 @@
 # dependencies = [
 #     "batbot",
 #     "click",
+#     "guano",
 #     "opencv-python",
 #     "pydantic",
 #     "scipy",
@@ -23,9 +24,11 @@ already have results in the output folder.
 from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from datetime import datetime
 import json
 import logging
 from pathlib import Path
+import re
 import shutil
 import tempfile
 from typing import Any
@@ -33,6 +36,7 @@ from typing import Any
 import batbot
 import click
 import cv2
+from guano import GuanoFile
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from scipy import interpolate
@@ -42,6 +46,122 @@ from skimage.filters import threshold_multiotsu
 
 # Suppress batbot's logging so progress output stays clean
 logging.getLogger('batbot').setLevel(logging.WARNING)
+
+
+def _parse_guano_datetime(datetime_str: str | None) -> datetime | None:
+    """Parse datetime string from GUANO (same logic as bats_ai.core.utils.guano_utils)."""
+    if not datetime_str:
+        return None
+    try:
+        return datetime.strptime(datetime_str, '%Y%m%dT%H%M%S')
+    except ValueError:
+        try:
+            return datetime.fromisoformat(datetime_str)
+        except ValueError:
+            return None
+
+
+def _extract_metadata_from_filename(filename: str) -> dict[str, Any]:
+    stem = Path(filename).stem
+    match = re.match(r'^(\d+)_(.+)_(\d{8})_(\d{6})(?:_(.*))?$', stem)
+    if not match:
+        return {}
+    cell_id, label_name, date_str, timestamp_str = (
+        match.group(1),
+        match.group(2),
+        match.group(3),
+        match.group(4),
+    )
+    out: dict[str, Any] = {}
+    if cell_id:
+        try:
+            out['nabat_grid_cell_grts_id'] = str(int(cell_id))
+        except ValueError:
+            pass
+    if date_str and len(date_str) == 8 and timestamp_str and len(timestamp_str) == 6:
+        try:
+            out['nabat_activation_start_time'] = datetime(
+                int(date_str[0:4]),
+                int(date_str[4:6]),
+                int(date_str[6:8]),
+                int(timestamp_str[0:2]),
+                int(timestamp_str[2:4]),
+                int(timestamp_str[4:6]),
+            )
+        except (ValueError, IndexError):
+            pass
+    if label_name and label_name.upper() in ('SW', 'NE', 'NW', 'SE'):
+        out['quadrant'] = label_name.upper()
+    return out
+
+
+def extract_guano_metadata(
+    recording_path: Path, check_filename: bool = True
+) -> dict[str, Any] | None:
+    try:
+        gfile = GuanoFile(str(recording_path))
+    except Exception:
+        return None
+
+    nabat_fields: dict[str, Any] = {
+        'nabat_grid_cell_grts_id': gfile.get('NABat|Grid Cell GRTS ID', None),
+        'nabat_latitude': gfile.get('NABat|Latitude', None),
+        'nabat_longitude': gfile.get('NABat|Longitude', None),
+        'nabat_site_name': gfile.get('NABat|Site Name', None),
+    }
+    if nabat_fields['nabat_longitude'] is not None:
+        try:
+            lon = float(nabat_fields['nabat_longitude'])
+            nabat_fields['nabat_longitude'] = lon * -1 if lon > 0 else lon
+        except (ValueError, TypeError):
+            nabat_fields['nabat_longitude'] = None
+    if nabat_fields['nabat_latitude'] is not None:
+        try:
+            nabat_fields['nabat_latitude'] = float(nabat_fields['nabat_latitude'])
+        except (ValueError, TypeError):
+            nabat_fields['nabat_latitude'] = None
+
+    start_t = (
+        _parse_guano_datetime(gfile.get('NABat|Activation start time', None))
+        if 'NABat|Activation start time' in gfile
+        else None
+    )
+    end_t = (
+        _parse_guano_datetime(gfile.get('NABat|Activation end time', None))
+        if 'NABat|Activation end time' in gfile
+        else None
+    )
+    species_raw = gfile.get('NABat|Species List', '')
+    additional: dict[str, Any] = {
+        'nabat_activation_start_time': start_t.isoformat() if start_t else None,
+        'nabat_activation_end_time': end_t.isoformat() if end_t else None,
+        'nabat_software_type': gfile.get('NABat|Software type', None),
+        'nabat_species_list': (
+            [s.strip() for s in species_raw.split(',') if s.strip()] if species_raw else None
+        ),
+        'nabat_comments': gfile.get('NABat|Comments', None),
+        'nabat_detector_type': gfile.get('NABat|Detector type', None),
+        'nabat_unusual_occurrences': gfile.get('NABat|Unusual occurrences', '') or None,
+    }
+    metadata = {**nabat_fields, **additional}
+
+    if check_filename:
+        filename_meta = _extract_metadata_from_filename(recording_path.name)
+        if not metadata.get('nabat_grid_cell_grts_id') and filename_meta.get(
+            'nabat_grid_cell_grts_id'
+        ):
+            metadata['nabat_grid_cell_grts_id'] = filename_meta['nabat_grid_cell_grts_id']
+        if not metadata.get('nabat_activation_start_time') and filename_meta.get(
+            'nabat_activation_start_time'
+        ):
+            metadata['nabat_activation_start_time'] = filename_meta[
+                'nabat_activation_start_time'
+            ].isoformat()
+        if filename_meta.get('quadrant'):
+            metadata['quadrant'] = filename_meta['quadrant']
+
+    has_any = any(v is not None for v in metadata.values())
+    return metadata if has_any else None
 
 
 # ---------------------------------------------------------------------------
@@ -569,6 +689,10 @@ def process_one(
         result['compressed']['contours'] = contours_data
 
         _copy_batbot_output(tmpdir_p, out_subdir)
+
+    guano_meta = extract_guano_metadata(recording_path)
+    if guano_meta is not None:
+        result['guano'] = guano_meta
 
     result_for_json = _result_with_basename_paths(result)
     payload = {
