@@ -923,7 +923,7 @@ def delete_sequence_annotation(request, recording_id: int, id: int):
         return {'error': 'Annotation not found'}
 
 
-# TODO - this may be modified to use different models in the
+# TODO - Remove this
 @router.post('/{id}/spectrogram/compressed/predict')
 def predict_spectrogram_compressed(request: HttpRequest, id: int):
     try:
