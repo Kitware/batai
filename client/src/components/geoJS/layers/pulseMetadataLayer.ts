@@ -206,8 +206,11 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         const kneeFreqKhz = (pulse.knee[1] / 1000).toFixed(1);
         this.textData.push({
           text: `Knee ${kneeFreqKhz} kHz`,
-          x: pos.x + 8,
+          x: pos.x - 2,
           y: pos.y,
+          offsetX: 0,
+          offsetY: 0,
+          textAlign: 'end',
         });
       }
       if (pulse.heel && pulse.heel.length >= 2) {
@@ -216,8 +219,11 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         const heelFreqKhz = (pulse.heel[1] / 1000).toFixed(1);
         this.textData.push({
           text: `Heel ${heelFreqKhz} kHz`,
-          x: pos.x + 8,
+          x: pos.x + 2,
           y: pos.y,
+          offsetX: 0,
+          offsetY: 0,
+          textAlign: 'start',
         });
       }
       if (pulse.char_freq && pulse.char_freq.length >= 2) {
@@ -226,8 +232,11 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         const charFreqKhz = (pulse.char_freq[1] / 1000).toFixed(1);
         this.textData.push({
           text: `Char ${charFreqKhz} kHz`,
-          x: pos.x + 8,
-          y: pos.y,
+          x: pos.x,
+          y: pos.y - 2,
+          offsetX: 0,
+          offsetY: 0,
+          textAlign: 'center',
         });
       }
     });
