@@ -533,6 +533,7 @@ export default defineComponent({
           if (!pulseMetadataLayer) {
             pulseMetadataLayer = new PulseMetadataLayer(
               props.geoViewerRef,
+              event,
               props.spectroInfo,
               pulseMetadataList.value,
             );
