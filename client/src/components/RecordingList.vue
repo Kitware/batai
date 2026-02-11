@@ -18,6 +18,7 @@ export default defineComponent({
     } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
 
+    // Only grab 20 recordings at a time to avoid loading all recordings at once.
     const buildListParams = (): RecordingListParams => {
       const excludeSubmitted = configuration.value.mark_annotations_completed_enabled
         && !showSubmittedRecordings.value;

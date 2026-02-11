@@ -22,7 +22,7 @@ import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
 
-/** Sort fields supported by the recordings list API (RecordingListQuerySchema.sort_by) */
+/* Sort fields supported by the recordings list API (RecordingListQuerySchema.sort_by) */
 const SERVER_SORT_FIELDS: readonly string[] = ['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'];
 
 export default defineComponent({
@@ -250,7 +250,6 @@ export default defineComponent({
 
     watch(filterTags, () => fetchMyRecordings(lastMyOptions.value), { deep: true });
     watch(sharedFilterTags, () => fetchSharedRecordings(lastSharedOptions.value), { deep: true });
-    watch(showSubmittedRecordings, () => fetchMyRecordings(lastMyOptions.value));
 
     const uploadDone = () => {
         uploadDialog.value = false;
