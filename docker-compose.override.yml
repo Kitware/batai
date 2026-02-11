@@ -31,6 +31,7 @@ services:
       dockerfile: ./dev/django.Dockerfile
     command: [
       "uv", "run",
+      "--extra" ,"tasks",
       "celery",
       "--app", "bats_ai.celery",
       "worker",
@@ -44,7 +45,7 @@ services:
     working_dir: /opt/django-project
     volumes:
       - .:/opt/django-project
-      - uv_cache:/var/cache/uv
+      - uv_task_cache:/var/cache/uv
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,3 +72,4 @@ services:
 
 volumes:
   uv_cache:
+  uv_task_cache:
