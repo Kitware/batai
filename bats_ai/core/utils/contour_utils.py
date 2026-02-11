@@ -2,12 +2,17 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import cv2
-import numpy as np
-import numpy.typing as npt
-from scipy.ndimage import gaussian_filter1d
-from skimage import measure
-from skimage.filters import threshold_multiotsu
+try:
+    import cv2
+    import numpy as np
+    import numpy.typing as npt
+    from scipy.ndimage import gaussian_filter1d
+    from skimage import measure
+    from skimage.filters import threshold_multiotsu
+except ImportError as exc:
+    raise RuntimeError(
+        'Contour generation requires additional dependencies specified by the [tasks] group.'
+    ) from exc
 
 logger = logging.getLogger(__name__)
 

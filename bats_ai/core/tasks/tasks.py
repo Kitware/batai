@@ -22,13 +22,8 @@ logger = logging.getLogger('NABatDataRetrieval')
 
 @app.task
 def recording_compute_spectrogram(recording_id: int):
-    try:
-        from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
-    except ImportError:
-        raise RuntimeError(
-            'Spectrogram generation requires additional dependencies specified by the '
-            '[tasks] group.'
-        )
+    from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
+
     recording = Recording.objects.get(pk=recording_id)
 
     with tempfile.TemporaryDirectory() as tmpdir:

@@ -4,7 +4,13 @@ import os
 from pathlib import Path
 from typing import Any, TypedDict
 
-import batbot
+try:
+    import batbot
+except ImportError as exc:
+    raise RuntimeError(
+        'Spectrogram generation requires additional dependencies specified by the [tasks] group.'
+    ) from exc
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .contour_utils import process_spectrogram_assets_for_contours
