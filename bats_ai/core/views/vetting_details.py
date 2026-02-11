@@ -1,4 +1,5 @@
 from django.http import Http404, HttpRequest, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404
 from ninja import Schema
 from ninja.pagination import RouterPaginated
 
@@ -12,10 +13,6 @@ class VettingDetailsSchema(Schema):
     user_id: int
     reference_materials: str
 
-    @classmethod
-    def from_orm(cls, obj):
-        return cls(id=obj.id, reference_materials=obj.reference_materials, user_id=obj.user_id)
-
 
 class UpdateVettingDetailsSchema(Schema):
     reference_materials: str
@@ -28,11 +25,11 @@ def get_vetting_details_for_user(request: HttpRequest, user_id: int):
     if not details:  # Ensure we return a consistent schema even if no details exist
         return {'id': None, 'user_id': user_id, 'reference_materials': ''}
 
-    if details.user != request.user and not request.user.is_staff:
+    if not (user_id == request.user.pk or request.user.is_superuser):
         # Don't leak user IDs, prefer to return a 404 over a 403
         raise Http404
 
-    return details
+    return get_object_or_404(VettingDetails, user_id=user_id)
 
 
 @router.post('/user/{user_id}', response=VettingDetailsSchema)
@@ -41,7 +38,7 @@ def update_or_create_vetting_details_for_user(
     payload: UpdateVettingDetailsSchema,
     user_id: int,
 ):
-    if not (request.user.pk == user_id or request.user.is_staff):
+    if not (user_id == request.user.pk or request.user.is_superuser):
         raise Http404
 
     if len(payload.reference_materials) > 2000:
@@ -49,13 +46,8 @@ def update_or_create_vetting_details_for_user(
             'reference_materials exceeds maximum length of 2000 characters'
         )
 
-    details = VettingDetails.objects.filter(user_id=user_id).first()
-
-    if not details:
-        details = VettingDetails(user=request.user, reference_materials=payload.reference_materials)
-    else:
-        details.reference_materials = payload.reference_materials
-
-    details.save()
-
-    return details
+    vetting_details, _created = VettingDetails.objects.update_or_create(
+        user_id=user_id,
+        defaults={'reference_materials': payload.reference_materials},
+    )
+    return vetting_details

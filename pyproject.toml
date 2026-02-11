@@ -29,22 +29,15 @@ dependencies = [
   "pydantic",
   "rich",
   "whitenoise[brotli]",
-  # Spectrogram Generation
-  "numpy",
-  # "onnxruntime-gpu",
-  "onnx",
-  "onnxruntime",
   "tqdm",
   # guano metadata
   "gdal",
+  "geopandas>=1.1.1",
   "guano",
   "django_celery_results",
   # Production-only
   "sentry-sdk[celery,django,pure_eval]",
   "gunicorn",
-  "geopandas>=1.1.1",
-  "batbot",
-  "scikit-image>=0.25.2",
 ]
 
 [project.optional-dependencies]
@@ -59,6 +52,15 @@ development = [
   "ipython",
   "watchdog",
   "werkzeug",
+]
+tasks = [
+  # Heavy duty dependencies used for computationally
+  # intensive tasks, such as spectrogram generation
+  "batbot",
+  "numpy",
+  "scipy",
+  "scikit-image",
+  "opencv-python-headless",
 ]
 
 [dependency-groups]
