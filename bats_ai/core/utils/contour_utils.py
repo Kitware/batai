@@ -2,11 +2,17 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import cv2
-import numpy as np
-from scipy.ndimage import gaussian_filter1d
-from skimage import measure
-from skimage.filters import threshold_multiotsu
+try:
+    import cv2
+    import numpy as np
+    import numpy.typing as npt
+    from scipy.ndimage import gaussian_filter1d
+    from skimage import measure
+    from skimage.filters import threshold_multiotsu
+except ImportError as exc:
+    raise RuntimeError(
+        'Contour generation requires additional dependencies specified by the [tasks] group.'
+    ) from exc
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def auto_histogram_levels(
-    data: np.ndarray,
+    data: npt.NDArray,
     bins: int = 512,
     smooth_sigma: float = 2.0,
     variance_threshold: float = 400.0,
@@ -79,7 +85,7 @@ def auto_histogram_levels(
 
 
 def compute_auto_levels(
-    data: np.ndarray,
+    data: npt.NDArray,
     mode: str,
     percentile_values,
     multi_otsu_classes: int,
@@ -116,14 +122,14 @@ def compute_auto_levels(
 # -----------------------------------------------------------------------------
 
 
-def polygon_area(points: np.ndarray) -> float:
+def polygon_area(points: npt.NDArray) -> float:
     if len(points) < 3:
         return 0.0
     x, y = points[:, 0], points[:, 1]
     return 0.5 * abs(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
 
 
-def smooth_contour_spline(contour: np.ndarray, smoothing_factor=0.1) -> np.ndarray:
+def smooth_contour_spline(contour: npt.NDArray, smoothing_factor=0.1) -> npt.NDArray:
     from scipy import interpolate
 
     if not np.array_equal(contour[0], contour[-1]):
@@ -144,7 +150,7 @@ def smooth_contour_spline(contour: np.ndarray, smoothing_factor=0.1) -> np.ndarr
 
 def filter_contours_by_segment(
     contours, segment_boundaries: list[tuple[float, float]]
-) -> list[list[tuple[np.ndarray, float]]]:
+) -> list[list[tuple[npt.NDArray, float]]]:
     """Filter contours by segment boundaries based on x-coordinates.
 
     Args:
@@ -154,7 +160,7 @@ def filter_contours_by_segment(
     Returns:
         List of lists, where each inner list contains contours for that segment
     """
-    segment_contours: list[list[tuple[np.ndarray, float]]] = [[] for _ in segment_boundaries]
+    segment_contours: list[list[tuple[npt.NDArray, float]]] = [[] for _ in segment_boundaries]
 
     for contour, level in contours:
         # Get x-coordinates of all points in the contour
@@ -272,7 +278,7 @@ def extract_contours(
 def process_spectrogram_assets_for_contours(
     assets: dict[str, Any],
     levels_mode: str = 'percentile',
-    percentile_values: list[float] = (60, 70, 80, 90, 92, 94, 96, 98),
+    percentile_values: list[float] | None = None,
     min_area: float = 30.0,
     smoothing_factor: float = 0.08,
     min_intensity: float = 1.0,
@@ -294,6 +300,9 @@ def process_spectrogram_assets_for_contours(
     global_freq_max = assets.get('freq_max', 0)
     stops = compressed_data.get('stops', [])
     all_segments_data = []
+
+    if percentile_values is None:
+        percentile_values = [60, 70, 80, 90, 92, 94, 96, 98]
 
     processed_images: set[Path] = set()
     for path_str in mask_paths:

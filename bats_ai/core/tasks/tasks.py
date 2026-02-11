@@ -10,16 +10,11 @@ from django.core.files import File
 from bats_ai.celery import app
 from bats_ai.core.models import (
     CompressedSpectrogram,
-    Configuration,
     PulseMetadata,
     Recording,
-    RecordingAnnotation,
-    Species,
     Spectrogram,
     SpectrogramImage,
 )
-from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
-from bats_ai.utils.spectrogram_utils import predict_from_compressed
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('NABatDataRetrieval')
@@ -27,6 +22,8 @@ logger = logging.getLogger('NABatDataRetrieval')
 
 @app.task
 def recording_compute_spectrogram(recording_id: int):
+    from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
+
     recording = Recording.objects.get(pk=recording_id)
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -121,33 +118,5 @@ def recording_compute_spectrogram(recording_id: int):
                     ),
                 },
             )
-
-        config = Configuration.objects.first()
-        # TODO: Disabled until prediction is in batbot
-        # https://github.com/Kitware/batbot/issues/29
-        if config and config.run_inference_on_upload and False:
-            predict_results = predict_from_compressed(compressed_obj)
-            label = predict_results['label']
-            score = predict_results['score']
-            confs = predict_results['confs']
-            confidences = [{'label': key, 'value': float(value)} for key, value in confs.items()]
-            sorted_confidences = sorted(confidences, key=lambda x: x['value'], reverse=True)
-            output = {
-                'label': label,
-                'score': float(score),
-                'confidences': sorted_confidences,
-            }
-            species = Species.objects.filter(species_code=label)
-
-            recording_annotation = RecordingAnnotation.objects.create(
-                recording=compressed_obj.recording,
-                owner=compressed_obj.recording.owner,
-                comments='Compressed Spectrogram Generation Prediction',
-                model='model.mobilenet.onnx',
-                confidence=output['score'],
-                additional_data=output,
-            )
-            recording_annotation.species.set(species)
-            recording_annotation.save()
 
         return {'spectrogram_id': spectrogram.id, 'compressed_id': compressed_obj.id}
