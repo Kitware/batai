@@ -8,7 +8,7 @@ try:
     import batbot
 except ImportError as exc:
     raise RuntimeError(
-        'Spectrogram generation requires additional dependencies specified by the [tasks] group.'
+        'Spectrogram generation requires additional dependencies specified by the [tasks] extra.'
     ) from exc
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator

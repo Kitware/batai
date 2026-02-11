@@ -259,6 +259,15 @@ development = [
     { name = "watchdog" },
     { name = "werkzeug" },
 ]
+tasks = [
+    { name = "batbot" },
+    { name = "numpy" },
+    { name = "opencv-python-headless" },
+    { name = "scikit-image", version = "0.25.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scikit-image", version = "0.26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.16.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -279,15 +288,6 @@ lint = [
     { name = "flake8-quotes" },
     { name = "pep8-naming" },
 ]
-tasks = [
-    { name = "batbot" },
-    { name = "numpy" },
-    { name = "opencv-python-headless" },
-    { name = "scikit-image", version = "0.25.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scikit-image", version = "0.26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.16.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
 test = [
     { name = "factory-boy" },
     { name = "pytest" },
@@ -304,6 +304,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
+    { name = "batbot", marker = "extra == 'tasks'", git = "https://github.com/Kitware/batbot" },
     { name = "celery" },
     { name = "django", extras = ["argon2"] },
     { name = "django-allauth" },
@@ -331,16 +332,20 @@ requires-dist = [
     { name = "guano" },
     { name = "gunicorn" },
     { name = "ipython", marker = "extra == 'development'" },
+    { name = "numpy", marker = "extra == 'tasks'" },
+    { name = "opencv-python-headless", marker = "extra == 'tasks'" },
     { name = "psycopg", extras = ["binary"] },
     { name = "pydantic" },
     { name = "rich" },
+    { name = "scikit-image", marker = "extra == 'tasks'" },
+    { name = "scipy", marker = "extra == 'tasks'" },
     { name = "sentry-sdk", extras = ["celery", "django", "pure-eval"] },
     { name = "tqdm" },
     { name = "watchdog", marker = "extra == 'development'" },
     { name = "werkzeug", marker = "extra == 'development'" },
     { name = "whitenoise", extras = ["brotli"] },
 ]
-provides-extras = ["development"]
+provides-extras = ["development", "tasks"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -360,13 +365,6 @@ lint = [
     { name = "flake8-isort" },
     { name = "flake8-quotes" },
     { name = "pep8-naming" },
-]
-tasks = [
-    { name = "batbot", git = "https://github.com/Kitware/batbot" },
-    { name = "numpy" },
-    { name = "opencv-python-headless" },
-    { name = "scikit-image" },
-    { name = "scipy" },
 ]
 test = [
     { name = "factory-boy" },

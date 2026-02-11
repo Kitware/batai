@@ -53,8 +53,6 @@ development = [
   "watchdog",
   "werkzeug",
 ]
-
-[dependency-groups]
 tasks = [
   # Heavy duty dependencies used for computationally
   # intensive tasks, such as spectrogram generation
@@ -64,6 +62,8 @@ tasks = [
   "scikit-image",
   "opencv-python-headless",
 ]
+
+[dependency-groups]
 dev = [
   # Additional developer tools
   # The "dev" dependency group is installed by default,
