@@ -11,7 +11,7 @@ try:
     from skimage.filters import threshold_multiotsu
 except ImportError as exc:
     raise RuntimeError(
-        'Contour generation requires additional dependencies specified by the [tasks] group.'
+        'Contour generation requires additional dependencies specified by the [tasks] extra.'
     ) from exc
 
 logger = logging.getLogger(__name__)
