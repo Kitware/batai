@@ -45,7 +45,7 @@ services:
     working_dir: /opt/django-project
     volumes:
       - .:/opt/django-project
-      - uv_cache:/var/cache/uv
+      - uv_tasks_cache:/var/cache/uv
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,3 +72,4 @@ services:
 
 volumes:
   uv_cache:
+  uv_tasks_cache:
