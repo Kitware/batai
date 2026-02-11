@@ -21,12 +21,16 @@ saves all output images into a per-recording subfolder, and writes a results JSO
 including the recording filename. Supports resume by skipping recordings that
 already have results in the output folder.
 """
+
+# BATBOT HAS A CLI COMMAND CALLED PREPROCESS THAT DOES BATCH PROCESSING OF A FOLDER
+# Had an option to generate the metadata
 from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 import json
 import logging
+import os
 from pathlib import Path
 import re
 import shutil
@@ -46,6 +50,8 @@ from skimage.filters import threshold_multiotsu
 
 # Suppress batbot's logging so progress output stays clean
 logging.getLogger('batbot').setLevel(logging.WARNING)
+# disable tqdm progress bars
+os.environ['TQDM_DISABLE'] = '1'
 
 
 def _parse_guano_datetime(datetime_str: str | None) -> datetime | None:
@@ -589,7 +595,7 @@ def process_spectrogram_assets_for_contours(
 
 def generate_spectrogram_assets(recording_path: str, output_folder: str) -> dict[str, Any]:
     """Run BatBot pipeline and return result dict (paths are under output_folder)."""
-    batbot.pipeline(recording_path, output_folder=output_folder)
+    batbot.pipeline(recording_path, output_folder=output_folder, quiet=True)
     metadata_file = Path(recording_path).with_suffix('.metadata.json').name
     metadata_path = Path(output_folder) / metadata_file
     metadata = parse_batbot_metadata(metadata_path)
