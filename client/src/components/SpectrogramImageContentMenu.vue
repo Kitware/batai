@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue';
+import { ref, watch } from 'vue';
 import useState from '@use/useState';
 
 defineProps<{
@@ -82,14 +82,14 @@ function onContoursEnabledChange(checked: boolean) {
   >
     <v-menu
       location="top"
-      :open-on-hover="false"
+      :open-on-hover="true"
+      :open-delay="200"
       :close-on-content-click="false"
       :close-delay="250"
     >
       <template #activator="{ props }">
         <v-icon
           v-if="!contoursLoading"
-          v-tooltip:bottom="'Click to show overlay & contour options'"
           v-bind="props"
           size="25"
           :color="viewMaskOverlay || contoursEnabled ? 'blue' : ''"

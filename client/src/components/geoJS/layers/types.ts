@@ -38,6 +38,7 @@ export interface LineData {
   line: GeoJSON.LineString;
   thicker?: boolean;
   grid?: boolean;
+  lineKind?: 'curve' | 'durationFreq';
 }
 
 export interface TextData {
@@ -46,4 +47,5 @@ export interface TextData {
   y: number;
   offsetY?: number;
   offsetX?: number;
+  textAlign?: 'start' | 'end' | 'center';
 }

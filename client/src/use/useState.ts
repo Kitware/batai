@@ -11,9 +11,8 @@ import {
   SpectrogramAnnotation,
   SpectrogramSequenceAnnotation,
   RecordingTag,
-  FileAnnotation,
-  getComputedPulseAnnotations,
-  ComputedPulseAnnotation,
+  getComputedPulseContour,
+  ComputedPulseContour,
   getVettingDetailsForUser,
 } from "../api/api";
 import {
@@ -88,7 +87,7 @@ const toggleFixedAxes = () => {
   fixedAxes.value = !fixedAxes.value;
 };
 
-const computedPulseAnnotations: Ref<ComputedPulseAnnotation[]> = ref([]);
+const computedPulseContours: Ref<ComputedPulseContour[]> = ref([]);
 // Initial contour state is off; not persisted or loaded from localStorage.
 const contoursEnabled = ref(false);
 const imageOpacity = ref(1.0);
@@ -101,11 +100,11 @@ const setContoursEnabled = (value: boolean) => {
 };
 async function loadContours(recordingId: number) {
   contoursLoading.value = true;
-  computedPulseAnnotations.value = await getComputedPulseAnnotations(recordingId);
+  computedPulseContours.value = await getComputedPulseContour(recordingId);
   contoursLoading.value = false;
 }
 function clearContours() {
-  computedPulseAnnotations.value = [];
+  computedPulseContours.value = [];
 }
 
 const reviewerMaterials = ref('');
@@ -190,131 +189,9 @@ export default function useState() {
 
   const showSubmittedRecordings = ref(false);
 
-  const submittedMyRecordings = computed(() => {
-    const submittedByMe = recordingList.value.filter((recording: Recording) => {
-      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
-        annotation.owner === currentUser.value && annotation.submitted
-      ));
-      return myAnnotations.length > 0;
-    });
-    return submittedByMe;
-  });
-
-  const submittedSharedRecordings = computed(() => {
-    const submittedByMe = sharedList.value.filter((recording: Recording) => {
-      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
-        annotation.owner === currentUser.value && annotation.submitted
-      ));
-      return myAnnotations.length > 0;
-    });
-    return submittedByMe;
-  });
-
-  const unsubmittedMyRecordings = computed(() => {
-    const unsubmitted = recordingList.value.filter((recording: Recording) => {
-      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
-        annotation.owner === currentUser.value && annotation.submitted
-      ));
-      return myAnnotations.length === 0;
-    });
-    return unsubmitted;
-  });
-
-  const unsubmittedSharedRecordings = computed(() => {
-    const unsubmitted = sharedList.value.filter((recording: Recording) => {
-      const myAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
-        annotation.owner === currentUser.value && annotation.submitted
-      ));
-      return myAnnotations.length === 0;
-    });
-    return unsubmitted;
-  });
-
-  // Use state to determine which recordings should be shown to the user
-  const myRecordingsDisplay = computed(() => {
-    if (!configuration.value.mark_annotations_completed_enabled) {
-      return recordingList.value;
-    } else {
-      return showSubmittedRecordings.value ? recordingList.value : unsubmittedMyRecordings.value;
-    }
-  });
-
-  const sharedRecordingsDisplay = computed(() => {
-    if (!configuration.value.mark_annotations_completed_enabled) {
-      return sharedList.value;
-    } else {
-      return showSubmittedRecordings.value ? sharedList.value : unsubmittedSharedRecordings.value;
-    }
-  });
-
-  function hasSubmittedAnnotation(recording: Recording): boolean {
-    return recording.fileAnnotations.some((annotation: FileAnnotation) => (
-      annotation.owner === currentUser.value && annotation.submitted
-    ));
-  }
-
-  const allRecordings = computed(() => {
-    const recordings = recordingList.value.concat(sharedList.value);
-    return recordings.map((recording: Recording) => {
-      const isSubmitted = recording.fileAnnotations.some((annotation: FileAnnotation) => (
-        annotation.owner === currentUser.value && annotation.submitted
-      ));
-      return {
-        ...recording,
-        submitted: isSubmitted,
-      };
-    });
-  });
-
-  function markAnnotationSubmitted(recordingId: number, annotationId: number) {
-    const recording = allRecordings.value.find((recording: Recording) => recording.id === recordingId);
-    if (!recording) return;
-    const annotation = recording.fileAnnotations.find((annotation: FileAnnotation) => annotation.id === annotationId);
-    if (!annotation) return;
-    annotation.submitted = true;
-  }
-
-  const nextUnsubmittedRecordingId = computed(() => {
-    if (allRecordings.value.length === 0) {
-      return undefined;
-    }
-    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentRecordingId.value) || 0;
-
-    for (let i = startingIndex + 1; i < allRecordings.value.length; i++) {
-      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
-        return allRecordings.value[i].id;
-      }
-    }
-
-    for (let i = 0; i < startingIndex; i++) {
-      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
-        return allRecordings.value[i].id;
-      }
-    }
-
-    return undefined;
-  });
-
-  const previousUnsubmittedRecordingId = computed(() =>{
-    if (allRecordings.value.length === 0) {
-      return undefined;
-    }
-    const startingIndex = allRecordings.value.findIndex((recording: Recording) => recording.id === currentRecordingId.value) || 0;
-
-    for (let i = startingIndex -1; i >= 0; i--) {
-      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
-        return allRecordings.value[i].id;
-      }
-    }
-
-    for (let i = allRecordings.value.length - 1; i > startingIndex; i--) {
-      if (!hasSubmittedAnnotation(allRecordings.value[i])) {
-        return allRecordings.value[i].id;
-      }
-    }
-
-    return undefined;
-  });
+  // Server filters by exclude_submitted when "Show submitted" is unchecked; we refetch on toggle.
+  const myRecordingsDisplay = computed(() => recordingList.value);
+  const sharedRecordingsDisplay = computed(() => sharedList.value);
 
   async function loadReviewerMaterials() {
     // Only make this request if vetting is enabled and a user is logged in
@@ -378,17 +255,10 @@ export default function useState() {
     setContoursEnabled,
     loadContours,
     clearContours,
-    computedPulseAnnotations,
+    computedPulseContours,
     showSubmittedRecordings,
-    submittedMyRecordings,
-    submittedSharedRecordings,
-    unsubmittedMyRecordings,
-    unsubmittedSharedRecordings,
     myRecordingsDisplay,
     sharedRecordingsDisplay,
-    nextUnsubmittedRecordingId,
-    previousUnsubmittedRecordingId,
-    markAnnotationSubmitted,
     currentRecordingId,
     reviewerMaterials,
     loadReviewerMaterials,
