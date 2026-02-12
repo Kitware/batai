@@ -42,14 +42,14 @@ def get_configuration(request):
         default_spectrogram_background_color=config.default_spectrogram_background_color,
         non_admin_upload_enabled=config.non_admin_upload_enabled,
         mark_annotations_completed_enabled=config.mark_annotations_completed_enabled,
-        is_admin=request.user.is_authenticated and request.user.is_superuser,
+        is_admin=request.user.is_superuser,
     )
 
 
 # Endpoint to update the configuration (admin only)
 @router.patch('/')
 def update_configuration(request, payload: ConfigurationSchema):
-    if not request.user.is_authenticated or not request.user.is_superuser:
+    if not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
     config = Configuration.objects.first()
     if not config:
@@ -62,17 +62,13 @@ def update_configuration(request, payload: ConfigurationSchema):
 
 @router.get('/is_admin/')
 def check_is_admin(request):
-    if request.user.is_authenticated:
-        return {'is_admin': request.user.is_superuser}
-    return {'is_admin': False}
+    return {'is_admin': request.user.is_superuser}
 
 
 @router.get('/me')
 def get_current_user(request):
-    if request.user.is_authenticated:
-        return {
-            'email': request.user.email,
-            'name': request.user.username,
-            'id': request.user.id,
-        }
-    return {'email': '', 'name': ''}
+    return {
+        'email': request.user.email,
+        'name': request.user.username,
+        'id': request.user.id,
+    }
