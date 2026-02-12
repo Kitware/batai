@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "bats-ai"
 version = "0.0.0"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 classifiers = ["Private :: Do Not Upload"]
@@ -34,7 +34,7 @@ dependencies = [
   "gdal",
   "geopandas>=1.1.1",
   "guano",
-  "django_celery_results",
+  "django-celery-results",
   # Production-only
   "sentry-sdk[celery,django,pure_eval]",
   "gunicorn",
@@ -68,7 +68,7 @@ dev = [
   # Additional developer tools
   # The "dev" dependency group is installed by default,
   # so use this to install "development" and "tasks" extras by default too
-  "bats-ai[development, tasks]",
+  "bats-ai[development,tasks]",
   "tox",
   "tox-uv",
 ]
@@ -124,7 +124,7 @@ gdal = { index = "large_image_wheels" }
 [tool.black]
 line-length = 100
 skip-string-normalization = true
-target-version = ["py310"]
+target-version = ["py312"]
 
 [tool.isort]
 profile = "black"
