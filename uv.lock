@@ -177,7 +177,7 @@ wheels = [
 [[package]]
 name = "batbot"
 version = "0.1.2"
-source = { git = "https://github.com/Kitware/batbot#c3981204970c737108333a7d2064a0bb8673b006" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "cryptography" },
@@ -195,6 +195,10 @@ dependencies = [
     { name = "shapely" },
     { name = "sphinx-click" },
     { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bc/41/f1702fa58ab8207e6b3f6059ee5e42e868c5b861059db1abafdc7786f390/batbot-0.1.2.tar.gz", hash = "sha256:92476da8ff3e55abc03c06ee9c2f72100b6efdbbf45e60c62612a71aa2b8c0c7", size = 3903360, upload-time = "2026-02-10T19:49:23.531Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/a0/216db39b5c6cfb4a00bb244419951830454b723c1d097038526f7dd5f840/batbot-0.1.2-py3-none-any.whl", hash = "sha256:56bc086784deb60af3f9649d0798ee7abb776116a5f24cb8bad1e643c9aa9c85", size = 35792, upload-time = "2026-02-10T19:49:22.017Z" },
 ]
 
 [[package]]
@@ -285,7 +289,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batbot", marker = "extra == 'tasks'", git = "https://github.com/Kitware/batbot" },
+    { name = "batbot", marker = "extra == 'tasks'"},
     { name = "celery" },
     { name = "django", extras = ["argon2"] },
     { name = "django-allauth" },

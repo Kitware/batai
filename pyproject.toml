@@ -120,7 +120,6 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
-batbot = { git = "https://github.com/Kitware/batbot" }
 
 [tool.black]
 line-length = 100

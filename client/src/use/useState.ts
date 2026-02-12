@@ -12,8 +12,8 @@ import {
   SpectrogramSequenceAnnotation,
   RecordingTag,
   FileAnnotation,
-  getComputedPulseAnnotations,
-  ComputedPulseAnnotation,
+  getComputedPulseContour,
+  ComputedPulseContour,
   getVettingDetailsForUser,
 } from "../api/api";
 import {
@@ -88,7 +88,7 @@ const toggleFixedAxes = () => {
   fixedAxes.value = !fixedAxes.value;
 };
 
-const computedPulseAnnotations: Ref<ComputedPulseAnnotation[]> = ref([]);
+const computedPulseContours: Ref<ComputedPulseContour[]> = ref([]);
 // Initial contour state is off; not persisted or loaded from localStorage.
 const contoursEnabled = ref(false);
 const imageOpacity = ref(1.0);
@@ -101,11 +101,11 @@ const setContoursEnabled = (value: boolean) => {
 };
 async function loadContours(recordingId: number) {
   contoursLoading.value = true;
-  computedPulseAnnotations.value = await getComputedPulseAnnotations(recordingId);
+  computedPulseContours.value = await getComputedPulseContour(recordingId);
   contoursLoading.value = false;
 }
 function clearContours() {
-  computedPulseAnnotations.value = [];
+  computedPulseContours.value = [];
 }
 
 const reviewerMaterials = ref('');
@@ -378,7 +378,7 @@ export default function useState() {
     setContoursEnabled,
     loadContours,
     clearContours,
-    computedPulseAnnotations,
+    computedPulseContours,
     showSubmittedRecordings,
     submittedMyRecordings,
     submittedSharedRecordings,

@@ -574,14 +574,28 @@ export interface Contour {
   index: number;
 }
 
-export interface ComputedPulseAnnotation {
+export interface ComputedPulseContour {
   id: number;
   index: number;
   contours: Contour[];
 }
 
-async function getComputedPulseAnnotations(recordingId: number) {
-  const result = await axiosInstance.get<ComputedPulseAnnotation[]>(`/recording/${recordingId}/pulse_data`);
+async function getComputedPulseContour(recordingId: number) {
+  const result = await axiosInstance.get<ComputedPulseContour[]>(`/recording/${recordingId}/pulse_contours`);
+  return result.data;
+}
+
+export interface PulseMetadata {
+  id: number;
+  index: number;
+  curve: number[][] | null; // list of [time, frequency]
+  char_freq: number[] | null; // point [time, frequency]
+  knee: number[] | null; // point [time, frequency]
+  heel: number[] | null; // point [time, frequency]
+}
+
+async function getPulseMetadata(recordingId: number) {
+  const result = await axiosInstance.get<PulseMetadata[]>(`/recording/${recordingId}/pulse_data`);
   return result.data;
 }
 
@@ -622,7 +636,8 @@ export {
   getFileAnnotationDetails,
   getExportStatus,
   getRecordingTags,
-  getComputedPulseAnnotations,
+  getComputedPulseContour,
+  getPulseMetadata,
   getCurrentUser,
   getVettingDetailsForUser,
   createOrUpdateVettingDetailsForUser,

@@ -8,4 +8,7 @@ class PulseMetadata(models.Model):
     index = models.IntegerField(null=False, blank=False)
     bounding_box = models.PolygonField(null=False, blank=False)
     contours = models.JSONField(null=True, blank=True)
-    # TODO: Add in metadata from batbot
+    curve = models.LineStringField(null=True, blank=True)
+    char_freq = models.PointField(null=True, blank=True)
+    knee = models.PointField(null=True, blank=True)
+    heel = models.PointField(null=True, blank=True)

@@ -1,6 +1,6 @@
 import { SpectroInfo } from '../geoJSUtils';
 import {
-  ComputedPulseAnnotation,
+  ComputedPulseContour,
   Contour,
 } from '@api/api';
 
@@ -35,7 +35,7 @@ export default class ContourLayer {
 
   scaledWidth: number;
 
-  computedPulseAnnotations: ComputedPulseAnnotation[];
+  computedPulseContours: ComputedPulseContour[];
 
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,7 +43,7 @@ export default class ContourLayer {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo,
-    computedPulseAnnotations: ComputedPulseAnnotation[],
+    computedPulseContours: ComputedPulseContour[],
     colorScheme: (t: number) => string,
   ) {
     this.geoViewerRef = geoViewerRef;
@@ -52,7 +52,7 @@ export default class ContourLayer {
     this.scaledHeight = this.spectroInfo.height;
     this.scaledWidth = this.spectroInfo.width;
     this.colorScheme = colorScheme;
-    this.computedPulseAnnotations = computedPulseAnnotations;
+    this.computedPulseContours = computedPulseContours;
     this.features = [];
     this.maxLevel = 0;
     this.contourOpacity = 1.0;
@@ -127,12 +127,12 @@ export default class ContourLayer {
   }
 
   drawContours() {
-    this.computedPulseAnnotations.forEach((annotation: ComputedPulseAnnotation) => annotation.contours.forEach((contour: Contour) => {
+    this.computedPulseContours.forEach((contour: ComputedPulseContour) => contour.contours.forEach((contour: Contour) => {
       if (contour.level > this.maxLevel) {
         this.maxLevel = contour.level;
       }
     }));
-    this.computedPulseAnnotations.forEach((pulseAnnotation: ComputedPulseAnnotation) => this.drawPolygonsForPulse(pulseAnnotation.contours));
+    this.computedPulseContours.forEach((pulseContour: ComputedPulseContour) => this.drawPolygonsForPulse(pulseContour.contours));
   }
 
   getTransformedContourPoint(point: number[], level: number, index: number): ContourPoint {
