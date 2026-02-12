@@ -34,7 +34,7 @@ dependencies = [
   "gdal",
   "geopandas>=1.1.1",
   "guano",
-  "django_celery_results",
+  "django-celery-results",
   # Production-only
   "sentry-sdk[celery,django,pure_eval]",
   "gunicorn",
@@ -68,7 +68,7 @@ dev = [
   # Additional developer tools
   # The "dev" dependency group is installed by default,
   # so use this to install "development" and "tasks" extras by default too
-  "bats-ai[development, tasks]",
+  "bats-ai[development,tasks]",
   "tox",
   "tox-uv",
 ]

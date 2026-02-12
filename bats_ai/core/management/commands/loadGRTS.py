@@ -67,10 +67,8 @@ class Command(BaseCommand):
                 try:
                     urlretrieve(url, zip_path)
                 except urllib.error.URLError as e:
-                    logger.warning(
-                        f'Failed to download from primary URL: {e}. \
-                            Attempting backup URL...'
-                    )
+                    logger.warning(f'Failed to download from primary URL: {e}. \
+                            Attempting backup URL...')
                     if backup_url is None:
                         logger.warning('No backup URL provided, skipping this shapefile.')
                         continue
@@ -146,9 +144,7 @@ class Command(BaseCommand):
                     with transaction.atomic():
                         GRTSCells.objects.bulk_create(records_to_create, ignore_conflicts=True)
 
-                logger.info(
-                    f'Finished importing shapefile for sample frame\
-                        {sample_frame_id}: {count_new} new records'
-                )
+                logger.info(f'Finished importing shapefile for sample frame\
+                        {sample_frame_id}: {count_new} new records')
 
         logger.info('All shapefiles processed successfully.')
