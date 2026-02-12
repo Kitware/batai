@@ -213,7 +213,7 @@ dependencies = [
     { name = "django-ninja" },
     { name = "django-oauth-toolkit" },
     { name = "django-resonant-settings", extra = ["allauth", "celery"] },
-    { name = "django-resonant-utils", extra = ["allauth", "s3-storage"] },
+    { name = "django-resonant-utils", extra = ["allauth", "ninja", "s3-storage"] },
     { name = "django-s3-file-field", extra = ["s3"] },
     { name = "django-storages", extra = ["s3"] },
     { name = "django-stubs-ext" },
@@ -301,7 +301,7 @@ requires-dist = [
     { name = "django-ninja" },
     { name = "django-oauth-toolkit" },
     { name = "django-resonant-settings", extras = ["allauth", "celery"] },
-    { name = "django-resonant-utils", extras = ["allauth", "s3-storage"] },
+    { name = "django-resonant-utils", extras = ["allauth", "ninja", "s3-storage"] },
     { name = "django-resonant-utils", extras = ["minio-storage"], marker = "extra == 'development'" },
     { name = "django-s3-file-field", extras = ["minio"], marker = "extra == 'development'" },
     { name = "django-s3-file-field", extras = ["s3"] },
@@ -1059,6 +1059,10 @@ allauth = [
 ]
 minio-storage = [
     { name = "django-minio-storage" },
+]
+ninja = [
+    { name = "django-ninja" },
+    { name = "django-oauth-toolkit" },
 ]
 s3-storage = [
     { name = "django-storages", extra = ["s3"] },
