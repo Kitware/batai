@@ -40,5 +40,10 @@ class SpectrogramImage(models.Model):
 
 @receiver(models.signals.pre_delete, sender=SpectrogramImage)
 def delete_content(sender, instance, **kwargs):
-    if instance.image_file:
+    if not instance.image_file:
+        return
+    # Only delete the file if no other SpectrogramImage references the same path
+    # (allows shared image references e.g. from copy_recordings management command)
+    same_path_count = sender.objects.filter(image_file=instance.image_file.name).count()
+    if same_path_count <= 1:
         instance.image_file.delete(save=False)
