@@ -2,7 +2,7 @@ from django.test import Client
 from ninja.testing import TestClient
 import pytest
 
-from bats_ai.api import api
+from bats_ai.core.api import api
 
 
 @pytest.fixture

@@ -96,9 +96,8 @@ def get_email_if_authorized(
     `recording_id` is retrieved.
     """
     # Superuser shortcut
-    if request.user and request.user.is_authenticated:
-        if request.user.is_superuser:
-            return request.user.email or 'superuser@nabat.org'
+    if request.user and request.user.is_superuser:
+        return request.user.email or 'superuser@nabat.org'
     # Decode JWT token
     try:
         payload = decode_jwt(api_token)
@@ -412,7 +411,7 @@ def get_nabat_recording_annotation(
 
     fileAnnotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
 
-    if request.user.is_authenticated and request.user.is_superuser:
+    if request.user.is_superuser:
         # If the user is a superuser, return all annotations
         pass
     elif user_email:

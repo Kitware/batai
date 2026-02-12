@@ -25,7 +25,7 @@ router = Router()
 
 @router.post('/update-species')
 def update_species_list(request: HttpRequest):
-    if not request.user.is_authenticated or not request.user.is_superuser:
+    if not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
     existing_task = ProcessingTask.objects.filter(
         metadata__type=ProcessingTaskType.UPDATING_SPECIES.value,
@@ -81,7 +81,7 @@ class RecordingListItemSchema(Schema):
 @router.get('/recordings', response=list[RecordingListItemSchema])
 @paginate
 def list_recordings(request: HttpRequest, filters: Query[RecordingFilterSchema]):
-    if not request.user.is_authenticated or not request.user.is_superuser:
+    if not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
 
     recordings = NABatRecording.objects.annotate(
@@ -154,7 +154,7 @@ class AnnotationSchema(Schema):
 def recording_annotations(
     request: HttpRequest, recording_id: int, filters: Query[AnnotationFilterSchema]
 ):
-    if not request.user.is_authenticated or not request.user.is_superuser:
+    if not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
 
     try:
@@ -188,7 +188,7 @@ def recording_annotations(
 
 @router.get('/stats')
 def get_stats(request: HttpRequest):
-    if not request.user.is_authenticated or not request.user.is_superuser:
+    if not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
 
     total_recordings = NABatRecording.objects.count()
