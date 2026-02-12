@@ -31,7 +31,6 @@ services:
       dockerfile: ./dev/django.Dockerfile
     command: [
       "uv", "run",
-      "--extra" ,"tasks",
       "celery",
       "--app", "bats_ai.celery",
       "worker",
