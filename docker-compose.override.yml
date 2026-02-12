@@ -29,13 +29,15 @@ services:
     build:
       context: .
       dockerfile: ./dev/django.Dockerfile
-    command:
-      - sh
-      - -c
-      - >
-        uv sync --extra tasks &&
-        uv run celery --app bats_ai.celery worker --loglevel INFO --without-heartbeat
-
+    command: [
+      "uv", "run",
+      "--extra" ,"tasks",
+      "celery",
+      "--app", "bats_ai.celery",
+      "worker",
+      "--loglevel", "INFO",
+      "--without-heartbeat"
+    ]
     # Docker Compose does not set the TTY width, which causes Celery errors
     tty: false
     environment:
@@ -43,7 +45,7 @@ services:
     working_dir: /opt/django-project
     volumes:
       - .:/opt/django-project
-      - uv_task_cache:/var/cache/uv
+      - uv_cache:/var/cache/uv
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,4 +72,3 @@ services:
 
 volumes:
   uv_cache:
-  uv_task_cache:
