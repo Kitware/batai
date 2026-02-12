@@ -9,6 +9,7 @@ from bats_ai.core.models import UserProfile, VettingDetails
 class UserFactory(factory.django.DjangoModelFactory[User]):
     class Meta:
         model = User
+        skip_postgeneration_save = True
 
     username = factory.SelfAttribute('email')
     email = factory.Faker('safe_email')
@@ -18,6 +19,13 @@ class UserFactory(factory.django.DjangoModelFactory[User]):
     profile = factory.RelatedFactory(
         'bats_ai.core.tests.factories.ProfileFactory', factory_related_name='user'
     )
+
+    # flake8 complains that the first argument to this function is not "self," but this is not
+    # a class method, this is a post-generation hook
+    @factory.post_generation
+    def save_after_generation(instance: User, create: bool, extracted, **kwargs):  # noqa: N805
+        if create:
+            instance.save()
 
 
 class SuperuserFactory(UserFactory):
