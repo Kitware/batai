@@ -19,6 +19,7 @@ class UserAdmin(BaseUserAdmin):
     inlines = [UserProfileInline]
     list_select_related = ['profile']
 
+    # See https://code.djangoproject.com/ticket/36926#ticket
     list_display = list(BaseUserAdmin.list_display) + ['is_verified']
     list_filter = list(BaseUserAdmin.list_filter) + ['profile__verified']
 
