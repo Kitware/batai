@@ -5,6 +5,14 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def create_user_profiles(apps, schema_editor):
+    User = apps.get_model('auth', 'User')
+    UserProfile = apps.get_model('core', 'UserProfile')
+
+    for user in User.objects.all():
+        UserProfile.objects.create(user=user)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -33,4 +41,5 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
+        migrations.RunPython(create_user_profiles, reverse_code=migrations.RunPython.noop)
     ]
