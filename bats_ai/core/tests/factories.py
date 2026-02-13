@@ -20,13 +20,6 @@ class UserFactory(factory.django.DjangoModelFactory[User]):
         'bats_ai.core.tests.factories.UserProfileFactory', factory_related_name='user'
     )
 
-    # flake8 complains that the first argument to this function is not "self," but this is not
-    # a class method, this is a post-generation hook
-    @factory.post_generation
-    def save_after_generation(instance: User, create: bool, extracted, **kwargs):  # noqa: N805
-        if create:
-            instance.save()
-
 
 class SuperuserFactory(UserFactory):
     is_superuser = True
