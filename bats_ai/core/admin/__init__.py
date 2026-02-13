@@ -18,6 +18,7 @@ from .sequence_annotations import SequenceAnnotationsAdmin
 from .species import SpeciesAdmin
 from .spectrogram import SpectrogramAdmin
 from .spectrogram_image import SpectrogramImageAdmin
+from .user import UserAdmin
 from .vetting_details import VettingDetailsAdmin
 
 __all__ = [
@@ -36,6 +37,7 @@ __all__ = [
     'SpectrogramImageAdmin',
     'VettingDetailsAdmin',
     'PulseMetadataAdmin',
+    'UserAdmin',
     # NABat Models
     'NABatRecordingAnnotationAdmin',
     'NABatCompressedSpectrogramAdmin',
