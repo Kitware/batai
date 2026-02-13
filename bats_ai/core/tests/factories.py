@@ -17,7 +17,7 @@ class UserFactory(factory.django.DjangoModelFactory[User]):
     last_name = factory.Faker('last_name')
 
     profile = factory.RelatedFactory(
-        'bats_ai.core.tests.factories.ProfileFactory', factory_related_name='user'
+        'bats_ai.core.tests.factories.UserProfileFactory', factory_related_name='user'
     )
 
     # flake8 complains that the first argument to this function is not "self," but this is not
@@ -34,9 +34,10 @@ class SuperuserFactory(UserFactory):
 
 
 @factory.django.mute_signals(post_save)
-class ProfileFactory(factory.django.DjangoModelFactory[UserProfile]):
+class UserProfileFactory(factory.django.DjangoModelFactory[UserProfile]):
     class Meta:
         model = UserProfile
+        skip_postgeneration_save = True
 
     verified = True
     user = factory.SubFactory(UserFactory, profile=None)

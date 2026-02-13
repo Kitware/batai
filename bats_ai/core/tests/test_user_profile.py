@@ -6,6 +6,8 @@ from bats_ai.core.models import UserProfile
 
 @pytest.mark.django_db
 def test_profile_creation():
+    # Use django model directly to test the signal receiver,
+    # not whether our factories are working as intended.
     user = User.objects.create()
     profile = UserProfile.objects.filter(user=user).first()
     assert profile is not None
