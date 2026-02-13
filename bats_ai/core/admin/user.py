@@ -27,4 +27,4 @@ class UserAdmin(BaseUserAdmin):
         description='Is Verified?',
     )
     def is_verified(self, obj):
-        return hasattr(obj, 'profile') and obj.profile.verified
+        return obj.profile.verified
