@@ -41,5 +41,5 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-        migrations.RunPython(create_user_profiles, reverse_code=migrations.RunPython.noop)
+        migrations.RunPython(create_user_profiles, reverse_code=migrations.RunPython.noop),
     ]
