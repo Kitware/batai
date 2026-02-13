@@ -12,7 +12,7 @@ from .sequence_annotations import SequenceAnnotations
 from .species import Species
 from .spectrogram import Spectrogram
 from .spectrogram_image import SpectrogramImage
-from .user_profile import UserProfile, create_new_user_profile
+from .user_profile import UserProfile
 from .vetting_details import VettingDetails
 
 __all__ = [
@@ -33,6 +33,5 @@ __all__ = [
     'ExportedAnnotationFile',
     'SpectrogramImage',
     'UserProfile',
-    'create_new_user_profile',
     'VettingDetails',
 ]
