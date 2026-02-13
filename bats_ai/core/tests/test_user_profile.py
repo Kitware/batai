@@ -9,6 +9,5 @@ def test_profile_creation():
     # Use django model directly to test the signal receiver,
     # not whether our factories are working as intended.
     user = User.objects.create()
-    profile = UserProfile.objects.filter(user=user).first()
-    assert profile is not None
+    profile = UserProfile.objects.get(user=user)
     assert not profile.verified
