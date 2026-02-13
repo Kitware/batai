@@ -30,6 +30,10 @@ class UserIsVerifiedFilter(admin.SimpleListFilter):
         return queryset
 
 
+admin.site.unregister(User)
+
+
+@admin.register(User)
 class UserAdmin(BaseUserAdmin):
     inlines = [UserProfileInline]
     list_select_related = ['profile']
@@ -37,12 +41,9 @@ class UserAdmin(BaseUserAdmin):
     list_display = list(BaseUserAdmin.list_display) + ['is_verified']
     list_filter = list(BaseUserAdmin.list_filter) + [UserIsVerifiedFilter]
 
+    @admin.display(
+        boolean=True,
+        description='Is Verified?',
+    )
     def is_verified(self, obj):
         return hasattr(obj, 'profile') and obj.profile.verified
-
-    is_verified.boolean = True
-    is_verified.short_description = 'Verified'
-
-
-admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
