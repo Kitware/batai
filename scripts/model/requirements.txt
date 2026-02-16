@@ -1,0 +1,18 @@
+argparse
+click
+ipython
+librosa
+matplotlib
+numba
+numpy
+onnx
+onnxruntime-gpu
+opencv-python-headless
+pillow
+scikit-learn
+scipy
+tensorboard
+# torch
+# torchaudio
+# torchvision
+tqdm

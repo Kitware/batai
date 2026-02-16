@@ -1,0 +1,8 @@
+ignore/
+spectrograms/
+waveforms/
+train*/
+val*/
+*.pkl
+*.sh
+
