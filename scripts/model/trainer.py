@@ -692,7 +692,7 @@ if __name__ == '__main__':
     OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=1 trainer.py
 
     CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --adam --lr=0.01 --rebase
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --adam --lr=0.001 
+    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --adam --lr=0.001
     CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --lr=0.01 --rebase
     CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --lr=0.001 --denoise
     CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --lr=0.0001 --denoise
@@ -708,7 +708,7 @@ if __name__ == '__main__':
     - add time masks
     - add frequency masks
     - add time dilations
-    """
+    """  # noqa: E501
     import argparse
 
     parser = argparse.ArgumentParser(description='simple distributed training job')

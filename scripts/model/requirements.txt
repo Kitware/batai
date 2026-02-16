@@ -16,3 +16,7 @@ tensorboard
 # torchaudio
 # torchvision
 tqdm
+soundfile
+samplerate
+resampy
+scikit-maad

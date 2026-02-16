@@ -14,22 +14,12 @@ import torchvision
 import torchvision.transforms.functional as F
 import tqdm
 
-# from sklearn.metrics import f1_score as metric_func
-# from sklearn.metrics import accuracy_score as metric_func
-
-# pip install tensorboard opencv-python-headless
-# pip install argparse scikit-learn torch torchvision torchaudio
+# pip install tensorboard opencv-python-headless scikit-learn torch torchvision tqdm
 
 torch._C._jit_set_profiling_mode(False)
 torch._C._jit_set_profiling_executor(False)
 
-
 torch.backends.cudnn.benchmark = True
-
-
-CACHE = {}
-VARIANCE = 1.0
-METRIC_SATURATION_POINT = 1.0  # Disabled
 
 
 class Data:
@@ -40,69 +30,22 @@ class Data:
 
 
 class Transforms(torch.nn.Module):
-    """
-    >>> import numpy as np
-    >>> import random
-    >>> import tqdm
-    >>> import cv2
-    >>>
-    >>> paths = Path('train').rglob('*.jpg')
-    >>> paths = [str(path.absolute()) for path in paths]
-    >>> random.shuffle(paths)
-    >>>
-    >>> gpu_id = 'cuda'
-    >>>
-    >>> transforms_original = torch.jit.script(Transforms(noise=False, visualize=True)).to(gpu_id)  # NOQA
-    >>> transforms_augment = torch.jit.script(Transforms(noise=True, visualize=True)).to(gpu_id)  # NOQA
-    >>>
-    >>> PLOT = 20
-    >>> column = []
-    >>> for path in paths:
-    >>>     img = cv2.imread(path)
-    >>>     h, w, c = img.shape
-    >>>     stretch = random.uniform(0.9, 1.1)
-    >>>     window = int(h * 2 * stretch)
-    >>>     if w < window:
-    >>>         continue
-    >>>     index = random.randint(0, w - window)
-    >>>     img = img[:, index: index + window, :]
-    >>>     img = cv2.resize(img, (224, 224), interpolation=cv2.INTER_LANCZOS4)
-    >>>     img = torch.tensor(img, device=gpu_id)
-    >>>     column.append(img)
-    >>>     if len(column) == PLOT:
-    >>>         break
-    >>> column = torch.stack(column)
-    >>>
-    >>> columns = [torch.vstack(tuple(transforms_original(column)))]
-    >>> for index in range(PLOT):
-    >>>     columns.append(torch.vstack(tuple(transforms_augment(column))))
-    >>>
-    >>> canvas = torch.hstack(columns)
-    >>> canvas = canvas.cpu().numpy().astype(np.uint8)
-    >>>
-    >>> cv2.imwrite('augmentation.jpg', canvas)
-    """
-
     def __init__(
         self,
         mean=(0.0, 0.0, 0.0),
         stddev=(1.0, 1.0, 1.0),
-        variance=VARIANCE,
         noise=True,
-        visualize=False,
     ):
         super().__init__()
         self.noise = noise
-        self.visualize = visualize
 
         self.mean = mean
         self.stddev = stddev
-        self.variance = variance
 
         self.jitter = torchvision.transforms.ColorJitter(
-            brightness=np.mean(self.stddev) * variance,
-            contrast=np.mean(self.stddev) * variance,
-            saturation=np.mean(self.stddev) * variance,
+            brightness=np.mean(self.stddev),
+            contrast=np.mean(self.stddev),
+            saturation=np.mean(self.stddev),
             hue=0.0,
         )
         self.poster = torchvision.transforms.RandomPosterize(bits=2)
@@ -114,10 +57,7 @@ class Transforms(torch.nn.Module):
         imgs = F.center_crop(imgs, [224])
 
         if self.noise:
-            imgs_ = self.jitter(imgs)
-            while imgs_.max() < 255 * 0.2:
-                imgs_ = self.jitter(imgs)
-            imgs = imgs_
+            imgs = self.jitter(imgs)
 
             imgs = self.poster(imgs)
 
@@ -126,35 +66,6 @@ class Transforms(torch.nn.Module):
                 imgs = self.blur(imgs)
 
         imgs = F.convert_image_dtype(imgs, torch.float16)
-
-        if self.noise:
-            alpha = 5e-2
-            noise = torch.rand(imgs.shape, dtype=imgs.dtype, device=imgs.device)
-            noise[:, 1] = noise[:, 0]
-            noise[:, 2] = noise[:, 0]
-            noise = (noise - 0.5) * alpha
-
-            floor = torch.rand(1)[0]
-            floor /= 10
-
-            imgs += noise
-            imgs[imgs < floor] = 0.0
-            imgs[imgs > 1.0] = 1.0
-
-        if self.noise:
-            coords = torch.rand(2)
-            coords *= 244 * 0.9
-            coords = coords.int()
-            imgs[:, :, coords[0] : coords[0] + 24, :] = 0
-            imgs[:, :, :, coords[1] : coords[1] + 24] = 0
-
-        if self.visualize:
-            imgs = imgs.permute((0, 2, 3, 1))
-            imgs = imgs * 255.0
-            imgs = torch.round(imgs)
-            imgs = imgs.int()
-            return imgs
-
         imgs = F.normalize(imgs, mean=self.mean, std=self.stddev)
 
         return imgs
@@ -169,7 +80,6 @@ class Dataset(torch.utils.data.Dataset):
         epochs=None,
         mean=(0.0, 0.0, 0.0),
         stddev=(1.0, 1.0, 1.0),
-        variance=VARIANCE,
         noise=True,
     ):
         self.paths = paths
@@ -177,7 +87,6 @@ class Dataset(torch.utils.data.Dataset):
         self.transforms = Transforms(
             mean=mean,
             stddev=stddev,
-            variance=variance,
             noise=noise,
         )
         self.transforms = torch.jit.script(self.transforms)
@@ -259,10 +168,6 @@ class Dataset(torch.utils.data.Dataset):
         target, paths_index = self.mapping[index]
         path = self.paths[target][paths_index]
 
-        # if path not in CACHE:
-        #     CACHE[path] = cv2.imread(path)
-        # img = CACHE[path]
-
         raw = cv2.imread(path)
 
         h, w, c = raw.shape
@@ -303,7 +208,6 @@ class Trainer:
         optimizer: torch.optim.Optimizer,
         save: str,
         samples: int = 3,
-        rebase=False,
         log_dir=None,
     ) -> None:
         self.data = data
@@ -317,26 +221,22 @@ class Trainer:
         self.loss = None
         self.metric = None
 
-        self.scaler = torch.cuda.amp.GradScaler()
-
+        self.scaler = torch.amp.GradScaler()
         self.gpu_id = int(os.environ['LOCAL_RANK'])
         self.reporter = self.gpu_id == 0
 
         # Send to device
-        self.model = self.model.to(f'cuda:{self.gpu_id}')
-        self.data.train.dataset.transforms = self.data.train.dataset.transforms.to(
-            f'cuda:{self.gpu_id}'
-        )
-        self.data.val.dataset.transforms = self.data.val.dataset.transforms.to(
-            f'cuda:{self.gpu_id}'
-        )
-        self.weights = self.data.train.dataset.weights.to(f'cuda:{self.gpu_id}')
+        self.device = f'cuda:{self.gpu_id}'
+        self.model = self.model.to(self.device)
+        self.data.train.dataset.transforms = self.data.train.dataset.transforms.to(self.device)
+        self.data.val.dataset.transforms = self.data.val.dataset.transforms.to(self.device)
+        self.weights = self.data.train.dataset.weights.to(self.device)
 
         # Load save
-        self._load_save(rebase)
+        self._load_save()
 
         # Setup DDP
-        self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=[self.gpu_id])
+        self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=[self.device])
 
         # Setup Tensorboard
         if self.reporter:
@@ -362,12 +262,12 @@ class Trainer:
             f'to {self.save}'
         )
 
-    def _load_save(self, rebase=False):
+    def _load_save(self):
         if not os.path.exists(self.save):
             return
 
         print(f'Loading from {self.save}')
-        data = torch.load(self.save, map_location=f'cuda:{self.gpu_id}')
+        data = torch.load(self.save, map_location=self.device)
 
         state = data.get('state', None)
         if state:
@@ -377,14 +277,9 @@ class Trainer:
             assert self.data.labels == sorted(labels.values())
         self.epoch = data.get('epoch', 0)
 
-        if rebase:
-            print('Rebasing loss and metric')
-            self.loss = np.inf
-            self.metric = -np.inf
-        else:
-            print('Loaded previous loss and metric')
-            self.loss = data.get('loss', None)
-            self.metric = data.get('metric', None)
+        print('Loaded previous loss and metric')
+        self.loss = data.get('loss', None)
+        self.metric = data.get('metric', None)
 
         print(
             f'[G{self.gpu_id}] Resuming from epoch {self.epoch} '
@@ -405,8 +300,8 @@ class Trainer:
         return outputs, loss
 
     def _run_forward(self, inputs, targets, transform_func):
-        inputs = inputs.to(f'cuda:{self.gpu_id}', non_blocking=True)
-        targets = targets.to(f'cuda:{self.gpu_id}', non_blocking=True)
+        inputs = inputs.to(self.device, non_blocking=True)
+        targets = targets.to(self.device, non_blocking=True)
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=UserWarning)
@@ -505,7 +400,7 @@ class Trainer:
     def _get_lr(self):
         return self.optimizer.param_groups[0]['lr']
 
-    def train(self, epochs: int, keep='metric', point=METRIC_SATURATION_POINT):
+    def train(self, epochs=20, keep='metric', point=1.0):
         max_epochs = self.epoch + epochs
 
         capture = io.StringIO()
@@ -562,15 +457,14 @@ def load_paths(path):
 def load_data(
     path,
     labels,
-    batch,
-    workers,
-    prefetch,
-    ratio,
-    epochs,
+    batch=16,
+    workers=4,
+    prefetch=2,
+    ratio=10,
+    epochs=20,
     sample=True,
     mean=(0.0, 0.0, 0.0),
     stddev=(1.0, 1.0, 1.0),
-    variance=VARIANCE,
     noise=True,
 ):
     paths = {index: load_paths(f'{path}/{label}/') for index, label in enumerate(labels)}
@@ -581,7 +475,6 @@ def load_data(
         epochs=epochs,
         mean=mean,
         stddev=stddev,
-        variance=variance,
         noise=noise,
     )
 
@@ -602,7 +495,7 @@ def load_data(
     return data
 
 
-def main(args):
+def main():
     from datetime import datetime
 
     torch.distributed.init_process_group(backend='nccl')
@@ -612,63 +505,41 @@ def main(args):
         labels += [temp.name for temp in Path(f'{tag}').iterdir() if temp.is_dir()]
     labels = sorted(set(labels))
 
-    mean = list(map(float, args.mean.strip().split(',')))
-    stddev = list(map(float, args.stddev.strip().split(',')))
+    mean = [0.0932, 0.0255, 0.0512]
+    stddev = [0.1057, 0.0543, 0.1170]
 
     data = Data(
         labels=labels,
         train=load_data(
             'train',
             labels,
-            args.batch,
-            args.workers,
-            args.prefetch,
-            args.ratio,
-            args.epochs,
             mean=mean,
             stddev=stddev,
-            variance=args.variance,
-            noise=not args.denoise,
+            noise=True,
         ),
         val=load_data(
             'val',
             labels,
-            args.batch,
-            args.workers,
-            args.prefetch,
-            args.ratio,
-            args.epochs,
             sample=False,
             mean=mean,
             stddev=stddev,
-            variance=args.variance,
             noise=False,
         ),
     )
 
-    if True:
-        model = torchvision.models.vit_b_16(
-            weights=torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1
-        )
-        model.heads = torch.nn.Sequential(
-            torch.nn.Linear(768, len(labels)),
-        )
-    else:
-        model = torchvision.models.mobilenet_v3_large(
-            weights=torchvision.models.MobileNet_V3_Large_Weights.IMAGENET1K_V2
-        )
-        model.classifier = torch.nn.Sequential(
-            torch.nn.Linear(960, args.complexity),
-            torch.nn.Hardswish(inplace=True),
-            torch.nn.Dropout(p=0.2, inplace=True),
-            torch.nn.Linear(args.complexity, len(labels)),
-        )
+    model = torchvision.models.mobilenet_v3_large(
+        weights=torchvision.models.MobileNet_V3_Large_Weights.IMAGENET1K_V2
+    )
+    model.classifier = torch.nn.Sequential(
+        torch.nn.Linear(960, 64),
+        torch.nn.Hardswish(inplace=True),
+        torch.nn.Dropout(p=0.2, inplace=True),
+        torch.nn.Linear(64, len(labels)),
+    )
 
+    lr = 1e-3
     criterion = torch.nn.functional.cross_entropy
-    if args.adam:
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-5)
-    else:
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
 
     saves = 'save.pth'
 
@@ -678,7 +549,7 @@ def main(args):
     trainer = Trainer(data, model, criterion, optimizer, saves, log_dir=log_dir)
 
     try:
-        trainer.train(args.epochs)
+        trainer.train()
     except (Exception, KeyboardInterrupt):
         raise
     finally:
@@ -689,48 +560,6 @@ def main(args):
 
 if __name__ == '__main__':
     """
-    OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=1 trainer.py
-
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --adam --lr=0.01 --rebase
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --adam --lr=0.001
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --lr=0.01 --rebase
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --lr=0.001 --denoise
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --lr=0.0001 --denoise
-
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --epochs=200 --batch=512 --adam --lr=0.001 --rebase
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --epochs=200 --batch=512 --lr=0.01 --rebase
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --epochs=200 --batch=512 --lr=0.001 --denoise
-
-    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu trainer.py --epochs=200 --batch=512 --adam --lr=0.001 --denoise --rebase
-
-    TODO:
-    - compare to 600x300 resized
-    - add time masks
-    - add frequency masks
-    - add time dilations
+    CUDA_VISIBLE_DEVICES=0,1,2,3 OMP_NUM_THREADS=1 torchrun --standalone --nproc_per_node=gpu mlflow.py
     """  # noqa: E501
-    import argparse
-
-    parser = argparse.ArgumentParser(description='simple distributed training job')
-    parser.add_argument('--lr', default=1e-3, type=float, help='Learning rate')
-    parser.add_argument('--epochs', default=50, type=int, help='Total epochs to train the model')
-    parser.add_argument('--batch', default=256, type=int, help='Input batch size on each device')
-    parser.add_argument('--workers', default=8, type=int, help='Number of data loader workers')
-    parser.add_argument('--prefetch', default=2, type=int, help='Number of batches to pre-fetch')
-    parser.add_argument(
-        '--ratio', default=10000, type=int, help='Ratio of dataset sampling, defaults to 100'
-    )
-    parser.add_argument('--mean', default='0.0932,0.0255,0.0512', type=str, help='Pixel mean')
-    parser.add_argument(
-        '--stddev', default='0.1057,0.0543,0.1170', type=str, help='Pixel standard deviation'
-    )
-    parser.add_argument('--variance', default=VARIANCE, type=float, help='Jitter variance')
-    parser.add_argument('--complexity', default=64, type=int, help='Model complexity')
-    parser.add_argument('--adam', action='store_true', help='Use Adam over SGD')
-    parser.add_argument('--denoise', action='store_true', help='Turn off augmentation noise')
-    parser.add_argument(
-        '--rebase', action='store_true', help='Ignore previous best model performance'
-    )
-    args = parser.parse_args()
-
-    main(args)
+    main()

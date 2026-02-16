@@ -4,11 +4,11 @@ from pathlib import Path
 import pickle
 
 import cv2
+import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import onnx
 from sklearn import metrics
-import matplotlib.patches as patches
 import torch
 import tqdm
 
@@ -148,40 +148,38 @@ def worker(inputs):
 
 
 def shade_regions(display, ax, plot):
-    regions = sorted(set([value[:2] for value in display]))
+    regions = sorted({value[:2] for value in display})
     color = (1.0, 0.0, 0.0, 0.2)
     errors = 0
     for region in regions:
-        indices = [
-            index
-            for index, value in enumerate(display)
-            if value[:2] == region
-        ]
+        indices = [index for index, value in enumerate(display) if value[:2] == region]
         min_index = min(indices)
         max_index = max(indices)
 
         if min_index > 0:
-            errors += plot.confusion_matrix[min_index:min_index + len(indices), :min_index].sum()
+            errors += plot.confusion_matrix[min_index : min_index + len(indices), :min_index].sum()
 
             rect = patches.Rectangle(
-                (0 - 0.48, min_index - 0.52), 
-                min_index, 
-                len(indices), 
-                linewidth=1, 
-                edgecolor='none', 
+                (0 - 0.48, min_index - 0.52),
+                min_index,
+                len(indices),
+                linewidth=1,
+                edgecolor='none',
                 facecolor=color,
             )
             ax.add_patch(rect)
 
         if max_index < len(display) - 1:
-            errors += plot.confusion_matrix[min_index:min_index + len(indices), max_index + 1:].sum()
+            errors += plot.confusion_matrix[
+                min_index : min_index + len(indices), max_index + 1 :
+            ].sum()
 
             rect = patches.Rectangle(
-                (max_index + 1 - 0.48, max_index + 1 - len(indices) - 0.52), 
-                len(display) - max_index - 1, 
-                len(indices), 
-                linewidth=1, 
-                edgecolor='none', 
+                (max_index + 1 - 0.48, max_index + 1 - len(indices) - 0.52),
+                len(display) - max_index - 1,
+                len(indices),
+                linewidth=1,
+                edgecolor='none',
                 facecolor=color,
             )
             ax.add_patch(rect)

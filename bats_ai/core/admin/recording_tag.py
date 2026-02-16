@@ -18,8 +18,9 @@ class RecordingTagAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.annotate(_recording_count=Count('recording'))
 
+    @admin.display(
+        description='Number of recordings',
+        ordering='_recording_count',
+    )
     def recording_count(self, obj):
         return obj._recording_count
-
-    recording_count.short_description = 'Number of recordings'
-    recording_count.admin_order_field = '_recording_count'

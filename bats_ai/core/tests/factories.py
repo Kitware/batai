@@ -20,7 +20,6 @@ class SuperuserFactory(UserFactory):
 
 
 class VettingDetailsFactory(factory.django.DjangoModelFactory[VettingDetails]):
-
     class Meta:
         model = VettingDetails
 

@@ -7,11 +7,13 @@ import random
 from PIL import Image
 import cv2
 import librosa
-import soundfile as sf
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
+import soundfile as sf
 import tqdm
+
+# brew install rubberband
 
 FREQ_MIN = 5e3
 FREQ_MAX = 120e3
@@ -19,8 +21,6 @@ FREQ_PAD = 2e3
 
 WORKERS = 8
 
-# brew install rubberband
-# pip install tqdm scipy numpy matplotlib opencv-python-headless pillow ipython librosa soundfile samplerate resampy scikit-maad
 
 def parallel(
     func,
@@ -253,10 +253,7 @@ def compute(wav_filepath, spectrogram_filepath):
         width = img.shape[1]
         for start, stop in ranges:
             segment = img[:, start:stop]
-            percents.append((
-                start / width,
-                stop / width
-            ))
+            percents.append((start / width, stop / width))
             segments.append(segment)
             # buffer = np.zeros((len(img), 20, 3), dtype=img.dtype)
             # segments.append(buffer)
@@ -283,7 +280,7 @@ def compute(wav_filepath, spectrogram_filepath):
     for start, stop in percents:
         start_ = (int(np.around(width * start)) // 2) * 2
         stop_ = (int(np.around(width * stop)) // 2) * 2
-        audios.append(original[:, start_: stop_])
+        audios.append(original[:, start_:stop_])
     audios = np.hstack(audios)
 
     waveform = librosa.istft(audios, n_fft=size, window='hamming')

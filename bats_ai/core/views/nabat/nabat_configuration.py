@@ -61,9 +61,9 @@ class RecordingFilterSchema(Schema):
     bbox: list[float] | None = None  # [minX, minY, maxX, maxY]
     location: tuple[float, float] | None = None  # (lat, lon)
     radius: float | None = None  # meters
-    sort_by: Literal['created', 'annotation_count', 'survey_event_id', 'recording_id'] | None = (
-        'created'  # default sort field
-    )
+    sort_by: Literal[  # noqa: BLK100
+        'created', 'annotation_count', 'survey_event_id', 'recording_id'
+    ] | None = 'created'  # default sort field
     sort_direction: Literal['asc', 'desc'] | None = 'desc'  # 'asc' or 'desc'
 
 
