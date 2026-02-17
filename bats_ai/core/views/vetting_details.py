@@ -20,11 +20,6 @@ class UpdateVettingDetailsSchema(Schema):
 
 @router.get('/user/{user_id}', response=VettingDetailsSchema)
 def get_vetting_details_for_user(request: HttpRequest, user_id: int):
-    details = VettingDetails.objects.filter(user_id=user_id).first()
-
-    if not details:  # Ensure we return a consistent schema even if no details exist
-        return {'id': None, 'user_id': user_id, 'reference_materials': ''}
-
     if not (user_id == request.user.pk or request.user.is_superuser):
         # Don't leak user IDs, prefer to return a 404 over a 403
         raise Http404
