@@ -568,9 +568,11 @@ def get_unsubmitted_neighbors(
 
     sort_by = q.sort_by or 'created'
     sort_direction = q.sort_direction or 'desc'
-    ids = _unsubmitted_recording_ids_ordered(
+    raw_ids = _unsubmitted_recording_ids_ordered(
         request, sort_by=sort_by, sort_direction=sort_direction, tags=q.tags
     )
+    # One entry per recording, order preserved (my + shared can duplicate ids)
+    ids = list(dict.fromkeys(int(x) for x in raw_ids))
 
     try:
         idx = ids.index(current_id)
@@ -578,8 +580,14 @@ def get_unsubmitted_neighbors(
         # Current not in unsubmitted list (e.g. already submitted)
         return UnsubmittedNeighborsResponse(next_id=None, previous_id=None)
 
-    next_id = ids[idx + 1] if idx + 1 < len(ids) else None
-    previous_id = ids[idx - 1] if idx - 1 >= 0 else None
+    n = len(ids)
+    if n > 1:
+        # Wrap: at last -> next is first; at first -> previous is last
+        next_id = ids[(idx + 1) % n]
+        previous_id = ids[(idx - 1) % n]
+    else:
+        next_id = None
+        previous_id = None
     return UnsubmittedNeighborsResponse(next_id=next_id, previous_id=previous_id)
 
 
