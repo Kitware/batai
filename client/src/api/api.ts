@@ -611,7 +611,7 @@ async function getExportStatus(exportId: number) {
 }
 
 export interface VettingDetails {
-  id: number | null;
+  id: number;
   user_id: number;
   reference_materials: string;
 }
