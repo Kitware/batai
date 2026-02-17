@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, time
 import json
 import logging
 from typing import Any, Literal
@@ -67,13 +67,6 @@ class RecordingListQuerySchema(Schema):
     limit: int = 20
 
 
-class RecordingPaginatedResponse(Schema):
-    """Response for paginated recording list (v-data-table-server compatible)."""
-
-    items: list[dict[str, Any]]
-    count: int
-
-
 class UnsubmittedNeighborsQuerySchema(Schema):
     """Query params for unsubmitted neighbors (next/previous recording IDs)."""
 
@@ -132,6 +125,44 @@ class RecordingAnnotationSchema(Schema):
             hasDetails=obj.additional_data is not None,
             submitted=obj.submitted,
         )
+
+
+class RecordingListItemSchema(Schema):
+    """Schema for a single recording in the paginated list response."""
+
+    id: int
+    name: str
+    audio_file: str
+    owner_id: int
+    recorded_date: date | None
+    recorded_time: time | None
+    equipment: str | None
+    comments: str | None
+    recording_location: dict[str, Any] | None
+    grts_cell_id: int | None
+    grts_cell: int | None
+    public: bool
+    created: datetime
+    modified: datetime
+    software: str | None
+    detector: str | None
+    species_list: str | None
+    site_name: str | None
+    unusual_occurrences: str | None
+    tags_text: list[str] | None
+    owner_username: str
+    audio_file_presigned_url: str
+    hasSpectrogram: bool
+    userAnnotations: int
+    userMadeAnnotations: bool
+    fileAnnotations: list[RecordingAnnotationSchema]
+
+
+class RecordingPaginatedResponse(Schema):
+    """Response for paginated recording list (v-data-table-server compatible)."""
+
+    items: list[RecordingListItemSchema]
+    count: int
 
 
 class AnnotationSchema(Schema):
@@ -316,45 +347,48 @@ def _build_recordings_response(
     page_recordings: list[Recording],
     annotation_counts: dict[int, int],
     user_has_annotations_ids: set[int],
-) -> list[dict]:
-    items = []
+) -> list[RecordingListItemSchema]:
+    items: list[RecordingListItemSchema] = []
     for rec in page_recordings:
         if rec.recording_location:
             location = json.loads(rec.recording_location.json)
         else:
             location = rec.recording_location
+        raw_tags = getattr(rec, 'tags_text', None)
+        # filter out None values
+        tags_text = [t for t in (raw_tags or []) if t is not None]
         items.append(
-            {
-                'id': rec.id,
-                'name': rec.name,
-                'audio_file': str(rec.audio_file),
-                'owner_id': rec.owner_id,
-                'recorded_date': rec.recorded_date,
-                'recorded_time': rec.recorded_time,
-                'equipment': rec.equipment,
-                'comments': rec.comments,
-                'recording_location': location,
-                'grts_cell_id': rec.grts_cell_id,
-                'grts_cell': rec.grts_cell,
-                'public': rec.public,
-                'created': rec.created,
-                'modified': rec.modified,
-                'software': rec.software,
-                'detector': rec.detector,
-                'species_list': rec.species_list,
-                'site_name': rec.site_name,
-                'unusual_occurrences': rec.unusual_occurrences,
-                'tags_text': getattr(rec, 'tags_text', None),
-                'owner_username': rec.owner.username,
-                'audio_file_presigned_url': default_storage.url(rec.audio_file.name),
-                'hasSpectrogram': rec.has_spectrogram_attr,
-                'userAnnotations': annotation_counts.get(rec.id, 0),
-                'userMadeAnnotations': rec.id in user_has_annotations_ids,
-                'fileAnnotations': [
-                    RecordingAnnotationSchema.from_orm(fa).dict()
+            RecordingListItemSchema(
+                id=rec.id,
+                name=rec.name,
+                audio_file=str(rec.audio_file),
+                owner_id=rec.owner_id,
+                recorded_date=rec.recorded_date,
+                recorded_time=rec.recorded_time,
+                equipment=rec.equipment,
+                comments=rec.comments,
+                recording_location=location,
+                grts_cell_id=rec.grts_cell_id,
+                grts_cell=rec.grts_cell,
+                public=rec.public,
+                created=rec.created,
+                modified=rec.modified,
+                software=rec.software,
+                detector=rec.detector,
+                species_list=rec.species_list,
+                site_name=rec.site_name,
+                unusual_occurrences=rec.unusual_occurrences,
+                tags_text=tags_text,
+                owner_username=rec.owner.username,
+                audio_file_presigned_url=default_storage.url(rec.audio_file.name),
+                hasSpectrogram=rec.has_spectrogram_attr,
+                userAnnotations=annotation_counts.get(rec.id, 0),
+                userMadeAnnotations=rec.id in user_has_annotations_ids,
+                fileAnnotations=[
+                    RecordingAnnotationSchema.from_orm(fa)
                     for fa in rec.recordingannotation_set.all()
                 ],
-            }
+            )
         )
     return items
 
