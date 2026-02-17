@@ -354,9 +354,6 @@ def _build_recordings_response(
             location = json.loads(rec.recording_location.json)
         else:
             location = rec.recording_location
-        raw_tags = getattr(rec, 'tags_text', None)
-        # filter out None values
-        tags_text = [t for t in (raw_tags or []) if t is not None]
         items.append(
             RecordingListItemSchema(
                 id=rec.id,
@@ -378,7 +375,7 @@ def _build_recordings_response(
                 species_list=rec.species_list,
                 site_name=rec.site_name,
                 unusual_occurrences=rec.unusual_occurrences,
-                tags_text=tags_text,
+                tags_text=getattr(rec, 'tags_text', None),
                 owner_username=rec.owner.username,
                 audio_file_presigned_url=default_storage.url(rec.audio_file.name),
                 hasSpectrogram=rec.has_spectrogram_attr,
