@@ -27,7 +27,7 @@ export default defineComponent({
         limit: 20,
         sort_by: 'created',
         sort_direction: 'desc',
-        ...(excludeSubmitted ? { exclude_submitted: true } : {}),
+        exclude_submitted: excludeSubmitted,
       };
     };
 
