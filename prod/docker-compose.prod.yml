@@ -69,6 +69,7 @@ services:
         BUILD_ENV: ${BUILD_ENV:-prod}
     command: [
       "uv", "run",
+      "--extra", "tasks",
       "celery",
       "--app", "bats_ai.celery",
       "worker",
