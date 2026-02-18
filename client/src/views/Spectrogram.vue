@@ -749,7 +749,7 @@ export default defineComponent({
                   <v-btn
                     flat
                     color="primary"
-                    :disabled="previousUnsubmittedId == null"
+                    :disabled="previousUnsubmittedId == null || loading"
                     @click="goToPreviousUnreviewed"
                   >
                     Prev
@@ -763,7 +763,7 @@ export default defineComponent({
                   <v-btn
                     flat
                     color="primary"
-                    :disabled="nextUnsubmittedId == null"
+                    :disabled="nextUnsubmittedId == null || loading"
                     @click="goToNextUnreviewed"
                   >
                     Next
