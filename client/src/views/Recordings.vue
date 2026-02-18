@@ -168,6 +168,14 @@ export default defineComponent({
     watch(showSubmittedRecordings, () => {
       fetchMyRecordings(lastMyOptions.value);
       fetchSharedRecordings(lastSharedOptions.value);
+      if (!showSubmittedRecordings.value) {
+        sharedHeaders.value = sharedHeaders.value.filter((header) => header.key !== 'submittedLabel');
+        headers.value = headers.value.filter((header) => header.key !== 'submittedLabel');
+      } else {
+        const submittedLabelHeader = { title: 'My Submitted Label', key: 'submittedLabel', value: 'submittedLabel' };
+        sharedHeaders.value.push(submittedLabelHeader);
+        headers.value.push(submittedLabelHeader);
+      }
     });
 
     const fetchRecordingTags = async () => {
@@ -190,8 +198,9 @@ export default defineComponent({
       }
       return userAnnotations.length ? 0 : -1;
     }
+    
 
-    function currentUserSubmission(recording: Recording) {
+    function currentUserSubmissionLabel(recording: Recording) {
       const userSubmittedAnnotation = recording.fileAnnotations.find((annotation: FileAnnotation) => (
         annotation.owner === currentUser.value && annotation.submitted
       ));
@@ -202,8 +211,12 @@ export default defineComponent({
       if (configuration.value.mark_annotations_completed_enabled) {
         const submittedHeader = { title: 'Submission Status', key: 'submitted', value: 'submitted' };
         const myLabelHeader = { title: 'My Submitted Label', key: 'submittedLabel', value: 'submittedLabel' };
-        headers.value.push(submittedHeader, myLabelHeader);
-        sharedHeaders.value.push(submittedHeader, myLabelHeader);
+        headers.value.push(submittedHeader);
+        sharedHeaders.value.push(submittedHeader);
+        if (showSubmittedRecordings.value) {
+          headers.value.push(myLabelHeader);
+          sharedHeaders.value.push(myLabelHeader);
+        } 
       }
     }
 
@@ -318,7 +331,7 @@ export default defineComponent({
         editingRecording,
         myRecordingsLoading,
         sharedRecordingsLoading,
-        currentUserSubmission,
+        currentUserSubmissionLabel,
         currentUserSubmissionStatus,
         configuration,
         myRecordingListStyles,
@@ -578,6 +591,12 @@ export default defineComponent({
             You have not created an annotation for this recording
           </v-tooltip>
         </template>
+        <template
+          v-if="configuration.mark_annotations_completed_enabled && showSubmittedRecordings"
+          #item.submittedLabel="{ item }"
+        >
+          {{ currentUserSubmissionLabel(item) }}
+        </template>
       </v-data-table-server>
       <div
         v-if="
@@ -772,6 +791,12 @@ export default defineComponent({
             </template>
             You have not created an annotation for this recording
           </v-tooltip>
+        </template>
+        <template
+          v-if="configuration.mark_annotations_completed_enabled && showSubmittedRecordings"
+          #item.submittedLabel="{ item }"
+        >
+          {{ currentUserSubmissionLabel(item) }}
         </template>
       </v-data-table-server>
       <div
