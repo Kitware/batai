@@ -216,7 +216,6 @@ export default defineComponent({
         otherUserAnnotations.value = otherResponse.data;
         createColorScale(Object.keys(otherUserAnnotations.value));
       }
-      loading.value = false;
 
       if (configuration.value.mark_annotations_completed_enabled) {
         try {
@@ -234,6 +233,7 @@ export default defineComponent({
         nextUnsubmittedId.value = null;
         previousUnsubmittedId.value = null;
       }
+      loading.value = false;
     };
     const setSelection = (annotationId: number) => {
       selectedId.value = annotationId;
