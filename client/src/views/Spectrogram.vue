@@ -19,6 +19,7 @@ import {
   getOtherUserAnnotations,
   getSequenceAnnotations,
   getUnsubmittedNeighbors,
+  getRecording,
 } from "../api/api";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
@@ -87,6 +88,8 @@ export default defineComponent({
       clearContours,
       currentRecordingId,
       viewMaskOverlay,
+      filterTags,
+      sharedFilterTags,
     } = useState();
     const {
       clearPulseMetadata,
@@ -219,9 +222,17 @@ export default defineComponent({
 
       if (configuration.value.mark_annotations_completed_enabled) {
         try {
+          const currentRecording = await getRecording(props.id);
+          let tags = [];
+          if (currentRecording.data.owner_username === currentUser.value) {
+            tags = filterTags.value;
+          } else {
+            tags = sharedFilterTags.value;
+          }
           const neighborsRes = await getUnsubmittedNeighbors(parseInt(props.id, 10), {
             sort_by: 'created',
             sort_direction: 'desc',
+            tags: tags,
           });
           nextUnsubmittedId.value = neighborsRes.data.next_id;
           previousUnsubmittedId.value = neighborsRes.data.previous_id;
