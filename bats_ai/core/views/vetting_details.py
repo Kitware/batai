@@ -9,7 +9,7 @@ router = RouterPaginated()
 
 
 class VettingDetailsSchema(Schema):
-    id: int
+    id: int | None  # Allow null for cases where no details exist
     user_id: int
     reference_materials: str
 

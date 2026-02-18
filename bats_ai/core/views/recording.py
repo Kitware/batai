@@ -1,15 +1,15 @@
-from datetime import datetime
+from datetime import date, datetime, time
 import json
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
-from django.db.models import Q
+from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
 from django.http import HttpRequest
-from ninja import File, Form, Schema
+from ninja import File, Form, Query, Schema
 from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
@@ -22,6 +22,7 @@ from bats_ai.core.models import (
     RecordingTag,
     SequenceAnnotations,
     Species,
+    Spectrogram,
 )
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 from bats_ai.core.views.recording_tag import RecordingTagSchema
@@ -48,6 +49,40 @@ class RecordingSchema(Schema):
     grts_cell_id: int | None
     grts_cell: int | None
     tags: list[RecordingTagSchema] = []
+
+
+class RecordingListQuerySchema(Schema):
+    """Query params for paginated recording list (v-data-table-server compatible)."""
+
+    public: bool | None = None
+    exclude_submitted: bool | None = None
+    annotation_completed: bool | None = None
+    search: str | None = None
+    tags: str | None = None  # Comma-separated tag texts; recording must have all listed tags
+    sort_by: (
+        Literal['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'] | None
+    ) = 'created'
+    sort_direction: Literal['asc', 'desc'] | None = 'desc'
+    page: int = 1
+    limit: int = 20
+
+
+class UnsubmittedNeighborsQuerySchema(Schema):
+    """Query params for unsubmitted neighbors (next/previous recording IDs)."""
+
+    current: int
+    sort_by: (
+        Literal['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'] | None
+    ) = 'created'
+    sort_direction: Literal['asc', 'desc'] | None = 'desc'
+    tags: str | None = None  # Comma-separated tag texts; recording must have all listed tags
+
+
+class UnsubmittedNeighborsResponse(Schema):
+    """Response for unsubmitted neighbors: next and previous recording IDs in the vetting order."""
+
+    next_id: int | None
+    previous_id: int | None
 
 
 class RecordingUploadSchema(Schema):
@@ -90,6 +125,44 @@ class RecordingAnnotationSchema(Schema):
             hasDetails=obj.additional_data is not None,
             submitted=obj.submitted,
         )
+
+
+class RecordingListItemSchema(Schema):
+    """Schema for a single recording in the paginated list response."""
+
+    id: int
+    name: str
+    audio_file: str
+    owner_id: int
+    recorded_date: date | None
+    recorded_time: time | None
+    equipment: str | None
+    comments: str | None
+    recording_location: dict[str, Any] | None
+    grts_cell_id: int | None
+    grts_cell: int | None
+    public: bool
+    created: datetime
+    modified: datetime
+    software: str | None
+    detector: str | None
+    species_list: str | None
+    site_name: str | None
+    unusual_occurrences: str | None
+    tags_text: list[str] | None
+    owner_username: str
+    audio_file_presigned_url: str
+    hasSpectrogram: bool
+    userAnnotations: int
+    userMadeAnnotations: bool
+    fileAnnotations: list[RecordingAnnotationSchema]
+
+
+class RecordingPaginatedResponse(Schema):
+    """Response for paginated recording list (v-data-table-server compatible)."""
+
+    items: list[RecordingListItemSchema]
+    count: int
 
 
 class AnnotationSchema(Schema):
@@ -253,20 +326,80 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
         recording.species_list = recording_data.species_list
     if recording_data.unusual_occurrences:
         recording.unusual_occurrences = recording_data.unusual_occurrences
-    if recording_data.tags:
-        existing_tags = recording.tags.all()
-        for tag in recording_data.tags:
-            tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=tag)
+    if recording_data.tags is not None:
+        existing_tags = list(recording.tags.all())
+        new_tag_texts = set(recording_data.tags)
+        for tag_text in recording_data.tags:
+            tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=tag_text)
             if tag not in existing_tags:
                 recording.tags.add(tag)
-        # Remove any tags that are not in the updated list
         for existing_tag in existing_tags:
-            if existing_tag.text not in recording_data.tags:
+            if existing_tag.text not in new_tag_texts:
                 recording.tags.remove(existing_tag)
 
     recording.save()
 
     return {'message': 'Recording updated successfully', 'id': recording.pk}
+
+
+def _build_recordings_response(
+    request: HttpRequest,
+    page_recordings: list[Recording],
+    annotation_counts: dict[int, int],
+    user_has_annotations_ids: set[int],
+) -> list[RecordingListItemSchema]:
+    items: list[RecordingListItemSchema] = []
+    for rec in page_recordings:
+        if rec.recording_location:
+            location = json.loads(rec.recording_location.json)
+        else:
+            location = rec.recording_location
+        items.append(
+            RecordingListItemSchema(
+                id=rec.id,
+                name=rec.name,
+                audio_file=str(rec.audio_file),
+                owner_id=rec.owner_id,
+                recorded_date=rec.recorded_date,
+                recorded_time=rec.recorded_time,
+                equipment=rec.equipment,
+                comments=rec.comments,
+                recording_location=location,
+                grts_cell_id=rec.grts_cell_id,
+                grts_cell=rec.grts_cell,
+                public=rec.public,
+                created=rec.created,
+                modified=rec.modified,
+                software=rec.software,
+                detector=rec.detector,
+                species_list=rec.species_list,
+                site_name=rec.site_name,
+                unusual_occurrences=rec.unusual_occurrences,
+                tags_text=getattr(rec, 'tags_text', None),
+                owner_username=rec.owner.username,
+                audio_file_presigned_url=default_storage.url(rec.audio_file.name),
+                hasSpectrogram=rec.has_spectrogram_attr,
+                userAnnotations=annotation_counts.get(rec.id, 0),
+                userMadeAnnotations=rec.id in user_has_annotations_ids,
+                fileAnnotations=[
+                    RecordingAnnotationSchema.from_orm(fa)
+                    for fa in rec.recordingannotation_set.all()
+                ],
+            )
+        )
+    return items
+
+
+def _base_recordings_queryset(request: HttpRequest, public: bool | None) -> QuerySet[Recording]:
+    if public is not None and public:
+        return (
+            Recording.objects.filter(public=True)
+            .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
+            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
+        )
+    return Recording.objects.filter(owner=request.user).annotate(
+        tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False))
+    )
 
 
 @router.delete('/{id}')
@@ -293,64 +426,169 @@ def delete_recording(
         return {'error': 'Annotation not found'}
 
 
-@router.get('/')
+@router.get('/', response=RecordingPaginatedResponse)
 def get_recordings(
-    request: HttpRequest, public: bool | None = None, exclude_submitted: bool | None = None
+    request: HttpRequest,
+    q: Query[RecordingListQuerySchema],
 ):
-    # Filter recordings based on the owner's id or public=True
-    if public is not None and public:
-        recordings = (
-            Recording.objects.filter(public=True)
-            .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
-            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
-            .values()
+    queryset = _base_recordings_queryset(request, q.public)
+
+    if q.exclude_submitted:
+        submitted_by_user = RecordingAnnotation.objects.filter(
+            owner=request.user, submitted=True
+        ).values_list('recording_id', flat=True)
+        queryset = queryset.exclude(pk__in=submitted_by_user)
+
+    if q.annotation_completed is not None:
+        has_submitted = RecordingAnnotation.objects.filter(submitted=True).values_list(
+            'recording_id', flat=True
         )
+        if q.annotation_completed:
+            queryset = queryset.filter(pk__in=has_submitted)
+        else:
+            queryset = queryset.exclude(pk__in=has_submitted)
+
+    if q.search and q.search.strip():
+        search = q.search.strip()
+        search_q = (
+            Q(name__icontains=search)
+            | Q(comments__icontains=search)
+            | Q(equipment__icontains=search)
+            | Q(site_name__icontains=search)
+            | Q(tags__text__icontains=search)
+        )
+        queryset = queryset.filter(search_q).distinct()
+
+    if q.tags and q.tags.strip():
+        tag_list = [t.strip() for t in q.tags.split(',') if t.strip()]
+        if tag_list:
+            for tag in tag_list:
+                queryset = queryset.filter(tags__text=tag)
+            queryset = queryset.distinct()
+
+    sort_field = q.sort_by or 'created'
+    order_prefix = '' if q.sort_direction == 'asc' else '-'
+    if sort_field == 'owner_username':
+        queryset = queryset.order_by(f'{order_prefix}owner__username')
     else:
-        recordings = (
-            Recording.objects.filter(owner=request.user)
-            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
-            .values()
-        )
+        queryset = queryset.order_by(f'{order_prefix}{sort_field}')
 
-    # TODO with larger dataset it may be better to do this in a queryset instead of python
-    for recording in recordings:
-        user = User.objects.get(id=recording['owner_id'])
-        fileAnnotations = RecordingAnnotation.objects.filter(recording=recording['id'])
-        recording['fileAnnotations'] = [
-            RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
-            for fileAnnotation in fileAnnotations
+    # Annotate has_spectrogram in SQL to avoid one query per recording
+    queryset = queryset.annotate(
+        has_spectrogram_attr=Exists(Spectrogram.objects.filter(recording=OuterRef('pk')))
+    )
+    count = queryset.count()
+    offset = (q.page - 1) * q.limit
+
+    # One query for page of recordings + owner; prefetch file annotations + species (no N+1)
+    file_annotations_prefetch = Prefetch(
+        'recordingannotation_set',
+        queryset=RecordingAnnotation.objects.prefetch_related('species').order_by('confidence'),
+    )
+    page_recordings = list(
+        queryset.select_related('owner').prefetch_related(file_annotations_prefetch)[
+            offset : offset + q.limit
         ]
-        recording['owner_username'] = user.username
-        recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
-        recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
-        if recording['recording_location']:
-            recording['recording_location'] = json.loads(recording['recording_location'].json)
-        unique_users_with_annotations = (
-            Annotations.objects.filter(recording_id=recording['id'])
-            .values('owner')
-            .distinct()
-            .count()
-        )
-        recording['userAnnotations'] = unique_users_with_annotations
-        user_has_annotations = (
-            Annotations.objects.filter(recording_id=recording['id'], owner=request.user).exists()
-            or RecordingAnnotation.objects.filter(
-                recording_id=recording['id'], owner=request.user
-            ).exists()
-        )
-        recording['userMadeAnnotations'] = user_has_annotations
+    )
 
-    if exclude_submitted:
-        recordings = [
-            recording
-            for recording in recordings
-            if not any(
-                annotation['submitted'] and annotation['owner'] == request.user.username
-                for annotation in recording['fileAnnotations']
-            )
-        ]
+    if not page_recordings:
+        return RecordingPaginatedResponse(items=[], count=count)
 
-    return list(recordings)
+    rec_ids = [r.id for r in page_recordings]
+    # Bulk: unique annotation user count per recording (Annotations table only)
+    annotation_counts = dict(
+        Annotations.objects.filter(recording_id__in=rec_ids)
+        .values('recording_id')
+        .annotate(c=Count('owner', distinct=True))
+        .values_list('recording_id', 'c')
+    )
+    # Bulk: recording IDs where request.user has any annotation (Annotations or RecordingAnnotation)
+    user_has_annotations_ids = set(
+        Annotations.objects.filter(recording_id__in=rec_ids, owner=request.user).values_list(
+            'recording_id', flat=True
+        )
+    ) | set(
+        RecordingAnnotation.objects.filter(
+            recording_id__in=rec_ids, owner=request.user
+        ).values_list('recording_id', flat=True)
+    )
+
+    items = _build_recordings_response(
+        request, page_recordings, annotation_counts, user_has_annotations_ids
+    )
+    return RecordingPaginatedResponse(items=items, count=count)
+
+
+def _unsubmitted_recording_ids_ordered(
+    request: HttpRequest,
+    sort_by: str = 'created',
+    sort_direction: str = 'desc',
+    tags: str | None = None,
+) -> list[int]:
+    submitted_by_user = RecordingAnnotation.objects.filter(
+        owner=request.user, submitted=True
+    ).values_list('recording_id', flat=True)
+
+    def apply_filters_and_sort(qs: QuerySet[Recording]) -> QuerySet[Recording]:
+        qs = qs.exclude(pk__in=submitted_by_user)
+        if tags and tags.strip():
+            tag_list = [t.strip() for t in tags.split(',') if t.strip()]
+            for tag in tag_list:
+                qs = qs.filter(tags__text=tag)
+            if tag_list:
+                qs = qs.distinct()
+        order_prefix = '' if sort_direction == 'asc' else '-'
+        if sort_by == 'owner_username':
+            qs = qs.order_by(f'{order_prefix}owner__username')
+        else:
+            qs = qs.order_by(f'{order_prefix}{sort_by}')
+        return qs
+
+    my_qs = apply_filters_and_sort(_base_recordings_queryset(request, False))
+    shared_qs = apply_filters_and_sort(_base_recordings_queryset(request, True))
+
+    my_ids = list(my_qs.values_list('id', flat=True))
+    shared_ids = list(shared_qs.values_list('id', flat=True))
+    return my_ids + shared_ids
+
+
+@router.get('/unsubmitted-neighbors/', response=UnsubmittedNeighborsResponse)
+def get_unsubmitted_neighbors(
+    request: HttpRequest,
+    q: Query[UnsubmittedNeighborsQuerySchema],
+):
+    current_id = q.current
+    # Verify user can access the current recording (owner or public)
+    try:
+        rec = Recording.objects.get(pk=current_id)
+    except Recording.DoesNotExist:
+        return UnsubmittedNeighborsResponse(next_id=None, previous_id=None)
+    if rec.owner != request.user and not rec.public:
+        return UnsubmittedNeighborsResponse(next_id=None, previous_id=None)
+
+    sort_by = q.sort_by or 'created'
+    sort_direction = q.sort_direction or 'desc'
+    raw_ids = _unsubmitted_recording_ids_ordered(
+        request, sort_by=sort_by, sort_direction=sort_direction, tags=q.tags
+    )
+    # One entry per recording, order preserved (my + shared can duplicate ids)
+    ids = list(dict.fromkeys(int(x) for x in raw_ids))
+
+    try:
+        idx = ids.index(current_id)
+    except ValueError:
+        # Current not in unsubmitted list (e.g. already submitted)
+        return UnsubmittedNeighborsResponse(next_id=None, previous_id=None)
+
+    n = len(ids)
+    if n > 1:
+        # Wrap: at last -> next is first; at first -> previous is last
+        next_id = ids[(idx + 1) % n]
+        previous_id = ids[(idx - 1) % n]
+    else:
+        next_id = None
+        previous_id = None
+    return UnsubmittedNeighborsResponse(next_id=next_id, previous_id=previous_id)
 
 
 @router.get('/{id}/')

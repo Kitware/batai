@@ -278,12 +278,84 @@ export interface RecordingTag {
   user_id: number;
 }
 
-async function getRecordings(getPublic = false) {
-  return axiosInstance.get<Recording[]>(`/recording/?public=${getPublic}`);
+/** Params for paginated recording list (v-data-table-server compatible). */
+export interface RecordingListParams {
+  public?: boolean;
+  exclude_submitted?: boolean;
+  annotation_completed?: boolean;
+  search?: string;
+  /** Filter by tags: recording must have all listed tags. Comma-separated or array. */
+  tags?: string | string[];
+  sort_by?: 'id' | 'name' | 'created' | 'modified' | 'recorded_date' | 'owner_username';
+  sort_direction?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+/** Paginated recording list response (v-data-table-server compatible). */
+export interface RecordingPaginatedResponse {
+  items: Recording[];
+  count: number;
+}
+
+async function getRecordings(getPublic = false, params?: RecordingListParams) {
+  const query = new URLSearchParams();
+  if (getPublic) {
+    query.set('public', 'true');
+  }
+  if (params) {
+    if (params.public !== undefined) query.set('public', String(params.public));
+    if (params.exclude_submitted !== undefined)
+      query.set('exclude_submitted', String(params.exclude_submitted));
+    if (params.annotation_completed !== undefined)
+      query.set('annotation_completed', String(params.annotation_completed));
+    if (params.search) query.set('search', params.search);
+    if (params.tags !== undefined) {
+      const tagStr = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
+      if (tagStr) query.set('tags', tagStr);
+    }
+    if (params.sort_by) query.set('sort_by', params.sort_by);
+    if (params.sort_direction) query.set('sort_direction', params.sort_direction);
+    if (params.page !== undefined) query.set('page', String(params.page));
+    if (params.limit !== undefined) query.set('limit', String(params.limit));
+  }
+  if (!params?.page) query.set('page', '1');
+  if (!params?.limit) query.set('limit', '20');
+  return axiosInstance.get<RecordingPaginatedResponse>(`/recording/?${query.toString()}`);
 }
 async function getRecording(id: string) {
   return axiosInstance.get<Recording>(`/recording/${id}/`);
 }
+
+export interface UnsubmittedNeighborsParams {
+  sort_by?: 'id' | 'name' | 'created' | 'modified' | 'recorded_date' | 'owner_username';
+  sort_direction?: 'asc' | 'desc';
+  /** Comma-separated or array of tag texts; recording must have all listed tags. */
+  tags?: string | string[];
+}
+
+export interface UnsubmittedNeighborsResponse {
+  next_id: number | null;
+  previous_id: number | null;
+}
+
+async function getUnsubmittedNeighbors(
+  currentId: number,
+  params?: UnsubmittedNeighborsParams
+) {
+  const query = new URLSearchParams({ current: String(currentId) });
+  if (params?.sort_by) query.set('sort_by', params.sort_by);
+  if (params?.sort_direction) query.set('sort_direction', params.sort_direction);
+  if (params?.tags !== undefined) {
+    const tagStr = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
+    if (tagStr) query.set('tags', tagStr);
+  }
+  const response = await axiosInstance.get<UnsubmittedNeighborsResponse>(
+    `/recording/unsubmitted-neighbors/?${query.toString()}`
+  );
+  return response;
+}
+
 async function getRecordingTags() {
   return axiosInstance.get<RecordingTag[]>(`/recording-tag/`);
 }
@@ -545,7 +617,7 @@ export interface VettingDetails {
 }
 
 export interface UpdateVettingDetails {
-  reference_Materials: string;
+  reference_materials: string;
 }
 
 async function getVettingDetailsForUser(userId: number) {
@@ -636,6 +708,7 @@ export {
   getFileAnnotationDetails,
   getExportStatus,
   getRecordingTags,
+  getUnsubmittedNeighbors,
   getComputedPulseContour,
   getPulseMetadata,
   getCurrentUser,
