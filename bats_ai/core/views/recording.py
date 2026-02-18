@@ -461,9 +461,9 @@ def get_recordings(
 
     if q.tags and q.tags.strip():
         tag_list = [t.strip() for t in q.tags.split(',') if t.strip()]
-        for tag in tag_list:
-            queryset = queryset.filter(tags__text=tag)
         if tag_list:
+            for tag in tag_list:
+                queryset = queryset.filter(tags__text=tag)
             queryset = queryset.distinct()
 
     sort_field = q.sort_by or 'created'
