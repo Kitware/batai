@@ -141,6 +141,8 @@ export default defineComponent({
       }
     };
 
+    const combinedTags = computed(() => Array.from (new Set([...filterTags.value, ...sharedFilterTags.value])));
+
     const loading = ref(false);
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
     const loadData = async () => {
@@ -382,6 +384,7 @@ export default defineComponent({
       fixedAxes,
       toggleFixedAxes,
       contoursLoading,
+      combinedTags,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -678,42 +681,64 @@ export default defineComponent({
       <v-card>
         <v-card-title>
           <v-row dense>
-            <v-spacer />
-            <v-tooltip bottom>
-              <template #activator="{ props: subProps }">
-                <v-btn
-                  v-bind="subProps"
-                  :variant="sideTab === 'recordings' ? 'flat' : 'outlined'"
-                  :color="sideTab === 'recordings' ? 'primary' : ''"
-                  class="mx-2"
-                  size="small"
-                  @click="sideTab = 'recordings'"
+            <v-col cols="2">
+              <v-tooltip v-if="combinedTags.length">
+                <template #activator="{ props: subProps }">
+                  <v-icon v-bind="subProps">
+                    mdi-filter
+                  </v-icon>
+                </template>
+                Filtering by:
+                <v-chip
+                  v-for="tag in combinedTags"
+                  :key="tag"
                 >
-                  Recordings
-                </v-btn>
-              </template>
-              <span>
-                View Recordings in sideTab
-              </span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template #activator="{ props: subProps }">
-                <v-btn
-                  v-bind="subProps"
-                  :variant="sideTab === 'annotations' ? 'flat' : 'outlined'"
-                  :color="sideTab === 'annotations' ? 'primary' : ''"
-                  class="mx-2"
-                  size="small"
-                  @click="sideTab = 'annotations'"
-                >
-                  Annotations
-                </v-btn>
-              </template>
-              <span>
-                View Annotations in sideTab
-              </span>
-            </v-tooltip>
-            <v-spacer />
+                  {{ tag }}
+                </v-chip>
+              </v-tooltip>
+              <v-spacer v-else />
+            </v-col>
+            <v-col cols="4">
+              <v-tooltip bottom>
+                <template #activator="{ props: subProps }">
+                  <v-btn
+                    v-bind="subProps"
+                    :variant="sideTab === 'recordings' ? 'flat' : 'outlined'"
+                    :color="sideTab === 'recordings' ? 'primary' : ''"
+                    class="mx-2"
+                    size="small"
+                    @click="sideTab = 'recordings'"
+                  >
+                    Recordings
+                  </v-btn>
+                </template>
+                <span>
+                  View Recordings in sideTab
+                </span>
+              </v-tooltip>
+            </v-col>
+            <v-col cols="4">
+              <v-tooltip bottom>
+                <template #activator="{ props: subProps }">
+                  <v-btn
+                    v-bind="subProps"
+                    :variant="sideTab === 'annotations' ? 'flat' : 'outlined'"
+                    :color="sideTab === 'annotations' ? 'primary' : ''"
+                    class="mx-2"
+                    size="small"
+                    @click="sideTab = 'annotations'"
+                  >
+                    Annotations
+                  </v-btn>
+                </template>
+                <span>
+                  View Annotations in sideTab
+                </span>
+              </v-tooltip>
+            </v-col>
+            <v-col>
+              <v-spacer />
+            </v-col>
           </v-row>
         </v-card-title>
         <v-card-text class="pa-0">
