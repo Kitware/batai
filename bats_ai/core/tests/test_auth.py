@@ -35,8 +35,6 @@ def test_auth_unverified_deny(api_client: TestClient):
 
 @pytest.mark.django_db
 def test_auth_unverified_superuser(api_client: TestClient):
-    user = SuperuserFactory()
-    user.profile.verified = False
-    user.profile.save()
+    user = SuperuserFactory(profile__verified=False)
     resp = api_client.get('configuration/me', user=user)
     assert resp.status_code == 200
