@@ -20,8 +20,7 @@ def test_auth_anonymous_deny(url_suffix: str, client: Client):
 
 @pytest.mark.django_db
 def test_auth_verified(api_client: TestClient):
-    # Our UserProfileFactory sets verified to `True` by default
-    user = UserFactory()
+    user = UserFactory(profile__verified=True)
     resp = api_client.get('configuration/me', user=user)
     assert resp.status_code == 200
 
