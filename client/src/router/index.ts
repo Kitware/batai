@@ -3,6 +3,7 @@ import HelpPage from '../views/HelpPage.vue';
 import Recordings from '../views/Recordings.vue';
 import Spectrogram from '../views/Spectrogram.vue';
 import Login from '../views/Login.vue';
+import Unverified from '../views/Unverified.vue';
 
 import oauthClient from '../plugins/Oauth';
 import Admin from '../views/Admin.vue';
@@ -42,6 +43,11 @@ function routerInit(){
         path: '/login',
         name: 'Login',
         component: Login,
+      },
+      {
+        path: '/unverified',
+        name: 'Unverified',
+        component: Unverified,
       },
       {
         path: '/help',

@@ -1,4 +1,5 @@
 <script lang="ts">
+import { isAxiosError } from 'axios';
 import { defineComponent, inject, ref, onMounted, computed, watch } from "vue";
 import OAuthClient from "@resonant/oauth-client";
 import { useRoute, useRouter } from "vue-router";
@@ -34,11 +35,21 @@ export default defineComponent({
     const checkLogin = async () => {
       if (oauthClient.isLoggedIn) {
         loginText.value = "Logout";
-        await loadConfiguration();
-        await loadCurrentUser();
-        await loadReviewerMaterials();
-        if (sharedList.value.length === 0) {
-          getShared();
+        try {
+          await loadConfiguration();
+          await loadCurrentUser();
+          await loadReviewerMaterials();
+          if (sharedList.value.length === 0) {
+            getShared();
+          }
+        } catch (e) {
+          // The user is logged in , but a 401 response indicates that their
+          // profile has not been verified by an admin.
+          if (isAxiosError(e) && e.response?.status === 401) {
+            router.push({ path: '/unverified', replace: true });
+          } else {
+            throw e;
+          }
         }
       } else {
         loginText.value = "Login";
@@ -55,7 +66,7 @@ export default defineComponent({
       }
     };
     onMounted(async () => {
-      checkLogin();
+      await checkLogin();
       loadFilterTags();
     });
     router.afterEach((guard) => {
