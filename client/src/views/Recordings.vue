@@ -688,6 +688,19 @@ export default defineComponent({
             {{ item.name }}
           </router-link>
         </template>
+
+        <template #item.tag_text="{ item }">
+          <span v-if="item.tags_text">
+            <v-chip
+              v-for="tag in item.tags_text"
+              :key="tag"
+              size="small"
+            >
+              {{ tag }}
+            </v-chip>
+          </span>
+        </template>
+
         <template #item.recorded_date="{ item }">
           {{ item.recorded_date }} {{ item.recorded_time }}
         </template>
