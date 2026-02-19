@@ -634,10 +634,10 @@ async function getVettingDetailsForUser(userId: number) {
 }
 
 async function createOrUpdateVettingDetailsForUser(userId: number, referenceMaterials: string) {
-  return await axiosInstance.post<UpdateVettingDetails, VettingDetails>(
+  return (await axiosInstance.post<VettingDetails>(
     `/vetting/user/${userId}`,
     { 'reference_materials': referenceMaterials }
-  );
+  )).data;
 }
 
 export interface Contour {
