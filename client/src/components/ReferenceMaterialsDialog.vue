@@ -10,11 +10,13 @@ const reviewerMaterialsDisplay = ref('');
 const valid = ref(true);
 const error = ref('');
 
+
 async function saveReviewerMaterials() {
   if (!currentUserId.value || !valid.value) return;
   try {
     const details = await createOrUpdateVettingDetailsForUser(currentUserId.value, reviewerMaterialsDisplay.value);
     reviewerMaterials.value = details.reference_materials;
+    error.value = '';
   } catch(err) {
     error.value = 'There was a problem saving your changes. Please try again';
   }
@@ -48,7 +50,7 @@ watch(reviewerMaterials, () => reviewerMaterialsDisplay.value = reviewerMaterial
             v-model="reviewerMaterialsDisplay"
             placeholder="Describe any reference materials used during labeling"
             :rules="[
-              v => v.length <= 2000 || 'Only 2000 characters are allowed'
+              v => (v?.length || 0) <= 2000 || 'Only 2000 characters are allowed'
             ]"
             counter="2000"
           />
