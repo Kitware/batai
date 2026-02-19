@@ -31,7 +31,8 @@ def global_auth(request):
             if access_token and access_token.user:
                 if not access_token.user.is_anonymous:
                     request.user = access_token.user
-    return not request.user.is_anonymous
+    user = request.user
+    return (not user.is_anonymous) and (user.profile.verified or user.is_superuser)
 
 
 api = NinjaAPI(auth=global_auth)
