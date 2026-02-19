@@ -15,6 +15,8 @@ export default defineComponent({
       showSubmittedRecordings,
       myRecordingsDisplay,
       sharedRecordingsDisplay,
+      filterTags,
+      sharedFilterTags,
     } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
 
@@ -33,9 +35,9 @@ export default defineComponent({
 
     const fetchRecordings = async () => {
       const params = buildListParams();
-      const recordings = await getRecordings(false, params);
+      const recordings = await getRecordings(false, { ...params, tags: filterTags.value });
       recordingList.value = recordings.data.items;
-      const shared = await getRecordings(true, { ...params, public: true });
+      const shared = await getRecordings(true, { ...params, public: true, tags: sharedFilterTags.value });
       sharedList.value = shared.data.items;
     };
     onMounted(() => fetchRecordings());
