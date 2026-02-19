@@ -7,6 +7,7 @@ from django_extensions.db.models import TimeStampedModel
 class ProcessingTaskType(Enum):
     UPDATING_SPECIES = 'Updating Species'
     NABAT_RECORDING_PROCESSING = 'NABatRecordingProcessing'
+    SPECTROGRAM_GENERATION = 'SpectrogramGeneration'
 
 
 class ProcessingTask(TimeStampedModel):
