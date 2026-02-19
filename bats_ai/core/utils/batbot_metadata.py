@@ -319,7 +319,7 @@ def convert_to_segment_data(
 
 
 def generate_spectrogram_assets(recording_path: str, output_folder: str):
-    batbot.pipeline(recording_path, output_folder=output_folder)
+    batbot.pipeline(recording_path, output_folder=output_folder, quiet=True)
     # There should be a .metadata.json file in the output_base directory by replacing extentions
     metadata_file = Path(recording_path).with_suffix('.metadata.json').name
     metadata_file = Path(output_folder) / metadata_file
