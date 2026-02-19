@@ -19,7 +19,6 @@ import {
   getOtherUserAnnotations,
   getSequenceAnnotations,
   getUnsubmittedNeighbors,
-  getRecording,
 } from "../api/api";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
@@ -222,13 +221,7 @@ export default defineComponent({
 
       if (configuration.value.mark_annotations_completed_enabled) {
         try {
-          const currentRecording = await getRecording(props.id);
-          let tags = [];
-          if (currentRecording.data.owner_username === currentUser.value) {
-            tags = filterTags.value;
-          } else {
-            tags = sharedFilterTags.value;
-          }
+          const tags = Array.from(new Set([...filterTags.value, ...sharedFilterTags.value]));
           const neighborsRes = await getUnsubmittedNeighbors(parseInt(props.id, 10), {
             sort_by: 'created',
             sort_direction: 'desc',
