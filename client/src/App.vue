@@ -21,6 +21,7 @@ export default defineComponent({
       configuration ,
       loadCurrentUser,
       loadReviewerMaterials,
+      loadFilterTags,
     } = useState();
     const getShared = async () => {
       sharedList.value = (await getRecordings(true)).data.items;
@@ -55,6 +56,7 @@ export default defineComponent({
     };
     onMounted(async () => {
       checkLogin();
+      loadFilterTags();
     });
     router.afterEach((guard) => {
       if (guard.path.includes("spectrogram")) {

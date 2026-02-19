@@ -111,6 +111,12 @@ const reviewerMaterials = ref('');
 
 const transparencyThreshold = ref(0); // 0-100 percentage
 
+const FILTER_TAG_STORAGE_KEY = 'bataiFilterTags';
+const SHARED_FILTER_TAG_STORAGE_KEY = 'bataiSharedFilterTags';
+
+const filterTags: Ref<string[]> = ref([]);
+const sharedFilterTags: Ref<string[]> = ref([]);
+
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
   const setAnnotationState = (state: AnnotationState) => {
@@ -204,6 +210,17 @@ export default function useState() {
     }
   }
 
+  function saveFilterTags() {
+    localStorage.setItem(FILTER_TAG_STORAGE_KEY, JSON.stringify(filterTags.value));
+    localStorage.setItem(SHARED_FILTER_TAG_STORAGE_KEY, JSON.stringify(sharedFilterTags.value));
+  }
+
+  function loadFilterTags() {
+    filterTags.value = JSON.parse(localStorage.getItem(FILTER_TAG_STORAGE_KEY) || '[]');
+    sharedFilterTags.value = JSON.parse(localStorage.getItem(SHARED_FILTER_TAG_STORAGE_KEY) || '[]');
+
+  }
+
   return {
     annotationState,
     creationType,
@@ -264,5 +281,9 @@ export default function useState() {
     loadReviewerMaterials,
     viewMaskOverlay,
     maskOverlayOpacity,
+    filterTags,
+    sharedFilterTags,
+    saveFilterTags,
+    loadFilterTags,
   };
 }

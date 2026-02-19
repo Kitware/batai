@@ -43,6 +43,9 @@ export default defineComponent({
       showSubmittedRecordings,
       myRecordingsDisplay,
       sharedRecordingsDisplay,
+      filterTags,
+      sharedFilterTags,
+      saveFilterTags,
     } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
     let intervalRef: number | null = null;
@@ -183,8 +186,6 @@ export default defineComponent({
       recordingTagList.value = tags.data;
     };
 
-    const filterTags: Ref<string[]> = ref([]);
-    const sharedFilterTags: Ref<string[]> = ref([]);
     const recordingTagOptions = computed(() =>
       recordingTagList.value.map((t) => t.text).filter(Boolean)
     );
@@ -198,7 +199,7 @@ export default defineComponent({
       }
       return userAnnotations.length ? 0 : -1;
     }
-    
+
 
     function currentUserSubmissionLabel(recording: Recording) {
       const userSubmittedAnnotation = recording.fileAnnotations.find((annotation: FileAnnotation) => (
@@ -216,7 +217,7 @@ export default defineComponent({
         if (showSubmittedRecordings.value) {
           headers.value.push(myLabelHeader);
           sharedHeaders.value.push(myLabelHeader);
-        } 
+        }
       }
     }
 
@@ -261,8 +262,22 @@ export default defineComponent({
       await fetchSharedRecordings({ page: 1, itemsPerPage: 20 });
     });
 
-    watch(filterTags, () => fetchMyRecordings(lastMyOptions.value), { deep: true });
-    watch(sharedFilterTags, () => fetchSharedRecordings(lastSharedOptions.value), { deep: true });
+    watch(
+      filterTags,
+      () => {
+        fetchMyRecordings(lastMyOptions.value);
+        saveFilterTags();
+      },
+      { deep: true }
+    );
+    watch(
+      sharedFilterTags,
+      () => {
+        fetchSharedRecordings(lastSharedOptions.value);
+        saveFilterTags();
+      },
+      { deep: true }
+    );
 
     const uploadDone = () => {
         uploadDialog.value = false;
@@ -673,6 +688,19 @@ export default defineComponent({
             {{ item.name }}
           </router-link>
         </template>
+
+        <template #item.tag_text="{ item }">
+          <span v-if="item.tags_text">
+            <v-chip
+              v-for="tag in item.tags_text"
+              :key="tag"
+              size="small"
+            >
+              {{ tag }}
+            </v-chip>
+          </span>
+        </template>
+
         <template #item.recorded_date="{ item }">
           {{ item.recorded_date }} {{ item.recorded_time }}
         </template>
