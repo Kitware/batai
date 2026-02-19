@@ -28,9 +28,7 @@ def test_auth_verified(api_client: TestClient):
 
 @pytest.mark.django_db
 def test_auth_unverified_deny(api_client: TestClient):
-    user = UserFactory()
-    user.profile.verified = False
-    user.profile.save()
+    user = UserFactory(profile__verified=False)
     resp = api_client.get('configuration/me', user=user)
     assert resp.status_code == 401
 
