@@ -21,7 +21,7 @@ dependencies = [
   "django-extensions",
   "django-oauth-toolkit",
   "django-resonant-settings[allauth,celery]",
-  "django-resonant-utils[allauth,s3_storage]",
+  "django-resonant-utils[allauth,ninja,s3-storage]",
   "django-s3-file-field[s3]",
   "django-storages[s3]",
   "django-stubs-ext",
