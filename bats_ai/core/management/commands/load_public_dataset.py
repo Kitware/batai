@@ -15,7 +15,7 @@ from django.core.files import File
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 
-from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Recording
+from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Recording, RecordingTag
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 from bats_ai.core.utils.guano_utils import extract_guano_metadata
 
@@ -72,7 +72,6 @@ def _try_start_spectrogram_generation(recording_id: int):
         Q(metadata__contains=metadata_filter)
         & Q(status__in=[ProcessingTask.Status.RUNNING, ProcessingTask.Status.QUEUED])
     ).first()
-    logger.warning(f'{processing_task}')
 
     if processing_task:
         logger.info(f'  Spectrogram generation already started for recording {recording_id}')
@@ -136,6 +135,14 @@ def _ingest_files_from_manifest(
                         species_list=metadata.get('species_list_str', ''),
                         unusual_occurrences=metadata.get('unusual_occurrences'),
                     )
+                    for tag_key in tag_keys:
+                        tag_text = line.get(tag_key, None)
+                        if not tag_text:
+                            continue
+                        tag, _created = RecordingTag.objects.get_or_create(
+                            user=owner, text=tag_text
+                        )
+                        recording.tags.add(tag)
                 # Trigger spectrogram task
                 logger.info(
                     f'  Created recording with id {recording.pk} for {s3_key}.'
@@ -176,6 +183,17 @@ class Command(BaseCommand):
         parser.add_argument(
             '-l', '--limit', type=int, help='Limit the number of WAV files to be imported'
         )
+        parser.add_argument(
+            '--filekey',
+            type=str,
+            help='Column header denoting the AWS S3 file key.',
+            default='file_key',
+        )
+        parser.add_argument(
+            '--tags',
+            type=str,
+            help='Comma-delimited list of column headers to use as tags for uploaded recordings.',
+        )
 
     def handle(self, *args, **options):
         bucket = options['bucket']
@@ -201,8 +219,22 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f'User {owner.username} will own the new files...')
 
+        tag_keys_input = options.get('tags', '')
+        if tag_keys_input:
+            tag_keys = [tag.strip() for tag in tag_keys_input.split(',') if tag]
+
         public = options.get('public', False)
         limit = options.get('limit')
+        file_key = options.get('filekey', 'file_key')
         if limit:
             self.stdout.write(f'Ingesting the first {limit} files from {manifest}...')
-        _ingest_files_from_manifest(s3_client, bucket, manifest, owner, public, limit)
+        _ingest_files_from_manifest(
+            s3_client,
+            bucket,
+            manifest,
+            owner,
+            public,
+            limit,
+            file_key=file_key,
+            tag_keys=tag_keys,
+        )
