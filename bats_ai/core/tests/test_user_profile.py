@@ -19,10 +19,11 @@ def test_profile_creation():
 @pytest.mark.django_db
 def test_new_user_signup_email_sent(mailoutbox):
     superuser = SuperuserFactory()
-    user = User.objects.create(
+    new_user = User.objects.create(
         username='foo',
         email='foo@bar.com',
     )
-    m = mailoutbox[0]
-    assert superuser.email in m.to
-    assert reverse('admin:auth_user_change', args=[user.pk]) in m.body
+    message = next(filter(lambda message: 'New user signup' in message.subject, mailoutbox), None)
+    assert message is not None
+    assert superuser.email in message.to
+    assert reverse('admin:auth_user_change', args=[new_user.pk]) in message.body
