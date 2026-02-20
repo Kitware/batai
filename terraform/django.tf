@@ -20,6 +20,7 @@ module "django" {
   heroku_worker_dyno_quantity  = 0
   ec2_worker_instance_quantity = 1
   ec2_worker_ssh_public_key    = file("${path.module}/ssh-key.pub")
+  ec2_worker_instance_type     = "t3.medium"
 
   django_cors_allowed_origins = [
     # Can't make this use "aws_route53_record.www.fqdn" because of a circular dependency
