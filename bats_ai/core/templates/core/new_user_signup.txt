@@ -1,0 +1,5 @@
+This is an automated notification from {{ site.name }} to alert admins that a new user {{ user.email }} has signed up.
+
+To see additional details about the user, and take actions like verifying the user's profile, go to
+
+https://{{ site.domain }}{% url 'admin:auth_user_change' user.pk %}
