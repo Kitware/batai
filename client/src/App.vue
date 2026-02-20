@@ -21,7 +21,6 @@ export default defineComponent({
       loadConfiguration,
       configuration ,
       loadCurrentUser,
-      loadReviewerMaterials,
       loadFilterTags,
     } = useState();
     const getShared = async () => {
@@ -38,7 +37,6 @@ export default defineComponent({
         try {
           await loadConfiguration();
           await loadCurrentUser();
-          await loadReviewerMaterials();
           if (sharedList.value.length === 0) {
             getShared();
           }
