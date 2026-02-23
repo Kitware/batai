@@ -480,10 +480,12 @@ def get_recordings(
     count = queryset.count()
     offset = (q.page - 1) * q.limit
 
-    # One query for page of recordings + owner; prefetch file annotations + species (no N+1)
+    # One query for page of recordings; prefetch current user's file annotations only (no N+1)
     file_annotations_prefetch = Prefetch(
         'recordingannotation_set',
-        queryset=RecordingAnnotation.objects.prefetch_related('species').order_by('confidence'),
+        queryset=RecordingAnnotation.objects.filter(owner=request.user)
+        .prefetch_related('species')
+        .order_by('confidence'),
     )
     page_recordings = list(
         queryset.select_related('owner').prefetch_related(file_annotations_prefetch)[
@@ -634,9 +636,10 @@ def get_recording(request: HttpRequest, id: int):
                 ).exists()
             )
             recording['userMadeAnnotations'] = user_has_annotations
-            fileAnnotations = RecordingAnnotation.objects.filter(recording=id).order_by(
-                'confidence'
-            )
+            # Only expose file-level annotations owned by the current user
+            fileAnnotations = RecordingAnnotation.objects.filter(
+                recording=id, owner=request.user
+            ).order_by('confidence')
             recording['fileAnnotations'] = [
                 RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
                 for fileAnnotation in fileAnnotations
@@ -650,9 +653,16 @@ def get_recording(request: HttpRequest, id: int):
 
 @router.get('/{recording_id}/recording-annotations')
 def get_recording_annotations(request: HttpRequest, recording_id: int):
-    fileAnnotations = RecordingAnnotation.objects.filter(recording=recording_id).order_by(
-        'confidence'
-    )
+    try:
+        recording = Recording.objects.get(pk=recording_id)
+    except Recording.DoesNotExist:
+        return {'error': 'Recording not found'}
+    if recording.owner != request.user and not recording.public:
+        return {'error': 'Permission denied. You do not own this recording, and it is not public.'}
+    # Only return file-level annotations owned by the current user (same as pulse annotations)
+    fileAnnotations = RecordingAnnotation.objects.filter(
+        recording=recording_id, owner=request.user
+    ).order_by('confidence')
     output = [
         RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
         for fileAnnotation in fileAnnotations
