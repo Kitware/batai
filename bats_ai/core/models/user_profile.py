@@ -20,6 +20,9 @@ def _create_new_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def _notify_admins_new_user(sender, instance, created, **kwargs):
+    if not created:
+        # Only send the email on initial user creation
+        return
     admins = User.objects.filter(is_superuser=True)
     current_site = Site.objects.get_current()
     recipient_list = [admin.email for admin in admins]
