@@ -325,6 +325,18 @@ export default defineComponent({
       }
     };
 
+    function getItemLocation(item: Recording) {
+      if (configuration.value.mark_annotations_completed_enabled) {
+        return undefined;
+      } else if (item.recording_location) {
+        return {
+          x: item.recording_location.coordinates[0],
+          y: item.recording_location.coordinates[1],
+        };
+      }
+      return undefined;
+    }
+
     return {
         headers,
         sharedHeaders,
@@ -358,6 +370,7 @@ export default defineComponent({
         fetchSharedRecordings,
         sortByMy,
         sortByShared,
+        getItemLocation,
       };
   },
 });
@@ -508,7 +521,7 @@ export default defineComponent({
 
         <template #item.recording_location="{ item }">
           <v-menu
-            v-if="item.recording_location"
+            v-if="item.recording_location || (configuration.mark_annotations_completed_enabled && item.grts_cell_id)"
             open-on-hover
             :close-on-content-click="false"
           >
@@ -521,7 +534,7 @@ export default defineComponent({
               <map-location
                 :editor="false"
                 :size="{width: 400, height: 400}"
-                :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
+                :location="getItemLocation(item)"
                 :grts-cell-id="configuration.mark_annotations_completed_enabled ? item.grts_cell_id || undefined : undefined"
               />
             </v-card>
@@ -723,7 +736,7 @@ export default defineComponent({
         </template>
         <template #item.recording_location="{ item }">
           <v-menu
-            v-if="item.recording_location"
+            v-if="item.recording_location || (configuration.mark_annotations_completed_enabled && item.grts_cell_id)"
             open-on-hover
             :close-on-content-click="false"
           >
@@ -736,7 +749,7 @@ export default defineComponent({
               <map-location
                 :editor="false"
                 :size="{width: 400, height: 400}"
-                :location="{ x: item.recording_location.coordinates[0], y: item.recording_location.coordinates[1]}"
+                :location="getItemLocation(item)"
                 :grts-cell-id="configuration.mark_annotations_completed_enabled ? item.grts_cell_id || undefined : undefined"
               />
             </v-card>

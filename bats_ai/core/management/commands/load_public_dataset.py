@@ -1,4 +1,5 @@
 from csv import DictReader
+from datetime import date
 import hashlib
 import logging
 import os
@@ -34,11 +35,11 @@ def _create_filename(s3_key: str) -> str:
     return f'{h}{suffix}'
 
 
-def _get_metadata(filename: str) -> dict[str, Any]:
+def _get_metadata(filename: str, line: dict[str, str]) -> dict[str, Any]:
     metadata = {}
     guano_metadata = extract_guano_metadata(filename, check_filename=False)
     if guano_metadata.get('nabat_activation_start_time'):
-        dt = metadata['nabat_activation_start_time']
+        dt = guano_metadata['nabat_activation_start_time']
         metadata['recorded_date'] = dt.date()
         metadata['recorded_time'] = dt.time()
     if guano_metadata.get('nabat_latitude') and guano_metadata.get('nabat_longitude'):
@@ -58,6 +59,21 @@ def _get_metadata(filename: str) -> dict[str, Any]:
     metadata['software_type'] = guano_metadata.get('nabat_software_type')
     metadata['site_name'] = guano_metadata.get('nabat_site_name')
     metadata['unusual_occurrences'] = guano_metadata.get('nabat_unusual_occurrences')
+
+    if metadata.get('grts_cell_id', None) is None and line.get('grts_cell_id', None) is not None:
+        metadata['grts_cell_id'] = line['grts_cell_id']
+
+    if (
+        metadata.get('recorded_date', None) is None
+        and line.get('recording_night', None) is not None
+    ):
+        # Expect this column to contain a string in YYYY-MM-DD format
+        recording_night_parts = line['recording_night'].split('-')
+        if len(recording_night_parts) == 3:
+            year = int(recording_night_parts[0])
+            month = int(recording_night_parts[1])
+            day = int(recording_night_parts[2])
+            metadata['recorded_date'] = date(year=year, month=month, day=day)
 
     return metadata
 
@@ -116,7 +132,7 @@ def _ingest_files_from_manifest(
                 logger.info(f'  Downloading to temporary file {filename}...')
                 s3_client.download_file(bucket, s3_key, filename)
                 logger.info(f'  Creating recording for {s3_key}')
-                metadata = _get_metadata(filename)
+                metadata = _get_metadata(filename, line)
                 with open(filename, 'rb') as f:
                     recording = Recording.objects.create(
                         name=s3_key,
