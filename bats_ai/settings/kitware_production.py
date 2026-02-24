@@ -1,8 +1,8 @@
 from .base import *
 
 # Import these afterwards, to override
-from resonant_settings.production.email import *  # isort: skip
-from resonant_settings.development.minio_storage import *  # isort: skip
+from resonant_settings.production.email import *
+from resonant_settings.development.minio_storage import *
 
 SECRET_KEY: str = env.str('DJANGO_SECRET_KEY')
 
