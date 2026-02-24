@@ -1006,7 +1006,7 @@ def patch_annotation(
         recording = Recording.objects.get(pk=recording_id)
 
         # Check if the user owns the recording or if the recording is public
-        if recording.owner == request.user or recording.public:
+        if recording.owner == request.user:
             annotation_instance = Annotations.objects.get(
                 pk=id, recording=recording, owner=request.user
             )
