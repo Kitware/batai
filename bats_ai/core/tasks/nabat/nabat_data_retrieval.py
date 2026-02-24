@@ -128,6 +128,7 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
             settings.BATAI_NABAT_API_URL,
             json={"query": batch_query},
             headers=headers,
+            timeout=30,
         )
     except Exception as e:
         processing_task.status = ProcessingTask.Status.ERROR

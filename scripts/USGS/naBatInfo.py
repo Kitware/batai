@@ -92,7 +92,7 @@ def fetch_and_save():
         "survey_event_id": SURVEY_EVENT_ID,
         "software_id": SOFTWARE_ID,
     }
-    response = requests.post(BASE_URL, json={"query": batch_query}, headers=headers)
+    response = requests.post(BASE_URL, json={"query": batch_query}, headers=headers, timeout=30)
     batch_data = {}
 
     print(response.text)
@@ -117,7 +117,7 @@ def fetch_and_save():
     # Fetch presigned URL
     presigned_url = batch_data["data"]["presignedUrlFromAcousticFile"]["s3PresignedUrl"]
     # Download the file
-    file_response = requests.get(presigned_url, stream=True)
+    file_response = requests.get(presigned_url, stream=True, timeout=60)
     if file_response.status_code == 200:
         try:
             with open(file_name, "wb") as f:

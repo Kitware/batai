@@ -76,7 +76,7 @@ def update_nabat_species(self):
     processing_task.save()
 
     try:
-        response = requests.post(settings.BATAI_NABAT_API_URL, json={"query": QUERY})
+        response = requests.post(settings.BATAI_NABAT_API_URL, json={"query": QUERY}, timeout=30)
         response.raise_for_status()
     except Exception as e:
         processing_task.status = ProcessingTask.Status.ERROR

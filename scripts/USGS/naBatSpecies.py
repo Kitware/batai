@@ -57,7 +57,7 @@ def fetch_and_save():
     headers = {}
     # Fetch batch data
     logger.info("Fetching batch data...")
-    response = requests.post(BASE_URL, json={"query": QUERY}, headers=headers)
+    response = requests.post(BASE_URL, json={"query": QUERY}, headers=headers, timeout=30)
     batch_data = {}
 
     print(response.text)

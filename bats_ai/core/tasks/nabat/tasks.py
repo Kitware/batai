@@ -29,7 +29,7 @@ def generate_spectrograms(
     with tempfile.TemporaryDirectory() as tmpdir:
         audio_file = None
         try:
-            file_response = requests.get(presigned_url, stream=True)
+            file_response = requests.get(presigned_url, stream=True, timeout=60)
             if file_response.status_code == 200:
                 audio_file = Path(f"{tmpdir}/audio_file.wav")
                 with open(audio_file, "wb") as temp_file:

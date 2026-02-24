@@ -128,7 +128,7 @@ def get_email_if_authorized(
     query = QUERY % {"acoustic_file_id": recording_id}
     try:
         response = requests.post(
-            settings.BATAI_NABAT_API_URL, json={"query": query}, headers=headers
+            settings.BATAI_NABAT_API_URL, json={"query": query}, headers=headers, timeout=30
         )
     except Exception:
         logger.exception("API request error")
@@ -186,7 +186,7 @@ def update_nabat_species(species_id: int, api_token: str, recording_id: int, sur
     }
     try:
         response = requests.post(
-            settings.BATAI_NABAT_API_URL, json={"query": batch_query}, headers=headers
+            settings.BATAI_NABAT_API_URL, json={"query": batch_query}, headers=headers, timeout=30
         )
         json_response = response.json()
         if json_response.get("errors"):
@@ -245,7 +245,7 @@ def generate_nabat_recording(
     }
     try:
         response = requests.post(
-            settings.BATAI_NABAT_API_URL, json={"query": batch_query}, headers=headers
+            settings.BATAI_NABAT_API_URL, json={"query": batch_query}, headers=headers, timeout=30
         )
         logger.info(response.json())
     except Exception:
