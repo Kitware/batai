@@ -53,12 +53,11 @@ def get_sequence_annotation(request: HttpRequest, id: int):
             )
 
             # Serialize the annotations using AnnotationSchema
-            annotations_data = [
+            return [
                 SequenceAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
                 for annotation in annotations_qs
             ]
 
-            return annotations_data
         else:
             return {
                 "error": "Permission denied. You do not own this annotation, or the associated"

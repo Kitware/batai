@@ -321,7 +321,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
     if not compressed_spectrogram:
         return JsonResponse({"error": "Compressed Spectrogram not found"}, status=404)
 
-    spectro_data = {
+    return {
         "urls": compressed_spectrogram.image_url_list,
         "mask_urls": compressed_spectrogram.mask_url_list,
         "spectroInfo": {
@@ -341,7 +341,6 @@ def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
         "sequence": [],
     }
 
-    return spectro_data
 
 
 class NABatRecordingAnnotationSchema(Schema):
@@ -422,11 +421,10 @@ def get_nabat_recording_annotation(
 
     fileAnnotations = fileAnnotations.order_by("confidence")
 
-    output = [
+    return [
         NABatRecordingAnnotationSchema.from_orm(fileAnnotation).dict()
         for fileAnnotation in fileAnnotations
     ]
-    return output
 
 
 @router.get("recording-annotation/{id}", auth=admin_auth, response=NABatRecordingAnnotationSchema)

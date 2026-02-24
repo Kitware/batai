@@ -399,9 +399,8 @@ def process_spectrogram_assets_for_contours(
 
     # If we processed from spectrogram assets, also create a combined output
     # organized by segments/widths
-    combined_output = {
+    return {
         "segments": sorted(all_segments_data, key=lambda x: x.get("segment_index", 0)),
         "total_segments": len(all_segments_data),
     }
 
-    return combined_output

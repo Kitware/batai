@@ -59,8 +59,7 @@ class RecordingAdmin(admin.ModelAdmin):
             spectrogram = recording.spectrogram
             href = reverse("admin:core_spectrogram_change", args=(spectrogram.pk,))
             description = str(spectrogram)
-            link = mark_safe(f'<a href="{href}">{description}</a>')
-            return link
+            return mark_safe(f'<a href="{href}">{description}</a>')
         return None
 
     @admin.display(
@@ -72,8 +71,7 @@ class RecordingAdmin(admin.ModelAdmin):
             spectrogram = recording.compressed_spectrogram
             href = reverse("admin:core_compressedspectrogram_change", args=(spectrogram.pk,))
             description = str(spectrogram)
-            link = mark_safe(f'<a href="{href}">{description}</a>')
-            return link
+            return mark_safe(f'<a href="{href}">{description}</a>')
         return None
 
     @admin.action(description="Compute Spectrograms")

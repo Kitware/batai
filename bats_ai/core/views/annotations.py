@@ -37,12 +37,11 @@ def get_annotation(request: HttpRequest, id: int):
             annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
             # Serialize the annotations using AnnotationSchema
-            annotations_data = [
+            return [
                 AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
                 for annotation in annotations_qs
             ]
 
-            return annotations_data
         else:
             return {
                 "error": "Permission denied. You do not own this annotation, or the associated"

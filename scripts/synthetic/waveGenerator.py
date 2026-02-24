@@ -67,8 +67,7 @@ def generate_random_us_latlon():
 
 def generate_chirp(start_freq, end_freq, duration, sample_rate):
     t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
-    chirp = np.sin(2 * np.pi * np.linspace(start_freq, end_freq, len(t)) * t)
-    return chirp
+    return np.sin(2 * np.pi * np.linspace(start_freq, end_freq, len(t)) * t)
 
 
 def generate_wav_file(filename, duration):

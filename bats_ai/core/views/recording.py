@@ -665,11 +665,10 @@ def get_recording_annotations(request: HttpRequest, recording_id: int):
     fileAnnotations = RecordingAnnotation.objects.filter(
         recording=recording_id, owner=request.user
     ).order_by("confidence")
-    output = [
+    return [
         RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
         for fileAnnotation in fileAnnotations
     ]
-    return output
 
 
 @router.get("/{id}/spectrogram")
@@ -824,12 +823,11 @@ def get_annotations(request: HttpRequest, id: int):
             annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
             # Serialize the annotations using AnnotationSchema
-            annotations_data = [
+            return [
                 AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
                 for annotation in annotations_qs
             ]
 
-            return annotations_data
         else:
             return {
                 "error": "Permission denied. You do not own this recording, and it is not public."
@@ -941,11 +939,10 @@ def get_user_annotations(request: HttpRequest, id: int, userId: int):
             annotations_qs = Annotations.objects.filter(recording=recording, owner=userId)
 
             # Serialize the annotations using AnnotationSchema
-            annotations_data = [
+            return [
                 AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs
             ]
 
-            return annotations_data
         else:
             return {
                 "error": "Permission denied. You do not own this recording, and it is not public."
@@ -1150,12 +1147,11 @@ def get_sequence_annotations(request: HttpRequest, id: int):
             )
 
             # Serialize the annotations using AnnotationSchema
-            annotations_data = [
+            return [
                 SequenceAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
                 for annotation in annotations_qs
             ]
 
-            return annotations_data
         else:
             return {
                 "error": "Permission denied. You do not own this recording, and it is not public."

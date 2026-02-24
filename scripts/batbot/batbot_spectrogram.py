@@ -315,7 +315,7 @@ def generate_spectrogram_assets(
     # percentage in the range 0–100 for downstream consumers.
     noise_threshold_percent = round((metadata.global_threshold_amp / 255.0) * 100.0, 2)
 
-    result = {
+    return {
         "duration": metadata.duration_ms,
         "freq_min": metadata.frequencies.min_hz,
         "freq_max": metadata.frequencies.max_hz,
@@ -336,7 +336,6 @@ def generate_spectrogram_assets(
             "stops": compressed_metadata.stops,
         },
     }
-    return result
 
 
 def pipeline_filepath_validator(ctx, param, value):
