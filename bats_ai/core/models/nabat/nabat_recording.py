@@ -26,8 +26,6 @@ class NABatRecording(TimeStampedModel, models.Model):
     software_developer = models.TextField(blank=True, null=True)
     software_version = models.TextField(blank=True, null=True)
     detector = models.TextField(blank=True, null=True)
-    nabat_auto_species = models.ForeignKey(Species, null=True, on_delete=models.SET_NULL)
-    nabat_manual_species = models.ForeignKey(Species, null=True, on_delete=models.SET_NULL)
     species_list = models.TextField(blank=True, null=True)
     nabat_auto_species = models.ForeignKey(
         Species, null=True, on_delete=models.SET_NULL, related_name="nabatrecording_auto_species"
