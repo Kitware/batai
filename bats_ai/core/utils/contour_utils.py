@@ -359,7 +359,6 @@ def process_spectrogram_assets_for_contours(
             time_per_pixel = (stop_time - start_time) / width
             mhz_per_pixel = (global_freq_max - global_freq_min) / height
             transformed_contours = []
-            contour_index = 0
             for contour, level in seg_contours:
                 # contour is (N, 2): each row is one point [x, y]
                 new_curve = [
@@ -376,7 +375,6 @@ def process_spectrogram_assets_for_contours(
                         "index": seg_idx,
                     }
                 )
-                contour_index += 1
             segment_obj: dict = {
                 "segment_index": seg_idx,
                 "contour_count": len(seg_contours),
