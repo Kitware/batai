@@ -152,7 +152,7 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
         processing_task.status = ProcessingTask.Status.ERROR
         processing_task.error = error_msg
         processing_task.save()
-        raise
+        response.raise_for_status()
 
     self.update_state(
         state="Progress",
