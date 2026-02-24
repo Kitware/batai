@@ -179,8 +179,8 @@ def generate_compressed(img_path, duration, annotation_path, output_path):
 
             width = canvas_display.shape[1]
             for _, row in annotations.iterrows():
-                start = int(round((row["start_time"] / duration) * width))
-                stop = int(round((row["end_time"] / duration) * width))
+                start = round((row["start_time"] / duration) * width)
+                stop = round((row["end_time"] / duration) * width)
                 canvas_display[:, start : stop + 1] = 255
 
             mask = scipy.signal.medfilt(canvas_display.max(axis=0), 3)

@@ -178,7 +178,7 @@ def convert_to_spectrogram_data(metadata: BatbotMetadata) -> SpectrogramData:
     return SpectrogramData(
         width=metadata.size.uncompressed.width_px,
         height=metadata.size.uncompressed.height_px,
-        duration=int(round(metadata.duration_ms)),
+        duration=round(metadata.duration_ms),
         frequency_min=metadata.frequencies.min_hz,
         frequency_max=metadata.frequencies.max_hz,
     )

@@ -79,7 +79,7 @@ def generate_spectrogram(wav_path, output_folder, colormap=None):
         for chunk in tqdm.tqdm(chunks, desc=f"Processing {os.path.basename(wav_path)}"):
             h, w = chunk.shape
             alpha = 3
-            figsize = (int(math.ceil(w / h)) * alpha + 1, alpha)
+            figsize = (math.ceil(w / h) * alpha + 1, alpha)
             fig = plt.figure(figsize=figsize, facecolor="black", dpi=300)
             ax = plt.axes()
             plt.margins(0)
