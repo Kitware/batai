@@ -319,7 +319,7 @@ def process_spectrogram_assets_for_contours(
         processed_images.add(img_path)
 
         # Extract all contours from the compressed image
-        contours, shape = extract_contours(
+        contours, _shape = extract_contours(
             img_path,
             levels_mode=levels_mode,
             percentile_values=percentile_values,
