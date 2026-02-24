@@ -61,7 +61,7 @@ def auto_histogram_levels(
     current_centers = []
     current_weights = []
 
-    for center, weight in zip(centers, counts):
+    for center, weight in zip(centers, counts, strict=False):
         weight = max(float(weight), 1e-9)
         current_centers.append(center)
         current_weights.append(weight)
