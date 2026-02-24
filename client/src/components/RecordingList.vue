@@ -104,7 +104,7 @@ export default defineComponent({
       <v-col>
         <v-checkbox
           v-model="showSubmittedRecordings"
-          label="Show submitted recordings"
+          label="Show recordings with submitted annotations"
           hide-details
         />
       </v-col>
@@ -158,7 +158,7 @@ export default defineComponent({
               >
                 <v-col>
                   <div>
-                    <b>Submitted: </b>
+                    <b>Annotation Submitted: </b>
                     <v-icon
                       v-if="userSubmittedAnnotation(item)"
                       color="success"

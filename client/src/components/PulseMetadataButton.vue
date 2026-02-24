@@ -87,7 +87,7 @@ export default defineComponent({
       </template>
       <v-card min-width="260">
         <v-card-title class="text-subtitle-1 px-3 pt-3">
-          Pulse metadata style
+          Pulse Metrics
         </v-card-title>
         <v-card-text class="pt-0">
           <div class="mt-1 d-flex align-center">
