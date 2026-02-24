@@ -69,16 +69,15 @@ def annotation_to_dict(
 def write_csv_and_json(
     zipf, name_prefix, queryset, include_times=False, include_freqs=False, include_confidence=False
 ):
-    rows = []
-    for ann in queryset.prefetch_related("species"):
-        rows.append(
-            annotation_to_dict(
-                ann,
-                include_times=include_times,
-                include_freqs=include_freqs,
-                include_confidence=include_confidence,
-            )
+    rows = [
+        annotation_to_dict(
+            ann,
+            include_times=include_times,
+            include_freqs=include_freqs,
+            include_confidence=include_confidence,
         )
+        for ann in queryset.prefetch_related("species")
+    ]
 
     if not rows:
         return

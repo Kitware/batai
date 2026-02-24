@@ -15,9 +15,7 @@ source_crs = "epsg:4326"
 with fiona.open(SHAPEFILE_PATH, "r") as shp:
     # Create a coordinate transformer
     transformer = pyproj.Transformer.from_crs(source_crs, target_crs, always_xy=True)
-    data = []
-    for feature in shp:
-        data.append({"id": feature["id"], "geometry": shape(feature["geometry"])})
+    data = [{"id": feature["id"], "geometry": shape(feature["geometry"])} for feature in shp]
 
 
 def get_gridcell_id(latitude, longitude, data):
