@@ -155,6 +155,7 @@ export default defineComponent({
       currentNaBatUser,
       userSubmittedAnnotationId,
       handleSubmitAnnotation,
+      configuration,
     };
   },
 });
@@ -212,7 +213,7 @@ export default defineComponent({
               Details
             </v-btn>
           </v-col>
-          <v-col class="annotation-confidence">
+          <v-col v-if="!configuration.mark_annotations_completed_enabled" class="annotation-confidence">
             <span>{{ getConfidenceLabelText(annotation.confidence) }} </span>
           </v-col>
           <v-col class="annotation-model">
