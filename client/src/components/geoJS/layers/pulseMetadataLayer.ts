@@ -184,7 +184,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         });
 
         this.textData.push({
-          text: `${(maxFreq / 1000).toFixed(1)} kHz`,
+          text: `Fₘₐₓ ${(maxFreq / 1000).toFixed(1)}kHz`,
           x: topLeft.x - freqLineOffsetX - labelOffset,
           y: topLeft.y,
           offsetX: 0,
@@ -192,7 +192,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           textAlign: 'end',
         });
         this.textData.push({
-          text: `${(minFreq / 1000).toFixed(1)} kHz`,
+          text: `Fₘᵢₙ ${(minFreq / 1000).toFixed(1)}kHz`,
           x: bottomLeft.x - freqLineOffsetX - labelOffset,
           y: bottomLeft.y,
           offsetX: 0,
@@ -231,7 +231,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         this.pointData.push({ x: pos.x, y: pos.y, label: 'char_freq' });
         const charFreqKhz = (pulse.char_freq[1] / 1000).toFixed(1);
         this.textData.push({
-          text: `Char ${charFreqKhz} kHz`,
+          text: `Fc ${charFreqKhz} kHz`,
           x: pos.x,
           y: pos.y - 2,
           offsetX: 0,
