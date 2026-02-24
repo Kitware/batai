@@ -529,7 +529,10 @@ export default defineComponent({
               </template>
               <span>Use a draggable straight edge to measure frequency</span>
             </v-tooltip>
-            <v-tooltip bottom>
+            <v-tooltip
+              v-if="configuration.display_pulse_annotations || configuration.display_sequence_annotations"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
@@ -543,7 +546,10 @@ export default defineComponent({
               </template>
               <span> Turn Species Label On/Off</span>
             </v-tooltip>
-            <v-tooltip bottom>
+            <v-tooltip
+              v-if="configuration.display_pulse_annotations || configuration.display_sequence_annotations"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
@@ -558,7 +564,10 @@ export default defineComponent({
               </template>
               <span> Turn Time Endpoint Labels On/Off</span>
             </v-tooltip>
-            <v-tooltip bottom>
+            <v-tooltip
+              v-if="configuration.display_pulse_annotations || configuration.display_sequence_annotations"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
@@ -573,7 +582,10 @@ export default defineComponent({
               </template>
               <span> Turn Time Duration Labels On/Off</span>
             </v-tooltip>
-            <v-tooltip bottom>
+            <v-tooltip
+              v-if="configuration.display_pulse_annotations || configuration.display_sequence_annotations"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
