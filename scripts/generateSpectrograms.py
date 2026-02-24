@@ -28,14 +28,14 @@ def generate_spectrogram(wav_path, output_folder, colormap=None):
         size_mod = 1
         high_res = False
 
-        if colormap in ["inference"]:
+        if colormap == "inference":
             colormap = None
             size_mod = 0
         elif colormap in ["none", "default", "dark"]:
             colormap = None
-        elif colormap in ["light"]:
+        elif colormap == "light":
             colormap = "gist_yarg"
-        elif colormap in ["heatmap"]:
+        elif colormap == "heatmap":
             colormap = "turbo"
             high_res = True
 
