@@ -57,53 +57,8 @@ repos:
       - id: ripsecrets
         name: RIPSecrets for API keys and secrets
 
-  - repo: https://github.com/psf/black
-    rev: 23.9.1
-    hooks:
-      - id: black
-        args: [--config, pyproject.toml]
-
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        args: [--settings-file, pyproject.toml]
-
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
-    hooks:
-      - id: pyupgrade
-        args: [--py311-plus]
-
   - repo: https://github.com/adamchainz/django-upgrade
     rev: 1.15.0
     hooks:
       - id: django-upgrade
         args: [--target-version, "4.1"]
-
-  - repo: https://github.com/PyCQA/autoflake
-    rev: v2.2.1
-    hooks:
-      - id: autoflake
-        args:
-          - --in-place
-          - --expand-star-imports
-          - --ignore-init-module-imports
-          - --remove-all-unused-imports
-          - --remove-unused-variables
-          - --exclude=bats_ai/settings/*
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.1.0
-    hooks:
-      - id: flake8
-        additional_dependencies:
-          - flake8-bugbear
-          - flake8-quotes
-          - flake8-black
-          - flake8-docstrings
-          - flake8-isort
-          - pep8-naming
-        args:
-          - --config
-          - bats_ai/.flake8
