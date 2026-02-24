@@ -291,9 +291,6 @@ def generate_spectrogram_assets(
     compressed_paths = _normalize_paths(metadata.spectrogram.compressed_path)
     mask_paths = _normalize_paths(metadata.spectrogram.mask_path)
 
-    metadata.frequencies.min_hz
-    metadata.frequencies.max_hz
-
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
 
     # Calculate widths for uncompressed spectrogram based on segments

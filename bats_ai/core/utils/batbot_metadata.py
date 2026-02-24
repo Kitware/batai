@@ -331,9 +331,6 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
     compressed_paths = metadata.spectrogram.compressed_path
     mask_paths = metadata.spectrogram.mask_path
 
-    metadata.frequencies.min_hz
-    metadata.frequencies.max_hz
-
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
     segment_curve_data = convert_to_segment_data(metadata)
     result: SpectrogramAssets = {
