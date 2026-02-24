@@ -135,4 +135,4 @@ def export_annotations_task(filters: dict, annotation_types: list, export_id: in
     except Exception as e:
         export_record.status = "failed"
         export_record.save()
-        raise e
+        raise

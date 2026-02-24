@@ -188,7 +188,7 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f"  Failed to generate spectrogram: {e!s}"))
                     logger.exception("Error generating spectrogram", exc_info=e)
-                    raise e
+                    raise
 
                 successful += 1
                 self.stdout.write(self.style.SUCCESS(f"  ✓ Successfully imported: {wav_file.name}"))
