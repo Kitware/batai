@@ -91,8 +91,8 @@ def get_recording_annotation(request: HttpRequest, id: int):
             raise HttpError(403, "Permission denied.")
 
         return RecordingAnnotationSchema.from_orm(annotation).dict()
-    except RecordingAnnotation.DoesNotExist:
-        raise HttpError(404, "Recording annotation not found.")
+    except RecordingAnnotation.DoesNotExist as e:
+        raise HttpError(404, "Recording annotation not found.") from e
 
 
 @router.get("/{id}/details", response=RecordingAnnotationDetailsSchema)
@@ -105,8 +105,8 @@ def get_recording_annotation_details(request: HttpRequest, id: int):
             raise HttpError(403, "Permission denied.")
 
         return RecordingAnnotationDetailsSchema.from_orm(annotation).dict()
-    except RecordingAnnotation.DoesNotExist:
-        raise HttpError(404, "Recording annotation not found.")
+    except RecordingAnnotation.DoesNotExist as e:
+        raise HttpError(404, "Recording annotation not found.") from e
 
 
 @router.put("/", response={200: str})
@@ -133,10 +133,10 @@ def create_recording_annotation(request: HttpRequest, data: CreateRecordingAnnot
             annotation.species.add(species)
 
         return "Recording annotation created successfully."
-    except Recording.DoesNotExist:
-        raise HttpError(404, "Recording not found.")
-    except Species.DoesNotExist:
-        raise HttpError(404, "One or more species IDs not found.")
+    except Recording.DoesNotExist as e:
+        raise HttpError(404, "Recording not found.") from e
+    except Species.DoesNotExist as e:
+        raise HttpError(404, "One or more species IDs not found.") from e
 
 
 @router.patch("/{id}", response={200: str})
@@ -165,10 +165,10 @@ def update_recording_annotation(
 
         annotation.save()
         return "Recording annotation updated successfully."
-    except RecordingAnnotation.DoesNotExist:
-        raise HttpError(404, "Recording annotation not found.")
-    except Species.DoesNotExist:
-        raise HttpError(404, "One or more species IDs not found.")
+    except RecordingAnnotation.DoesNotExist as e:
+        raise HttpError(404, "Recording annotation not found.") from e
+    except Species.DoesNotExist as e:
+        raise HttpError(404, "One or more species IDs not found.") from e
 
 
 # DELETE Endpoint
@@ -192,8 +192,8 @@ def delete_recording_annotation(request: HttpRequest, id: int):
 
         annotation.delete()
         return "Recording annotation deleted successfully."
-    except RecordingAnnotation.DoesNotExist:
-        raise HttpError(404, "Recording annotation not found.")
+    except RecordingAnnotation.DoesNotExist as e:
+        raise HttpError(404, "Recording annotation not found.") from e
 
 
 # Submit endpoint
@@ -212,5 +212,5 @@ def submit_recording_annotation(request: HttpRequest, id: int):
             "id": id,
             "submitted": annotation.submitted,
         }
-    except RecordingAnnotation.DoesNotExist:
-        raise HttpError(404, "Recording annotation not found.")
+    except RecordingAnnotation.DoesNotExist as e:
+        raise HttpError(404, "Recording annotation not found.") from e

@@ -155,8 +155,8 @@ class Command(BaseCommand):
         if owner_username:
             try:
                 owner = User.objects.get(username=owner_username)
-            except User.DoesNotExist:
-                raise CommandError(f"User not found: {owner_username}")
+            except User.DoesNotExist as e:
+                raise CommandError(f"User not found: {owner_username}") from e
 
         created = []
         for i in range(count):
