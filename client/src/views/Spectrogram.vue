@@ -802,6 +802,15 @@ export default defineComponent({
                   </v-btn>
                 </v-col>
               </v-row>
+              <v-row v-else-if="loading">
+                <v-col>
+                  <v-progress-circular
+                    indeterminate
+                    size="24"
+                    color="primary"
+                  />
+                </v-col>
+              </v-row>
               <v-row v-else>
                 <v-col>
                   There are no more files to review
