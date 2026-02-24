@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .annotations import Annotations
 from .compressed_spectrogram import CompressedSpectrogram
 from .configuration import Configuration
@@ -17,20 +19,20 @@ from .vetting_details import VettingDetails
 
 __all__ = [
     'Annotations',
-    'Recording',
-    'RecordingTag',
-    'RecordingAnnotationStatus',
-    'Species',
-    'Spectrogram',
-    'SequenceAnnotations',
-    'GRTSCells',
     'CompressedSpectrogram',
-    'PulseMetadata',
-    'RecordingAnnotation',
     'Configuration',
+    'ExportedAnnotationFile',
+    'GRTSCells',
     'ProcessingTask',
     'ProcessingTaskType',
-    'ExportedAnnotationFile',
+    'PulseMetadata',
+    'Recording',
+    'RecordingAnnotation',
+    'RecordingAnnotationStatus',
+    'RecordingTag',
+    'SequenceAnnotations',
+    'Species',
+    'Spectrogram',
     'SpectrogramImage',
     'UserProfile',
     'VettingDetails',

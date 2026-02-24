@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 from django.contrib.gis.db import models
@@ -34,11 +36,13 @@ class NABatRecording(TimeStampedModel, models.Model):
         Species, null=True, on_delete=models.SET_NULL, related_name='nabatrecording_manual_species'
     )
     computed_species = models.ManyToManyField(
-        Species, related_name='nabatrecording_computed_species'  # Changed related name
+        Species,
+        related_name='nabatrecording_computed_species',  # Changed related name
     )  # species from a computed sense
 
     official_species = models.ManyToManyField(
-        Species, related_name='nabatrecording_official_species'  # Changed related name
+        Species,
+        related_name='nabatrecording_official_species',  # Changed related name
     )  # species that are detemrined by the owner or from annotations as official species list
 
     unusual_occurrences = models.TextField(blank=True, null=True)
@@ -56,7 +60,6 @@ class NABatRecording(TimeStampedModel, models.Model):
 
     @property
     def spectrogram(self):
-        pass
 
         spectrograms = self.spectrograms
 
@@ -78,7 +81,6 @@ class NABatRecording(TimeStampedModel, models.Model):
 
     @property
     def compressed_spectrogram(self):
-        pass
 
         compressed_spectrograms = self.compressed_spectrograms
 

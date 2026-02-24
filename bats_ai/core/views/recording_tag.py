@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.http import Http404, HttpRequest
 from ninja import Schema
 from ninja.pagination import RouterPaginated

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import click
 import guano
 
@@ -10,7 +12,7 @@ def extract_guano_metadata(input_file, output):
         # Load a .WAV file with (or without) GUANO metadata
         g = guano.GuanoFile(input_file)
         # Get and set metadata values like a Python dict
-        print(f"GUANO Version: {g['GUANO|Version']}")
+        print(f'GUANO Version: {g["GUANO|Version"]}')
         # Print all the metadata values
         print('All Metadata:')
         for key, value in g.items():

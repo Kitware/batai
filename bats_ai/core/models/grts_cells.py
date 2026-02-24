@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.gis.db import models
 
 sample_frame_map = {

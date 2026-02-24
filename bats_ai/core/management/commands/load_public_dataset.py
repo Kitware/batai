@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from csv import DictReader
 from datetime import date
 import hashlib
@@ -60,13 +62,10 @@ def _get_metadata(filename: str, line: dict[str, str]) -> dict[str, Any]:
     metadata['site_name'] = guano_metadata.get('nabat_site_name')
     metadata['unusual_occurrences'] = guano_metadata.get('nabat_unusual_occurrences')
 
-    if metadata.get('grts_cell_id', None) is None and line.get('grts_cell_id', None) is not None:
+    if metadata.get('grts_cell_id') is None and line.get('grts_cell_id') is not None:
         metadata['grts_cell_id'] = line['grts_cell_id']
 
-    if (
-        metadata.get('recorded_date', None) is None
-        and line.get('recording_night', None) is not None
-    ):
+    if metadata.get('recorded_date') is None and line.get('recording_night') is not None:
         # Expect this column to contain a string in YYYY-MM-DD format
         recording_night_parts = line['recording_night'].split('-')
         if len(recording_night_parts) == 3:
@@ -226,7 +225,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f'Using manifest file {manifest}...')
 
-        owner = _get_owner(options.get('owner', None))
+        owner = _get_owner(options.get('owner'))
         if not owner:
             self.stdout.write(
                 self.style.ERROR('Could not find a user to assign ownership of the recordings')

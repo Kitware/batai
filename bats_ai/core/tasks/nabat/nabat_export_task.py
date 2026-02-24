@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import csv
 from datetime import timedelta
 from io import BytesIO, TextIOWrapper
@@ -50,7 +52,7 @@ def export_nabat_annotations_task(self, filters: dict, export_id: int):
             writer.writerow(
                 [
                     'recording_id',
-                    'recording_name' 'user_email',
+                    'recording_nameuser_email',
                     'confidence',
                     'created',
                     'species',

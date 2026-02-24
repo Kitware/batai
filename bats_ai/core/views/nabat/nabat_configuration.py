@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date, datetime, timedelta
 import json
 import logging
@@ -177,10 +179,10 @@ def recording_annotations(
             'comments': annotation.comments,
             'confidence': annotation.confidence,
             'created': annotation.created,
-            'user_id': annotation.user_id if annotation.user_id else None,
-            'user_email': annotation.user_email if annotation.user_email else None,
+            'user_id': annotation.user_id or None,
+            'user_email': annotation.user_email or None,
             'species': [species.species_code for species in annotation.species.all()],
-            'model': annotation.model if annotation.model else None,
+            'model': annotation.model or None,
         }
         for annotation in annotations
     ]

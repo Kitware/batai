@@ -9,6 +9,8 @@
 # [tool.uv.sources]
 # batbot = { git = "https://github.com/Kitware/batbot" }
 # ///
+from __future__ import annotations
+
 from contextlib import contextmanager
 import json
 import os

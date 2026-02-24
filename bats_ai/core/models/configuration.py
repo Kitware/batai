@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.db import models
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
@@ -38,9 +40,7 @@ class Configuration(models.Model):
 
     def save(self, *args, **kwargs):
         # Ensure only one instance of Configuration exists
-        if not Configuration.objects.exists() and not self.pk:
-            super().save(*args, **kwargs)
-        elif self.pk:
+        if (not Configuration.objects.exists() and not self.pk) or self.pk:
             super().save(*args, **kwargs)
         else:
             raise ValueError('Only one instance of Configuration is allowed.')

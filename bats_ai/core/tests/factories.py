@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 import factory.django
@@ -37,7 +39,6 @@ class UserProfileFactory(factory.django.DjangoModelFactory[UserProfile]):
 
 
 class VettingDetailsFactory(factory.django.DjangoModelFactory[VettingDetails]):
-
     class Meta:
         model = VettingDetails
 

@@ -13,14 +13,13 @@
 #     "scipy",
 # ]
 # ///
-
+from __future__ import annotations
 
 import io
 import math
 import os
 from random import uniform
 
-from PIL import Image
 import click
 import cv2
 from faker import Faker
@@ -29,6 +28,7 @@ import librosa
 import librosa.display
 import numpy as np
 import pandas as pd
+from PIL import Image
 from scipy.io import wavfile
 import scipy.signal
 
@@ -241,7 +241,7 @@ def main(num_files, outdir, colormap, spectro):
                 success = generate_compressed(
                     spectrogram_path, spec_duration, annotation_path, compressed_path
                 )
-                print(f"{base}: {'Success' if success else 'Failed'}")
+                print(f'{base}: {"Success" if success else "Failed"}')
 
 
 if __name__ == '__main__':

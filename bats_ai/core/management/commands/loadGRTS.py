@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import tempfile
@@ -16,11 +18,11 @@ logger = logging.getLogger(__name__)
 
 SHAPEFILES = [
     (
-        'https://www.sciencebase.gov/catalog/file/get/5b7753bde4b0f5d578820455?facet=conus_mastersample_10km_GRTS',  # noqa: E501
+        'https://www.sciencebase.gov/catalog/file/get/5b7753bde4b0f5d578820455?facet=conus_mastersample_10km_GRTS',
         14,
         'CONUS',
         # Backup URL
-        'https://data.kitware.com/api/v1/item/697cc601e7dea9be44ec5aee/download',  # noqa: E501
+        'https://data.kitware.com/api/v1/item/697cc601e7dea9be44ec5aee/download',
     ),  # CONUS
     # Removed other regions for now because of sciencebase.gov being down
     # (
@@ -67,8 +69,10 @@ class Command(BaseCommand):
                 try:
                     urlretrieve(url, zip_path)
                 except urllib.error.URLError as e:
-                    logger.warning(f'Failed to download from primary URL: {e}. \
-                            Attempting backup URL...')
+                    logger.warning(
+                        f'Failed to download from primary URL: {e}. \
+                            Attempting backup URL...'
+                    )
                     if backup_url is None:
                         logger.warning('No backup URL provided, skipping this shapefile.')
                         continue
@@ -144,7 +148,9 @@ class Command(BaseCommand):
                     with transaction.atomic():
                         GRTSCells.objects.bulk_create(records_to_create, ignore_conflicts=True)
 
-                logger.info(f'Finished importing shapefile for sample frame\
-                        {sample_frame_id}: {count_new} new records')
+                logger.info(
+                    f'Finished importing shapefile for sample frame\
+                        {sample_frame_id}: {count_new} new records'
+                )
 
         logger.info('All shapefiles processed successfully.')

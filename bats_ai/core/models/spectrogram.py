@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.files.storage import default_storage
 from django.db import models

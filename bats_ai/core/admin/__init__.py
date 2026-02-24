@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .annotations import AnnotationsAdmin
 from .compressed_spectrogram import CompressedSpectrogramAdmin
 from .configuration import ConfigurationAdmin

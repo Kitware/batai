@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.db import migrations
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.migrations.state import StateApps
@@ -7,7 +9,7 @@ CLIENT_ID = 'HSJWFZ2cIpWQOvNyCXyStV9hiOd7DfWeBOCzo4pP'
 
 
 def create_oauth2_application(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
-    Application = apps.get_model('oauth2_provider', 'Application')  # noqa: N806
+    Application = apps.get_model('oauth2_provider', 'Application')
 
     Application.objects.create(
         name=APPLICATION_NAME,
@@ -25,7 +27,7 @@ def create_oauth2_application(apps: StateApps, schema_editor: BaseDatabaseSchema
 
 
 def delete_oauth2_application(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
-    Application = apps.get_model('oauth2_provider', 'Application')  # noqa: N806
+    Application = apps.get_model('oauth2_provider', 'Application')
 
     Application.objects.filter(name=APPLICATION_NAME).delete()
 

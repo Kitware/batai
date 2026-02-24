@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import json
 import logging
@@ -119,8 +121,7 @@ def fetch_and_save():
     if file_response.status_code == 200:
         try:
             with open(file_name, 'wb') as f:
-                for chunk in file_response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+                f.writelines(file_response.iter_content(chunk_size=8192))
             logger.info(f'File downloaded: {file_name}')
         except Exception as e:
             logger.error(f'Error saving the file: {e}')

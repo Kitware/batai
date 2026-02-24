@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 import io
 import json
 import math
 import os
 import traceback
 
-from PIL import Image
 import click
 import cv2
 import librosa
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
 import tqdm
 
 FREQ_MIN = 5e3
@@ -59,7 +61,7 @@ def generate_spectrogram(wav_path, output_folder, colormap=None):
         for index in range(len(bands)):
             band_min = bands[index]
             band_max = bands[index + 1] if index < len(bands) - 1 else np.inf
-            if band_max <= FREQ_MIN or FREQ_MAX <= band_min:
+            if band_max <= FREQ_MIN or band_min >= FREQ_MAX:
                 window[index, :] = -1
 
         window = np.clip(window, 0, None)

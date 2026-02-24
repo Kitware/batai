@@ -7,6 +7,8 @@ Reuses the source recording's spectrogram images and compressed spectrogram
 (no recompute); copies RecordingAnnotations to the new recording.
 """
 
+from __future__ import annotations
+
 import logging
 import random
 

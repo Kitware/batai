@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.db import models
 from django.dispatch import receiver
 from django_extensions.db.models import TimeStampedModel

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.gis.geos import Point, Polygon
 from django.http import HttpRequest, JsonResponse
 from ninja import Query
@@ -10,7 +12,7 @@ router = RouterPaginated()
 
 @router.get('/grid_cell_id')
 def get_grid_cell_id(
-    request: HttpRequest, latitude: float = Query(...), longitude: float = Query(...)  # noqa: B008
+    request: HttpRequest, latitude: float = Query(...), longitude: float = Query(...)
 ):
     try:
         # Create a point object from the provided latitude and longitude

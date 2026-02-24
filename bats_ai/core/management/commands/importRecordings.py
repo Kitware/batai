@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 
@@ -185,9 +187,7 @@ class Command(BaseCommand):
                         )
                     )
                 except Exception as e:
-                    self.stdout.write(
-                        self.style.ERROR(f'  Failed to generate spectrogram: {str(e)}')
-                    )
+                    self.stdout.write(self.style.ERROR(f'  Failed to generate spectrogram: {e!s}'))
                     logger.exception('Error generating spectrogram', exc_info=e)
                     raise e
 
@@ -196,9 +196,7 @@ class Command(BaseCommand):
 
             except Exception as e:
                 failed += 1
-                self.stdout.write(
-                    self.style.ERROR(f'  ✗ Failed to import {wav_file.name}: {str(e)}')
-                )
+                self.stdout.write(self.style.ERROR(f'  ✗ Failed to import {wav_file.name}: {e!s}'))
                 logger.exception('Error importing file', exc_info=e)
 
         # Summary

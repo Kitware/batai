@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 from django.contrib.auth.models import User
@@ -62,7 +64,6 @@ class Recording(TimeStampedModel, models.Model):
 
     @property
     def spectrogram(self):
-        pass
 
         spectrograms = self.spectrograms
 

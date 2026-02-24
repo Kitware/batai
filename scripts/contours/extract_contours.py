@@ -13,6 +13,7 @@
 # [tool.uv.sources]
 # batbot = { git = "https://github.com/Kitware/batbot" }
 # ///
+from __future__ import annotations
 
 import colorsys
 import json

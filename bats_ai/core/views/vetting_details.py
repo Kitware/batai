@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.http import Http404, HttpRequest, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from ninja import Schema

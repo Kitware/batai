@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 import tempfile
@@ -28,8 +30,7 @@ def generate_spectrograms(
             if file_response.status_code == 200:
                 audio_file = Path(f'{tmpdir}/audio_file.wav')
                 with open(audio_file, 'wb') as temp_file:
-                    for chunk in file_response.iter_content(chunk_size=8192):
-                        temp_file.write(chunk)
+                    temp_file.writelines(file_response.iter_content(chunk_size=8192))
         except Exception as e:
             logger.error(f'Error Downloading Presigned URL: {e}')
             processing_task.status = ProcessingTask.Status.ERROR

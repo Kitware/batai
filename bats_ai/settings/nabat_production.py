@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .base import *
 
 # Import these afterwards, to override

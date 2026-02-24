@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django_extensions.utils import InternalIPS
 
 from .base import *
