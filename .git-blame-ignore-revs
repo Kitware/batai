@@ -6,3 +6,5 @@ e96c4259a70b8152903ba461bb955f32e89bd229
 83d5640865392f1d24cb676f9fe0265e7f90413e
 # Auto-format with Ruff
 8ae10baa9f11b43cd1b3e4d39717b349cc69238b
+# Apply double quotes with Ruff
+b904a4ce1548b2667c4b22e46c73d47dbbeaae27
