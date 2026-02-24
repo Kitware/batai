@@ -10,11 +10,11 @@ from django.template.loader import render_to_string
 
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     verified = models.BooleanField(default=False)
 
 
-@receiver(post_save, sender=User, dispatch_uid='create_new_user_profile')
+@receiver(post_save, sender=User, dispatch_uid="create_new_user_profile")
 def _create_new_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
@@ -31,14 +31,14 @@ def _notify_admins_new_user(sender, instance, created, **kwargs):
 
     if recipient_list:
         email_content = render_to_string(
-            'core/new_user_signup.txt',
+            "core/new_user_signup.txt",
             {
-                'user': instance,
-                'site': current_site,
+                "user": instance,
+                "site": current_site,
             },
         )
         send_mail(
-            subject=f'{current_site.name}: New user signup',
+            subject=f"{current_site.name}: New user signup",
             message=email_content,
             from_email=None,
             recipient_list=recipient_list,

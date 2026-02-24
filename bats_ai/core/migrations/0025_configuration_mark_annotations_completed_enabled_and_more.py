@@ -9,37 +9,37 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('core', '0024_delete_image'),
+        ("core", "0024_delete_image"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='configuration',
-            name='mark_annotations_completed_enabled',
+            model_name="configuration",
+            name="mark_annotations_completed_enabled",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='configuration',
-            name='non_admin_upload_enabled',
+            model_name="configuration",
+            name="non_admin_upload_enabled",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='recordingannotation',
-            name='submitted',
+            model_name="recordingannotation",
+            name="submitted",
             field=models.BooleanField(default=False),
         ),
         migrations.CreateModel(
-            name='VettingDetails',
+            name="VettingDetails",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('reference_materials', models.TextField(blank=True)),
+                ("reference_materials", models.TextField(blank=True)),
                 (
-                    'user',
+                    "user",
                     models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
                     ),
@@ -47,10 +47,10 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.AddConstraint(
-            model_name='vettingdetails',
+            model_name="vettingdetails",
             constraint=models.CheckConstraint(
-                condition=models.Q(('reference_materials__length__lte', 2000)),
-                name='reference_materials_max_2000',
+                condition=models.Q(("reference_materials__length__lte", 2000)),
+                name="reference_materials_max_2000",
             ),
         ),
     ]

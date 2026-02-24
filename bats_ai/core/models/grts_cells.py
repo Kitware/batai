@@ -3,17 +3,17 @@ from __future__ import annotations
 from django.contrib.gis.db import models
 
 sample_frame_map = {
-    12: 'Mexico',
-    14: 'Contintental US',
-    19: 'Canada',
-    20: 'Alaska',
-    21: 'Puerto Rico',
-    15: 'Hawaii',
-    22: 'Offshore Caribbean',
-    23: 'Offshore AKCAN',
-    24: 'Offshore CONUS',
-    25: 'Offshore Hawaii',
-    26: 'Offshore Mexico',
+    12: "Mexico",
+    14: "Contintental US",
+    19: "Canada",
+    20: "Alaska",
+    21: "Puerto Rico",
+    15: "Hawaii",
+    22: "Offshore Caribbean",
+    23: "Offshore AKCAN",
+    24: "Offshore CONUS",
+    25: "Offshore Hawaii",
+    26: "Offshore Mexico",
 }
 
 

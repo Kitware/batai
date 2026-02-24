@@ -62,9 +62,9 @@ class RecordingListQuerySchema(Schema):
     search: str | None = None
     tags: str | None = None  # Comma-separated tag texts; recording must have all listed tags
     sort_by: (
-        Literal['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'] | None
-    ) = 'created'
-    sort_direction: Literal['asc', 'desc'] | None = 'desc'
+        Literal["id", "name", "created", "modified", "recorded_date", "owner_username"] | None
+    ) = "created"
+    sort_direction: Literal["asc", "desc"] | None = "desc"
     page: int = 1
     limit: int = 20
 
@@ -74,9 +74,9 @@ class UnsubmittedNeighborsQuerySchema(Schema):
 
     current: int
     sort_by: (
-        Literal['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'] | None
-    ) = 'created'
-    sort_direction: Literal['asc', 'desc'] | None = 'desc'
+        Literal["id", "name", "created", "modified", "recorded_date", "owner_username"] | None
+    ) = "created"
+    sort_direction: Literal["asc", "desc"] | None = "desc"
     tags: str | None = None  # Comma-separated tag texts; recording must have all listed tags
 
 
@@ -250,15 +250,15 @@ class PulseMetadataSchema(Schema):
         )
 
 
-@router.post('/')
+@router.post("/")
 def create_recording(
     request: HttpRequest,
     payload: Form[RecordingUploadSchema],
     audio_file: File[UploadedFile],
     publicVal: bool = False,
 ):
-    converted_date = datetime.strptime(payload.recorded_date, '%Y-%m-%d')
-    converted_time = datetime.strptime(payload.recorded_time, '%H%M%S')
+    converted_date = datetime.strptime(payload.recorded_date, "%Y-%m-%d")
+    converted_time = datetime.strptime(payload.recorded_time, "%H%M%S")
     point = None
     if payload.latitude and payload.longitude:
         point = Point(payload.longitude, payload.latitude)
@@ -291,15 +291,15 @@ def create_recording(
     # this creates the spectrogram during the upload so it is available immediately afterwards
     # it will make the upload process longer but I think it's worth it.
     recording_compute_spectrogram.delay(recording.pk)
-    return {'message': 'Recording updated successfully', 'id': recording.pk}
+    return {"message": "Recording updated successfully", "id": recording.pk}
 
 
-@router.patch('/{id}')
+@router.patch("/{id}")
 def update_recording(request: HttpRequest, id: int, recording_data: RecordingUploadSchema):
     try:
         recording = Recording.objects.get(pk=id, owner=request.user)
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
     if recording_data.name:
         recording.name = recording_data.name
@@ -308,10 +308,10 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
     if recording_data.equipment:
         recording.equipment = recording_data.equipment
     if recording_data.recorded_date:
-        converted_date = datetime.strptime(recording_data.recorded_date, '%Y-%m-%d')
+        converted_date = datetime.strptime(recording_data.recorded_date, "%Y-%m-%d")
         recording.recorded_date = converted_date
     if recording_data.recorded_time:
-        converted_time = datetime.strptime(recording_data.recorded_time, '%H%M%S')
+        converted_time = datetime.strptime(recording_data.recorded_time, "%H%M%S")
         recording.recorded_time = converted_time
     if recording_data.publicVal is not None and recording_data.publicVal != recording.public:
         recording.public = recording_data.publicVal
@@ -341,7 +341,7 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
 
     recording.save()
 
-    return {'message': 'Recording updated successfully', 'id': recording.pk}
+    return {"message": "Recording updated successfully", "id": recording.pk}
 
 
 def _build_recordings_response(
@@ -377,7 +377,7 @@ def _build_recordings_response(
                 species_list=rec.species_list,
                 site_name=rec.site_name,
                 unusual_occurrences=rec.unusual_occurrences,
-                tags_text=getattr(rec, 'tags_text', None),
+                tags_text=getattr(rec, "tags_text", None),
                 owner_username=rec.owner.username,
                 audio_file_presigned_url=default_storage.url(rec.audio_file.name),
                 hasSpectrogram=rec.has_spectrogram_attr,
@@ -397,14 +397,14 @@ def _base_recordings_queryset(request: HttpRequest, public: bool | None) -> Quer
         return (
             Recording.objects.filter(public=True)
             .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
-            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
+            .annotate(tags_text=ArrayAgg("tags__text", filter=Q(tags__text__isnull=False)))
         )
     return Recording.objects.filter(owner=request.user).annotate(
-        tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False))
+        tags_text=ArrayAgg("tags__text", filter=Q(tags__text__isnull=False))
     )
 
 
-@router.delete('/{id}')
+@router.delete("/{id}")
 def delete_recording(
     request,
     id: int,
@@ -416,19 +416,19 @@ def delete_recording(
         if recording.owner == request.user or recording.public:
             # Delete the annotation
             recording.delete()
-            return {'message': 'Recording deleted successfully'}
+            return {"message": "Recording deleted successfully"}
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
     except Annotations.DoesNotExist:
-        return {'error': 'Annotation not found'}
+        return {"error": "Annotation not found"}
 
 
-@router.get('/', response=RecordingPaginatedResponse)
+@router.get("/", response=RecordingPaginatedResponse)
 def get_recordings(
     request: HttpRequest,
     q: Query[RecordingListQuerySchema],
@@ -438,12 +438,12 @@ def get_recordings(
     if q.exclude_submitted:
         submitted_by_user = RecordingAnnotation.objects.filter(
             owner=request.user, submitted=True
-        ).values_list('recording_id', flat=True)
+        ).values_list("recording_id", flat=True)
         queryset = queryset.exclude(pk__in=submitted_by_user)
 
     if q.annotation_completed is not None:
         has_submitted = RecordingAnnotation.objects.filter(submitted=True).values_list(
-            'recording_id', flat=True
+            "recording_id", flat=True
         )
         if q.annotation_completed:
             queryset = queryset.filter(pk__in=has_submitted)
@@ -462,35 +462,35 @@ def get_recordings(
         queryset = queryset.filter(search_q).distinct()
 
     if q.tags and q.tags.strip():
-        tag_list = [t.strip() for t in q.tags.split(',') if t.strip()]
+        tag_list = [t.strip() for t in q.tags.split(",") if t.strip()]
         if tag_list:
             for tag in tag_list:
                 queryset = queryset.filter(tags__text=tag)
             queryset = queryset.distinct()
 
-    sort_field = q.sort_by or 'created'
-    order_prefix = '' if q.sort_direction == 'asc' else '-'
-    if sort_field == 'owner_username':
-        queryset = queryset.order_by(f'{order_prefix}owner__username')
+    sort_field = q.sort_by or "created"
+    order_prefix = "" if q.sort_direction == "asc" else "-"
+    if sort_field == "owner_username":
+        queryset = queryset.order_by(f"{order_prefix}owner__username")
     else:
-        queryset = queryset.order_by(f'{order_prefix}{sort_field}')
+        queryset = queryset.order_by(f"{order_prefix}{sort_field}")
 
     # Annotate has_spectrogram in SQL to avoid one query per recording
     queryset = queryset.annotate(
-        has_spectrogram_attr=Exists(Spectrogram.objects.filter(recording=OuterRef('pk')))
+        has_spectrogram_attr=Exists(Spectrogram.objects.filter(recording=OuterRef("pk")))
     )
     count = queryset.count()
     offset = (q.page - 1) * q.limit
 
     # One query for page of recordings; prefetch current user's file annotations only (no N+1)
     file_annotations_prefetch = Prefetch(
-        'recordingannotation_set',
+        "recordingannotation_set",
         queryset=RecordingAnnotation.objects.filter(owner=request.user)
-        .prefetch_related('species')
-        .order_by('confidence'),
+        .prefetch_related("species")
+        .order_by("confidence"),
     )
     page_recordings = list(
-        queryset.select_related('owner').prefetch_related(file_annotations_prefetch)[
+        queryset.select_related("owner").prefetch_related(file_annotations_prefetch)[
             offset : offset + q.limit
         ]
     )
@@ -502,19 +502,19 @@ def get_recordings(
     # Bulk: unique annotation user count per recording (Annotations table only)
     annotation_counts = dict(
         Annotations.objects.filter(recording_id__in=rec_ids)
-        .values('recording_id')
-        .annotate(c=Count('owner', distinct=True))
-        .values_list('recording_id', 'c')
+        .values("recording_id")
+        .annotate(c=Count("owner", distinct=True))
+        .values_list("recording_id", "c")
     )
     # Bulk: recording IDs where request.user has any annotation (Annotations or RecordingAnnotation)
     user_has_annotations_ids = set(
         Annotations.objects.filter(recording_id__in=rec_ids, owner=request.user).values_list(
-            'recording_id', flat=True
+            "recording_id", flat=True
         )
     ) | set(
         RecordingAnnotation.objects.filter(
             recording_id__in=rec_ids, owner=request.user
-        ).values_list('recording_id', flat=True)
+        ).values_list("recording_id", flat=True)
     )
 
     items = _build_recordings_response(
@@ -525,38 +525,38 @@ def get_recordings(
 
 def _unsubmitted_recording_ids_ordered(
     request: HttpRequest,
-    sort_by: str = 'created',
-    sort_direction: str = 'desc',
+    sort_by: str = "created",
+    sort_direction: str = "desc",
     tags: str | None = None,
 ) -> list[int]:
     submitted_by_user = RecordingAnnotation.objects.filter(
         owner=request.user, submitted=True
-    ).values_list('recording_id', flat=True)
+    ).values_list("recording_id", flat=True)
 
     def apply_filters_and_sort(qs: QuerySet[Recording]) -> QuerySet[Recording]:
         qs = qs.exclude(pk__in=submitted_by_user)
         if tags and tags.strip():
-            tag_list = [t.strip() for t in tags.split(',') if t.strip()]
+            tag_list = [t.strip() for t in tags.split(",") if t.strip()]
             for tag in tag_list:
                 qs = qs.filter(tags__text=tag)
             if tag_list:
                 qs = qs.distinct()
-        order_prefix = '' if sort_direction == 'asc' else '-'
-        if sort_by == 'owner_username':
-            qs = qs.order_by(f'{order_prefix}owner__username')
+        order_prefix = "" if sort_direction == "asc" else "-"
+        if sort_by == "owner_username":
+            qs = qs.order_by(f"{order_prefix}owner__username")
         else:
-            qs = qs.order_by(f'{order_prefix}{sort_by}')
+            qs = qs.order_by(f"{order_prefix}{sort_by}")
         return qs
 
     my_qs = apply_filters_and_sort(_base_recordings_queryset(request, False))
     shared_qs = apply_filters_and_sort(_base_recordings_queryset(request, True))
 
-    my_ids = list(my_qs.values_list('id', flat=True))
-    shared_ids = list(shared_qs.values_list('id', flat=True))
+    my_ids = list(my_qs.values_list("id", flat=True))
+    shared_ids = list(shared_qs.values_list("id", flat=True))
     return my_ids + shared_ids
 
 
-@router.get('/unsubmitted-neighbors/', response=UnsubmittedNeighborsResponse)
+@router.get("/unsubmitted-neighbors/", response=UnsubmittedNeighborsResponse)
 def get_unsubmitted_neighbors(
     request: HttpRequest,
     q: Query[UnsubmittedNeighborsQuerySchema],
@@ -570,8 +570,8 @@ def get_unsubmitted_neighbors(
     if rec.owner != request.user and not rec.public:
         return UnsubmittedNeighborsResponse(next_id=None, previous_id=None)
 
-    sort_by = q.sort_by or 'created'
-    sort_direction = q.sort_direction or 'desc'
+    sort_by = q.sort_by or "created"
+    sort_direction = q.sort_direction or "desc"
     raw_ids = _unsubmitted_recording_ids_ordered(
         request, sort_by=sort_by, sort_direction=sort_direction, tags=q.tags
     )
@@ -595,32 +595,32 @@ def get_unsubmitted_neighbors(
     return UnsubmittedNeighborsResponse(next_id=next_id, previous_id=previous_id)
 
 
-@router.get('/{id}/')
+@router.get("/{id}/")
 def get_recording(request: HttpRequest, id: int):
     # Filter recordings based on the owner's id or public=True
     try:
         recordings = (
             Recording.objects.filter(pk=id)
-            .annotate(tags_text=ArrayAgg('tags__text', filter=Q(tags__text__isnull=False)))
+            .annotate(tags_text=ArrayAgg("tags__text", filter=Q(tags__text__isnull=False)))
             .values()
         )
         if len(recordings) > 0:
             recording = recordings[0]
 
-            user = User.objects.get(id=recording['owner_id'])
-            recording['owner_username'] = user.username
-            recording['audio_file_presigned_url'] = default_storage.url(recording['audio_file'])
-            recording['hasSpectrogram'] = Recording.objects.get(id=recording['id']).has_spectrogram
-            if recording['recording_location']:
-                recording['recording_location'] = json.loads(recording['recording_location'].json)
+            user = User.objects.get(id=recording["owner_id"])
+            recording["owner_username"] = user.username
+            recording["audio_file_presigned_url"] = default_storage.url(recording["audio_file"])
+            recording["hasSpectrogram"] = Recording.objects.get(id=recording["id"]).has_spectrogram
+            if recording["recording_location"]:
+                recording["recording_location"] = json.loads(recording["recording_location"].json)
             annotation_owners = (
-                Annotations.objects.filter(recording_id=recording['id'])
-                .values_list('owner', flat=True)
+                Annotations.objects.filter(recording_id=recording["id"])
+                .values_list("owner", flat=True)
                 .distinct()
             )
             recording_annotation_owners = (
-                RecordingAnnotation.objects.filter(recording_id=recording['id'])
-                .values_list('owner', flat=True)
+                RecordingAnnotation.objects.filter(recording_id=recording["id"])
+                .values_list("owner", flat=True)
                 .distinct()
             )
 
@@ -628,43 +628,43 @@ def get_recording(request: HttpRequest, id: int):
             unique_users_with_annotations = len(
                 set(annotation_owners).union(set(recording_annotation_owners))
             )
-            recording['userAnnotations'] = unique_users_with_annotations
+            recording["userAnnotations"] = unique_users_with_annotations
             user_has_annotations = (
                 Annotations.objects.filter(
-                    recording_id=recording['id'], owner=request.user
+                    recording_id=recording["id"], owner=request.user
                 ).exists()
                 or RecordingAnnotation.objects.filter(
-                    recording_id=recording['id'], owner=request.user
+                    recording_id=recording["id"], owner=request.user
                 ).exists()
             )
-            recording['userMadeAnnotations'] = user_has_annotations
+            recording["userMadeAnnotations"] = user_has_annotations
             # Only expose file-level annotations owned by the current user
             fileAnnotations = RecordingAnnotation.objects.filter(
                 recording=id, owner=request.user
-            ).order_by('confidence')
-            recording['fileAnnotations'] = [
+            ).order_by("confidence")
+            recording["fileAnnotations"] = [
                 RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
                 for fileAnnotation in fileAnnotations
             ]
             return recording
         else:
-            return {'error': 'Recording not found'}
+            return {"error": "Recording not found"}
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
 
-@router.get('/{recording_id}/recording-annotations')
+@router.get("/{recording_id}/recording-annotations")
 def get_recording_annotations(request: HttpRequest, recording_id: int):
     try:
         recording = Recording.objects.get(pk=recording_id)
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
     if recording.owner != request.user and not recording.public:
-        return {'error': 'Permission denied. You do not own this recording, and it is not public.'}
+        return {"error": "Permission denied. You do not own this recording, and it is not public."}
     # Only return file-level annotations owned by the current user (same as pulse annotations)
     fileAnnotations = RecordingAnnotation.objects.filter(
         recording=recording_id, owner=request.user
-    ).order_by('confidence')
+    ).order_by("confidence")
     output = [
         RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
         for fileAnnotation in fileAnnotations
@@ -672,33 +672,33 @@ def get_recording_annotations(request: HttpRequest, recording_id: int):
     return output
 
 
-@router.get('/{id}/spectrogram')
+@router.get("/{id}/spectrogram")
 def get_spectrogram(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
     spectrogram = recording.spectrogram
 
     compressed = recording.compressed_spectrogram
 
     spectro_data = {
-        'urls': spectrogram.image_url_list,
-        'spectroInfo': {
-            'spectroId': spectrogram.pk,
-            'width': spectrogram.width,
-            'height': spectrogram.height,
-            'start_time': 0,
-            'end_time': spectrogram.duration,
-            'low_freq': spectrogram.frequency_min,
-            'high_freq': spectrogram.frequency_max,
+        "urls": spectrogram.image_url_list,
+        "spectroInfo": {
+            "spectroId": spectrogram.pk,
+            "width": spectrogram.width,
+            "height": spectrogram.height,
+            "start_time": 0,
+            "end_time": spectrogram.duration,
+            "low_freq": spectrogram.frequency_min,
+            "high_freq": spectrogram.frequency_max,
         },
     }
     if compressed:
-        spectro_data['compressed'] = {
-            'start_times': compressed.starts,
-            'end_times': compressed.stops,
+        spectro_data["compressed"] = {
+            "start_times": compressed.starts,
+            "end_times": compressed.stops,
         }
 
     # Get distinct other users who have made annotations on the recording
@@ -706,22 +706,22 @@ def get_spectrogram(request: HttpRequest, id: int):
         other_users_qs = (
             Annotations.objects.filter(recording=recording)
             .exclude(owner=request.user)
-            .values('owner__username', 'owner__email', 'owner__pk')
+            .values("owner__username", "owner__email", "owner__pk")
             .distinct()
         )
 
         other_users = [
             {
-                'username': user['owner__username'],
-                'email': user['owner__email'],
-                'id': user['owner__pk'],
+                "username": user["owner__username"],
+                "email": user["owner__email"],
+                "id": user["owner__pk"],
             }
             for user in other_users_qs
         ]
 
-        spectro_data['otherUsers'] = other_users
+        spectro_data["otherUsers"] = other_users
 
-    spectro_data['currentUser'] = request.user.email
+    spectro_data["currentUser"] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
     sequence_annotations_qs = SequenceAnnotations.objects.filter(
@@ -738,36 +738,36 @@ def get_spectrogram(request: HttpRequest, id: int):
         for annotation in sequence_annotations_qs
     ]
 
-    spectro_data['annotations'] = annotations_data
-    spectro_data['sequence'] = sequence_annotations_data
+    spectro_data["annotations"] = annotations_data
+    spectro_data["sequence"] = sequence_annotations_data
     return spectro_data
 
 
-@router.get('/{id}/spectrogram/compressed')
+@router.get("/{id}/spectrogram/compressed")
 def get_spectrogram_compressed(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
         compressed_spectrogram = CompressedSpectrogram.objects.filter(recording=id).first()
     except compressed_spectrogram.DoesNotExist:
-        return {'error': 'Compressed Spectrogram'}
+        return {"error": "Compressed Spectrogram"}
     except recording.DoesNotExist:
-        return {'error': 'Recording does not exist'}
+        return {"error": "Recording does not exist"}
 
     spectro_data = {
-        'urls': compressed_spectrogram.image_url_list,
-        'mask_urls': compressed_spectrogram.mask_url_list,
-        'spectroInfo': {
-            'spectroId': compressed_spectrogram.pk,
-            'width': compressed_spectrogram.spectrogram.width,
-            'start_time': 0,
-            'end_time': compressed_spectrogram.spectrogram.duration,
-            'height': compressed_spectrogram.spectrogram.height,
-            'low_freq': compressed_spectrogram.spectrogram.frequency_min,
-            'high_freq': compressed_spectrogram.spectrogram.frequency_max,
-            'start_times': compressed_spectrogram.starts,
-            'end_times': compressed_spectrogram.stops,
-            'widths': compressed_spectrogram.widths,
-            'compressedWidth': compressed_spectrogram.length,
+        "urls": compressed_spectrogram.image_url_list,
+        "mask_urls": compressed_spectrogram.mask_url_list,
+        "spectroInfo": {
+            "spectroId": compressed_spectrogram.pk,
+            "width": compressed_spectrogram.spectrogram.width,
+            "start_time": 0,
+            "end_time": compressed_spectrogram.spectrogram.duration,
+            "height": compressed_spectrogram.spectrogram.height,
+            "low_freq": compressed_spectrogram.spectrogram.frequency_min,
+            "high_freq": compressed_spectrogram.spectrogram.frequency_max,
+            "start_times": compressed_spectrogram.starts,
+            "end_times": compressed_spectrogram.stops,
+            "widths": compressed_spectrogram.widths,
+            "compressedWidth": compressed_spectrogram.length,
         },
     }
 
@@ -776,22 +776,22 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
         other_users_qs = (
             Annotations.objects.filter(recording=recording)
             .exclude(owner=request.user)
-            .values('owner__username', 'owner__email', 'owner__pk')
+            .values("owner__username", "owner__email", "owner__pk")
             .distinct()
         )
 
         other_users = [
             {
-                'username': user['owner__username'],
-                'email': user['owner__email'],
-                'id': user['owner__pk'],
+                "username": user["owner__username"],
+                "email": user["owner__email"],
+                "id": user["owner__pk"],
             }
             for user in other_users_qs
         ]
 
-        spectro_data['otherUsers'] = other_users
+        spectro_data["otherUsers"] = other_users
 
-    spectro_data['currentUser'] = request.user.email
+    spectro_data["currentUser"] = request.user.email
 
     annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
     sequence_annotations_qs = SequenceAnnotations.objects.filter(
@@ -808,12 +808,12 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
         for annotation in sequence_annotations_qs
     ]
 
-    spectro_data['annotations'] = annotations_data
-    spectro_data['sequence'] = sequence_annotations_data
+    spectro_data["annotations"] = annotations_data
+    spectro_data["sequence"] = sequence_annotations_data
     return spectro_data
 
 
-@router.get('/{id}/annotations')
+@router.get("/{id}/annotations")
 def get_annotations(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
@@ -832,52 +832,52 @@ def get_annotations(request: HttpRequest, id: int):
             return annotations_data
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
 
-@router.get('/{id}/pulse_contours')
+@router.get("/{id}/pulse_contours")
 def get_pulse_contours(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
         if recording.owner == request.user or recording.public:
             computed_pulse_annotation_qs = PulseMetadata.objects.filter(
                 recording=recording
-            ).order_by('index')
+            ).order_by("index")
             return [
                 PulseContourSchema.from_orm(pulse) for pulse in computed_pulse_annotation_qs.all()
             ]
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
 
-@router.get('/{id}/pulse_data')
+@router.get("/{id}/pulse_data")
 def get_pulse_data(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
         if recording.owner == request.user or recording.public:
             computed_pulse_annotation_qs = PulseMetadata.objects.filter(
                 recording=recording
-            ).order_by('index')
+            ).order_by("index")
             return [
                 PulseMetadataSchema.from_orm(pulse) for pulse in computed_pulse_annotation_qs.all()
             ]
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
 
-@router.get('/{id}/annotations/other_users')
+@router.get("/{id}/annotations/other_users")
 def get_other_user_annotations(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
@@ -901,10 +901,10 @@ def get_other_user_annotations(request: HttpRequest, id: int):
 
                 # If user_email is not already a key in the dictionary, initialize it with
                 # an empty list
-                annotations_by_user.setdefault(user_email, {'annotations': [], 'sequence': []})
+                annotations_by_user.setdefault(user_email, {"annotations": [], "sequence": []})
 
                 # Append the annotation to the list for the corresponding user_email
-                annotations_by_user[user_email]['annotations'].append(
+                annotations_by_user[user_email]["annotations"].append(
                     AnnotationSchema.from_orm(annotation, owner_email=user_email).dict()
                 )
 
@@ -913,24 +913,24 @@ def get_other_user_annotations(request: HttpRequest, id: int):
 
                 # If user_email is not already a key in the dictionary, initialize it with
                 # an empty list
-                annotations_by_user.setdefault(user_email, {'annotations': [], 'sequence': []})
+                annotations_by_user.setdefault(user_email, {"annotations": [], "sequence": []})
 
                 # Append the annotation to the list for the corresponding user_email
-                annotations_by_user[user_email]['sequence'].append(
+                annotations_by_user[user_email]["sequence"].append(
                     SequenceAnnotationSchema.from_orm(annotation, owner_email=user_email).dict()
                 )
 
             return annotations_by_user
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
 
-@router.get('/{id}/annotations/user/{userId}')
+@router.get("/{id}/annotations/user/{userId}")
 def get_user_annotations(request: HttpRequest, id: int, userId: int):
     try:
         recording = Recording.objects.get(pk=id)
@@ -948,14 +948,14 @@ def get_user_annotations(request: HttpRequest, id: int, userId: int):
             return annotations_data
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
 
-@router.put('/{id}/annotations')
+@router.put("/{id}/annotations")
 def put_annotation(
     request,
     id: int,
@@ -984,19 +984,19 @@ def put_annotation(
                     new_annotation.species.add(species_obj)
                 except Species.DoesNotExist:
                     # Handle the case where the species with the given ID doesn't exist
-                    return {'error': f'Species with ID {species_id} not found'}
+                    return {"error": f"Species with ID {species_id} not found"}
 
-            return {'message': 'Annotation added successfully', 'id': new_annotation.pk}
+            return {"message": "Annotation added successfully", "id": new_annotation.pk}
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
 
-@router.patch('/{recording_id}/annotations/{id}')
+@router.patch("/{recording_id}/annotations/{id}")
 def patch_annotation(
     request,
     recording_id: int,
@@ -1040,21 +1040,21 @@ def patch_annotation(
                         annotation_instance.species.add(species_obj)
                     except Species.DoesNotExist:
                         # Handle the case where the species with the given ID doesn't exist
-                        return {'error': f'Species with ID {species_id} not found'}
+                        return {"error": f"Species with ID {species_id} not found"}
 
-            return {'message': 'Annotation updated successfully', 'id': annotation_instance.pk}
+            return {"message": "Annotation updated successfully", "id": annotation_instance.pk}
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
     except Annotations.DoesNotExist:
-        return {'error': 'Annotation not found'}
+        return {"error": "Annotation not found"}
 
 
-@router.patch('/{recording_id}/sequence-annotations/{id}')
+@router.patch("/{recording_id}/sequence-annotations/{id}")
 def patch_sequence_annotation(
     request,
     recording_id: int,
@@ -1094,21 +1094,21 @@ def patch_sequence_annotation(
                         annotation_instance.species.add(species_obj)
                     except Species.DoesNotExist:
                         # Handle the case where the species with the given ID doesn't exist
-                        return {'error': f'Species with ID {species_id} not found'}
+                        return {"error": f"Species with ID {species_id} not found"}
 
-            return {'message': 'Annotation updated successfully', 'id': annotation_instance.pk}
+            return {"message": "Annotation updated successfully", "id": annotation_instance.pk}
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
     except Annotations.DoesNotExist:
-        return {'error': 'Annotation not found'}
+        return {"error": "Annotation not found"}
 
 
-@router.delete('/{recording_id}/annotations/{id}')
+@router.delete("/{recording_id}/annotations/{id}")
 def delete_annotation(request, recording_id: int, id: int):
     try:
         recording = Recording.objects.get(pk=recording_id)
@@ -1122,22 +1122,22 @@ def delete_annotation(request, recording_id: int, id: int):
             # Delete the annotation
             annotation_instance.delete()
 
-            return {'message': 'Annotation deleted successfully'}
+            return {"message": "Annotation deleted successfully"}
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
     except Annotations.DoesNotExist:
-        return {'error': 'Annotation not found'}
+        return {"error": "Annotation not found"}
 
 
 # SEQUENCE ANNOTATIONS
 
 
-@router.get('/{id}/sequence-annotations')
+@router.get("/{id}/sequence-annotations")
 def get_sequence_annotations(request: HttpRequest, id: int):
     try:
         recording = Recording.objects.get(pk=id)
@@ -1158,14 +1158,14 @@ def get_sequence_annotations(request: HttpRequest, id: int):
             return annotations_data
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
 
-@router.put('/{id}/sequence-annotations')
+@router.put("/{id}/sequence-annotations")
 def put_sequence_annotation(
     request,
     id: int,
@@ -1185,17 +1185,17 @@ def put_sequence_annotation(
                 comments=annotation.comments,
             )
 
-            return {'message': 'Annotation added successfully', 'id': new_annotation.pk}
+            return {"message": "Annotation added successfully", "id": new_annotation.pk}
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
 
-@router.delete('/{recording_id}/sequence-annotations/{id}')
+@router.delete("/{recording_id}/sequence-annotations/{id}")
 def delete_sequence_annotation(request, recording_id: int, id: int):
     try:
         recording = Recording.objects.get(pk=recording_id)
@@ -1209,13 +1209,13 @@ def delete_sequence_annotation(request, recording_id: int, id: int):
             # Delete the annotation
             annotation_instance.delete()
 
-            return {'message': 'Annotation deleted successfully'}
+            return {"message": "Annotation deleted successfully"}
         else:
             return {
-                'error': 'Permission denied. You do not own this recording, and it is not public.'
+                "error": "Permission denied. You do not own this recording, and it is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
     except Annotations.DoesNotExist:
-        return {'error': 'Annotation not found'}
+        return {"error": "Annotation not found"}

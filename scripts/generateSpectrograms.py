@@ -18,7 +18,7 @@ FREQ_MIN = 5e3
 FREQ_MAX = 120e3
 FREQ_PAD = 2e3
 
-COLORMAP_ALLOWED = [None, 'gist_yarg', 'turbo']
+COLORMAP_ALLOWED = [None, "gist_yarg", "turbo"]
 
 
 def generate_spectrogram(wav_path, output_folder, colormap=None):
@@ -28,26 +28,26 @@ def generate_spectrogram(wav_path, output_folder, colormap=None):
         size_mod = 1
         high_res = False
 
-        if colormap in ['inference']:
+        if colormap in ["inference"]:
             colormap = None
             size_mod = 0
-        elif colormap in ['none', 'default', 'dark']:
+        elif colormap in ["none", "default", "dark"]:
             colormap = None
-        elif colormap in ['light']:
-            colormap = 'gist_yarg'
-        elif colormap in ['heatmap']:
-            colormap = 'turbo'
+        elif colormap in ["light"]:
+            colormap = "gist_yarg"
+        elif colormap in ["heatmap"]:
+            colormap = "turbo"
             high_res = True
 
         if colormap not in COLORMAP_ALLOWED:
-            click.echo(f'Substituted requested {colormap} colormap to default')
+            click.echo(f"Substituted requested {colormap} colormap to default")
             colormap = None
 
         size = int(0.001 * sr)  # 1.0ms resolution
         size = 2 ** (math.ceil(math.log(size, 2)) + size_mod)
         hop_length = int(size / 4)
 
-        window = librosa.stft(sig, n_fft=size, hop_length=hop_length, window='hamming')
+        window = librosa.stft(sig, n_fft=size, hop_length=hop_length, window="hamming")
         window = np.abs(window) ** 2
         window = librosa.power_to_db(window)
 
@@ -76,23 +76,23 @@ def generate_spectrogram(wav_path, output_folder, colormap=None):
         chunks = np.array_split(window, arange, axis=1)
 
         imgs = []
-        for chunk in tqdm.tqdm(chunks, desc=f'Processing {os.path.basename(wav_path)}'):
+        for chunk in tqdm.tqdm(chunks, desc=f"Processing {os.path.basename(wav_path)}"):
             h, w = chunk.shape
             alpha = 3
             figsize = (int(math.ceil(w / h)) * alpha + 1, alpha)
-            fig = plt.figure(figsize=figsize, facecolor='black', dpi=300)
+            fig = plt.figure(figsize=figsize, facecolor="black", dpi=300)
             ax = plt.axes()
             plt.margins(0)
 
             kwargs = {
-                'sr': sr,
-                'n_fft': size,
-                'hop_length': hop_length,
-                'x_axis': 's',
-                'y_axis': 'fft',
-                'ax': ax,
-                'vmin': vmin,
-                'vmax': vmax,
+                "sr": sr,
+                "n_fft": size,
+                "hop_length": hop_length,
+                "x_axis": "s",
+                "y_axis": "fft",
+                "ax": ax,
+                "vmin": vmin,
+                "vmax": vmax,
             }
 
             if colormap is None:
@@ -101,10 +101,10 @@ def generate_spectrogram(wav_path, output_folder, colormap=None):
                 librosa.display.specshow(chunk, cmap=colormap, **kwargs)
 
             ax.set_ylim(freq_low, freq_high)
-            ax.axis('off')
+            ax.axis("off")
 
             buf = io.BytesIO()
-            fig.savefig(buf, bbox_inches='tight', pad_inches=0)
+            fig.savefig(buf, bbox_inches="tight", pad_inches=0)
             plt.close(fig)
 
             buf.seek(0)
@@ -159,31 +159,31 @@ def generate_spectrogram(wav_path, output_folder, colormap=None):
             img[img > 255] = 255
             img = np.around(img).astype(np.uint8)
 
-        img = Image.fromarray(img, 'RGB')
+        img = Image.fromarray(img, "RGB")
         output_path = os.path.join(
-            output_folder, os.path.splitext(os.path.basename(wav_path))[0] + '.jpg'
+            output_folder, os.path.splitext(os.path.basename(wav_path))[0] + ".jpg"
         )
-        img.save(output_path, format='JPEG', quality=80)
+        img.save(output_path, format="JPEG", quality=80)
 
-        return {'file': wav_path, 'status': 'success', 'output': output_path}
+        return {"file": wav_path, "status": "success", "output": output_path}
 
     except Exception as e:
         return {
-            'file': wav_path,
-            'status': 'error',
-            'error': str(e),
-            'traceback': traceback.format_exc(),
+            "file": wav_path,
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc(),
         }
 
 
 @click.command()
-@click.argument('input_folder', type=click.Path(exists=True))
-@click.argument('output_folder', type=click.Path(), default='./outputs')
+@click.argument("input_folder", type=click.Path(exists=True))
+@click.argument("output_folder", type=click.Path(), default="./outputs")
 @click.option(
-    '--colormap',
+    "--colormap",
     type=str,
     default=None,
-    help='Colormap for spectrograms (default, light, heatmap).',
+    help="Colormap for spectrograms (default, light, heatmap).",
 )
 def process_wav_files(input_folder, output_folder, colormap):
     os.makedirs(output_folder, exist_ok=True)
@@ -191,19 +191,19 @@ def process_wav_files(input_folder, output_folder, colormap):
 
     for root, _, files in os.walk(input_folder):
         for file in files:
-            if file.lower().endswith('.wav'):
+            if file.lower().endswith(".wav"):
                 wav_path = os.path.join(root, file)
                 result = generate_spectrogram(wav_path, output_folder, colormap)
                 results.append(result)
 
-    results.sort(key=lambda x: x['status'], reverse=True)
+    results.sort(key=lambda x: x["status"], reverse=True)
 
-    log_file = os.path.join(output_folder, 'conversion_log.json')
-    with open(log_file, 'w') as f:
+    log_file = os.path.join(output_folder, "conversion_log.json")
+    with open(log_file, "w") as f:
         json.dump(results, f, indent=4)
 
-    click.echo(f'Processing complete. Log saved to {log_file}')
+    click.echo(f"Processing complete. Log saved to {log_file}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     process_wav_files()

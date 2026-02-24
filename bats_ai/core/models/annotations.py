@@ -26,5 +26,5 @@ class Annotations(TimeStampedModel, models.Model):
             MinValueValidator(0.0),
             MaxValueValidator(1.0),
         ],
-        help_text='A confidence value between 0 and 1.0, default is 1.0.',
+        help_text="A confidence value between 0 and 1.0, default is 1.0.",
     )

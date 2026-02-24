@@ -30,19 +30,19 @@ class NABatRecording(TimeStampedModel, models.Model):
     nabat_manual_species = models.ForeignKey(Species, null=True, on_delete=models.SET_NULL)
     species_list = models.TextField(blank=True, null=True)
     nabat_auto_species = models.ForeignKey(
-        Species, null=True, on_delete=models.SET_NULL, related_name='nabatrecording_auto_species'
+        Species, null=True, on_delete=models.SET_NULL, related_name="nabatrecording_auto_species"
     )
     nabat_manual_species = models.ForeignKey(
-        Species, null=True, on_delete=models.SET_NULL, related_name='nabatrecording_manual_species'
+        Species, null=True, on_delete=models.SET_NULL, related_name="nabatrecording_manual_species"
     )
     computed_species = models.ManyToManyField(
         Species,
-        related_name='nabatrecording_computed_species',  # Changed related name
+        related_name="nabatrecording_computed_species",  # Changed related name
     )  # species from a computed sense
 
     official_species = models.ManyToManyField(
         Species,
-        related_name='nabatrecording_official_species',  # Changed related name
+        related_name="nabatrecording_official_species",  # Changed related name
     )  # species that are detemrined by the owner or from annotations as official species list
 
     unusual_occurrences = models.TextField(blank=True, null=True)
@@ -55,7 +55,7 @@ class NABatRecording(TimeStampedModel, models.Model):
     def spectrograms(self):
         from bats_ai.core.models.nabat import NABatSpectrogram
 
-        query = NABatSpectrogram.objects.filter(nabat_recording=self).order_by('-created')
+        query = NABatSpectrogram.objects.filter(nabat_recording=self).order_by("-created")
         return query.all()
 
     @property
@@ -76,7 +76,7 @@ class NABatRecording(TimeStampedModel, models.Model):
     def compressed_spectrograms(self):
         from bats_ai.core.models.nabat import NABatCompressedSpectrogram
 
-        query = NABatCompressedSpectrogram.objects.filter(nabat_recording=self).order_by('-created')
+        query = NABatCompressedSpectrogram.objects.filter(nabat_recording=self).order_by("-created")
         return query.all()
 
     @property
@@ -90,5 +90,5 @@ class NABatRecording(TimeStampedModel, models.Model):
         return spectrogram
 
     class Meta:
-        verbose_name = 'NABat Recording'
-        verbose_name_plural = 'NABat Recording'
+        verbose_name = "NABat Recording"
+        verbose_name_plural = "NABat Recording"

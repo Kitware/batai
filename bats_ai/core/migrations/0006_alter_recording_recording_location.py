@@ -7,13 +7,13 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0005_recording_public'),
+        ("core", "0005_recording_public"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='recording',
-            name='recording_location',
+            model_name="recording",
+            name="recording_location",
             field=django.contrib.gis.db.models.fields.GeometryField(
                 blank=True, null=True, srid=4326
             ),

@@ -14,16 +14,16 @@ from .species import router as SpeciesRouter
 from .vetting_details import router as VettingRouter
 
 __all__ = [
-    'AnnotationRouter',
-    'ConfigurationRouter',
-    'ExportAnnotationRouter',
-    'GRTSCellsRouter',
-    'GuanoMetadataRouter',
-    'ProcessingTaskRouter',
-    'RecordingAnnotationRouter',
-    'RecordingRouter',
-    'RecordingTagRouter',
-    'SequenceAnnotationRouter',
-    'SpeciesRouter',
-    'VettingRouter',
+    "AnnotationRouter",
+    "ConfigurationRouter",
+    "ExportAnnotationRouter",
+    "GRTSCellsRouter",
+    "GuanoMetadataRouter",
+    "ProcessingTaskRouter",
+    "RecordingAnnotationRouter",
+    "RecordingRouter",
+    "RecordingTagRouter",
+    "SequenceAnnotationRouter",
+    "SpeciesRouter",
+    "VettingRouter",
 ]

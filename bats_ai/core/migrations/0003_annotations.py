@@ -9,37 +9,37 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('core', '0002_species'),
+        ("core", "0002_species"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Annotations',
+            name="Annotations",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('start_time', models.IntegerField(blank=True, null=True)),
-                ('end_time', models.IntegerField(blank=True, null=True)),
-                ('low_freq', models.IntegerField(blank=True, null=True)),
-                ('high_freq', models.IntegerField(blank=True, null=True)),
-                ('comments', models.TextField(blank=True, null=True)),
+                ("start_time", models.IntegerField(blank=True, null=True)),
+                ("end_time", models.IntegerField(blank=True, null=True)),
+                ("low_freq", models.IntegerField(blank=True, null=True)),
+                ("high_freq", models.IntegerField(blank=True, null=True)),
+                ("comments", models.TextField(blank=True, null=True)),
                 (
-                    'owner',
+                    "owner",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
                     ),
                 ),
                 (
-                    'recording',
+                    "recording",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.recording'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.recording"
                     ),
                 ),
-                ('species', models.ManyToManyField(to='core.species')),
+                ("species", models.ManyToManyField(to="core.species")),
             ],
         ),
     ]

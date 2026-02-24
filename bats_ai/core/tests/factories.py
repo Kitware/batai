@@ -13,13 +13,13 @@ class UserFactory(factory.django.DjangoModelFactory[User]):
         model = User
         skip_postgeneration_save = True
 
-    username = factory.SelfAttribute('email')
-    email = factory.Faker('safe_email')
-    first_name = factory.Faker('first_name')
-    last_name = factory.Faker('last_name')
+    username = factory.SelfAttribute("email")
+    email = factory.Faker("safe_email")
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
 
     profile = factory.RelatedFactory(
-        'bats_ai.core.tests.factories.UserProfileFactory', factory_related_name='user'
+        "bats_ai.core.tests.factories.UserProfileFactory", factory_related_name="user"
     )
 
 
@@ -43,4 +43,4 @@ class VettingDetailsFactory(factory.django.DjangoModelFactory[VettingDetails]):
         model = VettingDetails
 
     user = factory.SubFactory(UserFactory)
-    reference_materials = factory.Faker('paragraph', nb_sentences=3)
+    reference_materials = factory.Faker("paragraph", nb_sentences=3)

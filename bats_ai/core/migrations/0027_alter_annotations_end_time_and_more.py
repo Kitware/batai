@@ -7,38 +7,38 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0026_merge'),
+        ("core", "0026_merge"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='annotations',
-            name='end_time',
+            model_name="annotations",
+            name="end_time",
             field=models.FloatField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='annotations',
-            name='high_freq',
+            model_name="annotations",
+            name="high_freq",
             field=models.FloatField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='annotations',
-            name='low_freq',
+            model_name="annotations",
+            name="low_freq",
             field=models.FloatField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='annotations',
-            name='start_time',
+            model_name="annotations",
+            name="start_time",
             field=models.FloatField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='compressedspectrogram',
-            name='length',
+            model_name="compressedspectrogram",
+            name="length",
             field=models.FloatField(),
         ),
         migrations.AlterField(
-            model_name='compressedspectrogram',
-            name='starts',
+            model_name="compressedspectrogram",
+            name="starts",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django.contrib.postgres.fields.ArrayField(
                     base_field=models.FloatField(), size=None
@@ -47,8 +47,8 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name='compressedspectrogram',
-            name='stops',
+            model_name="compressedspectrogram",
+            name="stops",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django.contrib.postgres.fields.ArrayField(
                     base_field=models.FloatField(), size=None
@@ -57,8 +57,8 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name='compressedspectrogram',
-            name='widths',
+            model_name="compressedspectrogram",
+            name="widths",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django.contrib.postgres.fields.ArrayField(
                     base_field=models.FloatField(), size=None
@@ -67,13 +67,13 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name='nabatcompressedspectrogram',
-            name='length',
+            model_name="nabatcompressedspectrogram",
+            name="length",
             field=models.FloatField(),
         ),
         migrations.AlterField(
-            model_name='nabatcompressedspectrogram',
-            name='starts',
+            model_name="nabatcompressedspectrogram",
+            name="starts",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django.contrib.postgres.fields.ArrayField(
                     base_field=models.FloatField(), size=None
@@ -82,8 +82,8 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name='nabatcompressedspectrogram',
-            name='stops',
+            model_name="nabatcompressedspectrogram",
+            name="stops",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django.contrib.postgres.fields.ArrayField(
                     base_field=models.FloatField(), size=None
@@ -92,8 +92,8 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name='nabatcompressedspectrogram',
-            name='widths',
+            model_name="nabatcompressedspectrogram",
+            name="widths",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django.contrib.postgres.fields.ArrayField(
                     base_field=models.FloatField(), size=None
@@ -102,43 +102,43 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name='nabatspectrogram',
-            name='duration',
+            model_name="nabatspectrogram",
+            name="duration",
             field=models.FloatField(),
         ),
         migrations.AlterField(
-            model_name='nabatspectrogram',
-            name='frequency_max',
+            model_name="nabatspectrogram",
+            name="frequency_max",
             field=models.FloatField(),
         ),
         migrations.AlterField(
-            model_name='nabatspectrogram',
-            name='frequency_min',
+            model_name="nabatspectrogram",
+            name="frequency_min",
             field=models.FloatField(),
         ),
         migrations.AlterField(
-            model_name='sequenceannotations',
-            name='end_time',
+            model_name="sequenceannotations",
+            name="end_time",
             field=models.FloatField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='sequenceannotations',
-            name='start_time',
+            model_name="sequenceannotations",
+            name="start_time",
             field=models.FloatField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='spectrogram',
-            name='duration',
+            model_name="spectrogram",
+            name="duration",
             field=models.FloatField(),
         ),
         migrations.AlterField(
-            model_name='spectrogram',
-            name='frequency_max',
+            model_name="spectrogram",
+            name="frequency_max",
             field=models.FloatField(),
         ),
         migrations.AlterField(
-            model_name='spectrogram',
-            name='frequency_min',
+            model_name="spectrogram",
+            name="frequency_min",
             field=models.FloatField(),
         ),
     ]

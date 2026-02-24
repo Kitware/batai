@@ -6,8 +6,8 @@ from .nabat_recording_annotation import NABatRecordingAnnotation
 from .nabat_spectrogram import NABatSpectrogram
 
 __all__ = [
-    'NABatCompressedSpectrogram',
-    'NABatRecording',
-    'NABatRecordingAnnotation',
-    'NABatSpectrogram',
+    "NABatCompressedSpectrogram",
+    "NABatRecording",
+    "NABatRecordingAnnotation",
+    "NABatSpectrogram",
 ]

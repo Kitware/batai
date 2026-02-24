@@ -6,57 +6,57 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0008_grtscells_recording_recorded_time'),
+        ("core", "0008_grtscells_recording_recorded_time"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='annotations',
-            name='type',
+            model_name="annotations",
+            name="type",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='recording',
-            name='computed_species',
+            model_name="recording",
+            name="computed_species",
             field=models.ManyToManyField(
-                related_name='recording_computed_species', to='core.species'
+                related_name="recording_computed_species", to="core.species"
             ),
         ),
         migrations.AddField(
-            model_name='recording',
-            name='detector',
+            model_name="recording",
+            name="detector",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='recording',
-            name='official_species',
+            model_name="recording",
+            name="official_species",
             field=models.ManyToManyField(
-                related_name='recording_official_species', to='core.species'
+                related_name="recording_official_species", to="core.species"
             ),
         ),
         migrations.AddField(
-            model_name='recording',
-            name='site_name',
+            model_name="recording",
+            name="site_name",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='recording',
-            name='software',
+            model_name="recording",
+            name="software",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='recording',
-            name='species_list',
+            model_name="recording",
+            name="species_list",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='recording',
-            name='unusual_occurrences',
+            model_name="recording",
+            name="unusual_occurrences",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='spectrogram',
-            name='colormap',
+            model_name="spectrogram",
+            name="colormap",
             field=models.CharField(max_length=20, null=True),
         ),
     ]

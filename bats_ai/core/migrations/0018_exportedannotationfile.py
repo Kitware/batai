@@ -7,50 +7,50 @@ import django_extensions.db.fields
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0017_configuration_default_color_scheme_and_more'),
+        ("core", "0017_configuration_default_color_scheme_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ExportedAnnotationFile',
+            name="ExportedAnnotationFile",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
-                ('file', models.FileField(upload_to='exports/')),
-                ('download_url', models.URLField(blank=True, max_length=2048, null=True)),
-                ('filters_applied', models.JSONField(blank=True, null=True)),
-                ('expires_at', models.DateTimeField()),
+                ("file", models.FileField(upload_to="exports/")),
+                ("download_url", models.URLField(blank=True, max_length=2048, null=True)),
+                ("filters_applied", models.JSONField(blank=True, null=True)),
+                ("expires_at", models.DateTimeField()),
                 (
-                    'status',
+                    "status",
                     models.CharField(
                         choices=[
-                            ('pending', 'Pending'),
-                            ('complete', 'Complete'),
-                            ('failed', 'Failed'),
+                            ("pending", "Pending"),
+                            ("complete", "Complete"),
+                            ("failed", "Failed"),
                         ],
-                        default='pending',
+                        default="pending",
                         max_length=32,
                     ),
                 ),
             ],
             options={
-                'ordering': ['-created'],
+                "ordering": ["-created"],
             },
         ),
     ]

@@ -18,137 +18,137 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Recording',
+            name="Recording",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
-                ('name', models.CharField(max_length=255)),
-                ('audio_file', models.FileField(upload_to='')),
-                ('recorded_date', models.DateField(blank=True, null=True)),
-                ('equipment', models.TextField(blank=True, null=True)),
-                ('comments', models.TextField(blank=True, null=True)),
+                ("name", models.CharField(max_length=255)),
+                ("audio_file", models.FileField(upload_to="")),
+                ("recorded_date", models.DateField(blank=True, null=True)),
+                ("equipment", models.TextField(blank=True, null=True)),
+                ("comments", models.TextField(blank=True, null=True)),
                 (
-                    'recording_location',
+                    "recording_location",
                     django.contrib.gis.db.models.fields.GeometryField(
                         blank=True, null=True, srid=0
                     ),
                 ),
-                ('grts_cell_id', models.IntegerField(blank=True, null=True)),
-                ('grts_cell', models.IntegerField(blank=True, null=True)),
+                ("grts_cell_id", models.IntegerField(blank=True, null=True)),
+                ("grts_cell", models.IntegerField(blank=True, null=True)),
                 (
-                    'owner',
+                    "owner",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
                     ),
                 ),
             ],
             options={
-                'get_latest_by': 'modified',
-                'abstract': False,
+                "get_latest_by": "modified",
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='RecordingAnnotationStatus',
+            name="RecordingAnnotationStatus",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
                 (
-                    'recording_status',
+                    "recording_status",
                     models.CharField(
                         blank=True,
                         choices=[
-                            ('Complete', 'Complete'),
-                            ('In Progress', 'Inprogress'),
-                            ('Error', 'Error'),
+                            ("Complete", "Complete"),
+                            ("In Progress", "Inprogress"),
+                            ("Error", "Error"),
                         ],
-                        help_text='Recording Annotation Status',
+                        help_text="Recording Annotation Status",
                         max_length=255,
                     ),
                 ),
                 (
-                    'recording',
+                    "recording",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.recording'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.recording"
                     ),
                 ),
                 (
-                    'user',
+                    "user",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
                     ),
                 ),
             ],
             options={
-                'get_latest_by': 'modified',
-                'abstract': False,
+                "get_latest_by": "modified",
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Image',
+            name="Image",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
-                ('name', models.CharField(max_length=255)),
-                ('blob', s3_file_field.fields.S3FileField()),
-                ('checksum', models.CharField(blank=True, max_length=128, null=True)),
+                ("name", models.CharField(max_length=255)),
+                ("blob", s3_file_field.fields.S3FileField()),
+                ("checksum", models.CharField(blank=True, max_length=128, null=True)),
                 (
-                    'owner',
+                    "owner",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
                     ),
                 ),
             ],
             options={
-                'get_latest_by': 'modified',
-                'abstract': False,
+                "get_latest_by": "modified",
+                "abstract": False,
             },
         ),
     ]

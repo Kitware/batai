@@ -8,12 +8,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('core', '0021_remove_grtscells_clipped_and_more'),
+        ("core", "0021_remove_grtscells_clipped_and_more"),
     ]
 
     operations = [
         migrations.RenameModel(
-            old_name='TemporalAnnotations',
-            new_name='SequenceAnnotations',
+            old_name="TemporalAnnotations",
+            new_name="SequenceAnnotations",
         ),
     ]

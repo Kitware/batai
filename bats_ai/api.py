@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def global_auth(request):
     if request.user.is_anonymous:
-        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        token = request.headers.get("Authorization", "").replace("Bearer ", "")
         if len(token) > 0:
             try:
                 access_token = AccessToken.objects.get(token=token)
@@ -39,15 +39,15 @@ def global_auth(request):
 
 api = NinjaAPI(auth=global_auth)
 
-api.add_router('/recording/', RecordingRouter)
-api.add_router('/species/', SpeciesRouter)
-api.add_router('/grts/', GRTSCellsRouter)
-api.add_router('/guano/', GuanoMetadataRouter)
-api.add_router('/recording-annotation/', RecordingAnnotationRouter)
-api.add_router('/export-annotation/', ExportAnnotationRouter)
-api.add_router('/configuration/', ConfigurationRouter)
-api.add_router('/processing-task/', ProcessingTaskRouter)
-api.add_router('/recording-tag/', RecordingTagRouter)
-api.add_router('/nabat/recording/', NABatRecordingRouter)
-api.add_router('/nabat/configuration/', NABatConfigurationRouter)
-api.add_router('/vetting/', VettingRouter)
+api.add_router("/recording/", RecordingRouter)
+api.add_router("/species/", SpeciesRouter)
+api.add_router("/grts/", GRTSCellsRouter)
+api.add_router("/guano/", GuanoMetadataRouter)
+api.add_router("/recording-annotation/", RecordingAnnotationRouter)
+api.add_router("/export-annotation/", ExportAnnotationRouter)
+api.add_router("/configuration/", ConfigurationRouter)
+api.add_router("/processing-task/", ProcessingTaskRouter)
+api.add_router("/recording-tag/", RecordingTagRouter)
+api.add_router("/nabat/recording/", NABatRecordingRouter)
+api.add_router("/nabat/configuration/", NABatConfigurationRouter)
+api.add_router("/vetting/", VettingRouter)

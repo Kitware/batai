@@ -5,7 +5,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.functions import Length
 
-models.TextField.register_lookup(Length, 'length')
+models.TextField.register_lookup(Length, "length")
 
 
 class VettingDetails(models.Model):
@@ -16,6 +16,6 @@ class VettingDetails(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=Q(reference_materials__length__lte=2000),
-                name='reference_materials_max_2000',
+                name="reference_materials_max_2000",
             )
         ]

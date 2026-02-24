@@ -8,39 +8,39 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0027_alter_annotations_end_time_and_more'),
+        ("core", "0027_alter_annotations_end_time_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='spectrogramimage',
-            name='type',
+            model_name="spectrogramimage",
+            name="type",
             field=models.CharField(
                 choices=[
-                    ('spectrogram', 'Spectrogram'),
-                    ('compressed', 'Compressed'),
-                    ('masks', 'Masks'),
+                    ("spectrogram", "Spectrogram"),
+                    ("compressed", "Compressed"),
+                    ("masks", "Masks"),
                 ],
-                default='spectrogram',
+                default="spectrogram",
                 max_length=20,
             ),
         ),
         migrations.CreateModel(
-            name='PulseMetadata',
+            name="PulseMetadata",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('index', models.IntegerField()),
-                ('bounding_box', django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
-                ('contours', models.JSONField(blank=True, null=True)),
+                ("index", models.IntegerField()),
+                ("bounding_box", django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
+                ("contours", models.JSONField(blank=True, null=True)),
                 (
-                    'recording',
+                    "recording",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.recording'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.recording"
                     ),
                 ),
             ],

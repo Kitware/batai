@@ -29,11 +29,11 @@ class ConfigurationSchema(Schema):
 
 
 # Endpoint to retrieve the configuration status
-@router.get('/', response=ConfigurationSchema)
+@router.get("/", response=ConfigurationSchema)
 def get_configuration(request):
     config = Configuration.objects.first()
     if not config:
-        return JsonResponse({'error': 'No configuration found'}, status=404)
+        return JsonResponse({"error": "No configuration found"}, status=404)
     return ConfigurationSchema(
         display_pulse_annotations=config.display_pulse_annotations,
         display_sequence_annotations=config.display_sequence_annotations,
@@ -49,32 +49,32 @@ def get_configuration(request):
 
 
 # Endpoint to update the configuration (admin only)
-@router.patch('/')
+@router.patch("/")
 def update_configuration(request, payload: ConfigurationSchema):
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return JsonResponse({'error': 'Permission denied'}, status=403)
+        return JsonResponse({"error": "Permission denied"}, status=403)
     config = Configuration.objects.first()
     if not config:
-        return JsonResponse({'error': 'No configuration found'}, status=404)
+        return JsonResponse({"error": "No configuration found"}, status=404)
     for attr, value in payload.dict().items():
         setattr(config, attr, value)
     config.save()
     return ConfigurationSchema.from_orm(config)
 
 
-@router.get('/is_admin/')
+@router.get("/is_admin/")
 def check_is_admin(request):
     if request.user.is_authenticated:
-        return {'is_admin': request.user.is_superuser}
-    return {'is_admin': False}
+        return {"is_admin": request.user.is_superuser}
+    return {"is_admin": False}
 
 
-@router.get('/me')
+@router.get("/me")
 def get_current_user(request):
     if request.user.is_authenticated:
         return {
-            'email': request.user.email,
-            'name': request.user.username,
-            'id': request.user.id,
+            "email": request.user.email,
+            "name": request.user.username,
+            "id": request.user.id,
         }
-    return {'email': '', 'name': ''}
+    return {"email": "", "name": ""}

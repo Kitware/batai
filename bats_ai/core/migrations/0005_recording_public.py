@@ -6,13 +6,13 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0004_spectrogram'),
+        ("core", "0004_spectrogram"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='recording',
-            name='public',
+            model_name="recording",
+            name="public",
             field=models.BooleanField(default=False),
         ),
     ]

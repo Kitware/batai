@@ -10,7 +10,7 @@ from bats_ai.core.models import GRTSCells
 router = RouterPaginated()
 
 
-@router.get('/grid_cell_id')
+@router.get("/grid_cell_id")
 def get_grid_cell_id(
     request: HttpRequest, latitude: float = Query(...), longitude: float = Query(...)
 ):
@@ -23,16 +23,16 @@ def get_grid_cell_id(
 
         if cell:
             # Return the grid cell ID
-            return JsonResponse({'grid_cell_id': cell.grts_cell_id})
+            return JsonResponse({"grid_cell_id": cell.grts_cell_id})
         else:
             return JsonResponse(
-                {'error': 'No grid cell found for the provided latitude and longitude'}, status=200
+                {"error": "No grid cell found for the provided latitude and longitude"}, status=200
             )
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=200)
+        return JsonResponse({"error": str(e)}, status=200)
 
 
-@router.get('/{id}')
+@router.get("/{id}")
 def get_cell_center(request: HttpRequest, id: int, quadrant: str = None):
     try:
         cells = GRTSCells.objects.filter(grts_cell_id=id)
@@ -59,13 +59,13 @@ def get_cell_center(request: HttpRequest, id: int, quadrant: str = None):
             mid_y = (min_y + max_y) / 2
 
             # Determine the bounding box coordinates of the specified quadrant
-            if quadrant.upper() == 'NW':
+            if quadrant.upper() == "NW":
                 bbox = (min_x, mid_y, mid_x, max_y)
-            elif quadrant.upper() == 'SE':
+            elif quadrant.upper() == "SE":
                 bbox = (mid_x, min_y, max_x, mid_y)
-            elif quadrant.upper() == 'SW':
+            elif quadrant.upper() == "SW":
                 bbox = (min_x, min_y, mid_x, mid_y)
-            elif quadrant.upper() == 'NE':
+            elif quadrant.upper() == "NE":
                 bbox = (mid_x, mid_y, max_x, max_y)
 
             quadrant_polygon = Polygon.from_bbox(bbox)
@@ -80,12 +80,12 @@ def get_cell_center(request: HttpRequest, id: int, quadrant: str = None):
         center_latitude = center.y
         center_longitude = center.x
 
-        return JsonResponse({'latitude': center_latitude, 'longitude': center_longitude})
+        return JsonResponse({"latitude": center_latitude, "longitude": center_longitude})
     except GRTSCells.DoesNotExist:
-        return JsonResponse({'error': f'Cell with cellId={id} does not exist'}, status=200)
+        return JsonResponse({"error": f"Cell with cellId={id} does not exist"}, status=200)
 
 
-@router.get('/{id}/bbox')
+@router.get("/{id}/bbox")
 def get_grts_cell_bbox(request: HttpRequest, id: int):
     try:
         cells = GRTSCells.objects.filter(grts_cell_id=id)
@@ -101,21 +101,21 @@ def get_grts_cell_bbox(request: HttpRequest, id: int):
         min_x, min_y, max_x, max_y = geom.extent
 
         geojson = {
-            'type': 'Feature',
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
                     [min_x, min_y],
                     [min_x, max_y],
                     [max_x, max_y],
                     [max_x, min_y],
                 ],
             },
-            'properties': {
-                'grts_cell_id': id,
-                'annotationType': 'rectangle',
+            "properties": {
+                "grts_cell_id": id,
+                "annotationType": "rectangle",
             },
         }
         return JsonResponse(geojson)
     except (GRTSCells.DoesNotExist, IndexError):
-        return JsonResponse({'error': f'Cell with id {id} does not exist'}, status=200)
+        return JsonResponse({"error": f"Cell with id {id} does not exist"}, status=200)

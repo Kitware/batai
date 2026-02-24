@@ -9,22 +9,22 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('core', '0022_rename_temporalannotations_sequenceannotations'),
+        ("core", "0022_rename_temporalannotations_sequenceannotations"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='RecordingTag',
+            name="RecordingTag",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('text', models.CharField(max_length=50)),
+                ("text", models.CharField(max_length=50)),
                 (
-                    'user',
+                    "user",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
                     ),
@@ -32,14 +32,14 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.AddField(
-            model_name='recording',
-            name='tags',
-            field=models.ManyToManyField(to='core.recordingtag'),
+            model_name="recording",
+            name="tags",
+            field=models.ManyToManyField(to="core.recordingtag"),
         ),
         migrations.AddConstraint(
-            model_name='recordingtag',
+            model_name="recordingtag",
             constraint=models.UniqueConstraint(
-                fields=('user', 'text'), name='unique_user_text_tag'
+                fields=("user", "text"), name="unique_user_text_tag"
             ),
         ),
     ]

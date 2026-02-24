@@ -6,25 +6,25 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0001_initial'),
+        ("core", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Species',
+            name="Species",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('species_code', models.CharField(blank=True, max_length=10, null=True)),
-                ('family', models.CharField(blank=True, max_length=50, null=True)),
-                ('genus', models.CharField(blank=True, max_length=50, null=True)),
-                ('species', models.CharField(blank=True, max_length=100, null=True)),
-                ('common_name', models.CharField(blank=True, max_length=100, null=True)),
-                ('species_code_6', models.CharField(blank=True, max_length=10, null=True)),
+                ("species_code", models.CharField(blank=True, max_length=10, null=True)),
+                ("family", models.CharField(blank=True, max_length=50, null=True)),
+                ("genus", models.CharField(blank=True, max_length=50, null=True)),
+                ("species", models.CharField(blank=True, max_length=100, null=True)),
+                ("common_name", models.CharField(blank=True, max_length=100, null=True)),
+                ("species_code_6", models.CharField(blank=True, max_length=10, null=True)),
             ],
         ),
     ]

@@ -7,8 +7,8 @@ import django.db.models.deletion
 
 
 def create_user_profiles(apps, schema_editor):
-    User = apps.get_model('auth', 'User')
-    UserProfile = apps.get_model('core', 'UserProfile')
+    User = apps.get_model("auth", "User")
+    UserProfile = apps.get_model("core", "UserProfile")
 
     for user in User.objects.all():
         UserProfile.objects.create(user=user)
@@ -16,26 +16,26 @@ def create_user_profiles(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0029_pulsemetadata_char_freq_pulsemetadata_curve_and_more'),
+        ("core", "0029_pulsemetadata_char_freq_pulsemetadata_curve_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='UserProfile',
+            name="UserProfile",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('verified', models.BooleanField(default=False)),
+                ("verified", models.BooleanField(default=False)),
                 (
-                    'user',
+                    "user",
                     models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='profile',
+                        related_name="profile",
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),

@@ -6,84 +6,84 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0020_species_category'),
+        ("core", "0020_species_category"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='grtscells',
-            name='clipped',
+            model_name="grtscells",
+            name="clipped",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='location_1_name',
+            model_name="grtscells",
+            name="location_1_name",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='location_1_p',
+            model_name="grtscells",
+            name="location_1_p",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='location_1_type',
+            model_name="grtscells",
+            name="location_1_type",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='location_2_name',
+            model_name="grtscells",
+            name="location_2_name",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='location_2_p',
+            model_name="grtscells",
+            name="location_2_p",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='location_2_type',
+            model_name="grtscells",
+            name="location_2_type",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='outside_p',
+            model_name="grtscells",
+            name="outside_p",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='own_1_name',
+            model_name="grtscells",
+            name="own_1_name",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='own_1_p',
+            model_name="grtscells",
+            name="own_1_p",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='priority_frame',
+            model_name="grtscells",
+            name="priority_frame",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='priority_state',
+            model_name="grtscells",
+            name="priority_state",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='sub_location_1_name',
+            model_name="grtscells",
+            name="sub_location_1_name",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='sub_location_1_p',
+            model_name="grtscells",
+            name="sub_location_1_p",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='sub_location_1_type',
+            model_name="grtscells",
+            name="sub_location_1_type",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='sub_location_2_name',
+            model_name="grtscells",
+            name="sub_location_2_name",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='sub_location_2_p',
+            model_name="grtscells",
+            name="sub_location_2_p",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='sub_location_2_type',
+            model_name="grtscells",
+            name="sub_location_2_type",
         ),
         migrations.RemoveField(
-            model_name='grtscells',
-            name='water_p',
+            model_name="grtscells",
+            name="water_p",
         ),
     ]

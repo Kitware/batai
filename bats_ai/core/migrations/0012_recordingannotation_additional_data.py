@@ -6,15 +6,15 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0011_alter_annotations_options_annotations_confidence_and_more'),
+        ("core", "0011_alter_annotations_options_annotations_confidence_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='recordingannotation',
-            name='additional_data',
+            model_name="recordingannotation",
+            name="additional_data",
             field=models.JSONField(
-                blank=True, help_text='Additional information about the models/data', null=True
+                blank=True, help_text="Additional information about the models/data", null=True
             ),
         ),
     ]

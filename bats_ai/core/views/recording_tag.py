@@ -15,7 +15,7 @@ class RecordingTagSchema(Schema):
 router = RouterPaginated()
 
 
-@router.get('/')
+@router.get("/")
 def get_recording_tags(request: HttpRequest):
     user = request.user
     if not user:

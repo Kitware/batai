@@ -7,17 +7,17 @@ from django_extensions.db.models import TimeStampedModel
 
 
 class ProcessingTaskType(Enum):
-    UPDATING_SPECIES = 'Updating Species'
-    NABAT_RECORDING_PROCESSING = 'NABatRecordingProcessing'
-    SPECTROGRAM_GENERATION = 'SpectrogramGeneration'
+    UPDATING_SPECIES = "Updating Species"
+    NABAT_RECORDING_PROCESSING = "NABatRecordingProcessing"
+    SPECTROGRAM_GENERATION = "SpectrogramGeneration"
 
 
 class ProcessingTask(TimeStampedModel):
     class Status(models.TextChoices):
-        COMPLETE = 'Complete'
-        RUNNING = 'Running'
-        ERROR = 'Error'
-        QUEUED = 'Queued'
+        COMPLETE = "Complete"
+        RUNNING = "Running"
+        ERROR = "Error"
+        QUEUED = "Queued"
 
     name = models.CharField(max_length=255)
 
@@ -25,17 +25,17 @@ class ProcessingTask(TimeStampedModel):
     status = models.CharField(
         max_length=255,  # If we need future states
         blank=True,
-        help_text='Processing Status',
+        help_text="Processing Status",
         choices=Status,
     )
     celery_id = models.CharField(
         max_length=255,  # If we need future states
         blank=True,
         unique=True,
-        help_text='Celery Task Id',
+        help_text="Celery Task Id",
     )
     output_metadata = models.JSONField(
         blank=True, null=True
     )  # description and details about the task output (file_items/layers)
 
-    error = models.TextField(blank=True, help_text='Error text if an error occurs')
+    error = models.TextField(blank=True, help_text="Error text if an error occurs")

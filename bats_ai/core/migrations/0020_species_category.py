@@ -8,35 +8,35 @@ from django.db import migrations, models
 
 
 def load_species_data(apps, schema_editor):
-    Species = apps.get_model('core', 'Species')
-    fixture_path = os.path.join(os.path.dirname(__file__), '..', 'fixtures', 'species.json')
+    Species = apps.get_model("core", "Species")
+    fixture_path = os.path.join(os.path.dirname(__file__), "..", "fixtures", "species.json")
 
     with open(fixture_path) as f:
         data = json.load(f)
         for entry in data:
-            fields = entry['fields']
-            pk = int(entry['pk'])
+            fields = entry["fields"]
+            pk = int(entry["pk"])
             Species.objects.update_or_create(pk=pk, defaults=fields)
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0019_remove_compressedspectrogram_image_file_and_more'),
+        ("core", "0019_remove_compressedspectrogram_image_file_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='species',
-            name='category',
+            model_name="species",
+            name="category",
             field=models.CharField(
                 choices=[
-                    ('couplet', 'Couplet'),
-                    ('individual', 'Individual Species'),
-                    ('frequency', 'Frequency'),
-                    ('noid', 'NoID'),
+                    ("couplet", "Couplet"),
+                    ("individual", "Individual Species"),
+                    ("frequency", "Frequency"),
+                    ("noid", "NoID"),
                 ],
-                default='individual',
-                help_text='Category label: couplet, individual species, frequency, or NoID',
+                default="individual",
+                help_text="Category label: couplet, individual species, frequency, or NoID",
                 max_length=20,
             ),
         ),

@@ -11,223 +11,223 @@ import django_extensions.db.fields
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0014_configuration_run_inference_on_upload_and_more'),
+        ("core", "0014_configuration_run_inference_on_upload_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='NABatRecording',
+            name="NABatRecording",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
-                ('name', models.CharField(max_length=255)),
-                ('recording_id', models.BigIntegerField(unique=True)),
-                ('survey_event_id', models.BigIntegerField()),
-                ('acoustic_batch_id', models.BigIntegerField(blank=True, null=True)),
-                ('equipment', models.TextField(blank=True, null=True)),
-                ('comments', models.TextField(blank=True, null=True)),
+                ("name", models.CharField(max_length=255)),
+                ("recording_id", models.BigIntegerField(unique=True)),
+                ("survey_event_id", models.BigIntegerField()),
+                ("acoustic_batch_id", models.BigIntegerField(blank=True, null=True)),
+                ("equipment", models.TextField(blank=True, null=True)),
+                ("comments", models.TextField(blank=True, null=True)),
                 (
-                    'recording_location',
+                    "recording_location",
                     django.contrib.gis.db.models.fields.GeometryField(
                         blank=True, null=True, srid=4326
                     ),
                 ),
-                ('grts_cell_id', models.IntegerField(blank=True, null=True)),
-                ('grts_cell', models.IntegerField(blank=True, null=True)),
-                ('public', models.BooleanField(default=False)),
-                ('software_name', models.TextField(blank=True, null=True)),
-                ('software_developer', models.TextField(blank=True, null=True)),
-                ('software_version', models.TextField(blank=True, null=True)),
-                ('detector', models.TextField(blank=True, null=True)),
-                ('species_list', models.TextField(blank=True, null=True)),
-                ('unusual_occurrences', models.TextField(blank=True, null=True)),
+                ("grts_cell_id", models.IntegerField(blank=True, null=True)),
+                ("grts_cell", models.IntegerField(blank=True, null=True)),
+                ("public", models.BooleanField(default=False)),
+                ("software_name", models.TextField(blank=True, null=True)),
+                ("software_developer", models.TextField(blank=True, null=True)),
+                ("software_version", models.TextField(blank=True, null=True)),
+                ("detector", models.TextField(blank=True, null=True)),
+                ("species_list", models.TextField(blank=True, null=True)),
+                ("unusual_occurrences", models.TextField(blank=True, null=True)),
                 (
-                    'computed_species',
+                    "computed_species",
                     models.ManyToManyField(
-                        related_name='nabatrecording_computed_species', to='core.species'
+                        related_name="nabatrecording_computed_species", to="core.species"
                     ),
                 ),
                 (
-                    'nabat_auto_species',
+                    "nabat_auto_species",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name='nabatrecording_auto_species',
-                        to='core.species',
+                        related_name="nabatrecording_auto_species",
+                        to="core.species",
                     ),
                 ),
                 (
-                    'nabat_manual_species',
+                    "nabat_manual_species",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name='nabatrecording_manual_species',
-                        to='core.species',
+                        related_name="nabatrecording_manual_species",
+                        to="core.species",
                     ),
                 ),
                 (
-                    'official_species',
+                    "official_species",
                     models.ManyToManyField(
-                        related_name='nabatrecording_official_species', to='core.species'
+                        related_name="nabatrecording_official_species", to="core.species"
                     ),
                 ),
             ],
             options={
-                'verbose_name': 'NABat Recording',
-                'verbose_name_plural': 'NABat Recording',
+                "verbose_name": "NABat Recording",
+                "verbose_name_plural": "NABat Recording",
             },
         ),
         migrations.CreateModel(
-            name='ProcessingTask',
+            name="ProcessingTask",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
-                ('name', models.CharField(max_length=255)),
-                ('metadata', models.JSONField(blank=True, null=True)),
+                ("name", models.CharField(max_length=255)),
+                ("metadata", models.JSONField(blank=True, null=True)),
                 (
-                    'status',
+                    "status",
                     models.CharField(
                         blank=True,
                         choices=[
-                            ('Complete', 'Complete'),
-                            ('Running', 'Running'),
-                            ('Error', 'Error'),
-                            ('Queued', 'Queued'),
+                            ("Complete", "Complete"),
+                            ("Running", "Running"),
+                            ("Error", "Error"),
+                            ("Queued", "Queued"),
                         ],
-                        help_text='Processing Status',
+                        help_text="Processing Status",
                         max_length=255,
                     ),
                 ),
                 (
-                    'celery_id',
+                    "celery_id",
                     models.CharField(
-                        blank=True, help_text='Celery Task Id', max_length=255, unique=True
+                        blank=True, help_text="Celery Task Id", max_length=255, unique=True
                     ),
                 ),
-                ('output_metadata', models.JSONField(blank=True, null=True)),
-                ('error', models.TextField(blank=True, help_text='Error text if an error occurs')),
+                ("output_metadata", models.JSONField(blank=True, null=True)),
+                ("error", models.TextField(blank=True, help_text="Error text if an error occurs")),
             ],
             options={
-                'get_latest_by': 'modified',
-                'abstract': False,
+                "get_latest_by": "modified",
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='NABatSpectrogram',
+            name="NABatSpectrogram",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
-                ('image_file', models.FileField(upload_to='')),
-                ('width', models.IntegerField()),
-                ('height', models.IntegerField()),
-                ('duration', models.IntegerField()),
-                ('frequency_min', models.IntegerField()),
-                ('frequency_max', models.IntegerField()),
-                ('colormap', models.CharField(max_length=20, null=True)),
+                ("image_file", models.FileField(upload_to="")),
+                ("width", models.IntegerField()),
+                ("height", models.IntegerField()),
+                ("duration", models.IntegerField()),
+                ("frequency_min", models.IntegerField()),
+                ("frequency_max", models.IntegerField()),
+                ("colormap", models.CharField(max_length=20, null=True)),
                 (
-                    'nabat_recording',
+                    "nabat_recording",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.nabatrecording'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.nabatrecording"
                     ),
                 ),
             ],
             options={
-                'verbose_name': 'NABat Spectrogram',
-                'verbose_name_plural': 'NABat Spectrograms',
+                "verbose_name": "NABat Spectrogram",
+                "verbose_name_plural": "NABat Spectrograms",
             },
         ),
         migrations.CreateModel(
-            name='NABatRecordingAnnotation',
+            name="NABatRecordingAnnotation",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
-                ('comments', models.TextField(blank=True, null=True)),
+                ("comments", models.TextField(blank=True, null=True)),
                 (
-                    'user_id',
+                    "user_id",
                     models.UUIDField(
                         blank=True,
-                        help_text='User ID of the person who created the annotation',
+                        help_text="User ID of the person who created the annotation",
                         null=True,
                     ),
                 ),
                 (
-                    'user_email',
+                    "user_email",
                     models.TextField(
                         blank=True,
-                        help_text='User ID of the person who created the annotation',
+                        help_text="User ID of the person who created the annotation",
                         null=True,
                     ),
                 ),
-                ('model', models.TextField(blank=True, null=True)),
+                ("model", models.TextField(blank=True, null=True)),
                 (
-                    'confidence',
+                    "confidence",
                     models.FloatField(
                         default=1.0,
-                        help_text='A confidence value between 0 and 1.0, default is 1.0.',
+                        help_text="A confidence value between 0 and 1.0, default is 1.0.",
                         validators=[
                             django.core.validators.MinValueValidator(0.0),
                             django.core.validators.MaxValueValidator(1.0),
@@ -235,51 +235,51 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    'additional_data',
+                    "additional_data",
                     models.JSONField(
                         blank=True,
-                        help_text='Additional information about the models/data',
+                        help_text="Additional information about the models/data",
                         null=True,
                     ),
                 ),
                 (
-                    'nabat_recording',
+                    "nabat_recording",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.nabatrecording'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.nabatrecording"
                     ),
                 ),
-                ('species', models.ManyToManyField(to='core.species')),
+                ("species", models.ManyToManyField(to="core.species")),
             ],
             options={
-                'verbose_name': 'NABat Recording Annotation',
-                'verbose_name_plural': 'NABat Recording Annotations',
+                "verbose_name": "NABat Recording Annotation",
+                "verbose_name_plural": "NABat Recording Annotations",
             },
         ),
         migrations.CreateModel(
-            name='NABatCompressedSpectrogram',
+            name="NABatCompressedSpectrogram",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
-                ('image_file', models.FileField(upload_to='')),
-                ('length', models.IntegerField()),
+                ("image_file", models.FileField(upload_to="")),
+                ("length", models.IntegerField()),
                 (
-                    'starts',
+                    "starts",
                     django.contrib.postgres.fields.ArrayField(
                         base_field=django.contrib.postgres.fields.ArrayField(
                             base_field=models.IntegerField(), size=None
@@ -288,7 +288,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    'stops',
+                    "stops",
                     django.contrib.postgres.fields.ArrayField(
                         base_field=django.contrib.postgres.fields.ArrayField(
                             base_field=models.IntegerField(), size=None
@@ -297,7 +297,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    'widths',
+                    "widths",
                     django.contrib.postgres.fields.ArrayField(
                         base_field=django.contrib.postgres.fields.ArrayField(
                             base_field=models.IntegerField(), size=None
@@ -305,23 +305,23 @@ class Migration(migrations.Migration):
                         size=None,
                     ),
                 ),
-                ('cache_invalidated', models.BooleanField(default=True)),
+                ("cache_invalidated", models.BooleanField(default=True)),
                 (
-                    'nabat_recording',
+                    "nabat_recording",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.nabatrecording'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.nabatrecording"
                     ),
                 ),
                 (
-                    'spectrogram',
+                    "spectrogram",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.nabatspectrogram'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.nabatspectrogram"
                     ),
                 ),
             ],
             options={
-                'verbose_name': 'NABat Compressed Spectrogram',
-                'verbose_name_plural': 'NABat Compressed Spectrogram',
+                "verbose_name": "NABat Compressed Spectrogram",
+                "verbose_name_plural": "NABat Compressed Spectrogram",
             },
         ),
     ]

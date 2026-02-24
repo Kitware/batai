@@ -7,30 +7,30 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0028_alter_spectrogramimage_type_pulsemetadata'),
+        ("core", "0028_alter_spectrogramimage_type_pulsemetadata"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='pulsemetadata',
-            name='char_freq',
+            model_name="pulsemetadata",
+            name="char_freq",
             field=django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326),
         ),
         migrations.AddField(
-            model_name='pulsemetadata',
-            name='curve',
+            model_name="pulsemetadata",
+            name="curve",
             field=django.contrib.gis.db.models.fields.LineStringField(
                 blank=True, null=True, srid=4326
             ),
         ),
         migrations.AddField(
-            model_name='pulsemetadata',
-            name='heel',
+            model_name="pulsemetadata",
+            name="heel",
             field=django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326),
         ),
         migrations.AddField(
-            model_name='pulsemetadata',
-            name='knee',
+            model_name="pulsemetadata",
+            name="knee",
             field=django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326),
         ),
     ]

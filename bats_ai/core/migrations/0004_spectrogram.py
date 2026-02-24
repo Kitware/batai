@@ -8,47 +8,47 @@ import django_extensions.db.fields
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0003_annotations'),
+        ("core", "0003_annotations"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Spectrogram',
+            name="Spectrogram",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'created',
+                    "created",
                     django_extensions.db.fields.CreationDateTimeField(
-                        auto_now_add=True, verbose_name='created'
+                        auto_now_add=True, verbose_name="created"
                     ),
                 ),
                 (
-                    'modified',
+                    "modified",
                     django_extensions.db.fields.ModificationDateTimeField(
-                        auto_now=True, verbose_name='modified'
+                        auto_now=True, verbose_name="modified"
                     ),
                 ),
-                ('image_file', models.FileField(upload_to='')),
-                ('width', models.IntegerField()),
-                ('height', models.IntegerField()),
-                ('duration', models.IntegerField()),
-                ('frequency_min', models.IntegerField()),
-                ('frequency_max', models.IntegerField()),
+                ("image_file", models.FileField(upload_to="")),
+                ("width", models.IntegerField()),
+                ("height", models.IntegerField()),
+                ("duration", models.IntegerField()),
+                ("frequency_min", models.IntegerField()),
+                ("frequency_max", models.IntegerField()),
                 (
-                    'recording',
+                    "recording",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.recording'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.recording"
                     ),
                 ),
             ],
             options={
-                'get_latest_by': 'modified',
-                'abstract': False,
+                "get_latest_by": "modified",
+                "abstract": False,
             },
         ),
     ]

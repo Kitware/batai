@@ -113,13 +113,13 @@ def compute_auto_levels(
     if valid.size == 0:
         return []
 
-    if mode == 'multi-otsu':
+    if mode == "multi-otsu":
         try:
             return threshold_multiotsu(valid, classes=multi_otsu_classes).tolist()
         except Exception:
             pass
 
-    if mode == 'histogram':
+    if mode == "histogram":
         return auto_histogram_levels(
             valid,
             bins=hist_bins,
@@ -176,15 +176,15 @@ def save_svg(contours, image_shape, output_path: Path):
         if len(pts) < 3:
             continue
 
-        d = [f'M {pts[0][0]},{pts[0][1]}']
-        d += [f'L {x},{y}' for x, y in pts[1:]]
-        d.append('Z')
+        d = [f"M {pts[0][0]},{pts[0][1]}"]
+        d += [f"L {x},{y}" for x, y in pts[1:]]
+        d.append("Z")
 
         dwg.add(
             dwg.path(
-                d=' '.join(d),
-                fill='none',
-                stroke='black',
+                d=" ".join(d),
+                fill="none",
+                stroke="black",
                 stroke_width=1.0,
             )
         )
@@ -210,7 +210,7 @@ def save_svg_colored(contours, image_shape, output_path: Path):
         # Hue 240° (blue) → 0° (red)
         h = (240.0 - 240.0 * t) / 360.0
         r, g, b = colorsys.hsv_to_rgb(h, 1.0, 1.0)
-        return f'#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}'
+        return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
 
     h, w = image_shape[:2]
     dwg = svgwrite.Drawing(output_path, size=(w, h))
@@ -220,16 +220,16 @@ def save_svg_colored(contours, image_shape, output_path: Path):
         if len(pts) < 3:
             continue
 
-        d = [f'M {pts[0][0]},{pts[0][1]}']
-        d += [f'L {x},{y}' for x, y in pts[1:]]
-        d.append('Z')
+        d = [f"M {pts[0][0]},{pts[0][1]}"]
+        d += [f"L {x},{y}" for x, y in pts[1:]]
+        d.append("Z")
 
         color = level_to_color(level)
 
         dwg.add(
             dwg.path(
-                d=' '.join(d),
-                fill='none',
+                d=" ".join(d),
+                fill="none",
                 stroke=color,
                 stroke_width=1.0,
             )
@@ -282,20 +282,20 @@ def contours_to_metadata(
     contours, image_path: Path, segment_index: int | None = None, width: float | None = None
 ):
     metadata = {
-        'source_image': image_path.name,
-        'contour_count': len(contours),
-        'contours': [
+        "source_image": image_path.name,
+        "contour_count": len(contours),
+        "contours": [
             {
-                'level': float(level),
-                'curve': contour.round(3).tolist(),
+                "level": float(level),
+                "curve": contour.round(3).tolist(),
             }
             for contour, level in contours
         ],
     }
     if segment_index is not None:
-        metadata['segment_index'] = segment_index
+        metadata["segment_index"] = segment_index
     if width is not None:
-        metadata['width_px'] = width
+        metadata["width_px"] = width
     return metadata
 
 
@@ -330,27 +330,27 @@ def extract_contours(
 ):
     img = cv2.imread(str(image_path))
     if img is None:
-        raise RuntimeError(f'Could not read {image_path}')
+        raise RuntimeError(f"Could not read {image_path}")
 
     # Convert to grayscale first
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     if apply_noise_filter and noise_threshold is not None:
-        print(f'Applying noise filter: {apply_noise_filter} with threshold: {noise_threshold}')
+        print(f"Applying noise filter: {apply_noise_filter} with threshold: {noise_threshold}")
         # Create mask of pixels above threshold in original image
         # print out min and max of gray
         filtered = gray.copy()
         filtered[filtered < noise_threshold] = 0
         print(gray.mean())
         if debug:
-            debug_path = output_path / 'filtered.jpg' if output_path else None
-            unfiltered_path = output_path / 'unfiltered.jpg' if output_path else None
+            debug_path = output_path / "filtered.jpg" if output_path else None
+            unfiltered_path = output_path / "unfiltered.jpg" if output_path else None
             if debug_path:
                 cv2.imwrite(str(debug_path), filtered)
-                print('Wrote filtered debug image:', debug_path)
+                print("Wrote filtered debug image:", debug_path)
             if unfiltered_path:
                 cv2.imwrite(str(unfiltered_path), gray)
-                print('Wrote unfiltered debug image:', unfiltered_path)
+                print("Wrote unfiltered debug image:", unfiltered_path)
 
     data = gray
 
@@ -384,31 +384,31 @@ def extract_contours(
 # -----------------------------------------------------------------------------
 
 
-@click.command(context_settings={'show_default': True})
+@click.command(context_settings={"show_default": True})
 @click.argument(
-    'input_path',
+    "input_path",
     type=click.Path(exists=True),
-    metavar='IMAGE_OR_SPECTROGRAM_ASSETS',
+    metavar="IMAGE_OR_SPECTROGRAM_ASSETS",
 )
-@click.option('--out-dir', type=click.Path(), default='contours_out')
+@click.option("--out-dir", type=click.Path(), default="contours_out")
 @click.option(
-    '--levels-mode',
-    type=click.Choice(['percentile', 'histogram', 'multi-otsu']),
-    default='percentile',
+    "--levels-mode",
+    type=click.Choice(["percentile", "histogram", "multi-otsu"]),
+    default="percentile",
 )
-@click.option('--percentiles', multiple=True, default=(60, 70, 80, 90, 92, 94, 96, 98))
-@click.option('--min-area', default=30.0)
-@click.option('--smoothing-factor', default=0.08)
-@click.option('--multi-otsu-classes', default=4)
-@click.option('--hist-bins', default=512)
-@click.option('--hist-sigma', default=2.0)
-@click.option('--hist-variance-threshold', default=400.0)
-@click.option('--hist-max-levels', default=5)
-@click.option('-v', '--verbose', is_flag=True)
+@click.option("--percentiles", multiple=True, default=(60, 70, 80, 90, 92, 94, 96, 98))
+@click.option("--min-area", default=30.0)
+@click.option("--smoothing-factor", default=0.08)
+@click.option("--multi-otsu-classes", default=4)
+@click.option("--hist-bins", default=512)
+@click.option("--hist-sigma", default=2.0)
+@click.option("--hist-variance-threshold", default=400.0)
+@click.option("--hist-max-levels", default=5)
+@click.option("-v", "--verbose", is_flag=True)
 @click.option(
-    '--debug-images',
+    "--debug-images",
     is_flag=True,
-    help='Save debug images (filtered and unfiltered) to the output directory',
+    help="Save debug images (filtered and unfiltered) to the output directory",
 )
 def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
     logging.basicConfig(level=logging.INFO if verbose else logging.WARNING)
@@ -422,7 +422,7 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
     # image paths and segment info. Otherwise treat it as an image path.
     all_segments_data = []
 
-    if path.suffix.lower() == '.json':
+    if path.suffix.lower() == ".json":
         assets_path = path
         with assets_path.open() as f:
             assets_data = json.load(f)
@@ -430,17 +430,17 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
         # noise_filter_threshold is stored as a percentage (0–100) of the
         # image's 8‑bit dynamic range; convert to a 0–255 pixel threshold.
         noise_threshold = None
-        noise_threshold_percent = assets_data.get('noise_filter_threshold')
+        noise_threshold_percent = assets_data.get("noise_filter_threshold")
         if noise_threshold_percent is not None:
             noise_threshold = (float(noise_threshold_percent) / 100.0) * 255.0
 
         # Get compressed paths and widths/starts/stops
-        compressed_data = assets_data.get('compressed', {})
-        compressed_data.get('paths', [])
-        mask_paths = compressed_data.get('masks', [])
-        widths = compressed_data.get('widths', [])
-        starts = compressed_data.get('starts', [])
-        stops = compressed_data.get('stops', [])
+        compressed_data = assets_data.get("compressed", {})
+        compressed_data.get("paths", [])
+        mask_paths = compressed_data.get("masks", [])
+        widths = compressed_data.get("widths", [])
+        starts = compressed_data.get("starts", [])
+        stops = compressed_data.get("stops", [])
 
         # Resolve paths relative to the assets file location
         assets_dir = assets_path.parent
@@ -450,7 +450,7 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
         for path_str in mask_paths:
             img_path = (assets_dir / path_str).resolve()
             if not img_path.exists():
-                logger.warning('Image path does not exist: %s', img_path)
+                logger.warning("Image path does not exist: %s", img_path)
                 continue
 
             # Only process each unique image once
@@ -463,16 +463,16 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
                 img_path,
                 output_path=out_dir,
                 debug=debug_images,
-                levels_mode=kwargs['levels_mode'],
-                percentile_values=kwargs['percentiles'],
-                min_area=kwargs['min_area'],
-                smoothing_factor=kwargs['smoothing_factor'],
+                levels_mode=kwargs["levels_mode"],
+                percentile_values=kwargs["percentiles"],
+                min_area=kwargs["min_area"],
+                smoothing_factor=kwargs["smoothing_factor"],
                 min_intensity=1.0,
-                multi_otsu_classes=kwargs['multi_otsu_classes'],
-                hist_bins=kwargs['hist_bins'],
-                hist_sigma=kwargs['hist_sigma'],
-                hist_variance_threshold=kwargs['hist_variance_threshold'],
-                hist_max_levels=kwargs['hist_max_levels'],
+                multi_otsu_classes=kwargs["multi_otsu_classes"],
+                hist_bins=kwargs["hist_bins"],
+                hist_sigma=kwargs["hist_sigma"],
+                hist_variance_threshold=kwargs["hist_variance_threshold"],
+                hist_max_levels=kwargs["hist_max_levels"],
                 noise_threshold=noise_threshold,
                 apply_noise_filter=False,
             )
@@ -501,52 +501,52 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
                 freq_max = float(np.max(all_y).round(3)) if all_y.size else None
 
                 segment_obj: dict = {
-                    'segment_index': seg_idx,
-                    'contour_count': len(seg_contours),
-                    'freq_min': freq_min,
-                    'freq_max': freq_max,
-                    'contours': [
+                    "segment_index": seg_idx,
+                    "contour_count": len(seg_contours),
+                    "freq_min": freq_min,
+                    "freq_max": freq_max,
+                    "contours": [
                         {
-                            'level': float(level),
-                            'curve': contour.round(3).tolist(),
+                            "level": float(level),
+                            "curve": contour.round(3).tolist(),
                         }
                         for contour, level in seg_contours
                     ],
                 }
 
                 if seg_idx < len(widths):
-                    segment_obj['width_px'] = widths[seg_idx]
+                    segment_obj["width_px"] = widths[seg_idx]
                 if seg_idx < len(starts):
-                    segment_obj['start_ms'] = starts[seg_idx]
+                    segment_obj["start_ms"] = starts[seg_idx]
                 if seg_idx < len(stops):
-                    segment_obj['stop_ms'] = stops[seg_idx]
+                    segment_obj["stop_ms"] = stops[seg_idx]
 
                 segments_output.append(segment_obj)
 
             image_output = {
-                'source_image': img_path.name,
-                'segments': segments_output,
+                "source_image": img_path.name,
+                "segments": segments_output,
             }
 
             # Save per-image JSON with segments
-            json_path = out_dir / f'{img_path.stem}.contours.json'
-            with json_path.open('w') as f:
+            json_path = out_dir / f"{img_path.stem}.contours.json"
+            with json_path.open("w") as f:
                 json.dump(image_output, f, indent=2)
 
             logger.info(
-                'Wrote per-image contour JSON with segments: %s (segments=%d)',
+                "Wrote per-image contour JSON with segments: %s (segments=%d)",
                 json_path,
                 len(segments_output),
             )
 
             # Also save the full image SVGs (all segments combined)
-            svg_path = out_dir / f'{img_path.stem}.contours.svg'
+            svg_path = out_dir / f"{img_path.stem}.contours.svg"
             save_svg(contours, shape, svg_path)
-            logger.info('Wrote full image SVG: %s', svg_path)
+            logger.info("Wrote full image SVG: %s", svg_path)
 
-            svg_colored_path = out_dir / f'{img_path.stem}.contours.colored.svg'
+            svg_colored_path = out_dir / f"{img_path.stem}.contours.colored.svg"
             save_svg_colored(contours, shape, svg_colored_path)
-            logger.info('Wrote full image colored SVG: %s', svg_colored_path)
+            logger.info("Wrote full image colored SVG: %s", svg_colored_path)
 
             # Also save a colored SVG with the noise filter applied, if a
             # noise threshold is available from the spectrogram assets.
@@ -555,24 +555,24 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
                     img_path,
                     debug=debug_images,
                     output_path=out_dir,
-                    levels_mode=kwargs['levels_mode'],
-                    percentile_values=kwargs['percentiles'],
-                    min_area=kwargs['min_area'],
-                    smoothing_factor=kwargs['smoothing_factor'],
+                    levels_mode=kwargs["levels_mode"],
+                    percentile_values=kwargs["percentiles"],
+                    min_area=kwargs["min_area"],
+                    smoothing_factor=kwargs["smoothing_factor"],
                     min_intensity=1.0,
-                    multi_otsu_classes=kwargs['multi_otsu_classes'],
-                    hist_bins=kwargs['hist_bins'],
-                    hist_sigma=kwargs['hist_sigma'],
-                    hist_variance_threshold=kwargs['hist_variance_threshold'],
-                    hist_max_levels=kwargs['hist_max_levels'],
+                    multi_otsu_classes=kwargs["multi_otsu_classes"],
+                    hist_bins=kwargs["hist_bins"],
+                    hist_sigma=kwargs["hist_sigma"],
+                    hist_variance_threshold=kwargs["hist_variance_threshold"],
+                    hist_max_levels=kwargs["hist_max_levels"],
                     noise_threshold=noise_threshold,
                     apply_noise_filter=True,
                 )
 
-                svg_colored_nf_path = out_dir / f'{img_path.stem}.contours.colored.noisefilter.svg'
+                svg_colored_nf_path = out_dir / f"{img_path.stem}.contours.colored.noisefilter.svg"
                 save_svg_colored(contours_nf, shape, svg_colored_nf_path)
                 logger.info(
-                    'Wrote full image colored SVG with noise filter: %s',
+                    "Wrote full image colored SVG with noise filter: %s",
                     svg_colored_nf_path,
                 )
 
@@ -583,16 +583,16 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
         # organized by segments/widths
         if all_segments_data:
             combined_output = {
-                'source_spectrogram_assets': str(assets_path.name),
-                'segments': sorted(all_segments_data, key=lambda x: x.get('segment_index', 0)),
-                'total_segments': len(all_segments_data),
+                "source_spectrogram_assets": str(assets_path.name),
+                "segments": sorted(all_segments_data, key=lambda x: x.get("segment_index", 0)),
+                "total_segments": len(all_segments_data),
             }
 
-            combined_json_path = out_dir / f'{assets_path.stem}.contours.combined.json'
-            with combined_json_path.open('w') as f:
+            combined_json_path = out_dir / f"{assets_path.stem}.contours.combined.json"
+            with combined_json_path.open("w") as f:
                 json.dump(combined_output, f, indent=2)
 
-            logger.info('Wrote combined output: %s', combined_json_path)
+            logger.info("Wrote combined output: %s", combined_json_path)
 
     else:
         # Use provided image directly (no segment splitting)
@@ -601,16 +601,16 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
             img_path,
             output_path=out_dir,
             debug=debug_images,
-            levels_mode=kwargs['levels_mode'],
-            percentile_values=kwargs['percentiles'],
-            min_area=kwargs['min_area'],
-            smoothing_factor=kwargs['smoothing_factor'],
+            levels_mode=kwargs["levels_mode"],
+            percentile_values=kwargs["percentiles"],
+            min_area=kwargs["min_area"],
+            smoothing_factor=kwargs["smoothing_factor"],
             min_intensity=1.0,
-            multi_otsu_classes=kwargs['multi_otsu_classes'],
-            hist_bins=kwargs['hist_bins'],
-            hist_sigma=kwargs['hist_sigma'],
-            hist_variance_threshold=kwargs['hist_variance_threshold'],
-            hist_max_levels=kwargs['hist_max_levels'],
+            multi_otsu_classes=kwargs["multi_otsu_classes"],
+            hist_bins=kwargs["hist_bins"],
+            hist_sigma=kwargs["hist_sigma"],
+            hist_variance_threshold=kwargs["hist_variance_threshold"],
+            hist_max_levels=kwargs["hist_max_levels"],
         )
 
         # Optional debug images for single-image mode (no noise threshold
@@ -618,30 +618,30 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
         if debug_images:
             img_color = cv2.imread(str(img_path))
             if img_color is None:
-                logger.warning('Could not read image for debug output: %s', img_path)
+                logger.warning("Could not read image for debug output: %s", img_path)
             else:
                 gray = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
                 blurred = cv2.GaussianBlur(gray, (15, 15), 3)
 
-                unfiltered_path = out_dir / f'{img_path.stem}.unfiltered.jpg'
+                unfiltered_path = out_dir / f"{img_path.stem}.unfiltered.jpg"
                 cv2.imwrite(str(unfiltered_path), blurred)
-                logger.info('Wrote unfiltered debug image: %s', unfiltered_path)
+                logger.info("Wrote unfiltered debug image: %s", unfiltered_path)
 
-        svg_path = out_dir / f'{img_path.stem}.contours.svg'
-        json_path = out_dir / f'{img_path.stem}.contours.json'
+        svg_path = out_dir / f"{img_path.stem}.contours.svg"
+        json_path = out_dir / f"{img_path.stem}.contours.json"
 
         save_svg(contours, shape, svg_path)
 
-        svg_colored_path = out_dir / f'{img_path.stem}.contours.colored.svg'
+        svg_colored_path = out_dir / f"{img_path.stem}.contours.colored.svg"
         save_svg_colored(contours, shape, svg_colored_path)
 
         metadata = contours_to_metadata(contours, img_path)
 
-        with json_path.open('w') as f:
+        with json_path.open("w") as f:
             json.dump(metadata, f, indent=2)
 
-        logger.info('Wrote %s and %s', svg_path, json_path)
+        logger.info("Wrote %s and %s", svg_path, json_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

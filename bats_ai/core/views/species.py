@@ -24,7 +24,7 @@ class SpeciesSchema(Schema):
     pk: int = None
 
 
-@router.get('/', auth=None)
+@router.get("/", auth=None)
 def get_species(request: HttpRequest):
     species = Species.objects.values()
 

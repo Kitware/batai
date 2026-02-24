@@ -6,21 +6,21 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0012_recordingannotation_additional_data'),
+        ("core", "0012_recordingannotation_additional_data"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Configuration',
+            name="Configuration",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('display_pulse_annotations', models.BooleanField(default=True)),
-                ('display_sequence_annotations', models.BooleanField(default=True)),
+                ("display_pulse_annotations", models.BooleanField(default=True)),
+                ("display_sequence_annotations", models.BooleanField(default=True)),
             ],
         ),
     ]
