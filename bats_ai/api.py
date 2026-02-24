@@ -30,9 +30,8 @@ def global_auth(request):
                 access_token = AccessToken.objects.get(token=token)
             except AccessToken.DoesNotExist:
                 access_token = None
-            if access_token and access_token.user:
-                if not access_token.user.is_anonymous:
-                    request.user = access_token.user
+            if access_token and access_token.user and not access_token.user.is_anonymous:
+                request.user = access_token.user
     user = request.user
     return (not user.is_anonymous) and (user.profile.verified or user.is_superuser)
 

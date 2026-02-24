@@ -34,9 +34,8 @@ def admin_auth(request):
                 access_token = AccessToken.objects.get(token=token)
             except AccessToken.DoesNotExist:
                 access_token = None
-            if access_token and access_token.user:
-                if not access_token.user.is_anonymous:
-                    request.user = access_token.user
+            if access_token and access_token.user and not access_token.user.is_anonymous:
+                request.user = access_token.user
     return True
 
 
@@ -98,9 +97,8 @@ def get_email_if_authorized(
     `recording_id` is retrieved.
     """
     # Superuser shortcut
-    if request.user and request.user.is_authenticated:
-        if request.user.is_superuser:
-            return request.user.email or "superuser@nabat.org"
+    if request.user and request.user.is_authenticated and request.user.is_superuser:
+        return request.user.email or "superuser@nabat.org"
     # Decode JWT token
     try:
         payload = decode_jwt(api_token)
