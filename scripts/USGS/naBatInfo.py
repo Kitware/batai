@@ -104,8 +104,8 @@ def fetch_and_save():
             with open("output.json", "w") as f:
                 json.dump(batch_data, f, indent=2)
             logger.info("Data successfully fetched and saved to output.json")
-        except (KeyError, TypeError, json.JSONDecodeError) as e:
-            logger.exception(f"Error processing batch data: {e}")
+        except (KeyError, TypeError, json.JSONDecodeError):
+            logger.exception("Error processing batch data")
             return
     else:
         logger.error(f"Failed to fetch data: {response.status_code}, {response.text}")
@@ -123,8 +123,8 @@ def fetch_and_save():
             with open(file_name, "wb") as f:
                 f.writelines(file_response.iter_content(chunk_size=8192))
             logger.info(f"File downloaded: {file_name}")
-        except Exception as e:
-            logger.exception(f"Error saving the file: {e}")
+        except Exception:
+            logger.exception("Error saving the file")
     else:
         logger.error(f"Failed to download file: {file_response.status_code}")
 

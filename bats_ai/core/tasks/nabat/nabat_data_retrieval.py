@@ -215,9 +215,9 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
 
         return nabat_recording
 
-    except KeyError as e:
-        logger.exception(f"Missing key: {e}")
+    except KeyError:
+        logger.exception("Missing key")
         raise
-    except Exception as e:
-        logger.exception(f"Error creating NABatRecording: {e}")
+    except Exception:
+        logger.exception("Error creating NABatRecording")
         raise

@@ -68,8 +68,8 @@ def fetch_and_save():
             with open("species.json", "w") as f:
                 json.dump(batch_data, f, indent=2)
             logger.info("Data successfully fetched and saved to output.json")
-        except (KeyError, TypeError, json.JSONDecodeError) as e:
-            logger.exception(f"Error processing batch data: {e}")
+        except (KeyError, TypeError, json.JSONDecodeError):
+            logger.exception("Error processing batch data")
             return
     else:
         logger.error(f"Failed to fetch data: {response.status_code}, {response.text}")
