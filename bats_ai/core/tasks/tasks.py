@@ -51,7 +51,10 @@ def recording_compute_spectrogram(self, recording_id: int):
             audio_filename = os.path.basename(recording.audio_file.name)
             temp_audio_path = os.path.join(tmpdir, audio_filename)
 
-            with recording.audio_file.open("rb") as source_file, open(temp_audio_path, "wb") as dest_file:
+            with (
+                recording.audio_file.open("rb") as source_file,
+                open(temp_audio_path, "wb") as dest_file,
+            ):
                 shutil.copyfileobj(source_file, dest_file)
 
             results = generate_spectrogram_assets(temp_audio_path, output_folder=tmpdir)

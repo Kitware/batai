@@ -193,7 +193,10 @@ def generate_compressed(img_path, duration, annotation_path, output_path):
                     if mask[i + 1] == 0:
                         stops.append(i + 40)
 
-            ranges = [(max(0, s), min(canvas.shape[1], e)) for s, e in zip(starts, stops, strict=False)]
+            ranges = [
+                (max(0, s), min(canvas.shape[1], e))
+                for s, e in zip(starts, stops, strict=False)
+            ]
             if not ranges:
                 threshold -= 0.05
                 if threshold < 0:
