@@ -33,7 +33,7 @@ def get_grid_cell_id(
 
 
 @router.get("/{id}")
-def get_cell_center(request: HttpRequest, id: int, quadrant: str = None):
+def get_cell_center(request: HttpRequest, id: int, quadrant: str | None = None):
     try:
         cells = GRTSCells.objects.filter(grts_cell_id=id)
 
