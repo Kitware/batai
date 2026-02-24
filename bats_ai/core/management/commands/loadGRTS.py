@@ -117,7 +117,7 @@ class Command(BaseCommand):
                         raise CommandError(f"Row {idx} missing required GRTS_ID field!")
 
                     grts_id = int(row["GRTS_ID"])
-                    cell_id = int(row.get(list(row.keys())[0], grts_id))  # fallback to first field
+                    cell_id = int(row.get(next(iter(row.keys())), grts_id))  # fallback to first field
 
                     if grts_id in existing_ids:
                         continue
