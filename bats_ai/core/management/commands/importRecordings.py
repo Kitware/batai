@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 from pathlib import Path
 
@@ -143,10 +144,8 @@ class Command(BaseCommand):
                 # Get grid cell ID
                 grts_cell_id = None
                 if metadata.get("nabat_grid_cell_grts_id"):
-                    try:
+                    with contextlib.suppress(ValueError, TypeError):
                         grts_cell_id = int(metadata["nabat_grid_cell_grts_id"])
-                    except (ValueError, TypeError):
-                        pass
 
                 # Convert species list to string if present
                 species_list_str = None

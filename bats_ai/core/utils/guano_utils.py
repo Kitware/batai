@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from datetime import datetime
 from pathlib import Path
 import re
@@ -54,10 +55,8 @@ def extract_metadata_from_filename(filename: str) -> dict:
 
     # Extract grid cell ID
     if cell_id:
-        try:
+        with contextlib.suppress(ValueError):
             metadata["nabat_grid_cell_grts_id"] = str(int(cell_id))
-        except ValueError:
-            pass
 
     # Extract date and time
     if date_str and len(date_str) == 8 and timestamp_str and len(timestamp_str) == 6:

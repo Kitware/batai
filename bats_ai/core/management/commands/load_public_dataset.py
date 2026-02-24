@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from csv import DictReader
 from datetime import date
 import hashlib
@@ -49,10 +50,8 @@ def _get_metadata(filename: str, line: dict[str, str]) -> dict[str, Any]:
             guano_metadata["nabat_longitude"], guano_metadata["nabat_latitude"]
         )
     if guano_metadata.get("nabat_grid_cell_grts_id"):
-        try:
+        with contextlib.suppress(ValueError, TypeError):
             metadata["grts_cell_id"] = int(guano_metadata["nabat_grid_cell_grts_id"])
-        except (ValueError, TypeError):
-            pass
     if guano_metadata.get("nabat_species_list"):
         metadata["species_list_str"] = ",".join(guano_metadata["nabat_species_list"])
 
