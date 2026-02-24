@@ -388,7 +388,7 @@ export default defineComponent({
           <v-checkbox
             v-model="showSubmittedRecordings"
             class="mr-4"
-            label="Show submitted recordings"
+            label="Show recordings with submitted annotations"
             hide-details
           />
           <v-menu v-if="configuration.is_admin || configuration.non_admin_upload_enabled">

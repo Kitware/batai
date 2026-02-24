@@ -216,7 +216,7 @@ export default defineComponent({
         />
       </v-row>
       <v-row
-        v-if="type !== 'nabat'"
+        v-if="type !== 'nabat' && !configuration.mark_annotations_completed_enabled"
       >
         <v-slider
           v-model="confidence"

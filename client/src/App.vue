@@ -91,6 +91,7 @@ export default defineComponent({
       sideTab,
       isAdmin,
       isNaBat,
+      configuration,
      };
   },
 });
@@ -137,7 +138,7 @@ export default defineComponent({
       </h3>
       <v-spacer />
       <v-tooltip
-        v-if="containsSpectro && nextShared !== false"
+        v-if="(containsSpectro && nextShared !== false) && !configuration.mark_annotations_completed_enabled"
         bottom
       >
         <template #activator="{ props: subProps }">
