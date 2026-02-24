@@ -106,7 +106,7 @@ def get_email_if_authorized(
         if not email:
             raise ValueError("Email not found in JWT payload")
     except Exception as e:
-        logger.error(f"Failed to decode JWT: {e}")
+        logger.exception(f"Failed to decode JWT: {e}")
         return JsonResponse({"error": "Invalid API token"}, status=400)
 
     # Resolve recording_id from recording_pk if needed
@@ -131,7 +131,7 @@ def get_email_if_authorized(
             settings.BATAI_NABAT_API_URL, json={"query": query}, headers=headers
         )
     except Exception as e:
-        logger.error(f"API request error: {e}")
+        logger.exception(f"API request error: {e}")
         return JsonResponse({"error": "Failed to connect to NABat API"}, status=500)
 
     if response.status_code != 200:
@@ -145,7 +145,7 @@ def get_email_if_authorized(
         if data["data"]["presignedUrlFromAcousticFile"] is None:
             return JsonResponse({"error": "Recording not found or access denied"}, status=403)
     except (KeyError, TypeError, json.JSONDecodeError) as e:
-        logger.error(f"Error decoding NABat API response: {e}")
+        logger.exception(f"Error decoding NABat API response: {e}")
         return JsonResponse({"error": "Malformed response from NABat API"}, status=500)
 
     return email
@@ -193,7 +193,7 @@ def update_nabat_species(species_id: int, api_token: str, recording_id: int, sur
             logger.error(f"API Error: {json_response['errors']}")
             return JsonResponse(json_response, status=500)
     except Exception as e:
-        logger.error(f"API Request Failed: {e}")
+        logger.exception(f"API Request Failed: {e}")
         return JsonResponse({"error": "Failed to connect to NABat API"}, status=500)
     return "NABat species updated successfully."
 
@@ -260,7 +260,7 @@ def generate_nabat_recording(
             else:
                 return {"recordingId": nabat_recording.first().pk}
         except (KeyError, TypeError, json.JSONDecodeError) as e:
-            logger.error(f"Error processing batch data: {e}")
+            logger.exception(f"Error processing batch data: {e}")
             return JsonResponse({"error": f"Error with API Request: {e}"}, status=500)
     else:
         logger.error(f"Failed to fetch data: {response.status_code}, {response.text}")

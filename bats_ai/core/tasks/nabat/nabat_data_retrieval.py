@@ -141,7 +141,7 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
             batch_data = response.json()
         except (KeyError, TypeError, json.JSONDecodeError) as e:
             error_msg = f"Error decoding JSON response: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             processing_task.status = ProcessingTask.Status.ERROR
             processing_task.error = error_msg
             processing_task.save()
@@ -216,8 +216,8 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
         return nabat_recording
 
     except KeyError as e:
-        logger.error(f"Missing key: {e}")
+        logger.exception(f"Missing key: {e}")
         raise
     except Exception as e:
-        logger.error(f"Error creating NABatRecording: {e}")
+        logger.exception(f"Error creating NABatRecording: {e}")
         raise

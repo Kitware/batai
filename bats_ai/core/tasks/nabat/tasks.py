@@ -32,7 +32,7 @@ def generate_spectrograms(
                 with open(audio_file, "wb") as temp_file:
                     temp_file.writelines(file_response.iter_content(chunk_size=8192))
         except Exception as e:
-            logger.error(f"Error Downloading Presigned URL: {e}")
+            logger.exception(f"Error Downloading Presigned URL: {e}")
             processing_task.status = ProcessingTask.Status.ERROR
             processing_task.error = f"Error Downloading Presigned URL: {e}"
             processing_task.save()
