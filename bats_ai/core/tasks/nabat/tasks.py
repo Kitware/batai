@@ -3,16 +3,19 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 import tempfile
+from typing import TYPE_CHECKING
 
 from django.contrib.gis.geos import LineString, Point, Polygon
 import requests
 
 from bats_ai.core.models import ProcessingTask, PulseMetadata
-from bats_ai.core.models.nabat import NABatRecording
 from bats_ai.utils.spectrogram_utils import (
     generate_nabat_compressed_spectrogram,
     generate_nabat_spectrogram,
 )
+
+if TYPE_CHECKING:
+    from bats_ai.core.models.nabat import NABatRecording
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NABatDataRetrieval")

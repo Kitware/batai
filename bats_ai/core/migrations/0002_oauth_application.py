@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.db import migrations
-from django.db.backends.base.schema import BaseDatabaseSchemaEditor
-from django.db.migrations.state import StateApps
+
+if TYPE_CHECKING:
+    from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+    from django.db.migrations.state import StateApps
 
 APPLICATION_NAME = "batsai-client"
 CLIENT_ID = "HSJWFZ2cIpWQOvNyCXyStV9hiOd7DfWeBOCzo4pP"

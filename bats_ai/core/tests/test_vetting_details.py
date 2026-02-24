@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from ninja.testing import TestClient
+from typing import TYPE_CHECKING
+
 import pytest
 
 from bats_ai.core.models import VettingDetails
 
 from .factories import SuperuserFactory, UserFactory, VettingDetailsFactory
+
+if TYPE_CHECKING:
+    from ninja.testing import TestClient
 
 
 @pytest.mark.django_db

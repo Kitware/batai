@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-from django.test import Client
-from ninja.testing import TestClient
+from typing import TYPE_CHECKING
+
 import pytest
 
 from .factories import SuperuserFactory, UserFactory
+
+if TYPE_CHECKING:
+    from django.test import Client
+    from ninja.testing import TestClient
 
 
 @pytest.mark.parametrize(
