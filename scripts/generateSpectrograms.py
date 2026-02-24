@@ -44,7 +44,7 @@ def generate_spectrogram(wav_path, output_folder, colormap=None):
             colormap = None
 
         size = int(0.001 * sr)  # 1.0ms resolution
-        size = 2 ** (math.ceil(math.log(size, 2)) + size_mod)
+        size = 2 ** (math.ceil(math.log2(size)) + size_mod)
         hop_length = int(size / 4)
 
         window = librosa.stft(sig, n_fft=size, hop_length=hop_length, window="hamming")
