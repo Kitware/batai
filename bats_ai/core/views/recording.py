@@ -939,9 +939,7 @@ def get_user_annotations(request: HttpRequest, id: int, userId: int):
             annotations_qs = Annotations.objects.filter(recording=recording, owner=userId)
 
             # Serialize the annotations using AnnotationSchema
-            return [
-                AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs
-            ]
+            return [AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs]
 
         else:
             return {

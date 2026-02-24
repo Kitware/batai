@@ -204,9 +204,9 @@ def save_svg_colored(contours, image_shape, output_path: Path):
     level_span = max_level - min_level if max_level != min_level else 1.0
 
     def level_to_color(level: float) -> str:
-        # Normalize to 0–1
+        # Normalize to 0-1
         t = (float(level) - min_level) / level_span
-        # Map 0–1 to a blue→cyan→green→yellow→red style gradient using HSV
+        # Map 0-1 to a blue→cyan→green→yellow→red style gradient using HSV
         # Hue 240° (blue) → 0° (red)
         h = (240.0 - 240.0 * t) / 360.0
         r, g, b = colorsys.hsv_to_rgb(h, 1.0, 1.0)
@@ -427,8 +427,8 @@ def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
         with assets_path.open() as f:
             assets_data = json.load(f)
 
-        # noise_filter_threshold is stored as a percentage (0–100) of the
-        # image's 8‑bit dynamic range; convert to a 0–255 pixel threshold.
+        # noise_filter_threshold is stored as a percentage (0-100) of the
+        # image's 8-bit dynamic range; convert to a 0-255 pixel threshold.
         noise_threshold = None
         noise_threshold_percent = assets_data.get("noise_filter_threshold")
         if noise_threshold_percent is not None:

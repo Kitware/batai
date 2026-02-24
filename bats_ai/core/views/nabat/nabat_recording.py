@@ -342,7 +342,6 @@ def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
     }
 
 
-
 class NABatRecordingAnnotationSchema(Schema):
     species: list[SpeciesSchema] | None
     comments: str | None = None

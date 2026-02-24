@@ -179,7 +179,6 @@ ignore = [
   "PLR0915", # too-many-statements
   "PLW2901", # redefined-loop-name
   "PTH", # flake8-use-pathlib
-  "RUF003", # ambiguous-unicode-character-comment
   "S101", # assert
   "S110", # try-except-pass
   "S308", # suspicious-mark-safe-usage

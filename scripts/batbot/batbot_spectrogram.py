@@ -308,8 +308,8 @@ def generate_spectrogram_assets(
         # No segments - entire image is one segment
         uncompressed_widths = [uncompressed_width]
 
-    # Convert global threshold amplitude (0–255 for 8‑bit images) to a
-    # percentage in the range 0–100 for downstream consumers.
+    # Convert global threshold amplitude (0-255 for 8-bit images) to a
+    # percentage in the range 0-100 for downstream consumers.
     noise_threshold_percent = round((metadata.global_threshold_amp / 255.0) * 100.0, 2)
 
     return {

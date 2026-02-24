@@ -401,4 +401,3 @@ def process_spectrogram_assets_for_contours(
         "segments": sorted(all_segments_data, key=lambda x: x.get("segment_index", 0)),
         "total_segments": len(all_segments_data),
     }
-
