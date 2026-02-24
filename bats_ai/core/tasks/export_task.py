@@ -131,7 +131,7 @@ def export_annotations_task(filters: dict, annotation_types: list, export_id: in
         export_record.expires_at = now() + timedelta(hours=24)
         export_record.save()
 
-    except Exception as e:
+    except Exception:
         export_record.status = "failed"
         export_record.save()
         raise
