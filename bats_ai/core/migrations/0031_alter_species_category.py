@@ -47,8 +47,8 @@ class Migration(migrations.Migration):
             name='category',
             field=models.CharField(
                 choices=[
-                    ('single', 'Single Species'),
-                    ('multiple', 'Multiple Species'),
+                    ('single', 'Single'),
+                    ('multiple', 'Multiple'),
                     ('frequency', 'Frequency'),
                     ('noid', 'NoID'),
                 ],

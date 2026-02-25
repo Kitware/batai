@@ -2,12 +2,12 @@ from django.db import models
 
 
 class Species(models.Model):
-    CATEGORY_CHOICES = {
-        'single': 'Single',
-        'multiple': 'Multiple',
-        'frequency': 'Frequency',
-        'noid': 'NoID',
-    }
+    CATEGORY_CHOICES = [
+        ('single', 'Single'),
+        ('multiple', 'Multiple'),
+        ('frequency', 'Frequency'),
+        ('noid', 'NoID'),
+    ]
 
     species_code = models.CharField(max_length=255, blank=True, null=True)
     family = models.CharField(max_length=255, blank=True, null=True)
