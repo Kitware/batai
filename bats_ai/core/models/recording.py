@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 from django.contrib.auth.models import User
@@ -16,11 +18,11 @@ class RecordingTag(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'text'], name='unique_user_text_tag')
+            models.UniqueConstraint(fields=["user", "text"], name="unique_user_text_tag")
         ]
 
     def __str__(self):
-        return f'{self.text} ({self.user.username})'
+        return f"{self.text} ({self.user.username})"
 
 
 # TimeStampedModel also provides "created" and "modified" fields
@@ -41,10 +43,10 @@ class Recording(TimeStampedModel, models.Model):
     species_list = models.TextField(blank=True, null=True)
     site_name = models.TextField(blank=True, null=True)
     computed_species = models.ManyToManyField(
-        Species, related_name='recording_computed_species'
+        Species, related_name="recording_computed_species"
     )  # species from a computed sense
     official_species = models.ManyToManyField(
-        Species, related_name='recording_official_species'
+        Species, related_name="recording_official_species"
     )  # species that are detemrined by the owner or from annotations as official species list
     unusual_occurrences = models.TextField(blank=True, null=True)
     tags = models.ManyToManyField(RecordingTag)
@@ -57,19 +59,16 @@ class Recording(TimeStampedModel, models.Model):
     def spectrograms(self):
         from bats_ai.core.models import Spectrogram
 
-        query = Spectrogram.objects.filter(recording=self).order_by('-created')
+        query = Spectrogram.objects.filter(recording=self).order_by("-created")
         return query.all()
 
     @property
     def spectrogram(self):
-        pass
 
         spectrograms = self.spectrograms
 
         assert len(spectrograms) >= 1
-        spectrogram = spectrograms[0]  # most recently created
-
-        return spectrogram
+        return spectrograms[0]  # most recently created
 
     @property
     def has_compressed_spectrogram(self):
@@ -79,7 +78,7 @@ class Recording(TimeStampedModel, models.Model):
     def compressed_spectrograms(self):
         from bats_ai.core.models import CompressedSpectrogram
 
-        query = CompressedSpectrogram.objects.filter(recording=self).order_by('-created')
+        query = CompressedSpectrogram.objects.filter(recording=self).order_by("-created")
         return query.all()
 
     @property
@@ -87,9 +86,7 @@ class Recording(TimeStampedModel, models.Model):
         compressed_spectrograms = self.compressed_spectrograms
 
         assert len(compressed_spectrograms) >= 1
-        spectrogram = compressed_spectrograms[0]  # most recently created
-
-        return spectrogram
+        return compressed_spectrograms[0]  # most recently created
 
 
 @receiver(models.signals.pre_delete, sender=Recording)

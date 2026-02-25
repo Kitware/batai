@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.db import models
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
@@ -6,16 +8,16 @@ from django.dispatch import receiver
 # Define the Configuration model
 class Configuration(models.Model):
     class SpectrogramViewMode(models.TextChoices):
-        COMPRESSED = 'compressed'
-        UNCOMPRESSED = 'uncompressed'
+        COMPRESSED = "compressed"
+        UNCOMPRESSED = "uncompressed"
 
     class AvailableColorScheme(models.TextChoices):
-        INFERNO = 'inferno'
-        CIVIDIS = 'cividis'
-        VIRIDIS = 'viridis'
-        MAGMA = 'magma'
-        TURBO = 'turbo'
-        PLASMA = 'plasma'
+        INFERNO = "inferno"
+        CIVIDIS = "cividis"
+        VIRIDIS = "viridis"
+        MAGMA = "magma"
+        TURBO = "turbo"
+        PLASMA = "plasma"
 
     display_pulse_annotations = models.BooleanField(default=True)
     display_sequence_annotations = models.BooleanField(default=True)
@@ -30,7 +32,7 @@ class Configuration(models.Model):
         default=AvailableColorScheme.INFERNO,
     )
     # 18 characters is just enough for "rgb(255, 255, 255)"
-    default_spectrogram_background_color = models.CharField(max_length=18, default='rgb(0, 0, 0)')
+    default_spectrogram_background_color = models.CharField(max_length=18, default="rgb(0, 0, 0)")
 
     # Fields used for community vetting focused deployment of BatAI
     non_admin_upload_enabled = models.BooleanField(default=True)
@@ -38,12 +40,10 @@ class Configuration(models.Model):
 
     def save(self, *args, **kwargs):
         # Ensure only one instance of Configuration exists
-        if not Configuration.objects.exists() and not self.pk:
-            super().save(*args, **kwargs)
-        elif self.pk:
+        if (not Configuration.objects.exists() and not self.pk) or self.pk:
             super().save(*args, **kwargs)
         else:
-            raise ValueError('Only one instance of Configuration is allowed.')
+            raise ValueError("Only one instance of Configuration is allowed.")
 
 
 # Automatically create a Configuration instance after migrations

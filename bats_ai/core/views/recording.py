@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date, datetime, time
 import json
 import logging
@@ -469,9 +471,9 @@ def get_recordings(
     sort_field = q.sort_by or 'created'
     order_prefix = '' if q.sort_direction == 'asc' else '-'
     if sort_field == 'owner_username':
-        queryset = queryset.order_by(f'{order_prefix}owner__username')
+        queryset = queryset.order_by(f"{order_prefix}owner__username")
     else:
-        queryset = queryset.order_by(f'{order_prefix}{sort_field}')
+        queryset = queryset.order_by(f"{order_prefix}{sort_field}")
 
     # Annotate has_spectrogram in SQL to avoid one query per recording
     queryset = queryset.annotate(
@@ -541,9 +543,9 @@ def _unsubmitted_recording_ids_ordered(
                 qs = qs.distinct()
         order_prefix = '' if sort_direction == 'asc' else '-'
         if sort_by == 'owner_username':
-            qs = qs.order_by(f'{order_prefix}owner__username')
+            qs = qs.order_by(f"{order_prefix}owner__username")
         else:
-            qs = qs.order_by(f'{order_prefix}{sort_by}')
+            qs = qs.order_by(f"{order_prefix}{sort_by}")
         return qs
 
     my_qs = apply_filters_and_sort(_base_recordings_queryset(request, False))
@@ -663,11 +665,10 @@ def get_recording_annotations(request: HttpRequest, recording_id: int):
     fileAnnotations = RecordingAnnotation.objects.filter(
         recording=recording_id, owner=request.user
     ).order_by('confidence')
-    output = [
+    return [
         RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
         for fileAnnotation in fileAnnotations
     ]
-    return output
 
 
 @router.get('/{id}/spectrogram')
@@ -822,12 +823,11 @@ def get_annotations(request: HttpRequest, id: int):
             annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
             # Serialize the annotations using AnnotationSchema
-            annotations_data = [
+            return [
                 AnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
                 for annotation in annotations_qs
             ]
 
-            return annotations_data
         else:
             return {
                 'error': 'Permission denied. You do not own this recording, and it is not public.'
@@ -939,11 +939,8 @@ def get_user_annotations(request: HttpRequest, id: int, userId: int):
             annotations_qs = Annotations.objects.filter(recording=recording, owner=userId)
 
             # Serialize the annotations using AnnotationSchema
-            annotations_data = [
-                AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs
-            ]
+            return [AnnotationSchema.from_orm(annotation).dict() for annotation in annotations_qs]
 
-            return annotations_data
         else:
             return {
                 'error': 'Permission denied. You do not own this recording, and it is not public.'
@@ -982,7 +979,7 @@ def put_annotation(
                     new_annotation.species.add(species_obj)
                 except Species.DoesNotExist:
                     # Handle the case where the species with the given ID doesn't exist
-                    return {'error': f'Species with ID {species_id} not found'}
+                    return {'error': f"Species with ID {species_id} not found"}
 
             return {'message': 'Annotation added successfully', 'id': new_annotation.pk}
         else:
@@ -1040,7 +1037,7 @@ def patch_annotation(
                         annotation_instance.species.add(species_obj)
                     except Species.DoesNotExist:
                         # Handle the case where the species with the given ID doesn't exist
-                        return {'error': f'Species with ID {species_id} not found'}
+                        return {'error': f"Species with ID {species_id} not found"}
 
             return {'message': 'Annotation updated successfully', 'id': annotation_instance.pk}
         else:
@@ -1094,7 +1091,7 @@ def patch_sequence_annotation(
                         annotation_instance.species.add(species_obj)
                     except Species.DoesNotExist:
                         # Handle the case where the species with the given ID doesn't exist
-                        return {'error': f'Species with ID {species_id} not found'}
+                        return {'error': f"Species with ID {species_id} not found"}
 
             return {'message': 'Annotation updated successfully', 'id': annotation_instance.pk}
         else:
@@ -1150,12 +1147,11 @@ def get_sequence_annotations(request: HttpRequest, id: int):
             )
 
             # Serialize the annotations using AnnotationSchema
-            annotations_data = [
+            return [
                 SequenceAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
                 for annotation in annotations_qs
             ]
 
-            return annotations_data
         else:
             return {
                 'error': 'Permission denied. You do not own this recording, and it is not public.'

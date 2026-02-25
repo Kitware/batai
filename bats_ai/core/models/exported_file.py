@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from django.db import models
 from django.dispatch import receiver
 from django_extensions.db.models import TimeStampedModel
 
 
 class ExportedAnnotationFile(TimeStampedModel):
-    file = models.FileField(upload_to='exports/')
+    file = models.FileField(upload_to="exports/")
     download_url = models.URLField(blank=True, null=True, max_length=2048)
     filters_applied = models.JSONField(
         blank=True,
@@ -13,12 +15,12 @@ class ExportedAnnotationFile(TimeStampedModel):
     expires_at = models.DateTimeField()
     status = models.CharField(
         max_length=32,
-        choices=[('pending', 'Pending'), ('complete', 'Complete'), ('failed', 'Failed')],
-        default='pending',
+        choices=[("pending", "Pending"), ("complete", "Complete"), ("failed", "Failed")],
+        default="pending",
     )
 
     class Meta:
-        ordering = ['-created']
+        ordering = ["-created"]
 
 
 @receiver(models.signals.pre_delete, sender=ExportedAnnotationFile)

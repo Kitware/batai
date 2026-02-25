@@ -9,6 +9,8 @@
 # [tool.uv.sources]
 # batbot = { git = "https://github.com/Kitware/batbot" }
 # ///
+from __future__ import annotations
+
 from contextlib import contextmanager
 import json
 import os
@@ -25,23 +27,23 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class SpectrogramMetadata(BaseModel):
     """Metadata about the spectrogram."""
 
-    uncompressed_path: list[str] = Field(alias='uncompressed.path')
-    compressed_path: list[str] = Field(alias='compressed.path')
-    mask_path: list[str] = Field(alias='mask.path')
+    uncompressed_path: list[str] = Field(alias="uncompressed.path")
+    compressed_path: list[str] = Field(alias="compressed.path")
+    mask_path: list[str] = Field(alias="mask.path")
 
 
 class UncompressedSize(BaseModel):
     """Uncompressed spectrogram dimensions."""
 
-    width_px: int = Field(alias='width.px')
-    height_px: int = Field(alias='height.px')
+    width_px: int = Field(alias="width.px")
+    height_px: int = Field(alias="height.px")
 
 
 class CompressedSize(BaseModel):
     """Compressed spectrogram dimensions."""
 
-    width_px: int = Field(alias='width.px')
-    height_px: int = Field(alias='height.px')
+    width_px: int = Field(alias="width.px")
+    height_px: int = Field(alias="height.px")
 
 
 class SizeMetadata(BaseModel):
@@ -54,9 +56,9 @@ class SizeMetadata(BaseModel):
 class FrequencyMetadata(BaseModel):
     """Frequency range metadata."""
 
-    min_hz: int = Field(alias='min.hz')
-    max_hz: int = Field(alias='max.hz')
-    pixels_hz: list[int] = Field(alias='pixels.hz')
+    min_hz: int = Field(alias="min.hz")
+    max_hz: int = Field(alias="max.hz")
+    pixels_hz: list[int] = Field(alias="pixels.hz")
 
 
 class SegmentCurvePoint(BaseModel):
@@ -69,46 +71,46 @@ class SegmentCurvePoint(BaseModel):
 class Segment(BaseModel):
     """A detected segment in the spectrogram."""
 
-    curve_hz_ms: list[list[float]] = Field(alias='curve.(hz,ms)')
-    start_ms: float = Field(alias='segment start.ms')
-    end_ms: float = Field(alias='segment end.ms')
-    duration_ms: float = Field(alias='segment duration.ms')
-    contour_start_ms: float = Field(alias='contour start.ms')
-    contour_end_ms: float = Field(alias='contour end.ms')
-    contour_duration_ms: float = Field(alias='contour duration.ms')
-    threshold_amp: int = Field(alias='threshold.amp')
-    peak_f_ms: float | None = Field(None, alias='peak f.ms')
-    fc_ms: float | None = Field(None, alias='fc.ms')
-    hi_fc_knee_ms: float | None = Field(None, alias='hi fc:knee.ms')
-    lo_fc_heel_ms: float | None = Field(None, alias='lo fc:heel.ms')
-    bandwidth_hz: int | None = Field(None, alias='bandwidth.hz')
-    hi_f_hz: int | None = Field(None, alias='hi f.hz')
-    lo_f_hz: int | None = Field(None, alias='lo f.hz')
-    peak_f_hz: int | None = Field(None, alias='peak f.hz')
-    fc_hz: int | None = Field(None, alias='fc.hz')
-    hi_fc_knee_hz: int | None = Field(None, alias='hi fc:knee.hz')
-    lo_fc_heel_hz: int | None = Field(None, alias='lo fc:heel.hz')
-    harmonic_flag: bool = Field(False, alias='harmonic.flag')
-    harmonic_peak_f_ms: float | None = Field(None, alias='harmonic peak f.ms')
-    harmonic_peak_f_hz: int | None = Field(None, alias='harmonic peak f.hz')
-    echo_flag: bool = Field(False, alias='echo.flag')
-    echo_peak_f_ms: float | None = Field(None, alias='echo peak f.ms')
-    echo_peak_f_hz: int | None = Field(None, alias='echo peak f.hz')
+    curve_hz_ms: list[list[float]] = Field(alias="curve.(hz,ms)")
+    start_ms: float = Field(alias="segment start.ms")
+    end_ms: float = Field(alias="segment end.ms")
+    duration_ms: float = Field(alias="segment duration.ms")
+    contour_start_ms: float = Field(alias="contour start.ms")
+    contour_end_ms: float = Field(alias="contour end.ms")
+    contour_duration_ms: float = Field(alias="contour duration.ms")
+    threshold_amp: int = Field(alias="threshold.amp")
+    peak_f_ms: float | None = Field(None, alias="peak f.ms")
+    fc_ms: float | None = Field(None, alias="fc.ms")
+    hi_fc_knee_ms: float | None = Field(None, alias="hi fc:knee.ms")
+    lo_fc_heel_ms: float | None = Field(None, alias="lo fc:heel.ms")
+    bandwidth_hz: int | None = Field(None, alias="bandwidth.hz")
+    hi_f_hz: int | None = Field(None, alias="hi f.hz")
+    lo_f_hz: int | None = Field(None, alias="lo f.hz")
+    peak_f_hz: int | None = Field(None, alias="peak f.hz")
+    fc_hz: int | None = Field(None, alias="fc.hz")
+    hi_fc_knee_hz: int | None = Field(None, alias="hi fc:knee.hz")
+    lo_fc_heel_hz: int | None = Field(None, alias="lo fc:heel.hz")
+    harmonic_flag: bool = Field(False, alias="harmonic.flag")
+    harmonic_peak_f_ms: float | None = Field(None, alias="harmonic peak f.ms")
+    harmonic_peak_f_hz: int | None = Field(None, alias="harmonic peak f.hz")
+    echo_flag: bool = Field(False, alias="echo.flag")
+    echo_peak_f_ms: float | None = Field(None, alias="echo peak f.ms")
+    echo_peak_f_hz: int | None = Field(None, alias="echo peak f.hz")
     # Slope fields (optional, many variations)
-    slope_at_hi_fc_knee_khz_per_ms: float | None = Field(None, alias='slope@hi fc:knee.khz/ms')
-    slope_at_fc_khz_per_ms: float | None = Field(None, alias='slope@fc.khz/ms')
-    slope_at_low_fc_heel_khz_per_ms: float | None = Field(None, alias='slope@low fc:heel.khz/ms')
-    slope_at_peak_khz_per_ms: float | None = Field(None, alias='slope@peak.khz/ms')
-    slope_avg_khz_per_ms: float | None = Field(None, alias='slope[avg].khz/ms')
-    slope_hi_avg_khz_per_ms: float | None = Field(None, alias='slope/hi[avg].khz/ms')
-    slope_mid_avg_khz_per_ms: float | None = Field(None, alias='slope/mid[avg].khz/ms')
-    slope_lo_avg_khz_per_ms: float | None = Field(None, alias='slope/lo[avg].khz/ms')
-    slope_box_khz_per_ms: float | None = Field(None, alias='slope[box].khz/ms')
-    slope_hi_box_khz_per_ms: float | None = Field(None, alias='slope/hi[box].khz/ms')
-    slope_mid_box_khz_per_ms: float | None = Field(None, alias='slope/mid[box].khz/ms')
-    slope_lo_box_khz_per_ms: float | None = Field(None, alias='slope/lo[box].khz/ms')
+    slope_at_hi_fc_knee_khz_per_ms: float | None = Field(None, alias="slope@hi fc:knee.khz/ms")
+    slope_at_fc_khz_per_ms: float | None = Field(None, alias="slope@fc.khz/ms")
+    slope_at_low_fc_heel_khz_per_ms: float | None = Field(None, alias="slope@low fc:heel.khz/ms")
+    slope_at_peak_khz_per_ms: float | None = Field(None, alias="slope@peak.khz/ms")
+    slope_avg_khz_per_ms: float | None = Field(None, alias="slope[avg].khz/ms")
+    slope_hi_avg_khz_per_ms: float | None = Field(None, alias="slope/hi[avg].khz/ms")
+    slope_mid_avg_khz_per_ms: float | None = Field(None, alias="slope/mid[avg].khz/ms")
+    slope_lo_avg_khz_per_ms: float | None = Field(None, alias="slope/lo[avg].khz/ms")
+    slope_box_khz_per_ms: float | None = Field(None, alias="slope[box].khz/ms")
+    slope_hi_box_khz_per_ms: float | None = Field(None, alias="slope/hi[box].khz/ms")
+    slope_mid_box_khz_per_ms: float | None = Field(None, alias="slope/mid[box].khz/ms")
+    slope_lo_box_khz_per_ms: float | None = Field(None, alias="slope/lo[box].khz/ms")
 
-    @field_validator('curve_hz_ms', mode='before')
+    @field_validator("curve_hz_ms", mode="before")
     @classmethod
     def validate_curve(cls, v: Any) -> list[list[float]]:
         """Ensure curve is a list of [frequency, time] pairs."""
@@ -121,11 +123,11 @@ class BatbotMetadata(BaseModel):
     """Complete BatBot metadata structure."""
 
     model_config = ConfigDict(validate_by_name=True, validate_by_alias=True)
-    wav_path: str = Field(alias='wav.path')
+    wav_path: str = Field(alias="wav.path")
     spectrogram: SpectrogramMetadata
-    global_threshold_amp: int = Field(alias='global_threshold.amp')
-    sr_hz: int = Field(alias='sr.hz')
-    duration_ms: float = Field(alias='duration.ms')
+    global_threshold_amp: int = Field(alias="global_threshold.amp")
+    sr_hz: int = Field(alias="sr.hz")
+    duration_ms: float = Field(alias="duration.ms")
     frequencies: FrequencyMetadata
     size: SizeMetadata
     segments: list[Segment]
@@ -176,7 +178,7 @@ def convert_to_spectrogram_data(metadata: BatbotMetadata) -> SpectrogramData:
     return SpectrogramData(
         width=metadata.size.uncompressed.width_px,
         height=metadata.size.uncompressed.height_px,
-        duration=int(round(metadata.duration_ms)),
+        duration=round(metadata.duration_ms),
         frequency_min=metadata.frequencies.min_hz,
         frequency_max=metadata.frequencies.max_hz,
     )
@@ -274,7 +276,7 @@ def generate_spectrogram_assets(
 ) -> SpectrogramAssets:
     batbot.pipeline(recording_path, output_folder=output_folder, debug=debug)
     # There should be a .metadata.json file in the output_base directory by replacing extentions
-    metadata_file = Path(recording_path).with_suffix('.metadata.json').name
+    metadata_file = Path(recording_path).with_suffix(".metadata.json").name
     metadata_file = Path(output_folder) / metadata_file
     metadata = parse_batbot_metadata(metadata_file)
 
@@ -283,14 +285,11 @@ def generate_spectrogram_assets(
     # location (i.e., "./<filename>"), avoiding duplicated "sample" directory
     # segments when other tools join them with the assets file directory.
     def _normalize_paths(paths: list[str]) -> list[str]:
-        return [f'./{Path(p).name}' for p in paths]
+        return [f"./{Path(p).name}" for p in paths]
 
     uncompressed_paths = _normalize_paths(metadata.spectrogram.uncompressed_path)
     compressed_paths = _normalize_paths(metadata.spectrogram.compressed_path)
     mask_paths = _normalize_paths(metadata.spectrogram.mask_path)
-
-    metadata.frequencies.min_hz
-    metadata.frequencies.max_hz
 
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
 
@@ -309,67 +308,66 @@ def generate_spectrogram_assets(
         # No segments - entire image is one segment
         uncompressed_widths = [uncompressed_width]
 
-    # Convert global threshold amplitude (0–255 for 8‑bit images) to a
-    # percentage in the range 0–100 for downstream consumers.
+    # Convert global threshold amplitude (0-255 for 8-bit images) to a
+    # percentage in the range 0-100 for downstream consumers.
     noise_threshold_percent = round((metadata.global_threshold_amp / 255.0) * 100.0, 2)
 
-    result = {
-        'duration': metadata.duration_ms,
-        'freq_min': metadata.frequencies.min_hz,
-        'freq_max': metadata.frequencies.max_hz,
-        'noise_filter_threshold': noise_threshold_percent,
-        'normal': {
-            'paths': uncompressed_paths,
-            'width': metadata.size.uncompressed.width_px,
-            'height': metadata.size.uncompressed.height_px,
-            'widths': uncompressed_widths,
+    return {
+        "duration": metadata.duration_ms,
+        "freq_min": metadata.frequencies.min_hz,
+        "freq_max": metadata.frequencies.max_hz,
+        "noise_filter_threshold": noise_threshold_percent,
+        "normal": {
+            "paths": uncompressed_paths,
+            "width": metadata.size.uncompressed.width_px,
+            "height": metadata.size.uncompressed.height_px,
+            "widths": uncompressed_widths,
         },
-        'compressed': {
-            'paths': compressed_paths,
-            'masks': mask_paths,
-            'width': metadata.size.compressed.width_px,
-            'height': metadata.size.compressed.height_px,
-            'widths': compressed_metadata.widths,
-            'starts': compressed_metadata.starts,
-            'stops': compressed_metadata.stops,
+        "compressed": {
+            "paths": compressed_paths,
+            "masks": mask_paths,
+            "width": metadata.size.compressed.width_px,
+            "height": metadata.size.compressed.height_px,
+            "widths": compressed_metadata.widths,
+            "starts": compressed_metadata.starts,
+            "stops": compressed_metadata.stops,
         },
     }
-    return result
 
 
 def pipeline_filepath_validator(ctx, param, value):
     if not exists(value):
-        log.error(f'Input filepath does not exist: {value}')
+        log.error(f"Input filepath does not exist: {value}")
         ctx.exit()
     return value
 
 
-@click.command('pipeline')
+@click.command("pipeline")
 @click.argument(
-    'filepath',
+    "filepath",
     nargs=1,
     type=str,
     callback=pipeline_filepath_validator,
 )
 @click.option(
-    '--config',
-    help='Which ML model to use for inference',
+    "--config",
+    help="Which ML model to use for inference",
     default=None,
-    type=click.Choice(['usgs']),
+    type=click.Choice(["usgs"]),
 )
 @click.option(
-    '--output',
-    'output_path',
-    help='Path to output Folder',
+    "--output",
+    "output_path",
+    help="Path to output Folder",
     default=None,
     type=str,
 )
 @click.option(
-    '-d',
-    '--debug/',
+    "-d",
+    "--debug/",
     is_flag=True,
     default=False,
-    help='Enable debug mode with more verbose logging',
+    help="Enable debug mode with more verbose logging",
 )
 def pipeline(filepath, config, output_path, debug):
     """
@@ -391,13 +389,13 @@ def pipeline(filepath, config, output_path, debug):
 
     results = generate_spectrogram_assets(filepath, output_folder=output_path, debug=debug)
     # save the assets to a json file
-    with open(Path(output_path) / 'spectrogram_assets.json', 'w') as f:
+    with open(Path(output_path) / "spectrogram_assets.json", "w") as f:
         json.dump(results, f, indent=4)
 
 
-@click.command('metadata')
+@click.command("metadata")
 @click.argument(
-    'metadata_filepath',
+    "metadata_filepath",
     nargs=1,
     type=str,
     callback=pipeline_filepath_validator,
@@ -405,14 +403,14 @@ def pipeline(filepath, config, output_path, debug):
 def metadata(metadata_filepath):
     """Parse and display BatBot metadata JSON file."""
     metadata = parse_batbot_metadata(metadata_filepath)
-    print(len(metadata.segments), 'segments found.')
+    print(len(metadata.segments), "segments found.")
     convert_to_spectrogram_data(metadata)
     compressed_data = convert_to_compressed_spectrogram_data(metadata)
 
     # dump spectrogram assets
 
     # dump compressed spectrogram assets
-    with open(Path(metadata_filepath).with_suffix('.compressed_spectrogram_data.json'), 'w') as f:
+    with open(Path(metadata_filepath).with_suffix(".compressed_spectrogram_data.json"), "w") as f:
         json.dump(compressed_data.model_dump(), f, indent=4)
 
 
@@ -425,5 +423,5 @@ cli.add_command(pipeline)
 cli.add_command(metadata)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

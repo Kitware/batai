@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import tempfile
@@ -16,11 +18,11 @@ logger = logging.getLogger(__name__)
 
 SHAPEFILES = [
     (
-        'https://www.sciencebase.gov/catalog/file/get/5b7753bde4b0f5d578820455?facet=conus_mastersample_10km_GRTS',  # noqa: E501
+        "https://www.sciencebase.gov/catalog/file/get/5b7753bde4b0f5d578820455?facet=conus_mastersample_10km_GRTS",
         14,
-        'CONUS',
+        "CONUS",
         # Backup URL
-        'https://data.kitware.com/api/v1/item/697cc601e7dea9be44ec5aee/download',  # noqa: E501
+        "https://data.kitware.com/api/v1/item/697cc601e7dea9be44ec5aee/download",
     ),  # CONUS
     # Removed other regions for now because of sciencebase.gov being down
     # (
@@ -47,73 +49,76 @@ SHAPEFILES = [
 
 
 class Command(BaseCommand):
-    help = 'Download GRTS shapefiles, extract, and load into GRTSCells table.'
+    help = "Download GRTS shapefiles, extract, and load into GRTSCells table."
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--batch-size', type=int, default=5000, help='Batch size for database insertion'
+            "--batch-size", type=int, default=5000, help="Batch size for database insertion"
         )
 
     def handle(self, *args, **options):
-        batch_size = options['batch_size']
+        batch_size = options["batch_size"]
 
         # Track existing IDs to avoid duplicates
-        existing_ids = set(GRTSCells.objects.values_list('id', flat=True))
+        existing_ids = set(GRTSCells.objects.values_list("id", flat=True))
 
         for url, sample_frame_id, name, backup_url in SHAPEFILES:
-            logger.info(f'Downloading shapefile for Location {name}...')
+            logger.info(f"Downloading shapefile for Location {name}...")
             with tempfile.TemporaryDirectory() as tmpdir:
-                zip_path = os.path.join(tmpdir, 'file.zip')
+                zip_path = os.path.join(tmpdir, "file.zip")
                 try:
                     urlretrieve(url, zip_path)
                 except urllib.error.URLError as e:
-                    logger.warning(f'Failed to download from primary URL: {e}. \
-                            Attempting backup URL...')
+                    logger.warning(
+                        f"Failed to download from primary URL: {e}. \
+                            Attempting backup URL..."
+                    )
                     if backup_url is None:
-                        logger.warning('No backup URL provided, skipping this shapefile.')
+                        logger.warning("No backup URL provided, skipping this shapefile.")
                         continue
                     try:
                         urlretrieve(backup_url, zip_path)
                     except urllib.error.URLError as e2:
                         raise CommandError(
-                            f'Failed to download from backup URL as well: {e2}'
+                            f"Failed to download from backup URL as well: {e2}"
                         ) from e2
-                logger.info(f'Downloaded to {zip_path}')
+                logger.info(f"Downloaded to {zip_path}")
 
-                logger.info('Extracting zip file...')
-                with zipfile.ZipFile(zip_path, 'r') as zf:
+                logger.info("Extracting zip file...")
+                with zipfile.ZipFile(zip_path, "r") as zf:
                     zf.extractall(tmpdir)
-                logger.info('Extraction complete.')
+                logger.info("Extraction complete.")
 
                 # Look for shapefile in the extracted directory
                 shp_files = [
-                    os.path.join(tmpdir, f) for f in os.listdir(tmpdir) if f.endswith('.shp')
+                    os.path.join(tmpdir, f) for f in os.listdir(tmpdir) if f.endswith(".shp")
                 ]
                 if not shp_files:
-                    raise CommandError('No .shp file found in archive!')
+                    raise CommandError("No .shp file found in archive!")
 
                 shp_path = shp_files[0]
-                logger.info(f'Loading shapefile {shp_path} into GeoDataFrame...')
+                logger.info(f"Loading shapefile {shp_path} into GeoDataFrame...")
                 gdf = gpd.read_file(shp_path)
 
                 # Ensure geometry is WGS84 for geom_4326 (EPSG:4326)
                 if gdf.crs is not None:
                     gdf = gdf.to_crs(epsg=4326)
                 else:
-                    logger.warning('Shapefile CRS unknown; assuming EPSG:4326')
+                    logger.warning("Shapefile CRS unknown; assuming EPSG:4326")
 
                 records_to_create = []
                 count_new = 0
 
                 for idx, row in tqdm(
-                    gdf.iterrows(), total=len(gdf), desc=f'Importing {sample_frame_id}'
+                    gdf.iterrows(), total=len(gdf), desc=f"Importing {sample_frame_id}"
                 ):
                     # Hard fail if GRTS_ID is missing
-                    if 'GRTS_ID' not in row or row['GRTS_ID'] is None:
-                        raise CommandError(f'Row {idx} missing required GRTS_ID field!')
+                    if "GRTS_ID" not in row or row["GRTS_ID"] is None:
+                        raise CommandError(f"Row {idx} missing required GRTS_ID field!")
 
-                    grts_id = int(row['GRTS_ID'])
-                    cell_id = int(row.get(list(row.keys())[0], grts_id))  # fallback to first field
+                    grts_id = int(row["GRTS_ID"])
+                    # fallback to first field
+                    cell_id = int(row.get(next(iter(row.keys())), grts_id))
 
                     if grts_id in existing_ids:
                         continue
@@ -144,7 +149,9 @@ class Command(BaseCommand):
                     with transaction.atomic():
                         GRTSCells.objects.bulk_create(records_to_create, ignore_conflicts=True)
 
-                logger.info(f'Finished importing shapefile for sample frame\
-                        {sample_frame_id}: {count_new} new records')
+                logger.info(
+                    f"Finished importing shapefile for sample frame\
+                        {sample_frame_id}: {count_new} new records"
+                )
 
-        logger.info('All shapefiles processed successfully.')
+        logger.info("All shapefiles processed successfully.")

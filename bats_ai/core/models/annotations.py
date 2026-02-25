@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -24,5 +26,5 @@ class Annotations(TimeStampedModel, models.Model):
             MinValueValidator(0.0),
             MaxValueValidator(1.0),
         ],
-        help_text='A confidence value between 0 and 1.0, default is 1.0.',
+        help_text="A confidence value between 0 and 1.0, default is 1.0.",
     )

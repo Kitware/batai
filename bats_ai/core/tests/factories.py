@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 import factory.django
@@ -11,13 +13,13 @@ class UserFactory(factory.django.DjangoModelFactory[User]):
         model = User
         skip_postgeneration_save = True
 
-    username = factory.SelfAttribute('email')
-    email = factory.Faker('safe_email')
-    first_name = factory.Faker('first_name')
-    last_name = factory.Faker('last_name')
+    username = factory.SelfAttribute("email")
+    email = factory.Faker("safe_email")
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
 
     profile = factory.RelatedFactory(
-        'bats_ai.core.tests.factories.UserProfileFactory', factory_related_name='user'
+        "bats_ai.core.tests.factories.UserProfileFactory", factory_related_name="user"
     )
 
 
@@ -37,9 +39,8 @@ class UserProfileFactory(factory.django.DjangoModelFactory[UserProfile]):
 
 
 class VettingDetailsFactory(factory.django.DjangoModelFactory[VettingDetails]):
-
     class Meta:
         model = VettingDetails
 
     user = factory.SubFactory(UserFactory)
-    reference_materials = factory.Faker('paragraph', nb_sentences=3)
+    reference_materials = factory.Faker("paragraph", nb_sentences=3)

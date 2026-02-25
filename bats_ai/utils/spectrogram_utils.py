@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 from typing import TypedDict
@@ -47,24 +49,24 @@ def generate_nabat_spectrogram(
     spectrogram, _ = NABatSpectrogram.objects.get_or_create(
         nabat_recording=nabat_recording,
         defaults={
-            'width': results['normal']['width'],
-            'height': results['normal']['height'],
-            'duration': results['duration'],
-            'frequency_min': results['freq_min'],
-            'frequency_max': results['freq_max'],
+            "width": results["normal"]["width"],
+            "height": results["normal"]["height"],
+            "duration": results["duration"],
+            "frequency_min": results["freq_min"],
+            "frequency_max": results["freq_max"],
         },
     )
 
     # Create SpectrogramImage objects for each normal image
-    for idx, img_path in enumerate(results['normal']['paths']):
-        with open(img_path, 'rb') as f:
+    for idx, img_path in enumerate(results["normal"]["paths"]):
+        with open(img_path, "rb") as f:
             SpectrogramImage.objects.get_or_create(
                 content_type=ContentType.objects.get_for_model(spectrogram),
                 object_id=spectrogram.id,
                 index=idx,
                 defaults={
-                    'image_file': File(f, name=os.path.basename(img_path)),
-                    'type': 'spectrogram',
+                    "image_file": File(f, name=os.path.basename(img_path)),
+                    "type": "spectrogram",
                 },
             )
 
@@ -80,37 +82,37 @@ def generate_nabat_compressed_spectrogram(
         nabat_recording=nabat_recording,
         spectrogram=spectrogram,
         defaults={
-            'length': compressed_results['width'],
-            'widths': compressed_results['widths'],
-            'starts': compressed_results['starts'],
-            'stops': compressed_results['stops'],
-            'cache_invalidated': False,
+            "length": compressed_results["width"],
+            "widths": compressed_results["widths"],
+            "starts": compressed_results["starts"],
+            "stops": compressed_results["stops"],
+            "cache_invalidated": False,
         },
     )
 
     # Save compressed images
-    for idx, img_path in enumerate(compressed_results['paths']):
-        with open(img_path, 'rb') as f:
+    for idx, img_path in enumerate(compressed_results["paths"]):
+        with open(img_path, "rb") as f:
             SpectrogramImage.objects.get_or_create(
                 content_type=ContentType.objects.get_for_model(compressed_obj),
                 object_id=compressed_obj.id,
                 index=idx,
                 defaults={
-                    'image_file': File(f, name=os.path.basename(img_path)),
-                    'type': 'compressed',
+                    "image_file": File(f, name=os.path.basename(img_path)),
+                    "type": "compressed",
                 },
             )
 
     # Save mask images (from batbot metadata mask_path)
-    for idx, mask_path in enumerate(compressed_results.get('masks', [])):
-        with open(mask_path, 'rb') as f:
+    for idx, mask_path in enumerate(compressed_results.get("masks", [])):
+        with open(mask_path, "rb") as f:
             SpectrogramImage.objects.get_or_create(
                 content_type=ContentType.objects.get_for_model(compressed_obj),
                 object_id=compressed_obj.id,
                 index=idx,
-                type='masks',
+                type="masks",
                 defaults={
-                    'image_file': File(f, name=os.path.basename(mask_path)),
+                    "image_file": File(f, name=os.path.basename(mask_path)),
                 },
             )
 
