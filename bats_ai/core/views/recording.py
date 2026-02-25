@@ -257,8 +257,9 @@ def create_recording(
     audio_file: File[UploadedFile],
     publicVal: bool = False,
 ):
-    converted_date = datetime.strptime(payload.recorded_date, "%Y-%m-%d")
-    converted_time = datetime.strptime(payload.recorded_time, "%H%M%S")
+    converted_date = date.fromisoformat(payload.recorded_date)
+    time_str = payload.recorded_time
+    converted_time = time(int(time_str[:2]), int(time_str[2:4]), int(time_str[4:6]))
     point = None
     if payload.latitude and payload.longitude:
         point = Point(payload.longitude, payload.latitude)
@@ -308,11 +309,10 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
     if recording_data.equipment:
         recording.equipment = recording_data.equipment
     if recording_data.recorded_date:
-        converted_date = datetime.strptime(recording_data.recorded_date, "%Y-%m-%d")
-        recording.recorded_date = converted_date
+        recording.recorded_date = date.fromisoformat(recording_data.recorded_date)
     if recording_data.recorded_time:
-        converted_time = datetime.strptime(recording_data.recorded_time, "%H%M%S")
-        recording.recorded_time = converted_time
+        time_str = recording_data.recorded_time
+        recording.recorded_time = time(int(time_str[:2]), int(time_str[2:4]), int(time_str[4:6]))
     if recording_data.publicVal is not None and recording_data.publicVal != recording.public:
         recording.public = recording_data.publicVal
     if recording_data.latitude and recording_data.longitude:

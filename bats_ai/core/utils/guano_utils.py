@@ -24,7 +24,7 @@ def parse_datetime(datetime_str: str) -> datetime | None:
     if datetime_str:
         try:
             # Try parsing using the custom format
-            return datetime.strptime(datetime_str, "%Y%m%dT%H%M%S")
+            return datetime.strptime(datetime_str, "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
         except ValueError:
             try:
                 # Try parsing using ISO format
