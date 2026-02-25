@@ -4,7 +4,7 @@ from django.contrib import admin, messages
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from bats_ai.core.models import Recording
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
@@ -58,8 +58,8 @@ class RecordingAdmin(admin.ModelAdmin):
         if recording.has_spectrogram:
             spectrogram = recording.spectrogram
             href = reverse("admin:core_spectrogram_change", args=(spectrogram.pk,))
-            description = str(spectrogram)
-            return mark_safe(f'<a href="{href}">{description}</a>')
+            spectrogram_obj_id_str = str(spectrogram)
+            return format_html('<a href="{}">{}</a>', href, spectrogram_obj_id_str)
         return None
 
     @admin.display(
@@ -70,8 +70,8 @@ class RecordingAdmin(admin.ModelAdmin):
         if recording.has_compressed_spectrogram:
             spectrogram = recording.compressed_spectrogram
             href = reverse("admin:core_compressedspectrogram_change", args=(spectrogram.pk,))
-            description = str(spectrogram)
-            return mark_safe(f'<a href="{href}">{description}</a>')
+            spectrogram_obj_id_str = str(spectrogram)
+            return format_html('<a href="{}">{}</a>', href, spectrogram_obj_id_str)
         return None
 
     @admin.action(description="Compute Spectrograms")
