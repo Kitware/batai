@@ -46,6 +46,9 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   pointData: PulsePointData[] = [];
   style: PulseMetadataStyle = { ...defaultPulseMetadataStyle };
 
+  /** When false, zoom must not call redraw (user has turned off the layer). */
+  private enabled = true;
+
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
@@ -73,12 +76,14 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
 
   setScaledDimensions(scaledWidth: number, scaledHeight: number) {
     super.setScaledDimensions(scaledWidth, scaledHeight);
+    this.enabled = true;
     this.formatData();
     this.redraw();
   }
 
   setPulseMetadataList(pulseMetadataList: PulseMetadata[]) {
     this.pulseMetadataList = pulseMetadataList;
+    this.enabled = true;
     this.formatData();
     this.redraw();
   }
@@ -293,6 +298,12 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   }
 
   redraw() {
+    if (!this.enabled) {
+      this.lineLayer.data([]).draw();
+      this.pointLayer.data([]).draw();
+      this.textLayer.data([]).draw();
+      return;
+    }
     this.formatData();
     this.lineLayer
       .data(this.lineData)
@@ -312,6 +323,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   }
 
   disable() {
+    this.enabled = false;
     this.lineLayer.data([]).draw();
     this.pointLayer.data([]).draw();
     super.disable();
