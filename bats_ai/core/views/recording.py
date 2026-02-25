@@ -661,10 +661,16 @@ def get_recording_annotations(request: HttpRequest, recording_id: int):
         return {"error": "Recording not found"}
     if recording.owner != request.user and not recording.public:
         return {"error": "Permission denied. You do not own this recording, and it is not public."}
-    # Only return file-level annotations owned by the current user (same as pulse annotations)
-    fileAnnotations = RecordingAnnotation.objects.filter(
-        recording=recording_id, owner=request.user
-    ).order_by("confidence")
+    # Only return file-level annotations owned by the current user (same as pulse)
+    # prefetch_related/select_related avoid N+1 when serializing species and owner
+    fileAnnotations = (
+        RecordingAnnotation.objects.filter(
+            recording=recording_id, owner=request.user
+        )
+        .select_related("owner")
+        .prefetch_related("species")
+        .order_by("confidence")
+    )
     return [
         RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
         for fileAnnotation in fileAnnotations
