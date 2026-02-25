@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 
@@ -16,7 +18,7 @@ from .tasks import generate_spectrograms
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('NABatDataRetrieval')
+logger = logging.getLogger("NABatDataRetrieval")
 
 SOFTWARE_ID = 81
 QUERY = """
@@ -74,8 +76,8 @@ def get_or_create_processing_task(recording_id, request_id):
     """
     # Define the metadata filter with specific keys in the JSON metadata field
     metadata_filter = {
-        'type': ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
-        'recordingId': recording_id,
+        "type": ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+        "recordingId": recording_id,
     }
 
     # Try to get an existing task or handle the case where it's not found
@@ -111,25 +113,26 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
 
     processing_task.status = ProcessingTask.Status.RUNNING
     processing_task.save()
-    headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
     batch_query = QUERY % {
-        'acoustic_file_id': recording_id,
-        'survey_event_id': survey_event_id,
-        'software_id': SOFTWARE_ID,
+        "acoustic_file_id": recording_id,
+        "survey_event_id": survey_event_id,
+        "software_id": SOFTWARE_ID,
     }
     self.update_state(
-        state='Progress',
-        meta={'description': 'Fetching NAbat Recording Data'},
+        state="Progress",
+        meta={"description": "Fetching NAbat Recording Data"},
     )
     try:
         response = requests.post(
             settings.BATAI_NABAT_API_URL,
-            json={'query': batch_query},
+            json={"query": batch_query},
             headers=headers,
+            timeout=30,
         )
     except Exception as e:
         processing_task.status = ProcessingTask.Status.ERROR
-        processing_task.error = f'Error with API Request: {e}'
+        processing_task.error = f"Error with API Request: {e}"
         processing_task.save()
         raise
     batch_data = {}
@@ -138,30 +141,30 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
         try:
             batch_data = response.json()
         except (KeyError, TypeError, json.JSONDecodeError) as e:
-            error_msg = f'Error decoding JSON response: {e}'
-            logger.error(error_msg)
+            error_msg = f"Error decoding JSON response: {e}"
+            logger.exception(error_msg)
             processing_task.status = ProcessingTask.Status.ERROR
             processing_task.error = error_msg
             processing_task.save()
             raise
     else:
-        error_msg = f'Failed to fetch data: {response.status_code}, {response.text}'
+        error_msg = f"Failed to fetch data: {response.status_code}, {response.text}"
         logger.error(error_msg)
         processing_task.status = ProcessingTask.Status.ERROR
         processing_task.error = error_msg
         processing_task.save()
-        raise
+        response.raise_for_status()
 
     self.update_state(
-        state='Progress',
-        meta={'description': 'Fetching Recording File'},
+        state="Progress",
+        meta={"description": "Fetching Recording File"},
     )
 
-    logger.info('Presigned URL obtained. Downloading file...')
+    logger.info("Presigned URL obtained. Downloading file...")
 
-    presigned_url = batch_data['data']['presignedUrlFromAcousticFile']['s3PresignedUrl']
+    presigned_url = batch_data["data"]["presignedUrlFromAcousticFile"]["s3PresignedUrl"]
 
-    logger.info('Creating NA Bat Recording...')
+    logger.info("Creating NA Bat Recording...")
     nabat_recording = create_nabat_recording_from_response(
         batch_data, recording_id, survey_event_id
     )
@@ -171,17 +174,17 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
 def create_nabat_recording_from_response(response_data, recording_id, survey_event_id):
     try:
         # Extract the batch data from the response
-        nabat_recording_data = response_data['data']
+        nabat_recording_data = response_data["data"]
 
         # Optional fields
-        recording_location_data = nabat_recording_data['surveyEventById'][
-            'eventGeometryByEventGeometryId'
-        ]['geom']['geojson']
-        file_name = nabat_recording_data['acousticFileById']['fileName']
+        recording_location_data = nabat_recording_data["surveyEventById"][
+            "eventGeometryByEventGeometryId"
+        ]["geom"]["geojson"]
+        file_name = nabat_recording_data["acousticFileById"]["fileName"]
 
         # Create geometry for the recording location if available
         if recording_location_data:
-            coordinates = recording_location_data.get('coordinates', [])
+            coordinates = recording_location_data.get("coordinates", [])
             recording_location = (
                 Point(coordinates[0], coordinates[1]) if len(coordinates) == 2 else None
             )
@@ -196,26 +199,26 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
             recording_location=recording_location,
         )
 
-        acoustic_batches_nodes = nabat_recording_data['surveyEventById'][
-            'acousticBatchesBySurveyEventId'
-        ]['nodes']
+        acoustic_batches_nodes = nabat_recording_data["surveyEventById"][
+            "acousticBatchesBySurveyEventId"
+        ]["nodes"]
         if len(acoustic_batches_nodes) > 0:
-            batch_data = acoustic_batches_nodes[0]['acousticFileBatchesByBatchId']['nodes']
+            batch_data = acoustic_batches_nodes[0]["acousticFileBatchesByBatchId"]["nodes"]
             for node in batch_data:
-                species_id = node.get('manualId', False)
+                species_id = node.get("manualId", False)
                 if species_id is not False:
                     annotation = NABatRecordingAnnotation.objects.create(
                         nabat_recording=nabat_recording,
-                        user_email=node['vetter'],
+                        user_email=node["vetter"],
                     )
                     species = Species.objects.get(pk=species_id)
                     annotation.species.add(species)
 
         return nabat_recording
 
-    except KeyError as e:
-        logger.error(f'Missing key: {e}')
+    except KeyError:
+        logger.exception("Missing key")
         raise
-    except Exception as e:
-        logger.error(f'Error creating NABatRecording: {e}')
+    except Exception:
+        logger.exception("Error creating NABatRecording")
         raise

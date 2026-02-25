@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .annotations import AnnotationsAdmin
 from .compressed_spectrogram import CompressedSpectrogramAdmin
 from .configuration import ConfigurationAdmin
@@ -22,25 +24,25 @@ from .user import UserAdmin
 from .vetting_details import VettingDetailsAdmin
 
 __all__ = [
-    'AnnotationsAdmin',
-    'RecordingAdmin',
-    'SpectrogramAdmin',
-    'SequenceAnnotationsAdmin',
-    'SpeciesAdmin',
-    'GRTSCellsAdmin',
-    'CompressedSpectrogramAdmin',
-    'RecordingAnnotationAdmin',
-    'RecordingTagAdmin',
-    'ProcessingTaskAdmin',
-    'ConfigurationAdmin',
-    'ExportedAnnotationFileAdmin',
-    'SpectrogramImageAdmin',
-    'VettingDetailsAdmin',
-    'PulseMetadataAdmin',
-    'UserAdmin',
+    "AnnotationsAdmin",
+    "CompressedSpectrogramAdmin",
+    "ConfigurationAdmin",
+    "ExportedAnnotationFileAdmin",
+    "GRTSCellsAdmin",
+    "NABatCompressedSpectrogramAdmin",
+    "NABatRecordingAdmin",
     # NABat Models
-    'NABatRecordingAnnotationAdmin',
-    'NABatCompressedSpectrogramAdmin',
-    'NABatSpectrogramAdmin',
-    'NABatRecordingAdmin',
+    "NABatRecordingAnnotationAdmin",
+    "NABatSpectrogramAdmin",
+    "ProcessingTaskAdmin",
+    "PulseMetadataAdmin",
+    "RecordingAdmin",
+    "RecordingAnnotationAdmin",
+    "RecordingTagAdmin",
+    "SequenceAnnotationsAdmin",
+    "SpeciesAdmin",
+    "SpectrogramAdmin",
+    "SpectrogramImageAdmin",
+    "UserAdmin",
+    "VettingDetailsAdmin",
 ]

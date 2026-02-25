@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 import logging
 
@@ -29,7 +31,7 @@ class GuanoMetadataSchema(Schema):
 router = RouterPaginated()
 
 
-@router.post('/')
+@router.post("/")
 def default_data(
     request: HttpRequest,
     audio_file: File[UploadedFile],
@@ -40,5 +42,5 @@ def default_data(
         return JsonResponse(metadata, safe=False)
 
     except Exception as e:
-        logger.exception('Error extracting GUANO metadata', exc_info=e)
-        return JsonResponse({'error': str(e)}, status=500)
+        logger.exception("Error extracting GUANO metadata", exc_info=e)
+        return JsonResponse({"error": str(e)}, status=500)

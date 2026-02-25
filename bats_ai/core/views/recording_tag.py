@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.http import Http404, HttpRequest
 from ninja import Schema
 from ninja.pagination import RouterPaginated
@@ -13,7 +15,7 @@ class RecordingTagSchema(Schema):
 router = RouterPaginated()
 
 
-@router.get('/')
+@router.get("/")
 def get_recording_tags(request: HttpRequest):
     user = request.user
     if not user:

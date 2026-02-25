@@ -7,6 +7,8 @@ Reuses the source recording's spectrogram images and compressed spectrogram
 (no recompute); copies RecordingAnnotations to the new recording.
 """
 
+from __future__ import annotations
+
 import logging
 import random
 
@@ -28,11 +30,11 @@ from bats_ai.core.models import (
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TAGS = ['test', 'foo', 'bar']
+DEFAULT_TAGS = ["test", "foo", "bar"]
 
 
 def _link_spectrogram_and_annotations(source_recording, new_recording):
-    spectrograms = list(Spectrogram.objects.filter(recording=source_recording).order_by('-created'))
+    spectrograms = list(Spectrogram.objects.filter(recording=source_recording).order_by("-created"))
     if not spectrograms:
         return
     source_spectrogram = spectrograms[0]
@@ -50,13 +52,13 @@ def _link_spectrogram_and_annotations(source_recording, new_recording):
         frequency_max=source_spectrogram.frequency_max,
     )
     # Link same image files: create SpectrogramImage rows pointing to source paths
-    for src_img in source_spectrogram.images.filter(type='spectrogram').order_by('index'):
+    for src_img in source_spectrogram.images.filter(type="spectrogram").order_by("index"):
         new_img = SpectrogramImage(
             content_type=ct_spectrogram,
             object_id=new_spectrogram.id,
-            type='spectrogram',
+            type="spectrogram",
             index=src_img.index,
-            image_file=ContentFile(b' ', name='placeholder'),
+            image_file=ContentFile(b" ", name="placeholder"),
         )
         new_img.save()
         old_path = new_img.image_file.name
@@ -66,7 +68,7 @@ def _link_spectrogram_and_annotations(source_recording, new_recording):
 
     # CompressedSpectrogram if present (most recent only)
     compressed_qs = CompressedSpectrogram.objects.filter(recording=source_recording).order_by(
-        '-created'
+        "-created"
     )[:1]
     for src_comp in compressed_qs:
         new_comp = CompressedSpectrogram.objects.create(
@@ -78,13 +80,13 @@ def _link_spectrogram_and_annotations(source_recording, new_recording):
             widths=src_comp.widths,
             cache_invalidated=src_comp.cache_invalidated,
         )
-        for src_img in src_comp.images.filter(type='compressed').order_by('index'):
+        for src_img in src_comp.images.filter(type="compressed").order_by("index"):
             new_img = SpectrogramImage(
                 content_type=ct_compressed,
                 object_id=new_comp.id,
-                type='compressed',
+                type="compressed",
                 index=src_img.index,
-                image_file=ContentFile(b' ', name='placeholder'),
+                image_file=ContentFile(b" ", name="placeholder"),
             )
             new_img.save()
             old_path = new_img.image_file.name
@@ -110,51 +112,51 @@ def _link_spectrogram_and_annotations(source_recording, new_recording):
 
 class Command(BaseCommand):
     help = (
-        'Create new recordings by copying existing ones with new names. '
-        'Optionally apply tags (default: test, foo, bar).'
+        "Create new recordings by copying existing ones with new names. "
+        "Optionally apply tags (default: test, foo, bar)."
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--count',
+            "--count",
             type=int,
             default=1,
-            help='Number of new recordings to create (default: 1)',
+            help="Number of new recordings to create (default: 1)",
         )
         parser.add_argument(
-            '--tags',
+            "--tags",
             type=str,
-            default=','.join(DEFAULT_TAGS),
-            help='Comma-separated tags to apply (default: test,foo,bar)',
+            default=",".join(DEFAULT_TAGS),
+            help="Comma-separated tags to apply (default: test,foo,bar)",
         )
         parser.add_argument(
-            '--owner',
+            "--owner",
             type=str,
-            help='Username of the owner for the new recordings\
-            (default: use source recording owner)',
+            help="Username of the owner for the new recordings\
+            (default: use source recording owner)",
         )
 
     def handle(self, *args, **options):
-        count = options['count']
-        tags_raw = options['tags'] or ','.join(DEFAULT_TAGS)
-        tag_texts = [t.strip() for t in tags_raw.split(',') if t.strip()]
+        count = options["count"]
+        tags_raw = options["tags"] or ",".join(DEFAULT_TAGS)
+        tag_texts = [t.strip() for t in tags_raw.split(",") if t.strip()]
         if not tag_texts:
             tag_texts = DEFAULT_TAGS
-        owner_username = options.get('owner')
+        owner_username = options.get("owner")
 
         if count < 1:
-            raise CommandError('--count must be at least 1.')
+            raise CommandError("--count must be at least 1.")
 
-        recordings = list(Recording.objects.all().order_by('id'))
+        recordings = list(Recording.objects.all().order_by("id"))
         if not recordings:
-            raise CommandError('No existing recordings found. Create or import some first.')
+            raise CommandError("No existing recordings found. Create or import some first.")
 
         owner = None
         if owner_username:
             try:
                 owner = User.objects.get(username=owner_username)
-            except User.DoesNotExist:
-                raise CommandError(f'User not found: {owner_username}')
+            except User.DoesNotExist as e:
+                raise CommandError(f"User not found: {owner_username}") from e
 
         created = []
         for i in range(count):
@@ -162,24 +164,24 @@ class Command(BaseCommand):
             if owner is None:
                 owner = source.owner
 
-            new_name = f'Copy of {source.name} ({i + 1})'
+            new_name = f"Copy of {source.name} ({i + 1})"
             self.stdout.write(
-                f'Creating copy {i + 1}/{count}: {new_name} from recording id={source.pk}'
+                f"Creating copy {i + 1}/{count}: {new_name} from recording id={source.pk}"
             )
 
             try:
                 with transaction.atomic():
                     # Copy file content (works for local and remote storage)
-                    source.audio_file.open('rb')
+                    source.audio_file.open("rb")
                     try:
                         file_content = source.audio_file.read()
                     finally:
                         source.audio_file.close()
 
                     # Preserve extension if present
-                    ext = ''
-                    if source.audio_file.name and '.' in source.audio_file.name:
-                        ext = '.' + source.audio_file.name.rsplit('.', 1)[-1]
+                    ext = ""
+                    if source.audio_file.name and "." in source.audio_file.name:
+                        ext = "." + source.audio_file.name.rsplit(".", 1)[-1]
                     save_name = new_name + ext if ext else new_name
 
                     new_recording = Recording(
@@ -214,16 +216,16 @@ class Command(BaseCommand):
 
                     created.append(new_recording)
                     self.stdout.write(
-                        self.style.SUCCESS(f'  Created recording id={new_recording.pk}')
+                        self.style.SUCCESS(f"  Created recording id={new_recording.pk}")
                     )
-                    self.stdout.write('  Linked spectrogram images and copied annotations.')
+                    self.stdout.write("  Linked spectrogram images and copied annotations.")
 
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f'  Failed: {e}'))
-                logger.exception('Error copying recording', exc_info=e)
+                self.stdout.write(self.style.ERROR(f"  Failed: {e}"))
+                logger.exception("Error copying recording", exc_info=e)
 
-        self.stdout.write('')
-        tag_str = ', '.join(tag_texts)
+        self.stdout.write("")
+        tag_str = ", ".join(tag_texts)
         self.stdout.write(
-            self.style.SUCCESS(f'Done: created {len(created)} recording(s) with tags: {tag_str}')
+            self.style.SUCCESS(f"Done: created {len(created)} recording(s) with tags: {tag_str}")
         )

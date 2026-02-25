@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 from typing import Any
@@ -11,7 +13,7 @@ try:
     from skimage.filters import threshold_multiotsu
 except ImportError as exc:
     raise RuntimeError(
-        'Contour generation requires additional dependencies specified by the [tasks] extra.'
+        "Contour generation requires additional dependencies specified by the [tasks] extra."
     ) from exc
 
 logger = logging.getLogger(__name__)
@@ -47,7 +49,7 @@ def auto_histogram_levels(
     current_centers = []
     current_weights = []
 
-    for center, weight in zip(centers, counts):
+    for center, weight in zip(centers, counts, strict=False):
         weight = max(float(weight), 1e-9)
         current_centers.append(center)
         current_weights.append(weight)
@@ -99,13 +101,13 @@ def compute_auto_levels(
     if valid.size == 0:
         return []
 
-    if mode == 'multi-otsu':
+    if mode == "multi-otsu":
         try:
             return threshold_multiotsu(valid, classes=multi_otsu_classes).tolist()
         except Exception:
             pass
 
-    if mode == 'histogram':
+    if mode == "histogram":
         return auto_histogram_levels(
             valid,
             bins=hist_bins,
@@ -192,20 +194,20 @@ def contours_to_metadata(
     contours, image_path: Path, segment_index: int | None = None, width: float | None = None
 ):
     metadata = {
-        'source_image': image_path.name,
-        'contour_count': len(contours),
-        'contours': [
+        "source_image": image_path.name,
+        "contour_count": len(contours),
+        "contours": [
             {
-                'level': float(level),
-                'curve': contour.round(3).tolist(),
+                "level": float(level),
+                "curve": contour.round(3).tolist(),
             }
             for contour, level in contours
         ],
     }
     if segment_index is not None:
-        metadata['segment_index'] = segment_index
+        metadata["segment_index"] = segment_index
     if width is not None:
-        metadata['width_px'] = width
+        metadata["width_px"] = width
     return metadata
 
 
@@ -238,7 +240,7 @@ def extract_contours(
 ):
     img = cv2.imread(str(image_path))
     if img is None:
-        raise RuntimeError(f'Could not read {image_path}')
+        raise RuntimeError(f"Could not read {image_path}")
 
     # Convert to grayscale first
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -277,7 +279,7 @@ def extract_contours(
 
 def process_spectrogram_assets_for_contours(
     assets: dict[str, Any],
-    levels_mode: str = 'percentile',
+    levels_mode: str = "percentile",
     percentile_values: list[float] | None = None,
     min_area: float = 30.0,
     smoothing_factor: float = 0.08,
@@ -290,15 +292,15 @@ def process_spectrogram_assets_for_contours(
     noise_threshold: float | None = None,
     apply_noise_filter: bool = False,
 ):
-    compressed_data = assets.get('compressed', {})
-    compressed_data.get('paths', [])
-    mask_paths = compressed_data.get('masks', [])
-    widths = compressed_data.get('widths', [])
-    height = compressed_data.get('height', 0)
-    starts = compressed_data.get('starts', [])
-    global_freq_min = assets.get('freq_min', 0)
-    global_freq_max = assets.get('freq_max', 0)
-    stops = compressed_data.get('stops', [])
+    compressed_data = assets.get("compressed", {})
+    compressed_data.get("paths", [])
+    mask_paths = compressed_data.get("masks", [])
+    widths = compressed_data.get("widths", [])
+    height = compressed_data.get("height", 0)
+    starts = compressed_data.get("starts", [])
+    global_freq_min = assets.get("freq_min", 0)
+    global_freq_max = assets.get("freq_max", 0)
+    stops = compressed_data.get("stops", [])
     all_segments_data = []
 
     if percentile_values is None:
@@ -308,7 +310,7 @@ def process_spectrogram_assets_for_contours(
     for path_str in mask_paths:
         img_path = Path(path_str).resolve()
         if not img_path.exists():
-            logger.warning('Image path does not exist: %s', img_path)
+            logger.warning("Image path does not exist: %s", img_path)
             continue
 
         # Only process each unique image once
@@ -317,7 +319,7 @@ def process_spectrogram_assets_for_contours(
         processed_images.add(img_path)
 
         # Extract all contours from the compressed image
-        contours, shape = extract_contours(
+        contours, _shape = extract_contours(
             img_path,
             levels_mode=levels_mode,
             percentile_values=percentile_values,
@@ -357,7 +359,6 @@ def process_spectrogram_assets_for_contours(
             time_per_pixel = (stop_time - start_time) / width
             mhz_per_pixel = (global_freq_max - global_freq_min) / height
             transformed_contours = []
-            contour_index = 0
             for contour, level in seg_contours:
                 # contour is (N, 2): each row is one point [x, y]
                 new_curve = [
@@ -369,26 +370,25 @@ def process_spectrogram_assets_for_contours(
                 ]
                 transformed_contours.append(
                     {
-                        'level': float(level),
-                        'curve': new_curve,
-                        'index': seg_idx,
+                        "level": float(level),
+                        "curve": new_curve,
+                        "index": seg_idx,
                     }
                 )
-                contour_index += 1
             segment_obj: dict = {
-                'segment_index': seg_idx,
-                'contour_count': len(seg_contours),
-                'freq_min': freq_min,
-                'freq_max': freq_max,
-                'contours': transformed_contours,
+                "segment_index": seg_idx,
+                "contour_count": len(seg_contours),
+                "freq_min": freq_min,
+                "freq_max": freq_max,
+                "contours": transformed_contours,
             }
 
             if seg_idx < len(widths):
-                segment_obj['width_px'] = widths[seg_idx]
+                segment_obj["width_px"] = widths[seg_idx]
             if seg_idx < len(starts):
-                segment_obj['start_ms'] = starts[seg_idx]
+                segment_obj["start_ms"] = starts[seg_idx]
             if seg_idx < len(stops):
-                segment_obj['stop_ms'] = stops[seg_idx]
+                segment_obj["stop_ms"] = stops[seg_idx]
 
             width_to_this_seg += widths[seg_idx]
             segments_output.append(segment_obj)
@@ -397,9 +397,7 @@ def process_spectrogram_assets_for_contours(
 
     # If we processed from spectrogram assets, also create a combined output
     # organized by segments/widths
-    combined_output = {
-        'segments': sorted(all_segments_data, key=lambda x: x.get('segment_index', 0)),
-        'total_segments': len(all_segments_data),
+    return {
+        "segments": sorted(all_segments_data, key=lambda x: x.get("segment_index", 0)),
+        "total_segments": len(all_segments_data),
     }
-
-    return combined_output

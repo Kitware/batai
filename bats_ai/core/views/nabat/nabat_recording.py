@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import json
 import logging
@@ -26,15 +28,14 @@ router = RouterPaginated()
 
 def admin_auth(request):
     if request.user.is_anonymous:
-        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        token = request.headers.get("Authorization", "").replace("Bearer ", "")
         if len(token) > 0:
             try:
                 access_token = AccessToken.objects.get(token=token)
             except AccessToken.DoesNotExist:
                 access_token = None
-            if access_token and access_token.user:
-                if not access_token.user.is_anonymous:
-                    request.user = access_token.user
+            if access_token and access_token.user and not access_token.user.is_anonymous:
+                request.user = access_token.user
     return True
 
 
@@ -63,18 +64,18 @@ updateAcousticFileVet (
 
 def decode_jwt(token):
     # Split the token into parts
-    parts = token.split('.')
+    parts = token.split(".")
     if len(parts) != 3:
-        raise ValueError('Invalid JWT token format')
+        raise ValueError("Invalid JWT token format")
 
     # JWT uses base64url encoding, so need to fix padding
     payload = parts[1]
-    padding = '=' * (4 - (len(payload) % 4))  # Fix padding if needed
+    padding = "=" * (4 - (len(payload) % 4))  # Fix padding if needed
     payload += padding
 
     # Decode the payload
     decoded_bytes = base64.urlsafe_b64decode(payload)
-    decoded_str = decoded_bytes.decode('utf-8')
+    decoded_str = decoded_bytes.decode("utf-8")
 
     # Parse JSON
     return json.loads(decoded_str)
@@ -96,57 +97,56 @@ def get_email_if_authorized(
     `recording_id` is retrieved.
     """
     # Superuser shortcut
-    if request.user and request.user.is_authenticated:
-        if request.user.is_superuser:
-            return request.user.email or 'superuser@nabat.org'
+    if request.user and request.user.is_authenticated and request.user.is_superuser:
+        return request.user.email or "superuser@nabat.org"
     # Decode JWT token
     try:
         payload = decode_jwt(api_token)
-        email = payload.get('email')
+        email = payload.get("email")
         if not email:
-            raise ValueError('Email not found in JWT payload')
-    except Exception as e:
-        logger.error(f'Failed to decode JWT: {e}')
-        return JsonResponse({'error': 'Invalid API token'}, status=400)
+            raise ValueError("Email not found in JWT payload")
+    except Exception:
+        logger.exception("Failed to decode JWT")
+        return JsonResponse({"error": "Invalid API token"}, status=400)
 
     # Resolve recording_id from recording_pk if needed
     if recording_id is None:
         if recording_pk is None:
             return JsonResponse(
-                {'error': 'Either recording_id or recording_pk must be provided'}, status=400
+                {"error": "Either recording_id or recording_pk must be provided"}, status=400
             )
         try:
             nabat_recording = NABatRecording.objects.get(pk=recording_pk)
             recording_id = nabat_recording.recording_id
         except NABatRecording.DoesNotExist:
             return JsonResponse(
-                {'error': f'NABatRecording with id {recording_pk} does not exist'}, status=404
+                {"error": f"NABatRecording with id {recording_pk} does not exist"}, status=404
             )
 
     # Verify access with NABat API
-    headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
-    query = QUERY % {'acoustic_file_id': recording_id}
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
+    query = QUERY % {"acoustic_file_id": recording_id}
     try:
         response = requests.post(
-            settings.BATAI_NABAT_API_URL, json={'query': query}, headers=headers
+            settings.BATAI_NABAT_API_URL, json={"query": query}, headers=headers, timeout=30
         )
-    except Exception as e:
-        logger.error(f'API request error: {e}')
-        return JsonResponse({'error': 'Failed to connect to NABat API'}, status=500)
+    except Exception:
+        logger.exception("API request error")
+        return JsonResponse({"error": "Failed to connect to NABat API"}, status=500)
 
     if response.status_code != 200:
-        logger.error(f'NABat API rejected access: {response.status_code} - {response.text}')
+        logger.error(f"NABat API rejected access: {response.status_code} - {response.text}")
         return JsonResponse(
-            {'error': 'Failed to verify access with NABat API'}, status=response.status_code
+            {"error": "Failed to verify access with NABat API"}, status=response.status_code
         )
 
     try:
         data = response.json()
-        if data['data']['presignedUrlFromAcousticFile'] is None:
-            return JsonResponse({'error': 'Recording not found or access denied'}, status=403)
-    except (KeyError, TypeError, json.JSONDecodeError) as e:
-        logger.error(f'Error decoding NABat API response: {e}')
-        return JsonResponse({'error': 'Malformed response from NABat API'}, status=500)
+        if data["data"]["presignedUrlFromAcousticFile"] is None:
+            return JsonResponse({"error": "Recording not found or access denied"}, status=403)
+    except (KeyError, TypeError, json.JSONDecodeError):
+        logger.exception("Error decoding NABat API response")
+        return JsonResponse({"error": "Malformed response from NABat API"}, status=500)
 
     return email
 
@@ -175,30 +175,30 @@ def update_nabat_species(species_id: int, api_token: str, recording_id: int, sur
     This function is called after creating or updating a recording annotation.
     """
     headers = {
-        'Authorization': f'Bearer {api_token}',
-        'Content-Type': 'application/json',
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json",
     }
     batch_query = UPDATE_QUERY % {
-        'survey_event_id': survey_event_id,
-        'software_id': SOFTWARE_ID,
-        'acoustic_file_id': recording_id,
-        'species_id': species_id,
+        "survey_event_id": survey_event_id,
+        "software_id": SOFTWARE_ID,
+        "acoustic_file_id": recording_id,
+        "species_id": species_id,
     }
     try:
         response = requests.post(
-            settings.BATAI_NABAT_API_URL, json={'query': batch_query}, headers=headers
+            settings.BATAI_NABAT_API_URL, json={"query": batch_query}, headers=headers, timeout=30
         )
         json_response = response.json()
-        if json_response.get('errors'):
-            logger.error(f'API Error: {json_response["errors"]}')
+        if json_response.get("errors"):
+            logger.error(f"API Error: {json_response['errors']}")
             return JsonResponse(json_response, status=500)
-    except Exception as e:
-        logger.error(f'API Request Failed: {e}')
-        return JsonResponse({'error': 'Failed to connect to NABat API'}, status=500)
-    return 'NABat species updated successfully.'
+    except Exception:
+        logger.exception("API Request Failed")
+        return JsonResponse({"error": "Failed to connect to NABat API"}, status=500)
+    return "NABat species updated successfully."
 
 
-@router.post('/', auth=None)
+@router.post("/", auth=None)
 def generate_nabat_recording(
     request: HttpRequest,
     payload: Form[NABatRecordingGenerateSchema],
@@ -211,9 +211,9 @@ def generate_nabat_recording(
     if existing_task:
         return JsonResponse(
             {
-                'error': 'A task is already processing this recordingId.',
-                'taskId': existing_task.celery_id,
-                'status': existing_task.status,
+                "error": "A task is already processing this recordingId.",
+                "taskId": existing_task.celery_id,
+                "status": existing_task.status,
             },
             status=409,
         )
@@ -226,26 +226,26 @@ def generate_nabat_recording(
         )
         with transaction.atomic():
             ProcessingTask.objects.create(
-                name=f'Processing Recording {payload.recordingId}',
+                name=f"Processing Recording {payload.recordingId}",
                 status=ProcessingTask.Status.QUEUED,
                 metadata={
-                    'type': ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
-                    'recordingId': payload.recordingId,
+                    "type": ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+                    "recordingId": payload.recordingId,
                 },
                 celery_id=task.id,
             )
-        return {'taskId': task.id}
+        return {"taskId": task.id}
     # we want to check the apiToken and make sure the user has access to the file
     # before returning it
     api_token = payload.apiToken
     recording_id = payload.recordingId
-    headers = {'Authorization': f'Bearer {api_token}', 'Content-Type': 'application/json'}
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
     batch_query = QUERY % {
-        'acoustic_file_id': recording_id,
+        "acoustic_file_id": recording_id,
     }
     try:
         response = requests.post(
-            settings.BATAI_NABAT_API_URL, json={'query': batch_query}, headers=headers
+            settings.BATAI_NABAT_API_URL, json={"query": batch_query}, headers=headers, timeout=30
         )
         logger.info(response.json())
     except Exception:
@@ -255,62 +255,62 @@ def generate_nabat_recording(
         try:
             batch_data = response.json()
             logger.info(batch_data)
-            if batch_data['data']['presignedUrlFromAcousticFile'] is None:
-                return JsonResponse({'error': 'Recording not found or access denied'}, status=404)
+            if batch_data["data"]["presignedUrlFromAcousticFile"] is None:
+                return JsonResponse({"error": "Recording not found or access denied"}, status=404)
             else:
-                return {'recordingId': nabat_recording.first().pk}
+                return {"recordingId": nabat_recording.first().pk}
         except (KeyError, TypeError, json.JSONDecodeError) as e:
-            logger.error(f'Error processing batch data: {e}')
-            return JsonResponse({'error': f'Error with API Request: {e}'}, status=500)
+            logger.exception("Error processing batch data")
+            return JsonResponse({"error": f"Error with API Request: {e}"}, status=500)
     else:
-        logger.error(f'Failed to fetch data: {response.status_code}, {response.text}')
+        logger.error(f"Failed to fetch data: {response.status_code}, {response.text}")
         return JsonResponse(response.json(), status=500)
 
 
-@router.get('/{id}/spectrogram', auth=admin_auth)
+@router.get("/{id}/spectrogram", auth=admin_auth)
 def get_spectrogram(request: HttpRequest, id: int):
     try:
         nabat_recording = NABatRecording.objects.get(pk=id)
     except NABatRecording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}
 
     spectrogram = nabat_recording.spectrogram
 
     compressed = nabat_recording.compressed_spectrogram
 
     spectro_data = {
-        'urls': spectrogram.image_url_list,
-        'spectroInfo': {
-            'spectroId': spectrogram.pk,
-            'width': spectrogram.width,
-            'height': spectrogram.height,
-            'start_time': 0,
-            'end_time': spectrogram.duration,
-            'low_freq': spectrogram.frequency_min,
-            'high_freq': spectrogram.frequency_max,
+        "urls": spectrogram.image_url_list,
+        "spectroInfo": {
+            "spectroId": spectrogram.pk,
+            "width": spectrogram.width,
+            "height": spectrogram.height,
+            "start_time": 0,
+            "end_time": spectrogram.duration,
+            "low_freq": spectrogram.frequency_min,
+            "high_freq": spectrogram.frequency_max,
         },
     }
     if compressed:
-        spectro_data['compressed'] = {
-            'start_times': compressed.starts,
-            'end_times': compressed.stops,
+        spectro_data["compressed"] = {
+            "start_times": compressed.starts,
+            "end_times": compressed.stops,
         }
 
     # Serialize the annotations using AnnotationSchema
     annotations_data = []
     sequence_annotations_data = []
 
-    spectro_data['annotations'] = annotations_data
-    spectro_data['sequence'] = sequence_annotations_data
+    spectro_data["annotations"] = annotations_data
+    spectro_data["sequence"] = sequence_annotations_data
     return spectro_data
 
 
-@router.get('/{id}/spectrogram/compressed', auth=admin_auth)
+@router.get("/{id}/spectrogram/compressed", auth=admin_auth)
 def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
     try:
         nabat_recording = NABatRecording.objects.get(pk=id)
     except NABatRecording.DoesNotExist:
-        return JsonResponse({'error': 'Recording does not exist'}, status=404)
+        return JsonResponse({"error": "Recording does not exist"}, status=404)
 
     email_or_response = get_email_if_authorized(request, apiToken, nabat_recording.recording_id)
     if isinstance(email_or_response, JsonResponse):
@@ -319,29 +319,27 @@ def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
     compressed_spectrogram = NABatCompressedSpectrogram.objects.filter(nabat_recording=id).first()
 
     if not compressed_spectrogram:
-        return JsonResponse({'error': 'Compressed Spectrogram not found'}, status=404)
+        return JsonResponse({"error": "Compressed Spectrogram not found"}, status=404)
 
-    spectro_data = {
-        'urls': compressed_spectrogram.image_url_list,
-        'mask_urls': compressed_spectrogram.mask_url_list,
-        'spectroInfo': {
-            'spectroId': compressed_spectrogram.pk,
-            'width': compressed_spectrogram.spectrogram.width,
-            'start_time': 0,
-            'end_time': compressed_spectrogram.spectrogram.duration,
-            'height': compressed_spectrogram.spectrogram.height,
-            'low_freq': compressed_spectrogram.spectrogram.frequency_min,
-            'high_freq': compressed_spectrogram.spectrogram.frequency_max,
-            'start_times': compressed_spectrogram.starts,
-            'end_times': compressed_spectrogram.stops,
-            'widths': compressed_spectrogram.widths,
-            'compressedWidth': compressed_spectrogram.length,
+    return {
+        "urls": compressed_spectrogram.image_url_list,
+        "mask_urls": compressed_spectrogram.mask_url_list,
+        "spectroInfo": {
+            "spectroId": compressed_spectrogram.pk,
+            "width": compressed_spectrogram.spectrogram.width,
+            "start_time": 0,
+            "end_time": compressed_spectrogram.spectrogram.duration,
+            "height": compressed_spectrogram.spectrogram.height,
+            "low_freq": compressed_spectrogram.spectrogram.frequency_min,
+            "high_freq": compressed_spectrogram.spectrogram.frequency_max,
+            "start_times": compressed_spectrogram.starts,
+            "end_times": compressed_spectrogram.stops,
+            "widths": compressed_spectrogram.widths,
+            "compressedWidth": compressed_spectrogram.length,
         },
-        'annotations': [],
-        'sequence': [],
+        "annotations": [],
+        "sequence": [],
     }
-
-    return spectro_data
 
 
 class NABatRecordingAnnotationSchema(Schema):
@@ -399,7 +397,7 @@ class NABatCreateRecordingAnnotationSchema(Schema):
     apiToken: str
 
 
-@router.get('/{nabat_recording_id}/recording-annotations', auth=admin_auth)
+@router.get("/{nabat_recording_id}/recording-annotations", auth=admin_auth)
 def get_nabat_recording_annotation(
     request: HttpRequest,
     nabat_recording_id: int,
@@ -420,16 +418,15 @@ def get_nabat_recording_annotation(
             Q(user_email=user_email) | Q(user_email__isnull=True)
         )
 
-    fileAnnotations = fileAnnotations.order_by('confidence')
+    fileAnnotations = fileAnnotations.order_by("confidence")
 
-    output = [
+    return [
         NABatRecordingAnnotationSchema.from_orm(fileAnnotation).dict()
         for fileAnnotation in fileAnnotations
     ]
-    return output
 
 
-@router.get('recording-annotation/{id}', auth=admin_auth, response=NABatRecordingAnnotationSchema)
+@router.get("recording-annotation/{id}", auth=admin_auth, response=NABatRecordingAnnotationSchema)
 def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
     email_or_response = get_email_if_authorized(request, apiToken, recording_pk=id)
     if isinstance(email_or_response, JsonResponse):
@@ -443,11 +440,11 @@ def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
 
         return NABatRecordingAnnotationSchema.from_orm(annotation).dict()
     except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({'error': 'Recording annotation not found.'}, 404)
+        return JsonResponse({"error": "Recording annotation not found."}, 404)
 
 
 @router.get(
-    'recording-annotation/{id}/details',
+    "recording-annotation/{id}/details",
     auth=admin_auth,
     response=NABatRecordingAnnotationDetailsSchema,
 )
@@ -463,10 +460,10 @@ def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: st
 
         return NABatRecordingAnnotationDetailsSchema.from_orm(annotation).dict()
     except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({'error': 'Recording annotation not found.'}, 404)
+        return JsonResponse({"error": "Recording annotation not found."}, 404)
 
 
-@router.put('recording-annotation', auth=None, response={200: str})
+@router.put("recording-annotation", auth=None, response={200: str})
 def create_recording_annotation(request: HttpRequest, data: NABatCreateRecordingAnnotationSchema):
     email_or_response = get_email_if_authorized(
         request, data.apiToken, recording_pk=data.recordingId
@@ -476,7 +473,7 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
     user_email = email_or_response  # safe to use
 
     token_data = decode_jwt(data.apiToken)
-    user_id = token_data['sub']
+    user_id = token_data["sub"]
 
     try:
         recording = NABatRecording.objects.get(pk=data.recordingId)
@@ -495,14 +492,14 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
         for species_id in data.species:
             species = Species.objects.get(pk=species_id)
             annotation.species.add(species)
-        return 'Recording annotation created successfully.'
+        return "Recording annotation created successfully."
     except NABatRecording.DoesNotExist:
-        return JsonResponse({'error': 'Recording not found.'}, 404)
+        return JsonResponse({"error": "Recording not found."}, 404)
     except Species.DoesNotExist:
-        return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
+        return JsonResponse({"error": "One or more species IDs not found."}, 404)
 
 
-@router.patch('recording-annotation/{id}', auth=None, response={200: str})
+@router.patch("recording-annotation/{id}", auth=None, response={200: str})
 def update_recording_annotation(
     request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
 ):
@@ -539,14 +536,14 @@ def update_recording_annotation(
                 annotation.species.add(species)
 
         annotation.save()
-        return 'Recording annotation updated successfully.'
+        return "Recording annotation updated successfully."
     except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({'error': 'Recording not found.'}, 404)
+        return JsonResponse({"error": "Recording not found."}, 404)
     except Species.DoesNotExist:
-        return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
+        return JsonResponse({"error": "One or more species IDs not found."}, 404)
 
 
-@router.patch('recording-annotation/{id}/push-to-nabat', auth=None, response={200: str})
+@router.patch("recording-annotation/{id}/push-to-nabat", auth=None, response={200: str})
 def update_nabat_recording_annotation(
     request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
 ):
@@ -580,17 +577,17 @@ def update_nabat_recording_annotation(
                 )
             elif len(data.species) > 1:
                 return JsonResponse(
-                    {'error': 'NABat only supports one species per recording annotation.'},
+                    {"error": "NABat only supports one species per recording annotation."},
                     status=400,
                 )
     except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({'error': 'Recording not found.'}, 404)
+        return JsonResponse({"error": "Recording not found."}, 404)
     except Species.DoesNotExist:
-        return JsonResponse({'error': 'One or more species IDs not found.'}, 404)
+        return JsonResponse({"error": "One or more species IDs not found."}, 404)
 
 
 # TODO: Determine if this will be implemented for NABat
-@router.delete('recording-annotation/{id}', auth=None, response={200: str})
+@router.delete("recording-annotation/{id}", auth=None, response={200: str})
 def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str, recordingId: str):
     email_or_response = get_email_if_authorized(request, apiToken, recording_pk=recordingId)
     if isinstance(email_or_response, JsonResponse):
@@ -601,6 +598,6 @@ def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str, re
 
         # Check permission
         annotation.delete()
-        return 'Recording annotation deleted successfully.'
+        return "Recording annotation deleted successfully."
     except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({'error': 'Recording not found for this user.'}, 404)
+        return JsonResponse({"error": "Recording not found for this user."}, 404)

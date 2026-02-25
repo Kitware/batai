@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .annotations import router as AnnotationRouter
 from .configuration import router as ConfigurationRouter
 from .export_annotation import router as ExportAnnotationRouter
@@ -12,16 +14,16 @@ from .species import router as SpeciesRouter
 from .vetting_details import router as VettingRouter
 
 __all__ = [
-    'RecordingRouter',
-    'SpeciesRouter',
-    'AnnotationRouter',
-    'SequenceAnnotationRouter',
-    'GRTSCellsRouter',
-    'GuanoMetadataRouter',
-    'RecordingAnnotationRouter',
-    'ConfigurationRouter',
-    'ProcessingTaskRouter',
-    'ExportAnnotationRouter',
-    'RecordingTagRouter',
-    'VettingRouter',
+    "AnnotationRouter",
+    "ConfigurationRouter",
+    "ExportAnnotationRouter",
+    "GRTSCellsRouter",
+    "GuanoMetadataRouter",
+    "ProcessingTaskRouter",
+    "RecordingAnnotationRouter",
+    "RecordingRouter",
+    "RecordingTagRouter",
+    "SequenceAnnotationRouter",
+    "SpeciesRouter",
+    "VettingRouter",
 ]

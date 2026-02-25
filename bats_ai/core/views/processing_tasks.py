@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 from celery.result import AsyncResult
@@ -13,21 +15,21 @@ router = Router()
 
 
 # Auth is None
-@router.get('/{task_id}/details', auth=None)
+@router.get("/{task_id}/details", auth=None)
 def task_details(request, task_id: str):
     task = get_object_or_404(ProcessingTask, celery_id=task_id)
     celery_task = AsyncResult(task.celery_id)
     celery_data = {
-        'state': celery_task.state,
-        'status': task.status,
-        'info': celery_task.info if not isinstance(celery_task.info, Exception) else None,
-        'error': task.error
+        "state": celery_task.state,
+        "status": task.status,
+        "info": celery_task.info if not isinstance(celery_task.info, Exception) else None,
+        "error": task.error
         or (str(celery_task.info) if isinstance(celery_task.info, Exception) else None),
     }
-    return {'task': task.name, 'celery_data': celery_data}
+    return {"task": task.name, "celery_data": celery_data}
 
 
-@router.post('/{task_id}/cancel')
+@router.post("/{task_id}/cancel")
 def cancel_task(request, task_id: str):
     task = get_object_or_404(ProcessingTask, pk=task_id)
     with transaction.atomic():
@@ -35,4 +37,4 @@ def cancel_task(request, task_id: str):
         celery_task = AsyncResult(task.celery_id)
         if celery_task:
             celery_task.revoke(terminate=True)
-        return {'message': 'Task successfully canceled.'}, 202
+        return {"message": "Task successfully canceled."}, 202
