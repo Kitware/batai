@@ -174,7 +174,6 @@ ignore = [
   "PLR0915", # too-many-statements
   "PLW2901", # redefined-loop-name
   "PTH", # flake8-use-pathlib
-  "S101", # assert
   "S110", # try-except-pass
   "S310", # suspicious-url-open-usage
   "S311", # suspicious-non-cryptographic-random-usage
