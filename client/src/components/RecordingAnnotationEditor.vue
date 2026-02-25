@@ -142,6 +142,9 @@ export default defineComponent({
       if (props.annotation && props.annotation.submitted) {
         return 'This annotation has been submitted. This cannot be undone.';
       }
+      if (!speciesEdit.value.length) {
+        return 'Select at least one species before submitting.';
+      }
       return 'Submit this annotation. This action cannot be undone.';
     });
 
@@ -289,7 +292,7 @@ export default defineComponent({
               <v-btn
                 flat
                 color="primary"
-                :disabled="updatingAnnotation || deletingAnnotation || annotation?.submitted || (submittedAnnotationId !== undefined && annotation?.id !== submittedAnnotationId)"
+                :disabled="speciesEdit.length === 0 || updatingAnnotation || deletingAnnotation || annotation?.submitted || (submittedAnnotationId !== undefined && annotation?.id !== submittedAnnotationId)"
                 @click="submitAnnotation"
               >
                 Submit
