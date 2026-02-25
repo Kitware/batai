@@ -3,8 +3,8 @@ from django.db import models
 
 class Species(models.Model):
     CATEGORY_CHOICES = {
-        'couplet': 'Couplet',
-        'individual': 'Individual Species',
+        'single': 'Single',
+        'multiple': 'Multiple',
         'frequency': 'Frequency',
         'noid': 'NoID',
     }
@@ -18,6 +18,6 @@ class Species(models.Model):
     category = models.CharField(
         max_length=20,
         choices=CATEGORY_CHOICES,
-        default='individual',
-        help_text='Category label: couplet, individual species, frequency, or NoID',
+        default='single',
+        help_text='Category label: single species, multiple species, frequency, or NoID',
     )
