@@ -111,13 +111,6 @@ export default defineComponent({
             <span class="text-caption text-medium-emphasis mr-2">Fₘₐₓ</span>
             <span>{{ data.fmaxKhz.toFixed(1) }} kHz</span>
           </div>
-          <div
-            v-if="data.heelColor || data.kneeColor || data.charFreqColor"
-            class="d-flex align-center flex-wrap gap-2 mt-1 pt-1"
-            style="border-top: 1px solid rgba(0,0,0,0.12);"
-          >
-            <span class="text-caption text-medium-emphasis">Point colors</span>
-          </div>
         </div>
       </v-card-text>
     </v-card>
