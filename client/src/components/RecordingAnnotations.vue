@@ -35,6 +35,7 @@ export default defineComponent({
   setup(props) {
     const selectedAnnotation: Ref<null | FileAnnotation> = ref(null);
     const annotationState: Ref<'creating' | 'editing' | null> = ref(null);
+    const addingAnnotation = ref(false);
     const annotations: Ref<FileAnnotation[]> = ref([]);
     const detailsDialog = ref(false);
     const detailRecordingId = ref(-1);
@@ -76,19 +77,24 @@ export default defineComponent({
     });
 
     const addAnnotation = async () => {
-      const newAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
-        recordingId: props.recordingId,
-        species: [],
-        comments: '',
-        model: 'User Defined',
-        confidence: 1.0,
-        apiToken: props.apiToken,
+      addingAnnotation.value = true;
+      try {
+        const newAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
+          recordingId: props.recordingId,
+          species: [],
+          comments: '',
+          model: 'User Defined',
+          confidence: 1.0,
+          apiToken: props.apiToken,
 
-      };
-      props.type === 'nabat' ? await putNABatFileAnnotation(newAnnotation) : await putFileAnnotation(newAnnotation);
-      await loadFileAnnotations();
-      if (annotations.value.length) {
-        setSelectedId(annotations.value[annotations.value.length - 1]);
+        };
+        props.type === 'nabat' ? await putNABatFileAnnotation(newAnnotation) : await putFileAnnotation(newAnnotation);
+        await loadFileAnnotations();
+        if (annotations.value.length) {
+          setSelectedId(annotations.value[annotations.value.length - 1]);
+        }
+      } finally {
+        addingAnnotation.value = false;
       }
     };
 
@@ -142,6 +148,7 @@ export default defineComponent({
     return {
       selectedAnnotation,
       annotationState,
+      addingAnnotation,
       annotations,
       setSelectedId,
       addAnnotation,
@@ -184,7 +191,8 @@ export default defineComponent({
       <v-spacer />
       <v-col v-if="!isNaBat() || !disableNaBatAnnotations">
         <v-btn
-          :disabled="annotationState === 'creating' || disableNaBatAnnotations"
+          :disabled="addingAnnotation || disableNaBatAnnotations"
+          :loading="addingAnnotation"
           @click="addAnnotation()"
         >
           Add<v-icon>mdi-plus</v-icon>

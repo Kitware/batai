@@ -55,6 +55,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const { configuration, currentUser } = useState();
     const updatingAnnotation = ref(false);
+    const deletingAnnotation = ref(false);
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
     const confidence: Ref<number> = ref(props.annotation?.confidence || 1.0);
@@ -110,9 +111,14 @@ export default defineComponent({
 
     const deleteAnnotation = async () => {
       if (props.annotation && props.recordingId) {
-            props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken, props.recordingId) : await deleteFileAnnotation(props.annotation.id,);
-            emit('delete:annotation');
+        deletingAnnotation.value = true;
+        try {
+          props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken, props.recordingId) : await deleteFileAnnotation(props.annotation.id,);
+          emit('delete:annotation');
+        } finally {
+          deletingAnnotation.value = false;
         }
+      }
     };
 
     const submitAnnotation = async () => {
@@ -151,6 +157,7 @@ export default defineComponent({
 
     return {
         updatingAnnotation,
+        deletingAnnotation,
         speciesEdit,
         confidence,
         comments,
@@ -171,7 +178,7 @@ export default defineComponent({
 <template>
   <v-card>
     <v-progress-linear
-      v-if="updatingAnnotation"
+      v-if="updatingAnnotation || deletingAnnotation"
       indeterminate
       color="primary"
       class="mb-0"
@@ -183,6 +190,12 @@ export default defineComponent({
           class="text-caption text-medium-emphasis mr-2"
         >
           Saving…
+        </span>
+        <span
+          v-else-if="deletingAnnotation"
+          class="text-caption text-medium-emphasis mr-2"
+        >
+          Deleting…
         </span>
         <span v-else>
           Choose Label
@@ -211,7 +224,7 @@ export default defineComponent({
           size="x-small"
           color="error"
           class="mt-1"
-          :disabled="updatingAnnotation"
+          :disabled="updatingAnnotation || deletingAnnotation"
           @click="deleteAnnotation()"
         >
           Delete<v-icon>mdi-delete</v-icon>
@@ -224,7 +237,7 @@ export default defineComponent({
           v-model="speciesEdit"
           :species-list="species"
           class="my-2"
-          :disabled="updatingAnnotation"
+          :disabled="updatingAnnotation || deletingAnnotation"
           @update:model-value="onSpeciesModelValue"
         />
       </v-row>
@@ -233,7 +246,7 @@ export default defineComponent({
           :key="`species_${annotation?.id}`"
           v-model="speciesEdit"
           :species-list="species"
-          :disabled="annotation?.submitted || updatingAnnotation"
+          :disabled="annotation?.submitted || updatingAnnotation || deletingAnnotation"
           @update:model-value="onSpeciesModelValue"
         />
       </v-row>
@@ -276,7 +289,7 @@ export default defineComponent({
               <v-btn
                 flat
                 color="primary"
-                :disabled="updatingAnnotation || annotation?.submitted || (submittedAnnotationId !== undefined && annotation?.id !== submittedAnnotationId)"
+                :disabled="updatingAnnotation || deletingAnnotation || annotation?.submitted || (submittedAnnotationId !== undefined && annotation?.id !== submittedAnnotationId)"
                 @click="submitAnnotation"
               >
                 Submit
