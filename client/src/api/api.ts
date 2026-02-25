@@ -38,7 +38,7 @@ export interface Species {
   common_name: string;
   species_code_6?: string;
   id: number;
-  category: "individual" | "couplet" | "frequency" | "noid";
+  category: "single" | "multiple" | "frequency" | "noid";
 }
 
 export interface SpectrogramAnnotation {
