@@ -28,3 +28,6 @@ class Annotations(TimeStampedModel, models.Model):
         ],
         help_text="A confidence value between 0 and 1.0, default is 1.0.",
     )
+
+    def __str__(self):
+        return f"Annotation {self.pk} (recording={self.recording_id}, owner={self.owner_id})"

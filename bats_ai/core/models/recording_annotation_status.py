@@ -22,3 +22,6 @@ class RecordingAnnotationStatus(TimeStampedModel, models.Model):
         help_text="Recording Annotation Status",
         choices=Status,
     )
+
+    def __str__(self):
+        return f"RecordingAnnotationStatus {self.pk} ({self.recording_status})"
