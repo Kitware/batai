@@ -26,7 +26,7 @@ class RecordingAnnotationSchema(Schema):
     hasDetails: bool
 
     @classmethod
-    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: RecordingAnnotation):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             owner=obj.owner.username,
@@ -52,7 +52,7 @@ class RecordingAnnotationDetailsSchema(Schema):
     submitted: bool
 
     @classmethod
-    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: RecordingAnnotation):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             owner=obj.owner.username,

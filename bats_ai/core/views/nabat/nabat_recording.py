@@ -352,7 +352,7 @@ class NABatRecordingAnnotationSchema(Schema):
     hasDetails: bool
 
     @classmethod
-    def from_orm(cls, obj: NABatRecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: NABatRecordingAnnotation):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             owner=obj.user_email,
@@ -375,7 +375,7 @@ class NABatRecordingAnnotationDetailsSchema(Schema):
     hasDetails: bool
 
     @classmethod
-    def from_orm(cls, obj: NABatRecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: NABatRecordingAnnotation):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             owner=obj.user_email,

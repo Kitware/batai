@@ -116,7 +116,7 @@ class RecordingAnnotationSchema(Schema):
     submitted: bool
 
     @classmethod
-    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: RecordingAnnotation):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             owner=obj.owner.username,
@@ -179,7 +179,7 @@ class AnnotationSchema(Schema):
     owner_email: str = None
 
     @classmethod
-    def from_orm(cls, obj: Annotations, owner_email=None, **kwargs):
+    def from_orm(cls, obj: Annotations, owner_email=None):
         return cls(
             start_time=obj.start_time,
             end_time=obj.end_time,
