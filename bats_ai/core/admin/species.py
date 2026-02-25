@@ -8,13 +8,13 @@ from bats_ai.core.models import Species
 @admin.register(Species)
 class SpeciesAdmin(admin.ModelAdmin):
     list_display = [
-        'pk',
-        'species_code',
-        'species_code_6',
-        'category',
-        'family',
-        'genus',
-        'species',
-        'common_name',
+        "pk",
+        "species_code",
+        "species_code_6",
+        "category",
+        "family",
+        "genus",
+        "species",
+        "common_name",
     ]
     list_select_related = True
