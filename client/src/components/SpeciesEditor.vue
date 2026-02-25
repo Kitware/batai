@@ -49,8 +49,8 @@ export default defineComponent({
     });
 
     const categoryColors: Record<string, string> =  {
-      'individual': 'primary',
-      'couplet': 'secondary',
+      'single': 'primary',
+      'multiple': 'secondary',
       'frequency': 'warning',
       'noid': '',
     };
@@ -65,7 +65,7 @@ export default defineComponent({
       }
 
       const result: Array<{ type: 'subheader', title: string } | Species & { category: string}> = [];
-      const groupsOrder = ['Individual', 'Couplet', 'Frequency', 'Noid'];
+      const groupsOrder = ['Single', 'Multiple', 'Frequency', 'Noid'];
       groupsOrder.forEach((key) => {
         result.push({ type: 'subheader', title: key });
         result.push(...(groups[key]));

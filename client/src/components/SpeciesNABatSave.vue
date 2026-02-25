@@ -40,8 +40,8 @@ export default defineComponent({
     );
 
     const categoryColors: Record<string, string> = {
-      'individual': 'primary',
-      'couplet': 'secondary',
+      'single': 'primary',
+      'multiple': 'secondary',
       'frequency': 'warning',
       'noid': '',
     };
