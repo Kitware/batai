@@ -159,7 +159,6 @@ ignore = [
   "C901", # complex-structure
   "DJ001", # django-nullable-model-string-field
   "DJ008", # django-model-without-dunder-str
-  "DTZ001", # call-datetime-without-tzinfo
   "DTZ007", # call-datetime-strptime-without-zone
   "FBT001", # boolean-type-hint-positional-argument
   "FBT002", # boolean-default-value-positional-argument
