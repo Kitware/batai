@@ -410,8 +410,8 @@ def delete_recording(
     try:
         recording = Recording.objects.get(pk=id)
 
-        # Check if the user owns the recording or if the recording is public
-        if recording.owner == request.user or recording.public:
+        # Check if the user owns the recording
+        if recording.owner == request.user:
             # Delete the annotation
             recording.delete()
             return {'message': 'Recording deleted successfully'}
@@ -881,7 +881,7 @@ def get_other_user_annotations(request: HttpRequest, id: int):
         recording = Recording.objects.get(pk=id)
 
         # Check if the user owns the recording or if the recording is public
-        if recording.owner == request.user or recording.public:
+        if recording.owner == request.user or request.user.is_superuser:
             # Query annotations associated with the recording that are owned by other users
             annotations_qs = Annotations.objects.filter(recording=recording).exclude(
                 owner=request.user
@@ -1006,10 +1006,12 @@ def patch_annotation(
         recording = Recording.objects.get(pk=recording_id)
 
         # Check if the user owns the recording or if the recording is public
-        if recording.owner == request.user:
+        if recording.owner == request.user or recording.public:
             annotation_instance = Annotations.objects.get(
                 pk=id, recording=recording, owner=request.user
             )
+            if annotation_instance is None:
+                return {'error': 'Annotation not found'}
 
             # Update annotation details
             if annotation.start_time is not None:
