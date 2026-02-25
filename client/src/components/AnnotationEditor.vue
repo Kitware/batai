@@ -119,9 +119,10 @@ export default defineComponent({
     <v-card-text>
       <v-row>
         <SpeciesInfo
+          v-model="speciesEdit"
           :species-list="species"
-          :selected-species="speciesEdit"
           class="my-2"
+          @update:model-value="updateAnnotation()"
         />
       </v-row>
       <v-row>

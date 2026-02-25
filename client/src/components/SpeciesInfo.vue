@@ -14,20 +14,20 @@ export default defineComponent({
   name: "SpeciesInfo",
   components: {},
   props: {
+    modelValue: {
+      type: Array as PropType<string[]>,
+      default: () => [],
+    },
     speciesList: {
       type: Array as PropType<Species[]>,
       required: true,
-    },
-    selectedSpecies: {
-      type: Array as PropType<string[]>,
-      default: () => [],
     },
     disabled: {
       type: Boolean,
       default: false,
     },
   },
-  emits: ['dismiss', 'update:selectedSpecies'],
+  emits: ['dismiss', 'update:modelValue'],
   setup(props, { emit }) {
     const itemsPerPage = ref(-1);
     const displayDialog = ref(false);
@@ -94,8 +94,8 @@ export default defineComponent({
 
     watch(displayDialog, (open) => {
       if (open) {
-        pendingSelection.value = [...props.selectedSpecies];
-        orderedSpecies.value = sortSpecies(props.speciesList, props.selectedSpecies);
+        pendingSelection.value = [...props.modelValue];
+        orderedSpecies.value = sortSpecies(props.speciesList, props.modelValue);
       }
     });
 
@@ -117,7 +117,7 @@ export default defineComponent({
     });
 
     const hasChanges = computed(() =>
-      !arraysEqual(pendingSelection.value, props.selectedSpecies)
+      !arraysEqual(pendingSelection.value, props.modelValue)
     );
 
     const isSelected = (speciesCode: string) =>
@@ -136,7 +136,7 @@ export default defineComponent({
     };
 
     const saveAndClose = () => {
-      emit("update:selectedSpecies", [...pendingSelection.value]);
+      emit("update:modelValue", [...pendingSelection.value]);
       displayDialog.value = false;
     };
 
