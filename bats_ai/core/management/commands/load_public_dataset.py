@@ -88,9 +88,9 @@ def _try_start_spectrogram_generation(recording_id: int):
     ).first()
 
     if processing_task:
-        logger.info(f"  Spectrogram generation already started for recording {recording_id}")
+        logger.info("Spectrogram generation already started for recording %s", recording_id)
     else:
-        logger.info(f"  Generating spectrograms for existing recording {recording_id}")
+        logger.info("Generating spectrograms for existing recording %s", recording_id)
         recording_compute_spectrogram.delay(recording_id)
 
 
@@ -122,14 +122,14 @@ def _ingest_files_from_manifest(
                 s3_key = line[file_key]
                 existing_recording = Recording.objects.filter(name=s3_key).first()
                 if existing_recording:
-                    logger.info(f"A recording already exists for {s3_key}.")
+                    logger.info("A recording already exists for %s.", s3_key)
                     _try_start_spectrogram_generation(existing_recording.pk)
                     continue
-                logger.info(f"Ingesting {s3_key}...")
+                logger.info("Ingesting %s...", s3_key)
                 filename = _create_filename(s3_key)
-                logger.info(f"  Downloading to temporary file {filename}...")
+                logger.info("Downloading to temporary file %s...", filename)
                 s3_client.download_file(bucket, s3_key, filename)
-                logger.info(f"  Creating recording for {s3_key}")
+                logger.info("Creating recording for %s", s3_key)
                 metadata = _get_metadata(filename, line)
                 with open(filename, "rb") as f:
                     recording = Recording.objects.create(
@@ -159,15 +159,17 @@ def _ingest_files_from_manifest(
                         recording.tags.add(tag)
                 # Trigger spectrogram task
                 logger.info(
-                    f"  Created recording with id {recording.pk} for {s3_key}."
-                    " Starting task to generate spectrograms..."
+                    "Created recording with id %s for %s."
+                    " Starting task to generate spectrograms...",
+                    recording.pk,
+                    s3_key,
                 )
                 recording_compute_spectrogram.delay(recording.pk)
             finally:
                 if filename:
                     # Delete the file (this may run on a machine with limited resources)
                     try:
-                        logger.info(f"  Cleaning up by removing temporary file {filename}...")
+                        logger.info("Cleaning up by removing temporary file %s...", filename)
                         os.remove(filename)
                     except FileNotFoundError:
                         pass

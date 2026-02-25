@@ -29,7 +29,7 @@ def recording_compute_spectrogram(self, recording_id: int):
     from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
 
     celery_id = getattr(self.request, "id", None)
-    logger.info(f"celery id {celery_id}")
+    logger.info("celery id %s", celery_id)
 
     processing_task = None
     if celery_id:

@@ -64,7 +64,7 @@ def export_nabat_annotations_task(self, filters: dict, export_id: int):
 
             for ann in queryset.prefetch_related("species"):
                 species_names = ", ".join(s.common_name for s in ann.species.all())
-                logger.info(f"Exporting Ann: {ann} with species names: {species_names}")
+                logger.info("Exporting Ann: %s with species names: %s", ann, species_names)
                 # Write row to CSV
                 writer.writerow(
                     [
@@ -101,7 +101,7 @@ def export_nabat_annotations_task(self, filters: dict, export_id: int):
         buffer.seek(0)
         filename = f"export-{export_id}.zip"
         export_record.file.save(filename, File(buffer), save=False)
-        logger.info(f"Export URL: {export_record.file.url}")
+        logger.info("Export URL: %s", export_record.file.url)
         export_record.download_url = export_record.file.url
         export_record.status = "complete"
         export_record.expires_at = now() + timedelta(hours=24)

@@ -135,7 +135,7 @@ def get_email_if_authorized(
         return JsonResponse({"error": "Failed to connect to NABat API"}, status=500)
 
     if response.status_code != 200:
-        logger.error(f"NABat API rejected access: {response.status_code} - {response.text}")
+        logger.error("NABat API rejected access: %s - %s", response.status_code, response.text)
         return JsonResponse(
             {"error": "Failed to verify access with NABat API"}, status=response.status_code
         )
@@ -190,7 +190,7 @@ def update_nabat_species(species_id: int, api_token: str, recording_id: int, sur
         )
         json_response = response.json()
         if json_response.get("errors"):
-            logger.error(f"API Error: {json_response['errors']}")
+            logger.error("API Error: %s", json_response["errors"])
             return JsonResponse(json_response, status=500)
     except Exception:
         logger.exception("API Request Failed")
@@ -263,7 +263,7 @@ def generate_nabat_recording(
             logger.exception("Error processing batch data")
             return JsonResponse({"error": f"Error with API Request: {e}"}, status=500)
     else:
-        logger.error(f"Failed to fetch data: {response.status_code}, {response.text}")
+        logger.error("Failed to fetch data: %s, %s", response.status_code, response.text)
         return JsonResponse(response.json(), status=500)
 
 
