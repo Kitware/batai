@@ -1,19 +1,25 @@
-from ninja.testing import TestClient
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
 
 from bats_ai.core.models import VettingDetails
 
 from .factories import SuperuserFactory, UserFactory, VettingDetailsFactory
 
+if TYPE_CHECKING:
+    from ninja.testing import TestClient
+
 
 @pytest.mark.django_db
 def test_get_vetting_details(api_client: TestClient):
     vetting_details = VettingDetailsFactory.create()
 
-    resp = api_client.get(f'vetting/user/{vetting_details.user.id}', user=vetting_details.user)
+    resp = api_client.get(f"vetting/user/{vetting_details.user.id}", user=vetting_details.user)
 
     assert resp.status_code == 200
-    assert resp.data['reference_materials'] == vetting_details.reference_materials
+    assert resp.data["reference_materials"] == vetting_details.reference_materials
 
 
 @pytest.mark.django_db
@@ -21,7 +27,7 @@ def test_get_vetting_details_other_user(api_client: TestClient):
     vetting_details = VettingDetailsFactory.create()
     other_user = UserFactory.create()
 
-    resp = api_client.get(f'vetting/user/{vetting_details.user.id}', user=other_user)
+    resp = api_client.get(f"vetting/user/{vetting_details.user.id}", user=other_user)
 
     assert resp.status_code == 404
 
@@ -31,15 +37,15 @@ def test_create_vetting_details(api_client: TestClient):
     user = UserFactory.create()
 
     resp = api_client.post(
-        f'vetting/user/{user.id}',
-        json={'reference_materials': 'foo'},
+        f"vetting/user/{user.id}",
+        json={"reference_materials": "foo"},
         user=user,
     )
 
     assert resp.status_code == 200
-    assert resp.data['user_id'] == user.id
-    assert resp.data['reference_materials'] == 'foo'
-    assert VettingDetails.objects.filter(user=user, reference_materials='foo').exists()
+    assert resp.data["user_id"] == user.id
+    assert resp.data["reference_materials"] == "foo"
+    assert VettingDetails.objects.filter(user=user, reference_materials="foo").exists()
 
 
 @pytest.mark.django_db
@@ -48,8 +54,8 @@ def test_create_vetting_details_other_user(api_client: TestClient):
     other_user = UserFactory.create()
 
     resp = api_client.post(
-        f'vetting/user/{user.id}',
-        json={'reference_materials': 'foo'},
+        f"vetting/user/{user.id}",
+        json={"reference_materials": "foo"},
         user=other_user,
     )
 
@@ -62,14 +68,14 @@ def test_create_vetting_details_other_superuser(api_client: TestClient):
     other_superuser = SuperuserFactory.create()
 
     resp = api_client.post(
-        f'vetting/user/{user.id}',
-        json={'reference_materials': 'foo'},
+        f"vetting/user/{user.id}",
+        json={"reference_materials": "foo"},
         user=other_superuser,
     )
 
     assert resp.status_code == 200
-    assert resp.data['reference_materials'] == 'foo'
-    assert VettingDetails.objects.filter(user=user, reference_materials='foo').exists()
+    assert resp.data["reference_materials"] == "foo"
+    assert VettingDetails.objects.filter(user=user, reference_materials="foo").exists()
 
 
 @pytest.mark.django_db
@@ -77,15 +83,15 @@ def test_update_vetting_details(api_client: TestClient):
     vetting_details = VettingDetailsFactory.create()
 
     resp = api_client.post(
-        f'vetting/user/{vetting_details.user.id}',
-        json={'reference_materials': 'foo'},
+        f"vetting/user/{vetting_details.user.id}",
+        json={"reference_materials": "foo"},
         user=vetting_details.user,
     )
 
     assert resp.status_code == 200
-    assert resp.data['reference_materials'] == 'foo'
+    assert resp.data["reference_materials"] == "foo"
     vetting_details.refresh_from_db()
-    assert vetting_details.reference_materials == 'foo'
+    assert vetting_details.reference_materials == "foo"
 
 
 @pytest.mark.django_db
@@ -94,8 +100,8 @@ def test_update_vetting_details_other_user(api_client: TestClient):
     other_user = UserFactory.create()
 
     resp = api_client.post(
-        f'vetting/user/{vetting_details.user.id}',
-        json={'reference_materials': 'foo'},
+        f"vetting/user/{vetting_details.user.id}",
+        json={"reference_materials": "foo"},
         user=other_user,
     )
     assert resp.status_code == 404
@@ -107,15 +113,15 @@ def test_update_vetting_details_other_superuser(api_client: TestClient):
     other_superuser = SuperuserFactory.create()
 
     resp = api_client.post(
-        f'vetting/user/{vetting_details.user.id}',
-        json={'reference_materials': 'foo'},
+        f"vetting/user/{vetting_details.user.id}",
+        json={"reference_materials": "foo"},
         user=other_superuser,
     )
 
     assert resp.status_code == 200
-    assert resp.data['reference_materials'] == 'foo'
+    assert resp.data["reference_materials"] == "foo"
     vetting_details.refresh_from_db()
-    assert vetting_details.reference_materials == 'foo'
+    assert vetting_details.reference_materials == "foo"
 
 
 @pytest.mark.django_db
@@ -123,8 +129,8 @@ def test_update_vetting_details_length_constraint(api_client: TestClient):
     vetting_details = VettingDetailsFactory.create()
 
     resp = api_client.post(
-        f'vetting/user/{vetting_details.user.id}',
-        json={'reference_materials': 'a' * 2001},
+        f"vetting/user/{vetting_details.user.id}",
+        json={"reference_materials": "a" * 2001},
         user=vetting_details.user,
     )
 

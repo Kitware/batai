@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.http import HttpRequest
 from ninja import Schema
 from ninja.pagination import RouterPaginated
@@ -37,7 +39,7 @@ class UpdateSequenceAnnotationSchema(Schema):
     comments: str | None = None
 
 
-@router.get('/{id}')
+@router.get("/{id}")
 def get_sequence_annotation(request: HttpRequest, id: int):
     try:
         annotation = Annotations.objects.get(pk=id)
@@ -51,17 +53,16 @@ def get_sequence_annotation(request: HttpRequest, id: int):
             )
 
             # Serialize the annotations using AnnotationSchema
-            annotations_data = [
+            return [
                 SequenceAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
                 for annotation in annotations_qs
             ]
 
-            return annotations_data
         else:
             return {
-                'error': 'Permission denied. You do not own this annotation, or the associated'
-                ' recording is not public.'
+                "error": "Permission denied. You do not own this annotation, or the associated"
+                " recording is not public."
             }
 
     except Recording.DoesNotExist:
-        return {'error': 'Recording not found'}
+        return {"error": "Recording not found"}

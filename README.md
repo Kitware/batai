@@ -147,9 +147,8 @@ some (but not all) of the style checks, run `uv run tox -e format`.
 
 ## Code Formatting
 
-Any contributed code should be compliant with `PEP8`, which is enforced by
-`flake8` via `pre-commit`. It's recommended that you use `pre-commit` to ensure
-linting procedures are run on any commit you make. See the
+It's recommended that you use `pre-commit` to provide additional
+linting on any commit you make. See the
 [installation instructions](https://pre-commit.com/#install) for your OS/platform
 to install.
 

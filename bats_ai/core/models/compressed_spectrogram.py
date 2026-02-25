@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.core.files.storage import default_storage
@@ -23,11 +25,11 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
     @property
     def image_url_list(self):
         """Ordered list of image URLs for this spectrogram."""
-        images = self.images.filter(type='compressed').order_by('index')
+        images = self.images.filter(type="compressed").order_by("index")
         return [default_storage.url(img.image_file.name) for img in images]
 
     @property
     def mask_url_list(self):
         """Ordered list of mask image URLs for this spectrogram."""
-        images = self.images.filter(type='masks').order_by('index')
+        images = self.images.filter(type="masks").order_by("index")
         return [default_storage.url(img.image_file.name) for img in images]
