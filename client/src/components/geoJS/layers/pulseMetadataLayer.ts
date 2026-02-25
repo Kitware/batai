@@ -3,6 +3,7 @@ import { SpectroInfo } from '../geoJSUtils';
 import { PulseMetadata } from '@api/api';
 import { LayerStyle, LineData, TextData } from './types';
 import BaseTextLayer from './baseTextLayer';
+import { PulseMetadataLabelsMode } from '@use/usePulseMetadata';
 
 /** Point data for char_freq, knee, heel with pixel coords and label. */
 interface PulsePointData {
@@ -26,8 +27,21 @@ export interface PulseMetadataStyle {
   labelColor: string;
   labelFontSize: number;
   pointRadius: number;
-  showLabels: boolean;
-  showLabelsOnHover: boolean;
+  pulseMetadataLabels: PulseMetadataLabelsMode;
+}
+
+/** Payload for pulse-metadata-tooltip event (display coords). */
+export interface PulseMetadataTooltipData {
+  durationMs: number;
+  fminKhz: number;
+  fmaxKhz: number;
+  fcKhz: number | null;
+  heelColor: string | null;
+  kneeColor: string | null;
+  charFreqColor: string | null;
+  heelKhz: number | null;
+  kneeKhz: number | null;
+  bbox: { top: number; left: number; width: number; height: number };
 }
 
 const defaultPulseMetadataStyle: PulseMetadataStyle = {
@@ -40,8 +54,7 @@ const defaultPulseMetadataStyle: PulseMetadataStyle = {
   labelColor: '#FFFFFF',
   labelFontSize: 12,
   pointRadius: 5,
-  showLabels: false,
-  showLabelsOnHover: false,
+  pulseMetadataLabels: 'None',
 };
 
 export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
@@ -72,7 +85,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   // When false, zoom must not call redraw (user has turned off the layer).
   private enabled = true;
 
-  // Index of pulse currently hovered when showLabelsOnHover is true; -1 when none.
+  // Index of pulse currently hovered when pulseMetadataLabels is Hover or Tooltip; -1 when none.
   private hoveredPulseIndex = -1;
 
   constructor(
@@ -105,7 +118,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     this.hoverPolygonFeature = this.hoverHitLayer
       .createFeature('polygon', { selectionAPI: true })
       .polygon((d: HoverHitData) => d.polygon.coordinates[0]);
-    this.hoverPolygonFeature.geoOn(geo.event.feature.mouseover, (e: GeoEvent) => this.onHoverHitOver(e));
+    this.hoverPolygonFeature.geoOn(geo.event.feature.mouseover, (e: GeoEvent & { index?: number }) => this.onHoverHitOver(e));
     this.hoverPolygonFeature.geoOn(geo.event.feature.mouseoff, () => this.onHoverHitOff());
     this.setScaledDimensions(spectroInfo.width, spectroInfo.height);
     this.style = { ...defaultPulseMetadataStyle };
@@ -134,7 +147,8 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     if (!this.enabled) return;
     this.lineLayer.style(this.createLineStyle()).draw();
     this.pointLayer.style(this.createPointStyle()).draw();
-    if (this.style.showLabelsOnHover) {
+    const hoverActive = this.style.pulseMetadataLabels === 'Hover' || this.style.pulseMetadataLabels === 'Tooltip';
+    if (hoverActive) {
       this.hoverPolygonFeature
         .data(this.hoverHitData)
         .style(this.createHoverHitStyle())
@@ -183,20 +197,20 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
 
   /** Text to show in the single text layer: all pulses or hovered pulse only. */
   private getTextDataToShow(): TextData[] {
-    if (this.style.showLabelsOnHover) {
+    if (this.style.pulseMetadataLabels === 'Hover') {
       if (this.hoveredPulseIndex >= 0 && this.hoveredPulseIndex < this.pulseTextData.length) {
         return this.pulseTextData[this.hoveredPulseIndex];
       }
       return [];
     }
-    if (this.style.showLabels) {
+    if (this.style.pulseMetadataLabels === 'Always') {
       return this.pulseTextData.flat();
     }
     return [];
   }
 
-    private getFreqDurationLineDataToShow(): LineData[] {
-    if (this.style.showLabelsOnHover) {
+  private getFreqDurationLineDataToShow(): LineData[] {
+    if (this.style.pulseMetadataLabels === 'Hover') {
       if (this.hoveredPulseIndex >= 0) {
         return this.durationFreqLineData.filter((d) => d.index === this.hoveredPulseIndex);
       }
@@ -204,8 +218,56 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     }
     return this.durationFreqLineData;
   }
-  
 
+  private getMap() {
+    const ref = this.geoViewerRef as { value?: { gcsToDisplay: (c: { x: number; y: number }, gcs: null) => { x: number; y: number } } };
+    return ref?.value ?? this.geoViewerRef;
+  }
+
+  private buildTooltipData(pulseIndex: number): PulseMetadataTooltipData | null {
+    const pulse = this.pulseMetadataList[pulseIndex];
+    if (!pulse || pulseIndex >= this.hoverHitData.length) return null;
+    const hit = this.hoverHitData[pulseIndex];
+    const coords = hit.polygon.coordinates[0];
+    if (!coords || coords.length < 4) return null;
+    const map = this.getMap();
+    if (!map || typeof map.gcsToDisplay !== 'function') return null;
+    const topLeft = map.gcsToDisplay({ x: coords[0][0], y: coords[0][1] }, null);
+    const bottomRight = map.gcsToDisplay({ x: coords[2][0], y: coords[2][1] }, null);
+    const left = Math.min(topLeft.x, bottomRight.x);
+    const width = Math.abs(bottomRight.x - topLeft.x);
+    const height = Math.abs(bottomRight.y - topLeft.y);
+
+    let durationMs = 0;
+    let fminKhz = 0;
+    let fmaxKhz = 0;
+    let fcKhz: number | null = null;
+    if (pulse.curve && pulse.curve.length >= 2) {
+      const times = pulse.curve.map((pt) => pt[0]);
+      const freqs = pulse.curve.map((pt) => pt[1]);
+      durationMs = Math.max(...times) - Math.min(...times);
+      const minFreq = Math.min(...freqs);
+      const maxFreq = Math.max(...freqs);
+      fminKhz = minFreq / 1000;
+      fmaxKhz = maxFreq / 1000;
+    }
+    if (pulse.char_freq && pulse.char_freq.length >= 2) {
+      fcKhz = pulse.char_freq[1] / 1000;
+    }
+    const { heelColor, charFreqColor, kneeColor } = this.style;
+    return {
+      durationMs,
+      fminKhz,
+      fmaxKhz,
+      fcKhz,
+      heelColor: pulse.heel ? heelColor : null,
+      kneeColor: pulse.knee ? kneeColor : null,
+      heelKhz: pulse.heel ? pulse.heel[1] / 1000 : null,
+      kneeKhz: pulse.knee ? pulse.knee[1] / 1000 : null,
+      charFreqColor: pulse.char_freq ? charFreqColor : null,
+      bbox: { top: 0, left, width, height },
+    };
+  }
 
   formatData() {
     this.lineData = [];
@@ -372,14 +434,25 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     });
   }
 
-  private onHoverHitOver(e: GeoEvent & { index: number }) {
-    if (!this.style.showLabelsOnHover || !this.enabled) return;
-    this.hoveredPulseIndex = e.index;
+  private onHoverHitOver(e: GeoEvent & { index?: number }) {
+    if (!this.enabled) return;
+    const hoverActive = this.style.pulseMetadataLabels === 'Hover' || this.style.pulseMetadataLabels === 'Tooltip';
+    if (!hoverActive) return;
+    const index = (e as GeoEvent & { index: number }).index;
+    if (index < 0) return;
+    this.hoveredPulseIndex = index;
+    if (this.style.pulseMetadataLabels === 'Tooltip') {
+      const data = this.buildTooltipData(index);
+      if (data) this.event('pulse-metadata-tooltip', data);
+    }
     this.updateMetadataStyle();
   }
 
   private onHoverHitOff() {
     if (this.hoveredPulseIndex === -1) return;
+    if (this.style.pulseMetadataLabels === 'Tooltip') {
+      this.event('pulse-metadata-tooltip', null);
+    }
     this.hoveredPulseIndex = -1;
     this.updateMetadataStyle();
   }
@@ -402,7 +475,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         d.lineKind === 'durationFreq' ? durationFreqLineColor : lineColor,
       strokeWidth: lineWidth,
       strokeOpacity: (_point, _index, d: LineData) => {
-        const showLabels = this.style.showLabels;
+        const showLabels = this.style.pulseMetadataLabels === 'Always' || this.style.pulseMetadataLabels === 'Hover';
         if (!showLabels && d.lineKind === 'durationFreq') {
           return 0;
         }
@@ -473,7 +546,8 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       .position((d: PulsePointData) => ({ x: d.x, y: d.y }))
       .style(this.createPointStyle())
       .draw();
-    if (this.style.showLabelsOnHover) {
+    const hoverActive = this.style.pulseMetadataLabels === 'Hover' || this.style.pulseMetadataLabels === 'Tooltip';
+    if (hoverActive) {
       this.hoverPolygonFeature
         .data(this.hoverHitData)
         .style(this.createHoverHitStyle())
@@ -507,9 +581,6 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     }
     if (this.hoverHitLayer) {
       this.geoViewerRef.deleteLayer(this.hoverHitLayer);
-    }
-    if (this.freqDurationLineLayer) {
-      this.geoViewerRef.deleteLayer(this.freqDurationLineLayer);
     }
   }
 }

@@ -10,6 +10,8 @@ import {
   SpectrogramSequenceAnnotation,
 } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
+import PulseMetadataTooltip from "./PulseMetadataTooltip.vue";
+import type { PulseMetadataTooltipData } from "./geoJS/layers/pulseMetadataLayer";
 import { GeoEvent } from "geojs";
 import geo from "geojs";
 import useState from "@use/useState";
@@ -17,7 +19,7 @@ import { getImageDimensions } from "@use/useUtils";
 
 export default defineComponent({
   name: "SpectroViewer",
-  components: { LayerManager },
+  components: { LayerManager, PulseMetadataTooltip },
   props: {
     images: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
     maskImages: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
@@ -45,6 +47,7 @@ export default defineComponent({
     } = useState();
 
     const containerRef: Ref<HTMLElement | undefined> = ref();
+    const pulseMetadataTooltipData = ref<PulseMetadataTooltipData | null>(null);
     const geoJS = useGeoJS();
     const initialized = ref(false);
     const cursor = ref("");
@@ -263,8 +266,14 @@ export default defineComponent({
       }
     });
 
+    function onPulseMetadataTooltip(data: PulseMetadataTooltipData | null) {
+      pulseMetadataTooltipData.value = data;
+    }
+
     return {
       containerRef,
+      pulseMetadataTooltipData,
+      onPulseMetadataTooltip,
       geoViewerRef: geoJS.getGeoViewer(),
       initialized,
       cursor,
@@ -291,12 +300,14 @@ export default defineComponent({
     <div
       id="spectro"
       ref="containerRef"
-      class="playback-container"
+      class="playback-container playback-container--with-tooltip"
       :style="{ cursor: cursor }"
       @mousemove="cursorHandler.handleMouseMove"
       @mouseleave="cursorHandler.handleMouseLeave"
       @mouseover="cursorHandler.handleMouseEnter"
-    />
+    >
+      <PulseMetadataTooltip :data="pulseMetadataTooltipData" />
+    </div>
     <layer-manager
       v-if="initialized"
       :geo-viewer-ref="geoViewerRef"
@@ -307,6 +318,7 @@ export default defineComponent({
       @update:annotation="updateAnnotation($event)"
       @create:annotation="createAnnotation($event)"
       @set-cursor="setCursor($event)"
+      @pulse-metadata-tooltip="onPulseMetadataTooltip($event)"
     />
     <div
       ref="imageCursorRef"
@@ -341,6 +353,7 @@ export default defineComponent({
 
   .playback-container {
     flex: 1;
+    position: relative;
   }
 
   .loadingSpinnerContainer {

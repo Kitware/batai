@@ -3,6 +3,16 @@ import { getPulseMetadata, PulseMetadata } from "../api/api";
 
 const STORAGE_KEY = "pulseMetadata";
 
+/** Single mode for pulse metadata labels: None, Always, Hover (inline labels), or Tooltip. */
+export type PulseMetadataLabelsMode = "None" | "Always" | "Hover" | "Tooltip";
+
+export const PULSE_METADATA_LABELS_OPTIONS: { title: string; value: PulseMetadataLabelsMode }[] = [
+  { title: "None", value: "None" },
+  { title: "Always", value: "Always" },
+  { title: "Hover (labels)", value: "Hover" },
+  { title: "Tooltip", value: "Tooltip" },
+];
+
 interface PulseMetadataStorage {
   viewPulseMetadataLayer?: boolean;
   pulseMetadataLineColor?: string;
@@ -13,8 +23,8 @@ interface PulseMetadataStorage {
   pulseMetadataLabelColor?: string;
   pulseMetadataLabelFontSize?: number;
   pulseMetadataPointSize?: number;
-  pulseMetadataShowLabels?: boolean;
-  pulseMetadataShowLabelsOnHover?: boolean;
+  /** Replaces legacy pulseMetadataShowLabels, pulseMetadataShowLabelsOnHover, pulseMetadataHoverMode */
+  pulseMetadataLabels?: PulseMetadataLabelsMode;
   pulseMetadataDurationFreqLineColor?: string;
 }
 
@@ -39,6 +49,21 @@ function saveToStorage(data: PulseMetadataStorage) {
 }
 
 const stored = loadFromStorage();
+
+/** Migrate legacy storage keys to pulseMetadataLabels. */
+function getInitialLabelsMode(): PulseMetadataLabelsMode {
+  const storedLabels = stored.pulseMetadataLabels;
+  if (storedLabels && ["None", "Always", "Hover", "Tooltip"].includes(storedLabels)) {
+    return storedLabels as PulseMetadataLabelsMode;
+  }
+  const showLabels = (stored as { pulseMetadataShowLabels?: boolean }).pulseMetadataShowLabels;
+  const showOnHover = (stored as { pulseMetadataShowLabelsOnHover?: boolean }).pulseMetadataShowLabelsOnHover;
+  const hoverMode = (stored as { pulseMetadataHoverMode?: string }).pulseMetadataHoverMode;
+  if (showLabels && !showOnHover) return "Always";
+  if (showOnHover && hoverMode === "tooltip") return "Tooltip";
+  if (showOnHover) return "Hover";
+  return "None";
+}
 
 const pulseMetadataList: Ref<PulseMetadata[]> = ref([]);
 const pulseMetadataLoading = ref(false);
@@ -70,8 +95,7 @@ const pulseMetadataKneeColor = ref(stored.pulseMetadataKneeColor ?? "#FF8800");
 const pulseMetadataLabelColor = ref(stored.pulseMetadataLabelColor ?? "#FFFFFF");
 const pulseMetadataLabelFontSize = ref(stored.pulseMetadataLabelFontSize ?? 12);
 const pulseMetadataPointSize = ref(stored.pulseMetadataPointSize ?? 5);
-const pulseMetadataShowLabels = ref(stored.pulseMetadataShowLabels ?? true);
-const pulseMetadataShowLabelsOnHover = ref(stored.pulseMetadataShowLabelsOnHover ?? false);
+const pulseMetadataLabels = ref<PulseMetadataLabelsMode>(getInitialLabelsMode());
 const pulseMetadataDurationFreqLineColor = ref(
   stored.pulseMetadataDurationFreqLineColor ?? "#FFFF00",
 );
@@ -87,8 +111,7 @@ watch(
     pulseMetadataLabelColor,
     pulseMetadataLabelFontSize,
     pulseMetadataPointSize,
-    pulseMetadataShowLabels,
-    pulseMetadataShowLabelsOnHover,
+    pulseMetadataLabels,
     pulseMetadataDurationFreqLineColor,
   ],
   () => {
@@ -102,8 +125,7 @@ watch(
       pulseMetadataLabelColor: pulseMetadataLabelColor.value,
       pulseMetadataLabelFontSize: pulseMetadataLabelFontSize.value,
       pulseMetadataPointSize: pulseMetadataPointSize.value,
-      pulseMetadataShowLabels: pulseMetadataShowLabels.value,
-      pulseMetadataShowLabelsOnHover: pulseMetadataShowLabelsOnHover.value,
+      pulseMetadataLabels: pulseMetadataLabels.value,
       pulseMetadataDurationFreqLineColor: pulseMetadataDurationFreqLineColor.value,
     });
   },
@@ -125,8 +147,7 @@ export default function usePulseMetadata() {
     pulseMetadataLabelColor,
     pulseMetadataLabelFontSize,
     pulseMetadataPointSize,
-    pulseMetadataShowLabels,
-    pulseMetadataShowLabelsOnHover,
+    pulseMetadataLabels,
     pulseMetadataDurationFreqLineColor,
   };
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
-import usePulseMetadata from "@use/usePulseMetadata";
+import usePulseMetadata, { PULSE_METADATA_LABELS_OPTIONS } from "@use/usePulseMetadata";
 
 export default defineComponent({
   name: "PulseMetadataButton",
@@ -30,8 +30,7 @@ export default defineComponent({
       pulseMetadataLabelColor,
       pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
-      pulseMetadataShowLabels,
-      pulseMetadataShowLabelsOnHover,
+      pulseMetadataLabels,
       pulseMetadataDurationFreqLineColor,
     } = usePulseMetadata();
 
@@ -54,10 +53,10 @@ export default defineComponent({
       pulseMetadataLabelColor,
       pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
-      pulseMetadataShowLabels,
-      pulseMetadataShowLabelsOnHover,
+      pulseMetadataLabels,
       pulseMetadataDurationFreqLineColor,
       colorsExpanded,
+      PULSE_METADATA_LABELS_OPTIONS,
     };
   },
 });
@@ -69,7 +68,6 @@ export default defineComponent({
     class="d-flex align-center"
   >
     <v-menu
-      v-if="compressed"
       location="top"
       :close-on-content-click="false"
       open-on-hover
@@ -96,22 +94,16 @@ export default defineComponent({
           Pulse Metrics
         </v-card-title>
         <v-card-text class="pt-0">
-          <div class="mt-1 d-flex align-center">
-            <span class="text-body-2 mr-2">Show frequency labels</span>
-            <v-switch
-              v-model="pulseMetadataShowLabels"
-              hide-details
+          <div class="mt-1">
+            <span class="text-body-2 d-block mb-1">Labels</span>
+            <v-select
+              v-model="pulseMetadataLabels"
+              :items="PULSE_METADATA_LABELS_OPTIONS"
+              item-title="title"
+              item-value="value"
               density="compact"
-              class="mt-0 pt-0"
-            />
-          </div>
-          <div class="mt-1 d-flex align-center">
-            <span class="text-body-2 mr-2">Show labels on hover</span>
-            <v-switch
-              v-model="pulseMetadataShowLabelsOnHover"
               hide-details
-              density="compact"
-              class="mt-0 pt-0"
+              variant="outlined"
             />
           </div>
           <v-expansion-panels
