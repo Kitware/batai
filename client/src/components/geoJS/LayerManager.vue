@@ -100,6 +100,7 @@ export default defineComponent({
       pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
       pulseMetadataShowLabels,
+      pulseMetadataShowLabelsOnHover,
       pulseMetadataDurationFreqLineColor,
     } = usePulseMetadata();
     const selectedAnnotationId: Ref<null | number> = ref(null);
@@ -552,6 +553,7 @@ export default defineComponent({
             labelFontSize: pulseMetadataLabelFontSize.value,
             pointRadius: pulseMetadataPointSize.value,
             showLabels: pulseMetadataShowLabels.value,
+            showLabelsOnHover: pulseMetadataShowLabelsOnHover.value,
           });
           pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
           pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
@@ -580,6 +582,7 @@ export default defineComponent({
         pulseMetadataLabelFontSize,
         pulseMetadataPointSize,
         pulseMetadataShowLabels,
+        pulseMetadataShowLabelsOnHover,
         pulseMetadataDurationFreqLineColor,
       ],
       () => {
@@ -595,6 +598,7 @@ export default defineComponent({
             labelFontSize: pulseMetadataLabelFontSize.value,
             pointRadius: pulseMetadataPointSize.value,
             showLabels: pulseMetadataShowLabels.value,
+            showLabelsOnHover: pulseMetadataShowLabelsOnHover.value,
           });
           pulseMetadataLayer.updateMetadataStyle();
         }

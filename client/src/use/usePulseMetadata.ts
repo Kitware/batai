@@ -14,6 +14,7 @@ interface PulseMetadataStorage {
   pulseMetadataLabelFontSize?: number;
   pulseMetadataPointSize?: number;
   pulseMetadataShowLabels?: boolean;
+  pulseMetadataShowLabelsOnHover?: boolean;
   pulseMetadataDurationFreqLineColor?: string;
 }
 
@@ -70,6 +71,7 @@ const pulseMetadataLabelColor = ref(stored.pulseMetadataLabelColor ?? "#FFFFFF")
 const pulseMetadataLabelFontSize = ref(stored.pulseMetadataLabelFontSize ?? 12);
 const pulseMetadataPointSize = ref(stored.pulseMetadataPointSize ?? 5);
 const pulseMetadataShowLabels = ref(stored.pulseMetadataShowLabels ?? true);
+const pulseMetadataShowLabelsOnHover = ref(stored.pulseMetadataShowLabelsOnHover ?? false);
 const pulseMetadataDurationFreqLineColor = ref(
   stored.pulseMetadataDurationFreqLineColor ?? "#FFFF00",
 );
@@ -86,6 +88,7 @@ watch(
     pulseMetadataLabelFontSize,
     pulseMetadataPointSize,
     pulseMetadataShowLabels,
+    pulseMetadataShowLabelsOnHover,
     pulseMetadataDurationFreqLineColor,
   ],
   () => {
@@ -100,6 +103,7 @@ watch(
       pulseMetadataLabelFontSize: pulseMetadataLabelFontSize.value,
       pulseMetadataPointSize: pulseMetadataPointSize.value,
       pulseMetadataShowLabels: pulseMetadataShowLabels.value,
+      pulseMetadataShowLabelsOnHover: pulseMetadataShowLabelsOnHover.value,
       pulseMetadataDurationFreqLineColor: pulseMetadataDurationFreqLineColor.value,
     });
   },
@@ -122,6 +126,7 @@ export default function usePulseMetadata() {
     pulseMetadataLabelFontSize,
     pulseMetadataPointSize,
     pulseMetadataShowLabels,
+    pulseMetadataShowLabelsOnHover,
     pulseMetadataDurationFreqLineColor,
   };
 }

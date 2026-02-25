@@ -31,6 +31,7 @@ export default defineComponent({
       pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
       pulseMetadataShowLabels,
+      pulseMetadataShowLabelsOnHover,
       pulseMetadataDurationFreqLineColor,
     } = usePulseMetadata();
 
@@ -54,6 +55,7 @@ export default defineComponent({
       pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
       pulseMetadataShowLabels,
+      pulseMetadataShowLabelsOnHover,
       pulseMetadataDurationFreqLineColor,
       colorsExpanded,
     };
@@ -98,6 +100,15 @@ export default defineComponent({
             <span class="text-body-2 mr-2">Show frequency labels</span>
             <v-switch
               v-model="pulseMetadataShowLabels"
+              hide-details
+              density="compact"
+              class="mt-0 pt-0"
+            />
+          </div>
+          <div class="mt-1 d-flex align-center">
+            <span class="text-body-2 mr-2">Show labels on hover</span>
+            <v-switch
+              v-model="pulseMetadataShowLabelsOnHover"
               hide-details
               density="compact"
               class="mt-0 pt-0"

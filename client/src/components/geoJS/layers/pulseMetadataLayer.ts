@@ -1,3 +1,4 @@
+import geo, { GeoEvent } from 'geojs';
 import { SpectroInfo } from '../geoJSUtils';
 import { PulseMetadata } from '@api/api';
 import { LayerStyle, LineData, TextData } from './types';
@@ -10,6 +11,11 @@ interface PulsePointData {
   label: string;
 }
 
+interface HoverHitData {
+  polygon: GeoJSON.Polygon;
+}
+
+type FreqDurationLineData  = LineData & { index: number };
 export interface PulseMetadataStyle {
   lineColor: string;
   lineWidth: number;
@@ -21,6 +27,7 @@ export interface PulseMetadataStyle {
   labelFontSize: number;
   pointRadius: number;
   showLabels: boolean;
+  showLabelsOnHover: boolean;
 }
 
 const defaultPulseMetadataStyle: PulseMetadataStyle = {
@@ -33,7 +40,8 @@ const defaultPulseMetadataStyle: PulseMetadataStyle = {
   labelColor: '#FFFFFF',
   labelFontSize: 12,
   pointRadius: 5,
-  showLabels: true,
+  showLabels: false,
+  showLabelsOnHover: false,
 };
 
 export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
@@ -43,15 +51,29 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   featureTextLayer: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  hoverHitLayer: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  hoverPolygonFeature: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lineLayer: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  freqDurationLineLayer: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pointLayer: any;
-  lineData: LineData[] = [];
+  lineData: LineData[] = []; // Contour for Pulses
+  durationFreqLineData: FreqDurationLineData[] = []; // Duration/frequency range summary for Pulses
   pointData: PulsePointData[] = [];
+  /** Per-pulse text items for hover mode. */
+  pulseTextData: TextData[][] = [];
+  /** Per-pulse bbox polygons for hover hit-testing. */
+  hoverHitData: HoverHitData[] = [];
   style: PulseMetadataStyle = { ...defaultPulseMetadataStyle };
 
-  /** When false, zoom must not call redraw (user has turned off the layer). */
+  // When false, zoom must not call redraw (user has turned off the layer).
   private enabled = true;
+
+  // Index of pulse currently hovered when showLabelsOnHover is true; -1 when none.
+  private hoveredPulseIndex = -1;
 
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,11 +92,21 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       features: ['text'],
     });
     this.lineLayer = this.featureLayer.createFeature('line');
+    this.freqDurationLineLayer = this.featureLayer.createFeature('line');
     this.pointLayer = this.featureLayer.createFeature('point');
     this.textLayer = this.featureTextLayer
       .createFeature('text')
       .text((d: TextData) => d.text)
       .position((d: TextData) => ({ x: d.x, y: d.y }));
+    // Below is used for hover hit-testing when showLabelsOnHover is true.
+    this.hoverHitLayer = this.geoViewerRef.createLayer('feature', {
+      features: ['polygon'],
+    });
+    this.hoverPolygonFeature = this.hoverHitLayer
+      .createFeature('polygon', { selectionAPI: true })
+      .polygon((d: HoverHitData) => d.polygon.coordinates[0]);
+    this.hoverPolygonFeature.geoOn(geo.event.feature.mouseover, (e: GeoEvent) => this.onHoverHitOver(e));
+    this.hoverPolygonFeature.geoOn(geo.event.feature.mouseoff, () => this.onHoverHitOff());
     this.setScaledDimensions(spectroInfo.width, spectroInfo.height);
     this.style = { ...defaultPulseMetadataStyle };
   }
@@ -102,11 +134,20 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     if (!this.enabled) return;
     this.lineLayer.style(this.createLineStyle()).draw();
     this.pointLayer.style(this.createPointStyle()).draw();
-    if (this.style.showLabels) {
-      this.textLayer.data(this.textData).style(this.createTextStyle()).draw();
-    } else {
-      this.textLayer.data([]).draw();
+    if (this.style.showLabelsOnHover) {
+      this.hoverPolygonFeature
+        .data(this.hoverHitData)
+        .style(this.createHoverHitStyle())
+        .draw();
     }
+    this.textLayer
+      .data(this.getTextDataToShow())
+      .style(this.createTextStyle())
+      .draw();
+    this.freqDurationLineLayer
+      .data(this.getFreqDurationLineDataToShow())
+      .style(this.createLineStyle())
+      .draw();
   }
 
   getCompressedPosition(time: number, freq: number, index: number): { x: number; y: number } {
@@ -140,10 +181,38 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     return (this.spectroInfo.high_freq - freq) * pixelsPerMhz;
   }
 
+  /** Text to show in the single text layer: all pulses or hovered pulse only. */
+  private getTextDataToShow(): TextData[] {
+    if (this.style.showLabelsOnHover) {
+      if (this.hoveredPulseIndex >= 0 && this.hoveredPulseIndex < this.pulseTextData.length) {
+        return this.pulseTextData[this.hoveredPulseIndex];
+      }
+      return [];
+    }
+    if (this.style.showLabels) {
+      return this.pulseTextData.flat();
+    }
+    return [];
+  }
+
+    private getFreqDurationLineDataToShow(): LineData[] {
+    if (this.style.showLabelsOnHover) {
+      if (this.hoveredPulseIndex >= 0) {
+        return this.durationFreqLineData.filter((d) => d.index === this.hoveredPulseIndex);
+      }
+      return [];
+    }
+    return this.durationFreqLineData;
+  }
+  
+
+
   formatData() {
     this.lineData = [];
+    this.durationFreqLineData = [];
     this.pointData = [];
-    this.textData = [];
+    this.pulseTextData = [];
+    this.hoverHitData = [];
     if (!this.spectroInfo.compressedWidth || !this.pulseMetadataList.length) {
       return;
     }
@@ -152,6 +221,9 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
 
     this.pulseMetadataList.forEach((pulse: PulseMetadata) => {
       const index = pulse.index;
+      const pulseText: TextData[] = [];
+      const bboxPoints: { x: number; y: number }[] = [];
+
       if (pulse.curve && pulse.curve.length >= 2) {
         const coords: [number, number][] = pulse.curve.map((pt) => {
           const pos = this.getCompressedPosition(pt[0], pt[1], index);
@@ -172,8 +244,9 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         const bottomLeft = this.getCompressedPosition(startTime, minFreq, index);
         const bottomRight = this.getCompressedPosition(endTime, minFreq, index);
         const topLeft = this.getCompressedPosition(startTime, maxFreq, index);
+        bboxPoints.push(bottomLeft, bottomRight, topLeft);
 
-        this.lineData.push({
+        this.durationFreqLineData.push({
           line: {
             type: 'LineString',
             coordinates: [
@@ -182,9 +255,10 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
             ],
           },
           lineKind: 'durationFreq',
+          index: index,
         });
 
-        this.lineData.push({
+        this.durationFreqLineData.push({
           line: {
             type: 'LineString',
             coordinates: [
@@ -193,10 +267,11 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
             ],
           },
           lineKind: 'durationFreq',
+          index: index,
         });
 
         const durationMidX = (bottomLeft.x + bottomRight.x) / 2;
-        this.textData.push({
+        pulseText.push({
           text: `${durationMs.toFixed(1)} ms`,
           x: durationMidX,
           y: bottomLeft.y + labelOffset,
@@ -204,8 +279,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           offsetY: 0,
           textAlign: 'center',
         });
-
-        this.textData.push({
+        pulseText.push({
           text: `Fₘₐₓ ${(maxFreq / 1000).toFixed(1)}kHz`,
           x: topLeft.x - freqLineOffsetX - labelOffset,
           y: topLeft.y,
@@ -213,7 +287,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           offsetY: 0,
           textAlign: 'end',
         });
-        this.textData.push({
+        pulseText.push({
           text: `Fₘᵢₙ ${(minFreq / 1000).toFixed(1)}kHz`,
           x: bottomLeft.x - freqLineOffsetX - labelOffset,
           y: bottomLeft.y,
@@ -225,8 +299,9 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       if (pulse.knee && pulse.knee.length >= 2) {
         const pos = this.getCompressedPosition(pulse.knee[0], pulse.knee[1], index);
         this.pointData.push({ x: pos.x, y: pos.y, label: 'knee' });
+        bboxPoints.push(pos);
         const kneeFreqKhz = (pulse.knee[1] / 1000).toFixed(1);
-        this.textData.push({
+        pulseText.push({
           text: `Knee ${kneeFreqKhz} kHz`,
           x: pos.x - 2,
           y: pos.y,
@@ -238,8 +313,9 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       if (pulse.heel && pulse.heel.length >= 2) {
         const pos = this.getCompressedPosition(pulse.heel[0], pulse.heel[1], index);
         this.pointData.push({ x: pos.x, y: pos.y, label: 'heel' });
+        bboxPoints.push(pos);
         const heelFreqKhz = (pulse.heel[1] / 1000).toFixed(1);
-        this.textData.push({
+        pulseText.push({
           text: `Heel ${heelFreqKhz} kHz`,
           x: pos.x + 2,
           y: pos.y,
@@ -251,8 +327,9 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       if (pulse.char_freq && pulse.char_freq.length >= 2) {
         const pos = this.getCompressedPosition(pulse.char_freq[0], pulse.char_freq[1], index);
         this.pointData.push({ x: pos.x, y: pos.y, label: 'char_freq' });
+        bboxPoints.push(pos);
         const charFreqKhz = (pulse.char_freq[1] / 1000).toFixed(1);
-        this.textData.push({
+        pulseText.push({
           text: `Fc ${charFreqKhz} kHz`,
           x: pos.x,
           y: pos.y - 2,
@@ -261,7 +338,61 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           textAlign: 'center',
         });
       }
+
+      this.pulseTextData.push(pulseText);
+      if (bboxPoints.length > 0) {
+        const xs = bboxPoints.map((p) => p.x);
+        const ys = bboxPoints.map((p) => p.y);
+        const xmin = Math.min(...xs);
+        const xmax = Math.max(...xs);
+        const ymin = Math.min(...ys);
+        const ymax = Math.max(...ys);
+        this.hoverHitData.push({
+          polygon: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [xmin, ymin],
+                [xmax, ymin],
+                [xmax, ymax],
+                [xmin, ymax],
+                [xmin, ymin],
+              ],
+            ],
+          },
+        });
+      } else {
+        this.hoverHitData.push({
+          polygon: {
+            type: 'Polygon',
+            coordinates: [[[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]],
+          },
+        });
+      }
     });
+  }
+
+  private onHoverHitOver(e: GeoEvent & { index: number }) {
+    if (!this.style.showLabelsOnHover || !this.enabled) return;
+    this.hoveredPulseIndex = e.index;
+    this.updateMetadataStyle();
+  }
+
+  private onHoverHitOff() {
+    if (this.hoveredPulseIndex === -1) return;
+    this.hoveredPulseIndex = -1;
+    this.updateMetadataStyle();
+  }
+
+  private createHoverHitStyle(): LayerStyle<HoverHitData> {
+    return {
+      fill: true,
+      fillOpacity: 0,
+      // Below is used for hover hit-testing debug by making stroke true
+      stroke: false, // don't show stroke on hover
+      strokeColor: '#FFFFFF',
+      strokeWidth: 1,
+    };
   }
 
   createLineStyle(): LayerStyle<LineData> {
@@ -271,7 +402,8 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         d.lineKind === 'durationFreq' ? durationFreqLineColor : lineColor,
       strokeWidth: lineWidth,
       strokeOpacity: (_point, _index, d: LineData) => {
-        if (!this.style.showLabels && d.lineKind === 'durationFreq') {
+        const showLabels = this.style.showLabels;
+        if (!showLabels && d.lineKind === 'durationFreq') {
           return 0;
         }
         return 1.0;
@@ -319,8 +451,10 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   redraw() {
     if (!this.enabled) {
       this.lineLayer.data([]).draw();
+      this.freqDurationLineLayer.data([]).draw();
       this.pointLayer.data([]).draw();
       this.textLayer.data([]).draw();
+      this.hoverPolygonFeature.data([]).draw();
       return;
     }
     this.formatData();
@@ -329,22 +463,38 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       .line((d: LineData) => d.line.coordinates)
       .style(this.createLineStyle())
       .draw();
+    this.freqDurationLineLayer
+      .data(this.getFreqDurationLineDataToShow())
+      .line((d: LineData) => d.line.coordinates)
+      .style(this.createLineStyle())
+      .draw();
     this.pointLayer
       .data(this.pointData)
       .position((d: PulsePointData) => ({ x: d.x, y: d.y }))
       .style(this.createPointStyle())
       .draw();
-    if (this.style.showLabels) {
-      this.textLayer.data(this.textData).style(this.createTextStyle()).draw();
+    if (this.style.showLabelsOnHover) {
+      this.hoverPolygonFeature
+        .data(this.hoverHitData)
+        .style(this.createHoverHitStyle())
+        .draw();
     } else {
-      this.textLayer.data([]).draw();
+      this.hoverPolygonFeature.data([]).draw();
+      this.hoveredPulseIndex = -1;
     }
+    this.textLayer
+      .data(this.getTextDataToShow())
+      .style(this.createTextStyle())
+      .draw();
   }
 
   disable() {
     this.enabled = false;
+    this.hoveredPulseIndex = -1;
     this.lineLayer.data([]).draw();
+    this.freqDurationLineLayer.data([]).draw();
     this.pointLayer.data([]).draw();
+    this.hoverPolygonFeature.data([]).draw();
     super.disable();
   }
 
@@ -354,6 +504,12 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     }
     if (this.featureTextLayer) {
       this.geoViewerRef.deleteLayer(this.featureTextLayer);
+    }
+    if (this.hoverHitLayer) {
+      this.geoViewerRef.deleteLayer(this.hoverHitLayer);
+    }
+    if (this.freqDurationLineLayer) {
+      this.geoViewerRef.deleteLayer(this.freqDurationLineLayer);
     }
   }
 }
