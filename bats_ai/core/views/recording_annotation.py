@@ -162,9 +162,7 @@ def update_recording_annotation(
         if data.species is not None:
             species_list = list(Species.objects.filter(pk__in=data.species))
             if len(species_list) != len(data.species):
-                raise HttpError(
-                    404, "One or more species IDs not found."
-                )
+                raise HttpError(404, "One or more species IDs not found.")
             annotation.species.set(species_list)
 
         annotation.save()

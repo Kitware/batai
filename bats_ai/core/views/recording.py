@@ -664,9 +664,7 @@ def get_recording_annotations(request: HttpRequest, recording_id: int):
     # Only return file-level annotations owned by the current user (same as pulse)
     # prefetch_related/select_related avoid N+1 when serializing species and owner
     fileAnnotations = (
-        RecordingAnnotation.objects.filter(
-            recording=recording_id, owner=request.user
-        )
+        RecordingAnnotation.objects.filter(recording=recording_id, owner=request.user)
         .select_related("owner")
         .prefetch_related("species")
         .order_by("confidence")
