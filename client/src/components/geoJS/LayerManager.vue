@@ -96,6 +96,8 @@ export default defineComponent({
       pulseMetadataHeelColor,
       pulseMetadataCharFreqColor,
       pulseMetadataKneeColor,
+      pulseMetadataLabelColor,
+      pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
       pulseMetadataShowLabels,
       pulseMetadataDurationFreqLineColor,
@@ -546,6 +548,8 @@ export default defineComponent({
             heelColor: pulseMetadataHeelColor.value,
             charFreqColor: pulseMetadataCharFreqColor.value,
             kneeColor: pulseMetadataKneeColor.value,
+            labelColor: pulseMetadataLabelColor.value,
+            labelFontSize: pulseMetadataLabelFontSize.value,
             pointRadius: pulseMetadataPointSize.value,
             showLabels: pulseMetadataShowLabels.value,
           });
@@ -572,6 +576,8 @@ export default defineComponent({
         pulseMetadataHeelColor,
         pulseMetadataCharFreqColor,
         pulseMetadataKneeColor,
+        pulseMetadataLabelColor,
+        pulseMetadataLabelFontSize,
         pulseMetadataPointSize,
         pulseMetadataShowLabels,
         pulseMetadataDurationFreqLineColor,
@@ -585,10 +591,12 @@ export default defineComponent({
             heelColor: pulseMetadataHeelColor.value,
             charFreqColor: pulseMetadataCharFreqColor.value,
             kneeColor: pulseMetadataKneeColor.value,
+            labelColor: pulseMetadataLabelColor.value,
+            labelFontSize: pulseMetadataLabelFontSize.value,
             pointRadius: pulseMetadataPointSize.value,
             showLabels: pulseMetadataShowLabels.value,
           });
-          pulseMetadataLayer.redraw();
+          pulseMetadataLayer.updateMetadataStyle();
         }
       },
     );

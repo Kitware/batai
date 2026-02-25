@@ -10,6 +10,8 @@ interface PulseMetadataStorage {
   pulseMetadataHeelColor?: string;
   pulseMetadataCharFreqColor?: string;
   pulseMetadataKneeColor?: string;
+  pulseMetadataLabelColor?: string;
+  pulseMetadataLabelFontSize?: number;
   pulseMetadataPointSize?: number;
   pulseMetadataShowLabels?: boolean;
   pulseMetadataDurationFreqLineColor?: string;
@@ -64,6 +66,8 @@ const pulseMetadataLineSize = ref(stored.pulseMetadataLineSize ?? 2);
 const pulseMetadataHeelColor = ref(stored.pulseMetadataHeelColor ?? "#FF0088");
 const pulseMetadataCharFreqColor = ref(stored.pulseMetadataCharFreqColor ?? "#00FF00");
 const pulseMetadataKneeColor = ref(stored.pulseMetadataKneeColor ?? "#FF8800");
+const pulseMetadataLabelColor = ref(stored.pulseMetadataLabelColor ?? "#FFFFFF");
+const pulseMetadataLabelFontSize = ref(stored.pulseMetadataLabelFontSize ?? 12);
 const pulseMetadataPointSize = ref(stored.pulseMetadataPointSize ?? 5);
 const pulseMetadataShowLabels = ref(stored.pulseMetadataShowLabels ?? true);
 const pulseMetadataDurationFreqLineColor = ref(
@@ -78,6 +82,8 @@ watch(
     pulseMetadataHeelColor,
     pulseMetadataCharFreqColor,
     pulseMetadataKneeColor,
+    pulseMetadataLabelColor,
+    pulseMetadataLabelFontSize,
     pulseMetadataPointSize,
     pulseMetadataShowLabels,
     pulseMetadataDurationFreqLineColor,
@@ -90,6 +96,8 @@ watch(
       pulseMetadataHeelColor: pulseMetadataHeelColor.value,
       pulseMetadataCharFreqColor: pulseMetadataCharFreqColor.value,
       pulseMetadataKneeColor: pulseMetadataKneeColor.value,
+      pulseMetadataLabelColor: pulseMetadataLabelColor.value,
+      pulseMetadataLabelFontSize: pulseMetadataLabelFontSize.value,
       pulseMetadataPointSize: pulseMetadataPointSize.value,
       pulseMetadataShowLabels: pulseMetadataShowLabels.value,
       pulseMetadataDurationFreqLineColor: pulseMetadataDurationFreqLineColor.value,
@@ -110,6 +118,8 @@ export default function usePulseMetadata() {
     pulseMetadataHeelColor,
     pulseMetadataCharFreqColor,
     pulseMetadataKneeColor,
+    pulseMetadataLabelColor,
+    pulseMetadataLabelFontSize,
     pulseMetadataPointSize,
     pulseMetadataShowLabels,
     pulseMetadataDurationFreqLineColor,

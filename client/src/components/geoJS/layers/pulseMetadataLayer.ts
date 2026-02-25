@@ -17,6 +17,8 @@ export interface PulseMetadataStyle {
   heelColor: string;
   charFreqColor: string;
   kneeColor: string;
+  labelColor: string;
+  labelFontSize: number;
   pointRadius: number;
   showLabels: boolean;
 }
@@ -28,6 +30,8 @@ const defaultPulseMetadataStyle: PulseMetadataStyle = {
   heelColor: '#FF0088',
   charFreqColor: '#00FF00',
   kneeColor: '#FF8800',
+  labelColor: '#FFFFFF',
+  labelFontSize: 12,
   pointRadius: 5,
   showLabels: true,
 };
@@ -72,6 +76,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       .text((d: TextData) => d.text)
       .position((d: TextData) => ({ x: d.x, y: d.y }));
     this.setScaledDimensions(spectroInfo.width, spectroInfo.height);
+    this.style = { ...defaultPulseMetadataStyle };
   }
 
   setScaledDimensions(scaledWidth: number, scaledHeight: number) {
@@ -90,6 +95,18 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
 
   setStyle(style: Partial<PulseMetadataStyle>) {
     this.style = { ...defaultPulseMetadataStyle, ...this.style, ...style };
+  }
+
+  /** Re-apply styles and draw without re-formatting data. Use when only colors/sizes change. */
+  updateMetadataStyle() {
+    if (!this.enabled) return;
+    this.lineLayer.style(this.createLineStyle()).draw();
+    this.pointLayer.style(this.createPointStyle()).draw();
+    if (this.style.showLabels) {
+      this.textLayer.data(this.textData).style(this.createTextStyle()).draw();
+    } else {
+      this.textLayer.data([]).draw();
+    }
   }
 
   getCompressedPosition(time: number, freq: number, index: number): { x: number; y: number } {
@@ -248,7 +265,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   }
 
   createLineStyle(): LayerStyle<LineData> {
-    const { lineColor, lineWidth, durationFreqLineColor } = this.style;
+    const { lineColor, lineWidth, durationFreqLineColor } = this.style || defaultPulseMetadataStyle;
     return {
       strokeColor: (_point, _index, d: LineData) =>
         d.lineKind === 'durationFreq' ? durationFreqLineColor : lineColor,
@@ -283,9 +300,11 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   }
 
   createTextStyle(): LayerStyle<TextData> {
+    const style = this.style ?? defaultPulseMetadataStyle;
+    const { labelColor, labelFontSize } = style;
     return {
-      fontSize: '12px',
-      color: () => '#FFFFFF',
+      fontSize: `${labelFontSize}px`,
+      color: () => labelColor,
       strokeColor: '#000000',
       strokeWidth: 1,
       stroke: true,

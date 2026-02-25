@@ -27,6 +27,8 @@ export default defineComponent({
       pulseMetadataHeelColor,
       pulseMetadataCharFreqColor,
       pulseMetadataKneeColor,
+      pulseMetadataLabelColor,
+      pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
       pulseMetadataShowLabels,
       pulseMetadataDurationFreqLineColor,
@@ -48,6 +50,8 @@ export default defineComponent({
       pulseMetadataHeelColor,
       pulseMetadataCharFreqColor,
       pulseMetadataKneeColor,
+      pulseMetadataLabelColor,
+      pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
       pulseMetadataShowLabels,
       pulseMetadataDurationFreqLineColor,
@@ -175,6 +179,41 @@ export default defineComponent({
                     class="pulse-metadata-color-input mr-2"
                   >
                   <span class="text-caption">{{ pulseMetadataKneeColor }}</span>
+                </div>
+                <div class="d-flex align-center mb-2">
+                  <span
+                    class="text-body-2 mr-2"
+                    style="min-width: 90px"
+                  >
+                    Label
+                  </span>
+                  <input
+                    v-model="pulseMetadataLabelColor"
+                    type="color"
+                    class="pulse-metadata-color-input mr-2"
+                  >
+                  <span class="text-caption">{{ pulseMetadataLabelColor }}</span>
+                </div>
+                <div class="d-flex align-center mb-2">
+                  <span
+                    class="text-body-2 mr-2"
+                    style="min-width: 90px"
+                  >
+                    Label size
+                  </span>
+                  <v-slider
+                    v-model="pulseMetadataLabelFontSize"
+                    min="8"
+                    max="24"
+                    step="1"
+                    hide-details
+                    density="compact"
+                    class="mt-0 flex-grow-1"
+                  >
+                    <template #thumb-label="{ modelValue }">
+                      {{ modelValue }}
+                    </template>
+                  </v-slider>
                 </div>
               </v-expansion-panel-text>
             </v-expansion-panel>
