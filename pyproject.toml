@@ -177,7 +177,6 @@ ignore = [
   "PTH", # flake8-use-pathlib
   "S101", # assert
   "S110", # try-except-pass
-  "S308", # suspicious-mark-safe-usage
   "S310", # suspicious-url-open-usage
   "S311", # suspicious-non-cryptographic-random-usage
   "SLF001", # private-member-access
