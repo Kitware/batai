@@ -153,7 +153,6 @@ ignore = [
   "TRY003", # raise-vanilla-args
 
   # Project-specific
-  "A002", # builtin-argument-shadowing
   "ARG003", # unused-class-method-argument
   "BLE001", # blind-except
   "C901", # complex-structure

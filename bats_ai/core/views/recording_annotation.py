@@ -81,10 +81,10 @@ class UpdateRecordingAnnotationSchema(Schema):
     confidence: float = None
 
 
-@router.get("/{id}", response=RecordingAnnotationSchema)
-def get_recording_annotation(request: HttpRequest, id: int):
+@router.get("/{pk}", response=RecordingAnnotationSchema)
+def get_recording_annotation(request: HttpRequest, pk: int):
     try:
-        annotation = RecordingAnnotation.objects.get(pk=id)
+        annotation = RecordingAnnotation.objects.get(pk=pk)
 
         # Check permission
         if annotation.recording.owner != request.user and not annotation.recording.public:
@@ -95,10 +95,10 @@ def get_recording_annotation(request: HttpRequest, id: int):
         raise HttpError(404, "Recording annotation not found.") from e
 
 
-@router.get("/{id}/details", response=RecordingAnnotationDetailsSchema)
-def get_recording_annotation_details(request: HttpRequest, id: int):
+@router.get("/{pk}/details", response=RecordingAnnotationDetailsSchema)
+def get_recording_annotation_details(request: HttpRequest, pk: int):
     try:
-        annotation = RecordingAnnotation.objects.get(pk=id)
+        annotation = RecordingAnnotation.objects.get(pk=pk)
 
         # Check permission
         if annotation.recording.owner != request.user and not annotation.recording.public:
@@ -139,14 +139,14 @@ def create_recording_annotation(request: HttpRequest, data: CreateRecordingAnnot
         raise HttpError(404, "One or more species IDs not found.") from e
 
 
-@router.patch("/{id}", response={200: str})
+@router.patch("/{pk}", response={200: str})
 def update_recording_annotation(
-    request: HttpRequest, id: int, data: UpdateRecordingAnnotationSchema
+    request: HttpRequest, pk: int, data: UpdateRecordingAnnotationSchema
 ):
     try:
         annotation = RecordingAnnotation.objects.select_related(
             "recording", "recording__owner"
-        ).get(pk=id)
+        ).get(pk=pk)
 
         # Check permission
         if annotation.owner != request.user:
@@ -177,8 +177,8 @@ def update_recording_annotation(
 
 
 # DELETE Endpoint
-@router.delete("/{id}", response={200: str})
-def delete_recording_annotation(request: HttpRequest, id: int):
+@router.delete("/{pk}", response={200: str})
+def delete_recording_annotation(request: HttpRequest, pk: int):
     try:
         configuration = Configuration.objects.first()
         vetting_enabled = (
@@ -189,7 +189,7 @@ def delete_recording_annotation(request: HttpRequest, id: int):
                 403, "Permission denied. Annotations cannot be deleted while vetting is enabled"
             )
 
-        annotation = RecordingAnnotation.objects.get(pk=id)
+        annotation = RecordingAnnotation.objects.get(pk=pk)
 
         # Check permission: only the annotation owner may delete their own
         if annotation.owner != request.user:
@@ -202,10 +202,10 @@ def delete_recording_annotation(request: HttpRequest, id: int):
 
 
 # Submit endpoint
-@router.patch("/{id}/submit", response={200: dict})
-def submit_recording_annotation(request: HttpRequest, id: int):
+@router.patch("/{pk}/submit", response={200: dict})
+def submit_recording_annotation(request: HttpRequest, pk: int):
     try:
-        annotation = RecordingAnnotation.objects.get(pk=id)
+        annotation = RecordingAnnotation.objects.get(pk=pk)
 
         # Check permission
         if annotation.owner != request.user:
@@ -214,7 +214,7 @@ def submit_recording_annotation(request: HttpRequest, id: int):
         annotation.submitted = True
         annotation.save()
         return {
-            "id": id,
+            "id": pk,
             "submitted": annotation.submitted,
         }
     except RecordingAnnotation.DoesNotExist as e:

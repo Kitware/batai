@@ -32,10 +32,10 @@ def get_grid_cell_id(
         return JsonResponse({"error": str(e)}, status=200)
 
 
-@router.get("/{id}")
-def get_cell_center(request: HttpRequest, id: int, quadrant: str | None = None):
+@router.get("/{pk}")
+def get_cell_center(request: HttpRequest, pk: int, quadrant: str | None = None):
     try:
-        cells = GRTSCells.objects.filter(grts_cell_id=id)
+        cells = GRTSCells.objects.filter(grts_cell_id=pk)
 
         # Define a custom order for sample_frame_id
         custom_order = GRTSCells.sort_order()  # Define your custom order here
@@ -82,13 +82,13 @@ def get_cell_center(request: HttpRequest, id: int, quadrant: str | None = None):
 
         return JsonResponse({"latitude": center_latitude, "longitude": center_longitude})
     except GRTSCells.DoesNotExist:
-        return JsonResponse({"error": f"Cell with cellId={id} does not exist"}, status=200)
+        return JsonResponse({"error": f"Cell with cellId={pk} does not exist"}, status=200)
 
 
-@router.get("/{id}/bbox")
-def get_grts_cell_bbox(request: HttpRequest, id: int):
+@router.get("/{pk}/bbox")
+def get_grts_cell_bbox(request: HttpRequest, pk: int):
     try:
-        cells = GRTSCells.objects.filter(grts_cell_id=id)
+        cells = GRTSCells.objects.filter(grts_cell_id=pk)
         custom_order = GRTSCells.sort_order()
 
         def custom_sort_key(cell):
@@ -112,10 +112,10 @@ def get_grts_cell_bbox(request: HttpRequest, id: int):
                 ],
             },
             "properties": {
-                "grts_cell_id": id,
+                "grts_cell_id": pk,
                 "annotationType": "rectangle",
             },
         }
         return JsonResponse(geojson)
     except (GRTSCells.DoesNotExist, IndexError):
-        return JsonResponse({"error": f"Cell with id {id} does not exist"}, status=200)
+        return JsonResponse({"error": f"Cell with id {pk} does not exist"}, status=200)
