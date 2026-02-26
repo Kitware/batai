@@ -1,7 +1,7 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref, Ref, watch } from 'vue';
-import { getRecording, Recording } from '../api/api';
+import { defineComponent } from 'vue';
 import useState from '@use/useState';
+import useRecording from '@use/useRecording';
 import RecordingInfoDisplay from './RecordingInfoDisplay.vue';
 
 
@@ -9,23 +9,11 @@ export default defineComponent({
   components: {
     RecordingInfoDisplay
   },
-  props: {
-    id: {
-      type: String,
-      required: true,
-    },
-  },
   emits: ['close'],
-  setup(props) {
-    const recordingInfo: Ref<Recording | null> = ref(null);
+  setup() {
+    const { recordingInfo } = useRecording();
     const { configuration } = useState();
 
-    const loadData = async () => {
-      const recording = getRecording(props.id);
-      recordingInfo.value = (await recording).data;
-    };
-    watch(() => props.id, () => loadData());
-    onMounted(() => loadData());
     return {
       recordingInfo,
       configuration,

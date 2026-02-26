@@ -34,6 +34,7 @@ import SpectrogramImageContentMenu from "@/components/SpectrogramImageContentMen
 import PulseMetadataButton from "@/components/PulseMetadataButton.vue";
 import useState from "@use/useState";
 import usePulseMetadata from "@use/usePulseMetadata";
+import useRecording from "@use/useRecording";
 export default defineComponent({
   name: "Spectrogram",
   components: {
@@ -94,6 +95,7 @@ export default defineComponent({
       clearPulseMetadata,
       viewPulseMetadataLayer,
     } = usePulseMetadata();
+    const { recordingInfo, updateRecordingInfo } = useRecording();
     const nextUnsubmittedId = ref<number | null>(null);
     const previousUnsubmittedId = ref<number | null>(null);
     const router = useRouter();
@@ -104,7 +106,7 @@ export default defineComponent({
     const loadedImage = ref(false);
     const allImagesLoaded: Ref<boolean[]> = ref([]);
     const gridEnabled = ref(false);
-    const recordingInfo = ref(false);
+    const recordingInfoDialog = ref(false);
     const compressed = ref(configuration.value.spectrogram_view === 'compressed');
     const colorpickerMenu = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
@@ -146,6 +148,7 @@ export default defineComponent({
     const loading = ref(false);
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
     const loadData = async () => {
+      await updateRecordingInfo(props.id);
       viewMaskOverlay.value = false;
       const tempViewPulseMetadataLayer = viewPulseMetadataLayer.value;
       viewPulseMetadataLayer.value = false;
@@ -392,6 +395,7 @@ export default defineComponent({
       colorScale,
       scaledVals,
       recordingInfo,
+      recordingInfoDialog,
       // Vetting
       goToNextUnreviewed,
       goToPreviousUnreviewed,
@@ -405,12 +409,11 @@ export default defineComponent({
 <template>
   <v-row dense>
     <v-dialog
-      v-model="recordingInfo"
+      v-model="recordingInfoDialog"
       width="600"
     >
       <recording-info-dialog
-        :id="id"
-        @close="recordingInfo = false"
+        @close="recordingInfoDialog = false"
       />
     </v-dialog>
     <v-col>
@@ -422,7 +425,7 @@ export default defineComponent({
                 <v-icon
                   v-bind="subProps"
                   size="40"
-                  @click="recordingInfo = true"
+                  @click="recordingInfoDialog = true"
                 >
                   mdi-information-outline
                 </v-icon>
