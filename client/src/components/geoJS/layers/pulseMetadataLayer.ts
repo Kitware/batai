@@ -142,6 +142,25 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     this.style = { ...defaultPulseMetadataStyle, ...this.style, ...style };
   }
 
+  /**
+   * Called on every zoom event from BaseTextLayer. Avoid full redraw (formatData + draw):
+   * zoom only changes text scale; geometry is unchanged. Update textScaled and redraw
+   * existing data via updateMetadataStyle() to prevent performance issues during zoom.
+   */
+  onZoom(event: { zoomLevel: number }) {
+    this.zoomLevel = event.zoomLevel;
+    this.textScaled = undefined;
+    if ((this.zoomLevel || 0) < -1.5) {
+      this.textScaled = -1.5;
+    } else if ((this.zoomLevel || 0) > 0) {
+      this.textScaled = Math.sqrt(this.zoomLevel || 1);
+    } else {
+      this.textScaled = this.zoomLevel;
+    }
+    if (!this.enabled) return;
+    this.updateMetadataStyle();
+  }
+
   /** Re-apply styles and draw without re-formatting data. Use when only colors/sizes change. */
   updateMetadataStyle() {
     if (!this.enabled) return;
