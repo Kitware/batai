@@ -89,6 +89,7 @@ export default defineComponent({
       viewMaskOverlay,
       filterTags,
       sharedFilterTags,
+      spectrogramFilename,
     } = useState();
     const {
       clearPulseMetadata,
@@ -159,6 +160,7 @@ export default defineComponent({
         ? await getSpectrogramCompressed(props.id)
         : await getSpectrogram(props.id);
       spectrogramData.value = response.data;
+      spectrogramFilename.value = response.data.filename ?? "";
       if (spectrogramData.value.urls.length) {
         const urls = spectrogramData.value.urls;
         images.value = [];
@@ -313,6 +315,7 @@ export default defineComponent({
     });
     onUnmounted(() => {
       window.removeEventListener("keydown", keyboardEvent);
+      spectrogramFilename.value = "";
     });
 
     const otherUsers = computed(() => Object.keys(otherUserAnnotations.value));
