@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
-import usePulseMetadata from "@use/usePulseMetadata";
+import usePulseMetadata, { PULSE_METADATA_LABELS_OPTIONS } from "@use/usePulseMetadata";
 
 export default defineComponent({
   name: "PulseMetadataButton",
@@ -27,8 +27,10 @@ export default defineComponent({
       pulseMetadataHeelColor,
       pulseMetadataCharFreqColor,
       pulseMetadataKneeColor,
+      pulseMetadataLabelColor,
+      pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
-      pulseMetadataShowLabels,
+      pulseMetadataLabels,
       pulseMetadataDurationFreqLineColor,
     } = usePulseMetadata();
 
@@ -48,10 +50,13 @@ export default defineComponent({
       pulseMetadataHeelColor,
       pulseMetadataCharFreqColor,
       pulseMetadataKneeColor,
+      pulseMetadataLabelColor,
+      pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
-      pulseMetadataShowLabels,
+      pulseMetadataLabels,
       pulseMetadataDurationFreqLineColor,
       colorsExpanded,
+      PULSE_METADATA_LABELS_OPTIONS,
     };
   },
 });
@@ -63,7 +68,6 @@ export default defineComponent({
     class="d-flex align-center"
   >
     <v-menu
-      v-if="compressed"
       location="top"
       :close-on-content-click="false"
       open-on-hover
@@ -90,13 +94,16 @@ export default defineComponent({
           Pulse Metrics
         </v-card-title>
         <v-card-text class="pt-0">
-          <div class="mt-1 d-flex align-center">
-            <span class="text-body-2 mr-2">Show frequency labels</span>
-            <v-switch
-              v-model="pulseMetadataShowLabels"
-              hide-details
+          <div class="mt-1">
+            <span class="text-body-2 d-block mb-1">Labels</span>
+            <v-select
+              v-model="pulseMetadataLabels"
+              :items="PULSE_METADATA_LABELS_OPTIONS"
+              item-title="title"
+              item-value="value"
               density="compact"
-              class="mt-0 pt-0"
+              hide-details
+              variant="outlined"
             />
           </div>
           <v-expansion-panels
@@ -175,6 +182,41 @@ export default defineComponent({
                     class="pulse-metadata-color-input mr-2"
                   >
                   <span class="text-caption">{{ pulseMetadataKneeColor }}</span>
+                </div>
+                <div class="d-flex align-center mb-2">
+                  <span
+                    class="text-body-2 mr-2"
+                    style="min-width: 90px"
+                  >
+                    Label
+                  </span>
+                  <input
+                    v-model="pulseMetadataLabelColor"
+                    type="color"
+                    class="pulse-metadata-color-input mr-2"
+                  >
+                  <span class="text-caption">{{ pulseMetadataLabelColor }}</span>
+                </div>
+                <div class="d-flex align-center mb-2">
+                  <span
+                    class="text-body-2 mr-2"
+                    style="min-width: 90px"
+                  >
+                    Label size
+                  </span>
+                  <v-slider
+                    v-model="pulseMetadataLabelFontSize"
+                    min="8"
+                    max="24"
+                    step="1"
+                    hide-details
+                    density="compact"
+                    class="mt-0 flex-grow-1"
+                  >
+                    <template #thumb-label="{ modelValue }">
+                      {{ modelValue }}
+                    </template>
+                  </v-slider>
                 </div>
               </v-expansion-panel-text>
             </v-expansion-panel>

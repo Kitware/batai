@@ -55,7 +55,7 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ["selected", "update:annotation", "create:annotation", "set-cursor"],
+  emits: ["selected", "update:annotation", "create:annotation", "set-cursor", "pulse-metadata-tooltip"],
   setup(props, { emit }) {
     const {
       creationType,
@@ -96,8 +96,10 @@ export default defineComponent({
       pulseMetadataHeelColor,
       pulseMetadataCharFreqColor,
       pulseMetadataKneeColor,
+      pulseMetadataLabelColor,
+      pulseMetadataLabelFontSize,
       pulseMetadataPointSize,
-      pulseMetadataShowLabels,
+      pulseMetadataLabels,
       pulseMetadataDurationFreqLineColor,
     } = usePulseMetadata();
     const selectedAnnotationId: Ref<null | number> = ref(null);
@@ -180,6 +182,9 @@ export default defineComponent({
       }
       if (type === "update:cursor") {
         emit("set-cursor", data.cursor);
+      }
+      if (type === "pulse-metadata-tooltip") {
+        emit("pulse-metadata-tooltip", data);
       }
       if (type === "annotation-cleared") {
         editing.value = false;
@@ -546,8 +551,10 @@ export default defineComponent({
             heelColor: pulseMetadataHeelColor.value,
             charFreqColor: pulseMetadataCharFreqColor.value,
             kneeColor: pulseMetadataKneeColor.value,
+            labelColor: pulseMetadataLabelColor.value,
+            labelFontSize: pulseMetadataLabelFontSize.value,
             pointRadius: pulseMetadataPointSize.value,
-            showLabels: pulseMetadataShowLabels.value,
+            pulseMetadataLabels: pulseMetadataLabels.value,
           });
           pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
           pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
@@ -572,8 +579,10 @@ export default defineComponent({
         pulseMetadataHeelColor,
         pulseMetadataCharFreqColor,
         pulseMetadataKneeColor,
+        pulseMetadataLabelColor,
+        pulseMetadataLabelFontSize,
         pulseMetadataPointSize,
-        pulseMetadataShowLabels,
+        pulseMetadataLabels,
         pulseMetadataDurationFreqLineColor,
       ],
       () => {
@@ -585,12 +594,14 @@ export default defineComponent({
             heelColor: pulseMetadataHeelColor.value,
             charFreqColor: pulseMetadataCharFreqColor.value,
             kneeColor: pulseMetadataKneeColor.value,
+            labelColor: pulseMetadataLabelColor.value,
+            labelFontSize: pulseMetadataLabelFontSize.value,
             pointRadius: pulseMetadataPointSize.value,
-            showLabels: pulseMetadataShowLabels.value,
+            pulseMetadataLabels: pulseMetadataLabels.value,
           });
-          pulseMetadataLayer.redraw();
+          pulseMetadataLayer.updateMetadataStyle();
         }
-      },
+      }
     );
     onUnmounted(() => {
       if (editAnnotationLayer) {
