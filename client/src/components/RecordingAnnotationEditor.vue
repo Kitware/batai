@@ -56,6 +56,8 @@ export default defineComponent({
     const { configuration, currentUser } = useState();
     const updatingAnnotation = ref(false);
     const deletingAnnotation = ref(false);
+    const submittingAnnotation = ref(false);
+    const submitConfirmOpen = ref(false);
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
     const confidence: Ref<number> = ref(props.annotation?.confidence || 1.0);
@@ -121,10 +123,23 @@ export default defineComponent({
       }
     };
 
-    const submitAnnotation = async () => {
-      if (props.annotation && props.recordingId) {
+    const submitAnnotation = () => {
+      submitConfirmOpen.value = true;
+    };
+
+    const closeSubmitConfirm = () => {
+      submitConfirmOpen.value = false;
+    };
+
+    const confirmSubmitAnnotation = async () => {
+      if (!props.annotation || !props.recordingId) return;
+      submittingAnnotation.value = true;
+      try {
         const response = await submitFileAnnotation(props.annotation.id);
+        submitConfirmOpen.value = false;
         emit('submit:annotation', props.annotation, response.data.submitted);
+      } finally {
+        submittingAnnotation.value = false;
       }
     };
 
@@ -161,6 +176,7 @@ export default defineComponent({
     return {
         updatingAnnotation,
         deletingAnnotation,
+        submittingAnnotation,
         speciesEdit,
         confidence,
         comments,
@@ -168,6 +184,9 @@ export default defineComponent({
         onSpeciesModelValue,
         deleteAnnotation,
         submitAnnotation,
+        confirmSubmitAnnotation,
+        closeSubmitConfirm,
+        submitConfirmOpen,
         singleSpecies,
         configuration,
         canSubmit,
@@ -306,6 +325,35 @@ export default defineComponent({
         </v-tooltip>
       </v-row>
     </v-card-text>
+    <v-dialog
+      v-model="submitConfirmOpen"
+      max-width="400"
+      persistent
+    >
+      <v-card>
+        <v-card-title>Submit annotation?</v-card-title>
+        <v-card-text>
+          Are you sure you want to submit this annotation? Once submitted, the annotation cannot be edited.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            text
+            :disabled="submittingAnnotation"
+            @click="closeSubmitConfirm"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="primary"
+            :loading="submittingAnnotation"
+            @click="confirmSubmitAnnotation"
+          >
+            Submit
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
