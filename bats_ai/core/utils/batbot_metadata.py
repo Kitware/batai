@@ -5,7 +5,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 try:
     import batbot
@@ -266,6 +266,17 @@ class SpectrogramContourSegment(TypedDict):
     stop_ms: float
 
 
+class BatBotSlopes(TypedDict, total=False):
+    """Slope values from batbot (kHz/ms). All keys optional."""
+
+    slope_avg_khz_per_ms: float | None
+    slope_hi_avg_khz_per_ms: float | None
+    slope_mid_avg_khz_per_ms: float | None
+    slope_at_hi_fc_knee_khz_per_ms: float | None
+    slope_at_fc_khz_per_ms: float | None
+    slope_at_low_fc_heel_khz_per_ms: float | None
+
+
 class BatBotMetadataCurve(TypedDict):
     segment_index: int
     curve_hz_ms: list[float]
@@ -275,6 +286,7 @@ class BatBotMetadataCurve(TypedDict):
     knee_hz: float
     heel_ms: float
     heel_hz: float
+    slopes: NotRequired[BatBotSlopes]
 
 
 class SpectrogramContours(TypedDict):
@@ -306,6 +318,20 @@ def convert_to_segment_data(
 ) -> list[BatBotMetadataCurve]:
     segment_data: list[BatBotMetadataCurve] = []
     for index, segment in enumerate(metadata.segments):
+        slopes: BatBotSlopes = {}
+        if segment.slope_avg_khz_per_ms is not None:
+            slopes["slope_avg_khz_per_ms"] = segment.slope_avg_khz_per_ms
+        if segment.slope_hi_avg_khz_per_ms is not None:
+            slopes["slope_hi_avg_khz_per_ms"] = segment.slope_hi_avg_khz_per_ms
+        if segment.slope_mid_avg_khz_per_ms is not None:
+            slopes["slope_mid_avg_khz_per_ms"] = segment.slope_mid_avg_khz_per_ms
+        if segment.slope_at_hi_fc_knee_khz_per_ms is not None:
+            slopes["slope_at_hi_fc_knee_khz_per_ms"] = segment.slope_at_hi_fc_knee_khz_per_ms
+        if segment.slope_at_fc_khz_per_ms is not None:
+            slopes["slope_at_fc_khz_per_ms"] = segment.slope_at_fc_khz_per_ms
+        if segment.slope_at_low_fc_heel_khz_per_ms is not None:
+            slopes["slope_at_low_fc_heel_khz_per_ms"] = segment.slope_at_low_fc_heel_khz_per_ms
+
         segment_data_item: BatBotMetadataCurve = {
             "segment_index": index,
             "curve_hz_ms": segment.curve_hz_ms,
@@ -315,6 +341,7 @@ def convert_to_segment_data(
             "knee_hz": segment.hi_fc_knee_hz,
             "heel_ms": segment.lo_fc_heel_ms,
             "heel_hz": segment.lo_fc_heel_hz,
+            "slopes": slopes,
         }
         segment_data.append(segment_data_item)
     return segment_data

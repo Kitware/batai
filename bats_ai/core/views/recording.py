@@ -220,6 +220,15 @@ class PulseContourSchema(Schema):
         )
 
 
+class PulseMetadataSlopesSchema(Schema):
+    slope_avg_khz_per_ms: float | None
+    slope_hi_avg_khz_per_ms: float | None
+    slope_mid_avg_khz_per_ms: float | None
+    slope_at_hi_fc_knee_khz_per_ms: float | None
+    slope_at_fc_khz_per_ms: float | None
+    slope_at_low_fc_heel_khz_per_ms: float | None
+
+
 class PulseMetadataSchema(Schema):
     id: int | None
     index: int
@@ -227,6 +236,7 @@ class PulseMetadataSchema(Schema):
     char_freq: list[float] | None = None  # point [time, frequency]
     knee: list[float] | None = None  # point [time, frequency]
     heel: list[float] | None = None  # point [time, frequency]
+    slopes: PulseMetadataSlopesSchema | None = None  # batbot slope values (kHz/ms)
 
     @classmethod
     def from_orm(cls, obj: PulseMetadata):
@@ -247,6 +257,7 @@ class PulseMetadataSchema(Schema):
             char_freq=point_to_list(obj.char_freq),
             knee=point_to_list(obj.knee),
             heel=point_to_list(obj.heel),
+            slopes=obj.slopes,
         )
 
 
