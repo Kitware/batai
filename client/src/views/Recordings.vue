@@ -39,6 +39,7 @@ export default defineComponent({
       recordingList,
       recordingTagList,
       currentUser,
+      currentRecordingId,
       configuration,
       showSubmittedRecordings,
       myRecordingsDisplay,
@@ -371,6 +372,7 @@ export default defineComponent({
         sortByMy,
         sortByShared,
         getItemLocation,
+        currentRecordingId,
       };
   },
 });
@@ -447,6 +449,7 @@ export default defineComponent({
         :items="recordingList"
         :items-length="totalMyCount"
         :loading="myRecordingsLoading"
+        :row-props="(data: { item: Recording }) => ({ class: { 'current-recording-row': data.item?.id === currentRecordingId } })"
         items-per-page="20"
         :items-per-page-options="[{ value: 10, title: '10' }, { value: 20, title: '20' }, { value: 50, title: '50' }, { value: 100, title: '100' }]"
         density="compact"
@@ -674,6 +677,7 @@ export default defineComponent({
         :items="sharedList"
         :items-length="totalSharedCount"
         :loading="sharedRecordingsLoading"
+        :row-props="(data: { item: Recording }) => ({ class: { 'current-recording-row': data.item?.id === currentRecordingId } })"
         items-per-page="20"
         :items-per-page-options="[{ value: 10, title: '10' }, { value: 20, title: '20' }, { value: 50, title: '50' }, { value: 100, title: '100' }]"
         density="compact"
@@ -858,5 +862,10 @@ export default defineComponent({
 }
 .shared-recordings {
   overflow-y:scroll;
+}
+.my-recordings :deep(tr.current-recording-row),
+.shared-recordings :deep(tr.current-recording-row) {
+  border: 2px solid rgb(var(--v-theme-primary));
+  box-sizing: border-box;
 }
 </style>

@@ -117,6 +117,9 @@ const SHARED_FILTER_TAG_STORAGE_KEY = 'bataiSharedFilterTags';
 const filterTags: Ref<string[]> = ref([]);
 const sharedFilterTags: Ref<string[]> = ref([]);
 
+/** Current spectrogram recording filename (for app bar display). Set by Spectrogram view, cleared when not on spectrogram. */
+const spectrogramFilename: Ref<string> = ref("");
+
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
   const setAnnotationState = (state: AnnotationState) => {
@@ -285,5 +288,6 @@ export default function useState() {
     sharedFilterTags,
     saveFilterTags,
     loadFilterTags,
+    spectrogramFilename,
   };
 }
