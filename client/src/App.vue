@@ -4,6 +4,7 @@ import { defineComponent, inject, ref, onMounted, computed, watch } from "vue";
 import OAuthClient from "@resonant/oauth-client";
 import { useRoute, useRouter } from "vue-router";
 import useState from "./use/useState";
+import useRecording from '@use/useRecording';
 import { getRecordings } from "./api/api";
 import HelpSystem from "./components/HelpSystem.vue";
 
@@ -13,6 +14,7 @@ export default defineComponent({
     const oauthClient = inject<OAuthClient>("oauthClient");
     const router = useRouter();
     const route = useRoute();
+    const { recordingInfo } = useRecording();
     const activeTab = ref(route.path.includes("spectrogram") ? "spectrogram" : "recordings");
     const {
       nextShared,
@@ -29,6 +31,11 @@ export default defineComponent({
     if (oauthClient === undefined) {
       throw new Error('Must provide "oauthClient" into component.');
     }
+
+    const isSpectrogramRoute = computed(() => (
+      route.path.startsWith("/recording") &&
+      route.path.endsWith("/spectrogram")
+    ));
 
     const loginText = ref("Login");
     const checkLogin = async () => {
@@ -92,6 +99,8 @@ export default defineComponent({
       isAdmin,
       isNaBat,
       configuration,
+      isSpectrogramRoute,
+      recordingInfo,
      };
   },
 });
@@ -136,7 +145,14 @@ export default defineComponent({
       >
         NABat Spectrogram Viewer
       </h3>
+      <strong
+        v-if="recordingInfo && isSpectrogramRoute"
+        class="app-bar-recording-name pl-6"
+      >
+        {{ recordingInfo.name }}
+      </strong>
       <v-spacer />
+      <!-- Put recording name here when applicable -->
       <v-tooltip
         v-if="(containsSpectro && nextShared !== false) && !configuration.mark_annotations_completed_enabled"
         bottom
@@ -174,8 +190,19 @@ export default defineComponent({
   </v-app>
 </template>
 
-<style >
+<style>
 html {
   overflow-y:hidden;
+}
+
+.app-bar-recording-name {
+  max-width: 500px;
+  display: inline-block;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  vertical-align: middle;
 }
 </style>
