@@ -54,6 +54,8 @@ export default defineComponent({
   emits: ['update:annotation', 'delete:annotation', 'submit:annotation'],
   setup(props, { emit }) {
     const { configuration, currentUser } = useState();
+    const updatingAnnotation = ref(false);
+    const deletingAnnotation = ref(false);
     const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
     const comments: Ref<string> = ref(props.annotation?.comments || '');
     const confidence: Ref<number> = ref(props.annotation?.confidence || 1.0);
@@ -70,8 +72,9 @@ export default defineComponent({
         }
     });
     const updateAnnotation = async () => {
-        if (props.annotation) {
-            // convert species names to Ids;
+        if (!props.annotation) return;
+        updatingAnnotation.value = true;
+        try {
             const speciesIds: number[] = [];
             speciesEdit.value.forEach((item) => {
                 const found = props.species.find((specie) => specie.species_code === item);
@@ -90,17 +93,32 @@ export default defineComponent({
               apiToken: props.apiToken,
             };
             props.type === 'nabat' ? await patchNABatFileAnnotationLocal(props.annotation.id, updateAnnotation) : await patchFileAnnotation(props.annotation.id, updateAnnotation);
-            // Signal to redownload the updated annotation values if possible
             emit('update:annotation');
+        } finally {
+            updatingAnnotation.value = false;
         }
+    };
 
+    const serverSpeciesCodes = () =>
+      props.annotation?.species?.map((item) => item.species_code || item.common_name) ?? [];
+    const speciesCodesEqual = (a: string[], b: string[]) =>
+      a.length === b.length && a.every((v, i) => v === b[i]);
+
+    const onSpeciesModelValue = (newVal: string[]) => {
+      if (speciesCodesEqual(newVal, serverSpeciesCodes())) return;
+      updateAnnotation();
     };
 
     const deleteAnnotation = async () => {
       if (props.annotation && props.recordingId) {
-            props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken, props.recordingId) : await deleteFileAnnotation(props.annotation.id,);
-            emit('delete:annotation');
+        deletingAnnotation.value = true;
+        try {
+          props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken, props.recordingId) : await deleteFileAnnotation(props.annotation.id,);
+          emit('delete:annotation');
+        } finally {
+          deletingAnnotation.value = false;
         }
+      }
     };
 
     const submitAnnotation = async () => {
@@ -124,6 +142,9 @@ export default defineComponent({
       if (props.annotation && props.annotation.submitted) {
         return 'This annotation has been submitted. This cannot be undone.';
       }
+      if (!speciesEdit.value.length) {
+        return 'Select at least one species before submitting.';
+      }
       return 'Submit this annotation. This action cannot be undone.';
     });
 
@@ -138,10 +159,13 @@ export default defineComponent({
     });
 
     return {
+        updatingAnnotation,
+        deletingAnnotation,
         speciesEdit,
         confidence,
         comments,
         updateAnnotation,
+        onSpeciesModelValue,
         deleteAnnotation,
         submitAnnotation,
         singleSpecies,
@@ -156,9 +180,29 @@ export default defineComponent({
 
 <template>
   <v-card>
+    <v-progress-linear
+      v-if="updatingAnnotation || deletingAnnotation"
+      indeterminate
+      color="primary"
+      class="mb-0"
+    />
     <v-card-title>
-      <v-row class="pa-2">
-        Choose Label
+      <v-row class="pa-2 align-center">
+        <span
+          v-if="updatingAnnotation"
+          class="text-caption text-medium-emphasis mr-2"
+        >
+          Saving…
+        </span>
+        <span
+          v-else-if="deletingAnnotation"
+          class="text-caption text-medium-emphasis mr-2"
+        >
+          Deleting…
+        </span>
+        <span v-else>
+          Choose Label
+        </span>
         <v-tooltip
           v-if="type === 'nabat'"
           width="250"
@@ -183,6 +227,7 @@ export default defineComponent({
           size="x-small"
           color="error"
           class="mt-1"
+          :disabled="updatingAnnotation || deletingAnnotation"
           @click="deleteAnnotation()"
         >
           Delete<v-icon>mdi-delete</v-icon>
@@ -192,9 +237,11 @@ export default defineComponent({
     <v-card-text>
       <v-row>
         <SpeciesInfo
+          v-model="speciesEdit"
           :species-list="species"
-          :selected-species="speciesEdit"
           class="my-2"
+          :disabled="updatingAnnotation || deletingAnnotation"
+          @update:model-value="onSpeciesModelValue"
         />
       </v-row>
       <v-row>
@@ -202,8 +249,8 @@ export default defineComponent({
           :key="`species_${annotation?.id}`"
           v-model="speciesEdit"
           :species-list="species"
-          :disabled="annotation?.submitted"
-          @update:model-value="updateAnnotation()"
+          :disabled="annotation?.submitted || updatingAnnotation || deletingAnnotation"
+          @update:model-value="onSpeciesModelValue"
         />
       </v-row>
       <v-row v-if="type === 'nabat'">
@@ -245,7 +292,7 @@ export default defineComponent({
               <v-btn
                 flat
                 color="primary"
-                :disabled="annotation.submitted || (submittedAnnotationId !== undefined && annotation.id !== submittedAnnotationId)"
+                :disabled="speciesEdit.length === 0 || updatingAnnotation || deletingAnnotation || annotation?.submitted || (submittedAnnotationId !== undefined && annotation?.id !== submittedAnnotationId)"
                 @click="submitAnnotation"
               >
                 Submit

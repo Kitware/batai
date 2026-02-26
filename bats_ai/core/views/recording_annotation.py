@@ -144,7 +144,9 @@ def update_recording_annotation(
     request: HttpRequest, id: int, data: UpdateRecordingAnnotationSchema
 ):
     try:
-        annotation = RecordingAnnotation.objects.get(pk=id)
+        annotation = RecordingAnnotation.objects.select_related(
+            "recording", "recording__owner"
+        ).get(pk=id)
 
         # Check permission
         if annotation.owner != request.user:
@@ -161,10 +163,10 @@ def update_recording_annotation(
         if data.confidence is not None:
             annotation.confidence = data.confidence
         if data.species is not None:
-            annotation.species.clear()  # Clear existing species
-            for species_id in data.species:
-                species = Species.objects.get(pk=species_id)
-                annotation.species.add(species)
+            species_list = list(Species.objects.filter(pk__in=data.species))
+            if len(species_list) != len(data.species):
+                raise HttpError(404, "One or more species IDs not found.")
+            annotation.species.set(species_list)
 
         annotation.save()
         return "Recording annotation updated successfully."

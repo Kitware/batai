@@ -37,6 +37,7 @@ export interface Species {
   genus: string;
   common_name: string;
   species_code_6?: string;
+  species?: string;
   id: number;
   category: "single" | "multiple" | "frequency" | "noid";
 }

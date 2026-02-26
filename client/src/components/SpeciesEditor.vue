@@ -32,12 +32,10 @@ export default defineComponent({
 
     // Update selected IDs when v-model changes from outside
     watch(() => props.modelValue, (newVal) => {
-      if (newVal !== props.modelValue) {
-        selectedNames.value = props.modelValue;
-      }
+        selectedNames.value = newVal ?? [];
     }, { immediate: true });
 
-    // Emit updated species objects when selection changes
+    // Emit when selection changes (parent decides whether to patch based on server state)
     watch(selectedNames, (newNames) => {
       emit('update:modelValue', newNames);
       // Hides the auto-complete menu after making a single selection
@@ -46,7 +44,7 @@ export default defineComponent({
           speciesAutocomplete.value?.blur();
         }
       });
-    });
+    }, { deep: true });
 
     const categoryColors: Record<string, string> =  {
       'single': 'primary',
@@ -68,7 +66,7 @@ export default defineComponent({
       const groupsOrder = ['Single', 'Multiple', 'Frequency', 'Noid'];
       groupsOrder.forEach((key) => {
         result.push({ type: 'subheader', title: key });
-        result.push(...(groups[key]));
+        result.push(...(groups[key] ?? []));
       });
 
       return result;
@@ -89,7 +87,7 @@ export default defineComponent({
       const index = selectedNames.value.findIndex((species) => species === item.species_code);
       if (index !== -1) {
         selectedNames.value.splice(index, 1);
-        emit('update:modelValue', selectedNames.value);
+        // watch(selectedNames, { deep: true }) emits
       }
     };
 
