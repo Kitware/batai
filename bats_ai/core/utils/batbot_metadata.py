@@ -299,7 +299,6 @@ _SEGMENT_SLOPE_KEYS: tuple[str, ...] = (
 )
 
 
-
 class BatBotMetadataCurve(TypedDict):
     segment_index: int
     curve_hz_ms: list[float]
