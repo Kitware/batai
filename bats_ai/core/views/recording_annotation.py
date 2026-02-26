@@ -149,6 +149,9 @@ def update_recording_annotation(
         ).get(pk=id)
 
         # Check permission
+        if annotation.owner != request.user:
+            raise HttpError(403, "Permission denied.")
+
         if annotation.recording.owner != request.user and not annotation.recording.public:
             raise HttpError(403, "Permission denied.")
 
@@ -188,8 +191,8 @@ def delete_recording_annotation(request: HttpRequest, id: int):
 
         annotation = RecordingAnnotation.objects.get(pk=id)
 
-        # Check permission
-        if annotation.recording.owner != request.user:
+        # Check permission: only the annotation owner may delete their own
+        if annotation.owner != request.user:
             raise HttpError(403, "Permission denied.")
 
         annotation.delete()
