@@ -69,10 +69,11 @@ export default defineComponent({
             v-if="data.kneeKhz != null"
             class="d-flex align-center"
           >
-            <span v-if="data.kneeColor"
-                class="color-swatch"
-                :style="{ backgroundColor: data.kneeColor }"
-              />
+            <span
+              v-if="data.kneeColor"
+              class="color-swatch"
+              :style="{ backgroundColor: data.kneeColor }"
+            />
             <span class="text-caption text-medium-emphasis mr-2">Knee</span>
             <span>{{ data.kneeKhz.toFixed(1) }} kHz</span>
           </div>
@@ -87,10 +88,11 @@ export default defineComponent({
             v-if="data.fcKhz != null"
             class="d-flex align-center"
           >
-            <span v-if="data.charFreqColor"
-                class="color-swatch"
-                :style="{ backgroundColor: data.charFreqColor }"
-              />
+            <span
+              v-if="data.charFreqColor"
+              class="color-swatch"
+              :style="{ backgroundColor: data.charFreqColor }"
+            />
             <span class="text-caption text-medium-emphasis mr-2">Fc</span>
             <span>{{ data.fcKhz.toFixed(1) }} kHz</span>
           </div>
@@ -105,10 +107,11 @@ export default defineComponent({
             v-if="data.heelKhz != null"
             class="d-flex align-center"
           >
-            <span v-if="data.heelColor"
-                class="color-swatch"
-                :style="{ backgroundColor: data.heelColor }"
-              />
+            <span
+              v-if="data.heelColor"
+              class="color-swatch"
+              :style="{ backgroundColor: data.heelColor }"
+            />
             <span class="text-caption text-medium-emphasis mr-2">Heel</span>
             <span>{{ data.heelKhz.toFixed(1) }} kHz</span>
           </div>
