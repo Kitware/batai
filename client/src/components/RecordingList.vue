@@ -11,6 +11,7 @@ export default defineComponent({
       sharedList,
       recordingList,
       currentUser,
+      currentRecordingId,
       configuration,
       showSubmittedRecordings,
       myRecordingsDisplay,
@@ -80,6 +81,8 @@ export default defineComponent({
       };
     });
 
+    const isCurrentRecording = (id: number) => currentRecordingId.value === id;
+
     return {
       recordingList,
       sharedList,
@@ -93,6 +96,7 @@ export default defineComponent({
       sharedRecordingsDisplay,
       showSubmittedRecordings,
       styles,
+      isCurrentRecording,
      };
   },
 });
@@ -120,7 +124,10 @@ export default defineComponent({
             v-for="item in myRecordingsDisplay"
             :key="`public_${item.id}`"
           >
-            <v-card class="pa-2 my-2">
+            <v-card
+              class="pa-2 my-2"
+              :class="{ 'recording-list-current': isCurrentRecording(item.id) }"
+            >
               <v-row dense>
                 <v-col class="text-left">
                   <b>Name:</b><router-link
@@ -195,7 +202,10 @@ export default defineComponent({
             v-for="item in modifiedList"
             :key="`public_${item.id}`"
           >
-            <v-card class="pa-2 my-2">
+            <v-card
+              class="pa-2 my-2"
+              :class="{ 'recording-list-current': isCurrentRecording(item.id) }"
+            >
               <v-row dense>
                 <v-col class="text-left">
                   <b class="pr-1">Name:</b>
@@ -233,7 +243,7 @@ export default defineComponent({
                 </v-col>
                 <v-col v-else>
                   <div>
-                    <b>Submitted: </b>
+                    <b>Annotation Submitted: </b>
                     <v-icon
                       v-if="userSubmittedAnnotation(item)"
                       color="success"
@@ -275,5 +285,10 @@ export default defineComponent({
 .overflow-recordings {
   max-height: 50vh;
   overflow-y: auto;
+}
+
+.recording-list-current {
+  border: 2px solid rgb(var(--v-theme-primary));
+  box-sizing: border-box;
 }
 </style>
