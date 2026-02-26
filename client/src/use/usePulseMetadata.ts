@@ -56,13 +56,7 @@ function getInitialLabelsMode(): PulseMetadataLabelsMode {
   if (storedLabels && ["None", "Always", "Hover", "Tooltip"].includes(storedLabels)) {
     return storedLabels as PulseMetadataLabelsMode;
   }
-  const showLabels = (stored as { pulseMetadataShowLabels?: boolean }).pulseMetadataShowLabels;
-  const showOnHover = (stored as { pulseMetadataShowLabelsOnHover?: boolean }).pulseMetadataShowLabelsOnHover;
-  const hoverMode = (stored as { pulseMetadataHoverMode?: string }).pulseMetadataHoverMode;
-  if (showLabels && !showOnHover) return "Always";
-  if (showOnHover && hoverMode === "tooltip") return "Tooltip";
-  if (showOnHover) return "Hover";
-  return "None";
+  return "Tooltip"; // default to Tooltip if no valid stored value
 }
 
 const pulseMetadataList: Ref<PulseMetadata[]> = ref([]);
