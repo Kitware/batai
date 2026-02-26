@@ -269,12 +269,35 @@ class SpectrogramContourSegment(TypedDict):
 class BatBotSlopes(TypedDict, total=False):
     """Slope values from batbot (kHz/ms). All keys optional."""
 
-    slope_avg_khz_per_ms: float | None
-    slope_hi_avg_khz_per_ms: float | None
-    slope_mid_avg_khz_per_ms: float | None
     slope_at_hi_fc_knee_khz_per_ms: float | None
     slope_at_fc_khz_per_ms: float | None
     slope_at_low_fc_heel_khz_per_ms: float | None
+    slope_at_peak_khz_per_ms: float | None
+    slope_avg_khz_per_ms: float | None
+    slope_hi_avg_khz_per_ms: float | None
+    slope_mid_avg_khz_per_ms: float | None
+    slope_lo_avg_khz_per_ms: float | None
+    slope_box_khz_per_ms: float | None
+    slope_hi_box_khz_per_ms: float | None
+    slope_mid_box_khz_per_ms: float | None
+    slope_lo_box_khz_per_ms: float | None
+
+
+_SEGMENT_SLOPE_KEYS: tuple[str, ...] = (
+    "slope_at_hi_fc_knee_khz_per_ms",
+    "slope_at_fc_khz_per_ms",
+    "slope_at_low_fc_heel_khz_per_ms",
+    "slope_at_peak_khz_per_ms",
+    "slope_avg_khz_per_ms",
+    "slope_hi_avg_khz_per_ms",
+    "slope_mid_avg_khz_per_ms",
+    "slope_lo_avg_khz_per_ms",
+    "slope_box_khz_per_ms",
+    "slope_hi_box_khz_per_ms",
+    "slope_mid_box_khz_per_ms",
+    "slope_lo_box_khz_per_ms",
+)
+
 
 
 class BatBotMetadataCurve(TypedDict):
@@ -319,18 +342,10 @@ def convert_to_segment_data(
     segment_data: list[BatBotMetadataCurve] = []
     for index, segment in enumerate(metadata.segments):
         slopes: BatBotSlopes = {}
-        if segment.slope_avg_khz_per_ms is not None:
-            slopes["slope_avg_khz_per_ms"] = segment.slope_avg_khz_per_ms
-        if segment.slope_hi_avg_khz_per_ms is not None:
-            slopes["slope_hi_avg_khz_per_ms"] = segment.slope_hi_avg_khz_per_ms
-        if segment.slope_mid_avg_khz_per_ms is not None:
-            slopes["slope_mid_avg_khz_per_ms"] = segment.slope_mid_avg_khz_per_ms
-        if segment.slope_at_hi_fc_knee_khz_per_ms is not None:
-            slopes["slope_at_hi_fc_knee_khz_per_ms"] = segment.slope_at_hi_fc_knee_khz_per_ms
-        if segment.slope_at_fc_khz_per_ms is not None:
-            slopes["slope_at_fc_khz_per_ms"] = segment.slope_at_fc_khz_per_ms
-        if segment.slope_at_low_fc_heel_khz_per_ms is not None:
-            slopes["slope_at_low_fc_heel_khz_per_ms"] = segment.slope_at_low_fc_heel_khz_per_ms
+        for key in _SEGMENT_SLOPE_KEYS:
+            value = getattr(segment, key, None)
+            if value is not None:
+                slopes[key] = value
 
         segment_data_item: BatBotMetadataCurve = {
             "segment_index": index,

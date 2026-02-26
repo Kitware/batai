@@ -221,12 +221,18 @@ class PulseContourSchema(Schema):
 
 
 class PulseMetadataSlopesSchema(Schema):
-    slope_avg_khz_per_ms: float | None
-    slope_hi_avg_khz_per_ms: float | None
-    slope_mid_avg_khz_per_ms: float | None
     slope_at_hi_fc_knee_khz_per_ms: float | None
     slope_at_fc_khz_per_ms: float | None
     slope_at_low_fc_heel_khz_per_ms: float | None
+    slope_at_peak_khz_per_ms: float | None
+    slope_avg_khz_per_ms: float | None
+    slope_hi_avg_khz_per_ms: float | None
+    slope_mid_avg_khz_per_ms: float | None
+    slope_lo_avg_khz_per_ms: float | None
+    slope_box_khz_per_ms: float | None
+    slope_hi_box_khz_per_ms: float | None
+    slope_mid_box_khz_per_ms: float | None
+    slope_lo_box_khz_per_ms: float | None
 
 
 class PulseMetadataSchema(Schema):
