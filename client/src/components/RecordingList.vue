@@ -2,6 +2,7 @@
 import { defineComponent, ref, Ref, onMounted, computed, watch, CSSProperties } from 'vue';
 import { FileAnnotation, getRecordings, Recording, Species, type RecordingListParams } from '../api/api';
 import useState from '@use/useState';
+import useRecording, { recordingInfo } from '@use/useRecording';
 import  { EditingRecording } from './UploadRecording.vue';
 
 export default defineComponent({
@@ -19,6 +20,10 @@ export default defineComponent({
       sharedFilterTags,
     } = useState();
     const editingRecording: Ref<EditingRecording | null> = ref(null);
+    const { recordingInfo } = useRecording();
+    function isCurrentRecording(id: number) {
+      return id === recordingInfo.value?.id;
+    }
 
     // Only grab 20 recordings at a time to avoid loading all recordings at once.
     const buildListParams = (): RecordingListParams => {
@@ -93,6 +98,7 @@ export default defineComponent({
       sharedRecordingsDisplay,
       showSubmittedRecordings,
       styles,
+      isCurrentRecording
      };
   },
 });
@@ -120,7 +126,13 @@ export default defineComponent({
             v-for="item in myRecordingsDisplay"
             :key="`public_${item.id}`"
           >
-            <v-card class="pa-2 my-2">
+            <v-card
+              :class="{
+                'pa-2': true,
+                'my-2': true,
+                'border-lg': isCurrentRecording(item.id),
+              }"
+            >
               <v-row dense>
                 <v-col class="text-left">
                   <b>Name:</b><router-link
