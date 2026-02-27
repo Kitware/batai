@@ -4,9 +4,14 @@ from __future__ import annotations
 from django.db import migrations, models
 import django.db.models.deletion
 
+# This migration introduces a custom through model
+# (RecordingAnnotationSpecies) to store ordered species per
+# RecordingAnnotation, migrates existing relations into it,
+# and redefines the species Many-to-Many field to use that through model
 
-def copy_species_to_through(apps, schema_editor):
-    """Copy existing M2M relations into RecordingAnnotationSpecies with order."""
+
+def copy_species_to_recording_annotation_species(apps, schema_editor):
+    """Copy existing relations into RecordingAnnotationSpecies with order."""
     RecordingAnnotation = apps.get_model("core", "RecordingAnnotation")
     RecordingAnnotationSpecies = apps.get_model("core", "RecordingAnnotationSpecies")
     for ann in RecordingAnnotation.objects.prefetch_related("species").all():
@@ -20,7 +25,7 @@ def copy_species_to_through(apps, schema_editor):
 
 
 def noop_reverse(apps, schema_editor):
-    """Reverse migration does not restore old M2M table data."""
+    """Reverse migration does not restore old Many-to-Many table data."""
 
 
 class Migration(migrations.Migration):
@@ -62,15 +67,7 @@ class Migration(migrations.Migration):
                 "unique_together": {("recording_annotation", "order")},
             },
         ),
-        # Copy data before we remove the old M2M: temporarily we have both.
-        # RunPython runs after CreateModel, so the through table exists but is empty.
-        # The old M2M is still on RecordingAnnotation until we AlterField.
-        # So we need to copy from old M2M to through *before* removing the field.
-        # But CreateModel only creates the through table; the field on RecordingAnnotation
-        # is still the old M2M. So we can: 1) Create through model 2) RunPython copy
-        # (read from ann.species.all() - that still uses the OLD M2M table) 3) RemoveField
-        # species 4) AddField species with through.
-        migrations.RunPython(copy_species_to_through, noop_reverse),
+        migrations.RunPython(copy_species_to_recording_annotation_species, noop_reverse),
         migrations.RemoveField(
             model_name="recordingannotation",
             name="species",
@@ -81,6 +78,7 @@ class Migration(migrations.Migration):
             field=models.ManyToManyField(
                 blank=True,
                 through="core.RecordingAnnotationSpecies",
+                through_fields=("recording_annotation", "species"),
                 to="core.species",
             ),
         ),

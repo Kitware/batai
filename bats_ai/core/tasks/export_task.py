@@ -37,10 +37,11 @@ def build_filters(filters, has_confidence=False):
 
 
 def _annotation_species_ordered(annotation):
-    """Return species list in order; supports RecordingAnnotation (through) and plain M2M."""
+    """Return species list in order; supports RecordingAnnotation and plain Many-to-Many."""
     if hasattr(annotation, "recordingannotationspecies_set"):
-        through = annotation.recordingannotationspecies_set.order_by("order")
-        return [t.species for t in through]
+        # if it is an instance of RecordingAnnotation, use the through model
+        species_ordered = annotation.recordingannotationspecies_set.order_by("order")
+        return [t.species for t in species_ordered]
     return list(annotation.species.all())
 
 

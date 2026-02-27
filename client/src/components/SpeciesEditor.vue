@@ -114,7 +114,7 @@ export default defineComponent({
       @click="openAddSpeciesConfirm"
     >
       <v-icon start>mdi-plus</v-icon>
-      Add species
+      Add Bat
     </v-btn>
     <v-dialog
       v-model="addSpeciesConfirmOpen"
@@ -122,9 +122,9 @@ export default defineComponent({
       persistent
     >
       <v-card>
-        <v-card-title>Add another species?</v-card-title>
+        <v-card-title>Add another Bat?</v-card-title>
         <v-card-text>
-          This is intended only when multiple species are found in the same recording. Do you want to add a new species?
+          This is intended only when multiple bats are found in the same recording. Do you want to add a new bat?
         </v-card-text>
         <v-card-actions>
           <v-spacer />
