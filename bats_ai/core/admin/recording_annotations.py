@@ -30,7 +30,6 @@ class RecordingAnnotationAdmin(admin.ModelAdmin):
     inlines = [RecordingAnnotationSpeciesInline]
     autocomplete_fields = ["owner"]
 
-    # Custom method to display the species codes as a comma-separated string (ordered, with duplicates)
     @admin.display(description="Species Codes")
     def species_codes(self, obj):
         through = obj.recordingannotationspecies_set.order_by("order")

@@ -9,8 +9,6 @@ def copy_species_to_through(apps, schema_editor):
     """Copy existing M2M relations into RecordingAnnotationSpecies with order."""
     RecordingAnnotation = apps.get_model("core", "RecordingAnnotation")
     RecordingAnnotationSpecies = apps.get_model("core", "RecordingAnnotationSpecies")
-    # Old M2M table: core_recordingannotation_species (recordingannotation_id, species_id)
-    # We need to read from the old table. Through the ORM we can't; use raw SQL or get from RecordingAnnotation.
     for ann in RecordingAnnotation.objects.prefetch_related("species").all():
         species_list = list(ann.species.all())
         for order, species in enumerate(species_list):

@@ -27,7 +27,7 @@ class RecordingAnnotationSchema(Schema):
     hasDetails: bool
 
     @classmethod
-    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: RecordingAnnotation):
         # Ordered list with duplicates via through model
         species_ordered = obj.recordingannotationspecies_set.order_by("order")
         species_list = [t.species for t in species_ordered]
@@ -56,7 +56,7 @@ class RecordingAnnotationDetailsSchema(Schema):
     submitted: bool
 
     @classmethod
-    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: RecordingAnnotation):
         species_ordered = obj.recordingannotationspecies_set.order_by("order")
         species_list = [t.species for t in species_ordered]
         return cls(
