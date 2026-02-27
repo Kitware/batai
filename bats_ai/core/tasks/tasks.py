@@ -154,6 +154,7 @@ def recording_compute_spectrogram(self, recording_id: int):
                             "char_freq": Point(segment["char_freq_ms"], segment["char_freq_hz"]),
                             "knee": Point(segment["knee_ms"], segment["knee_hz"]),
                             "heel": Point(segment["heel_ms"], segment["heel_hz"]),
+                            "slopes": segment.get("slopes"),
                         },
                     )
                 else:
@@ -166,6 +167,9 @@ def recording_compute_spectrogram(self, recording_id: int):
                     )
                     pulse_metadata_obj.knee = Point(segment["knee_ms"], segment["knee_hz"])
                     pulse_metadata_obj.heel = Point(segment["heel_ms"], segment["heel_hz"])
+                    slopes = segment.get("slopes")
+                    if slopes:
+                        pulse_metadata_obj.slopes = slopes
                     pulse_metadata_obj.save()
 
         if processing_task:

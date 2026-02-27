@@ -69,36 +69,59 @@ export default defineComponent({
             v-if="data.kneeKhz != null"
             class="d-flex align-center"
           >
-            <span v-if="data.kneeColor"
-                class="color-swatch"
-                :style="{ backgroundColor: data.kneeColor }"
-              />
+            <span
+              v-if="data.kneeColor"
+              class="color-swatch"
+              :style="{ backgroundColor: data.kneeColor }"
+            />
             <span class="text-caption text-medium-emphasis mr-2">Knee</span>
             <span>{{ data.kneeKhz.toFixed(1) }} kHz</span>
+          </div>
+          <div v-if="data.slopeAtHiFcKneeKhzPerMs != null"> 
+            <span
+              class="text-caption ml-4 text-medium-emphasis"
+            >
+              ({{ data.slopeAtHiFcKneeKhzPerMs.toFixed(2) }} kHz/ms)
+            </span>
           </div>
           <div
             v-if="data.fcKhz != null"
             class="d-flex align-center"
           >
-            <span v-if="data.charFreqColor"
-                class="color-swatch"
-                :style="{ backgroundColor: data.charFreqColor }"
-              />
+            <span
+              v-if="data.charFreqColor"
+              class="color-swatch"
+              :style="{ backgroundColor: data.charFreqColor }"
+            />
             <span class="text-caption text-medium-emphasis mr-2">Fc</span>
             <span>{{ data.fcKhz.toFixed(1) }} kHz</span>
+          </div>
+          <div v-if="data.slopeAtFcKhzPerMs != null"> 
+            <span
+              class="text-caption ml-4 text-medium-emphasis"
+            >
+              ({{ data.slopeAtFcKhzPerMs.toFixed(2) }} kHz/ms)
+            </span>
           </div>
           <div
             v-if="data.heelKhz != null"
             class="d-flex align-center"
           >
-            <span v-if="data.heelColor"
-                class="color-swatch"
-                :style="{ backgroundColor: data.heelColor }"
-              />
+            <span
+              v-if="data.heelColor"
+              class="color-swatch"
+              :style="{ backgroundColor: data.heelColor }"
+            />
             <span class="text-caption text-medium-emphasis mr-2">Heel</span>
             <span>{{ data.heelKhz.toFixed(1) }} kHz</span>
           </div>
-
+          <div v-if="data.slopeAtLowFcHeelKhzPerMs != null"> 
+            <span
+              class="text-caption ml-4 text-medium-emphasis"
+            >
+              ({{ data.slopeAtLowFcHeelKhzPerMs.toFixed(2) }} kHz/ms)
+            </span>
+          </div>
           <div class="d-flex align-center">
             <span class="text-caption text-medium-emphasis mr-2">Duration</span>
             <span>{{ data.durationMs.toFixed(1) }} ms</span>

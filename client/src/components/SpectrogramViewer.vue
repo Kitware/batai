@@ -300,7 +300,7 @@ export default defineComponent({
     <div
       id="spectro"
       ref="containerRef"
-      class="playback-container"
+      class="playback-container playback-container--with-tooltip"
       :style="{ cursor: cursor }"
       @mousemove="cursorHandler.handleMouseMove"
       @mouseleave="cursorHandler.handleMouseLeave"

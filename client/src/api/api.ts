@@ -658,6 +658,22 @@ async function getComputedPulseContour(recordingId: number) {
   return result.data;
 }
 
+/** Batbot slope values (kHz/ms). Keys match backend BatBotSlopes. */
+export interface PulseMetadataSlopes {
+  slope_at_hi_fc_knee_khz_per_ms?: number;
+  slope_at_fc_khz_per_ms?: number;
+  slope_at_low_fc_heel_khz_per_ms?: number;
+  slope_at_peak_khz_per_ms?: number;
+  slope_avg_khz_per_ms?: number;
+  slope_hi_avg_khz_per_ms?: number;
+  slope_mid_avg_khz_per_ms?: number;
+  slope_lo_avg_khz_per_ms?: number;
+  slope_box_khz_per_ms?: number;
+  slope_hi_box_khz_per_ms?: number;
+  slope_mid_box_khz_per_ms?: number;
+  slope_lo_box_khz_per_ms?: number;
+}
+
 export interface PulseMetadata {
   id: number;
   index: number;
@@ -665,6 +681,7 @@ export interface PulseMetadata {
   char_freq: number[] | null; // point [time, frequency]
   knee: number[] | null; // point [time, frequency]
   heel: number[] | null; // point [time, frequency]
+  slopes?: PulseMetadataSlopes | null;
 }
 
 async function getPulseMetadata(recordingId: number) {

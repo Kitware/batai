@@ -14,3 +14,4 @@ class PulseMetadata(models.Model):
     char_freq = models.PointField(null=True, blank=True)
     knee = models.PointField(null=True, blank=True)
     heel = models.PointField(null=True, blank=True)
+    slopes = models.JSONField(null=True, blank=True)
