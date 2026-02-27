@@ -156,7 +156,10 @@ export default defineComponent({
           {{ buttonLabel }}
         </v-btn>
       </template>
-      <v-card max-width="320" class="pa-3">
+      <v-card
+        max-width="320"
+        class="pa-3"
+      >
         <template v-if="selectedSpecies">
           <div class="text-subtitle-2 mb-2">Selected species</div>
           <div class="text-body-2">
@@ -171,21 +174,36 @@ export default defineComponent({
             </div>
           </div>
         </template>
-        <div class="text-caption text-medium-emphasis mt-2 pt-2" style="border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));">
+        <div
+          class="text-caption text-medium-emphasis mt-2 pt-2"
+          style="border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));"
+        >
           Click the button to open the editor for all species.
         </div>
       </v-card>
     </v-menu>
-    <v-dialog v-model="displayDialog" width="800" persistent>
+    <v-dialog
+      v-model="displayDialog"
+      width="800"
+      persistent
+    >
       <v-card class="d-flex flex-column">
         <v-card-title class="flex-shrink-0 d-flex flex-column">
           <v-row class="align-center">
             <h2 class="mr-4">Select Species</h2>
             <v-spacer />
-            <v-icon size="large" @click="closeDialog">mdi-close</v-icon>
+            <v-icon
+              size="large"
+              @click="closeDialog"
+            >mdi-close</v-icon>
           </v-row>
           <v-row class="mt-2">
-            <v-chip color="#0000FF" class="ma-1" label small>
+            <v-chip
+              color="#0000FF"
+              class="ma-1"
+              label
+              small
+            >
               Highlighted = Selected Species
             </v-chip>
           </v-row>
@@ -235,7 +253,7 @@ export default defineComponent({
                   >
                     {{
                       item.category.charAt(0).toUpperCase() +
-                      item.category.slice(1)
+                        item.category.slice(1)
                     }}
                   </span>
                 </td>
@@ -248,10 +266,36 @@ export default defineComponent({
         <v-card-actions class="flex-shrink-0">
           <v-spacer />
           <template v-if="hasChanges">
-            <v-btn variant="outlined" @click="closeDialog"> Cancel </v-btn>
-            <v-btn color="primary" @click="saveAndClose"> Save </v-btn>
+            <v-btn 
+              v-tooltip="'Cancel'"
+              variant="outlined"
+              @click="closeDialog"
+            >
+              <v-icon>
+                mdi-close
+              </v-icon>
+              Cancel
+            </v-btn>
+            <v-btn 
+              v-tooltip="'Save'"
+              color="primary"
+              @click="saveAndClose"
+            >
+              <v-icon>
+                mdi-content-save
+              </v-icon>
+              Save
+            </v-btn>
           </template>
-          <v-btn v-else color="primary" variant="outlined" @click="closeDialog">
+          <v-btn
+            v-else
+            color="primary"
+            variant="outlined"
+            @click="closeDialog"
+          >
+            <v-icon>
+              mdi-check
+            </v-icon>
             OK
           </v-btn>
         </v-card-actions>

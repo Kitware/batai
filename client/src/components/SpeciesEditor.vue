@@ -105,15 +105,19 @@ export default defineComponent({
       />
     </div>
     <v-btn
+      v-tooltip="'Add another species'"
       size="small"
       variant="outlined"
       color="primary"
       :disabled="disabled"
       class="mt-1 mb-2"
-      v-tooltip="'Add another species'"
       @click="openAddSpeciesConfirm"
     >
-      <v-icon start>mdi-plus</v-icon>
+      <v-icon start>
+        <v-icon>
+          mdi-plus
+        </v-icon>
+      </v-icon>
       Add Bat
     </v-btn>
     <v-dialog

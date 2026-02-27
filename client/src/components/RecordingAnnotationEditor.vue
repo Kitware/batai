@@ -11,13 +11,11 @@ import {
 } from "../api/api";
 import { deleteNABatFileAnnotation, patchNABatFileAnnotationLocal } from "../api/NABatApi";
 import useState from "@use/useState";
-import SpeciesInfo from "./SpeciesInfo.vue";
 import SpeciesEditor from "./SpeciesEditor.vue";
 import SpeciesNABatSave from "./SpeciesNABatSave.vue";
 export default defineComponent({
   name: "AnnotationEditor",
   components: {
-    SpeciesInfo,
     SpeciesEditor,
     SpeciesNABatSave,
   },

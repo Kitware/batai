@@ -171,13 +171,13 @@ export default defineComponent({
     </v-autocomplete>
     <v-btn
       v-if="showDelete"
+      v-tooltip="'Delete species'"
       icon
       size="x-small"
       variant="text"
       color="error"
       :disabled="disabled"
       class="ml-1"
-      v-tooltip="'Delete species'"
       @click="$emit('delete')"
     >
       <v-icon>mdi-delete</v-icon>
