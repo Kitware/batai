@@ -135,7 +135,7 @@ def get_email_if_authorized(
         return JsonResponse({"error": "Failed to connect to NABat API"}, status=500)
 
     if response.status_code != 200:
-        logger.error(f"NABat API rejected access: {response.status_code} - {response.text}")
+        logger.error("NABat API rejected access: %s - %s", response.status_code, response.text)
         return JsonResponse(
             {"error": "Failed to verify access with NABat API"}, status=response.status_code
         )
@@ -190,7 +190,7 @@ def update_nabat_species(species_id: int, api_token: str, recording_id: int, sur
         )
         json_response = response.json()
         if json_response.get("errors"):
-            logger.error(f"API Error: {json_response['errors']}")
+            logger.error("API Error: %s", json_response["errors"])
             return JsonResponse(json_response, status=500)
     except Exception:
         logger.exception("API Request Failed")
@@ -263,14 +263,14 @@ def generate_nabat_recording(
             logger.exception("Error processing batch data")
             return JsonResponse({"error": f"Error with API Request: {e}"}, status=500)
     else:
-        logger.error(f"Failed to fetch data: {response.status_code}, {response.text}")
+        logger.error("Failed to fetch data: %s, %s", response.status_code, response.text)
         return JsonResponse(response.json(), status=500)
 
 
-@router.get("/{id}/spectrogram", auth=admin_auth)
-def get_spectrogram(request: HttpRequest, id: int):
+@router.get("/{pk}/spectrogram", auth=admin_auth)
+def get_spectrogram(request: HttpRequest, pk: int):
     try:
-        nabat_recording = NABatRecording.objects.get(pk=id)
+        nabat_recording = NABatRecording.objects.get(pk=pk)
     except NABatRecording.DoesNotExist:
         return {"error": "Recording not found"}
 
@@ -305,10 +305,10 @@ def get_spectrogram(request: HttpRequest, id: int):
     return spectro_data
 
 
-@router.get("/{id}/spectrogram/compressed", auth=admin_auth)
-def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
+@router.get("/{pk}/spectrogram/compressed", auth=admin_auth)
+def get_spectrogram_compressed(request: HttpRequest, pk: int, apiToken: str):
     try:
-        nabat_recording = NABatRecording.objects.get(pk=id)
+        nabat_recording = NABatRecording.objects.get(pk=pk)
     except NABatRecording.DoesNotExist:
         return JsonResponse({"error": "Recording does not exist"}, status=404)
 
@@ -316,7 +316,7 @@ def get_spectrogram_compressed(request: HttpRequest, id: int, apiToken: str):
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
 
-    compressed_spectrogram = NABatCompressedSpectrogram.objects.filter(nabat_recording=id).first()
+    compressed_spectrogram = NABatCompressedSpectrogram.objects.filter(nabat_recording=pk).first()
 
     if not compressed_spectrogram:
         return JsonResponse({"error": "Compressed Spectrogram not found"}, status=404)
@@ -352,7 +352,7 @@ class NABatRecordingAnnotationSchema(Schema):
     hasDetails: bool
 
     @classmethod
-    def from_orm(cls, obj: NABatRecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: NABatRecordingAnnotation):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             owner=obj.user_email,
@@ -375,7 +375,7 @@ class NABatRecordingAnnotationDetailsSchema(Schema):
     hasDetails: bool
 
     @classmethod
-    def from_orm(cls, obj: NABatRecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: NABatRecordingAnnotation):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             owner=obj.user_email,
@@ -426,14 +426,14 @@ def get_nabat_recording_annotation(
     ]
 
 
-@router.get("recording-annotation/{id}", auth=admin_auth, response=NABatRecordingAnnotationSchema)
-def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
-    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=id)
+@router.get("recording-annotation/{pk}", auth=admin_auth, response=NABatRecordingAnnotationSchema)
+def get_recording_annotation(request: HttpRequest, pk: int, apiToken: str):
+    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=pk)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
     try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=id)
+        annotation = NABatRecordingAnnotation.objects.get(pk=pk)
 
         if user_email:
             annotation = annotation.filter(Q(user_email=user_email) | Q(user_email__isnull=True))
@@ -444,18 +444,18 @@ def get_recording_annotation(request: HttpRequest, id: int, apiToken: str):
 
 
 @router.get(
-    "recording-annotation/{id}/details",
+    "recording-annotation/{pk}/details",
     auth=admin_auth,
     response=NABatRecordingAnnotationDetailsSchema,
 )
-def get_recording_annotation_details(request: HttpRequest, id: int, apiToken: str):
-    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=id)
+def get_recording_annotation_details(request: HttpRequest, pk: int, apiToken: str):
+    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=pk)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
     try:
         annotation = NABatRecordingAnnotation.objects.get(
-            Q(pk=id) & (Q(user_email=user_email) | Q(user_email__isnull=True))
+            Q(pk=pk) & (Q(user_email=user_email) | Q(user_email__isnull=True))
         )
 
         return NABatRecordingAnnotationDetailsSchema.from_orm(annotation).dict()
@@ -499,9 +499,9 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
         return JsonResponse({"error": "One or more species IDs not found."}, 404)
 
 
-@router.patch("recording-annotation/{id}", auth=None, response={200: str})
+@router.patch("recording-annotation/{pk}", auth=None, response={200: str})
 def update_recording_annotation(
-    request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
+    request: HttpRequest, pk: int, data: NABatCreateRecordingAnnotationSchema
 ):
     """Update an existing recording annotation but doesn't update NABat.
 
@@ -519,7 +519,7 @@ def update_recording_annotation(
         return email_or_response
     user_email = email_or_response  # safe to use
     try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_email=user_email)
+        annotation = NABatRecordingAnnotation.objects.get(pk=pk, user_email=user_email)
         # Check permission
 
         # Update fields if provided
@@ -543,9 +543,9 @@ def update_recording_annotation(
         return JsonResponse({"error": "One or more species IDs not found."}, 404)
 
 
-@router.patch("recording-annotation/{id}/push-to-nabat", auth=None, response={200: str})
+@router.patch("recording-annotation/{pk}/push-to-nabat", auth=None, response={200: str})
 def update_nabat_recording_annotation(
-    request: HttpRequest, id: int, data: NABatCreateRecordingAnnotationSchema
+    request: HttpRequest, pk: int, data: NABatCreateRecordingAnnotationSchema
 ):
     """Update an existing recording annotation in NABat."""
     email_or_response = get_email_if_authorized(
@@ -556,7 +556,7 @@ def update_nabat_recording_annotation(
     user_email = email_or_response  # safe to use
 
     try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_email=user_email)
+        annotation = NABatRecordingAnnotation.objects.get(pk=pk, user_email=user_email)
         # Check permission
 
         # Update fields if provided
@@ -587,14 +587,14 @@ def update_nabat_recording_annotation(
 
 
 # TODO: Determine if this will be implemented for NABat
-@router.delete("recording-annotation/{id}", auth=None, response={200: str})
-def delete_recording_annotation(request: HttpRequest, id: int, apiToken: str, recordingId: str):
+@router.delete("recording-annotation/{pk}", auth=None, response={200: str})
+def delete_recording_annotation(request: HttpRequest, pk: int, apiToken: str, recordingId: str):
     email_or_response = get_email_if_authorized(request, apiToken, recording_pk=recordingId)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
     try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=id, user_email=user_email)
+        annotation = NABatRecordingAnnotation.objects.get(pk=pk, user_email=user_email)
 
         # Check permission
         annotation.delete()

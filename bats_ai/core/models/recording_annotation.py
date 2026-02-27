@@ -28,3 +28,8 @@ class RecordingAnnotation(TimeStampedModel, models.Model):
         blank=True, null=True, help_text="Additional information about the models/data"
     )
     submitted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return (
+            f"RecordingAnnotation {self.pk} (recording={self.recording_id}, owner={self.owner_id})"
+        )

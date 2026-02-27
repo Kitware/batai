@@ -22,6 +22,9 @@ class CompressedSpectrogram(TimeStampedModel, models.Model):
     widths = ArrayField(ArrayField(models.FloatField()))
     cache_invalidated = models.BooleanField(default=True)
 
+    def __str__(self):
+        return f"CompressedSpectrogram {self.pk} (recording={self.recording_id})"
+
     @property
     def image_url_list(self):
         """Ordered list of image URLs for this spectrogram."""

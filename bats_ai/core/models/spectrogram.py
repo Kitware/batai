@@ -18,6 +18,9 @@ class Spectrogram(TimeStampedModel, models.Model):
     frequency_min = models.FloatField()  # hz
     frequency_max = models.FloatField()  # hz
 
+    def __str__(self):
+        return f"Spectrogram {self.pk} (recording={self.recording_id})"
+
     @property
     def image_url_list(self):
         """Ordered list of image URLs for this spectrogram."""

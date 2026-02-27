@@ -116,7 +116,7 @@ class RecordingAnnotationSchema(Schema):
     submitted: bool
 
     @classmethod
-    def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+    def from_orm(cls, obj: RecordingAnnotation):
         return cls(
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
             owner=obj.owner.username,
@@ -179,7 +179,7 @@ class AnnotationSchema(Schema):
     owner_email: str = None
 
     @classmethod
-    def from_orm(cls, obj: Annotations, owner_email=None, **kwargs):
+    def from_orm(cls, obj: Annotations, owner_email=None):
         return cls(
             start_time=obj.start_time,
             end_time=obj.end_time,
@@ -274,8 +274,9 @@ def create_recording(
     audio_file: File[UploadedFile],
     publicVal: bool = False,
 ):
-    converted_date = datetime.strptime(payload.recorded_date, "%Y-%m-%d")
-    converted_time = datetime.strptime(payload.recorded_time, "%H%M%S")
+    converted_date = date.fromisoformat(payload.recorded_date)
+    time_str = payload.recorded_time
+    converted_time = time(int(time_str[:2]), int(time_str[2:4]), int(time_str[4:6]))
     point = None
     if payload.latitude and payload.longitude:
         point = Point(payload.longitude, payload.latitude)
@@ -311,10 +312,10 @@ def create_recording(
     return {"message": "Recording updated successfully", "id": recording.pk}
 
 
-@router.patch("/{id}")
-def update_recording(request: HttpRequest, id: int, recording_data: RecordingUploadSchema):
+@router.patch("/{pk}")
+def update_recording(request: HttpRequest, pk: int, recording_data: RecordingUploadSchema):
     try:
-        recording = Recording.objects.get(pk=id, owner=request.user)
+        recording = Recording.objects.get(pk=pk, owner=request.user)
     except Recording.DoesNotExist:
         return {"error": "Recording not found"}
 
@@ -325,11 +326,10 @@ def update_recording(request: HttpRequest, id: int, recording_data: RecordingUpl
     if recording_data.equipment:
         recording.equipment = recording_data.equipment
     if recording_data.recorded_date:
-        converted_date = datetime.strptime(recording_data.recorded_date, "%Y-%m-%d")
-        recording.recorded_date = converted_date
+        recording.recorded_date = date.fromisoformat(recording_data.recorded_date)
     if recording_data.recorded_time:
-        converted_time = datetime.strptime(recording_data.recorded_time, "%H%M%S")
-        recording.recorded_time = converted_time
+        time_str = recording_data.recorded_time
+        recording.recorded_time = time(int(time_str[:2]), int(time_str[2:4]), int(time_str[4:6]))
     if recording_data.publicVal is not None and recording_data.publicVal != recording.public:
         recording.public = recording_data.publicVal
     if recording_data.latitude and recording_data.longitude:
@@ -421,13 +421,13 @@ def _base_recordings_queryset(request: HttpRequest, public: bool | None) -> Quer
     )
 
 
-@router.delete("/{id}")
+@router.delete("/{pk}")
 def delete_recording(
     request,
-    id: int,
+    pk: int,
 ):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
 
         # Check if the user owns the recording
         if recording.owner == request.user:
@@ -612,12 +612,12 @@ def get_unsubmitted_neighbors(
     return UnsubmittedNeighborsResponse(next_id=next_id, previous_id=previous_id)
 
 
-@router.get("/{id}/")
-def get_recording(request: HttpRequest, id: int):
+@router.get("/{pk}/")
+def get_recording(request: HttpRequest, pk: int):
     # Filter recordings based on the owner's id or public=True
     try:
         recordings = (
-            Recording.objects.filter(pk=id)
+            Recording.objects.filter(pk=pk)
             .annotate(tags_text=ArrayAgg("tags__text", filter=Q(tags__text__isnull=False)))
             .values()
         )
@@ -657,7 +657,7 @@ def get_recording(request: HttpRequest, id: int):
             recording["userMadeAnnotations"] = user_has_annotations
             # Only expose file-level annotations owned by the current user
             fileAnnotations = RecordingAnnotation.objects.filter(
-                recording=id, owner=request.user
+                recording=pk, owner=request.user
             ).order_by("confidence")
             recording["fileAnnotations"] = [
                 RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
@@ -692,10 +692,10 @@ def get_recording_annotations(request: HttpRequest, recording_id: int):
     ]
 
 
-@router.get("/{id}/spectrogram")
-def get_spectrogram(request: HttpRequest, id: int):
+@router.get("/{pk}/spectrogram")
+def get_spectrogram(request: HttpRequest, pk: int):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
     except Recording.DoesNotExist:
         return {"error": "Recording not found"}
 
@@ -764,11 +764,11 @@ def get_spectrogram(request: HttpRequest, id: int):
     return spectro_data
 
 
-@router.get("/{id}/spectrogram/compressed")
-def get_spectrogram_compressed(request: HttpRequest, id: int):
+@router.get("/{pk}/spectrogram/compressed")
+def get_spectrogram_compressed(request: HttpRequest, pk: int):
     try:
-        recording = Recording.objects.get(pk=id)
-        compressed_spectrogram = CompressedSpectrogram.objects.filter(recording=id).first()
+        recording = Recording.objects.get(pk=pk)
+        compressed_spectrogram = CompressedSpectrogram.objects.filter(recording=pk).first()
     except compressed_spectrogram.DoesNotExist:
         return {"error": "Compressed Spectrogram"}
     except recording.DoesNotExist:
@@ -835,10 +835,10 @@ def get_spectrogram_compressed(request: HttpRequest, id: int):
     return spectro_data
 
 
-@router.get("/{id}/annotations")
-def get_annotations(request: HttpRequest, id: int):
+@router.get("/{pk}/annotations")
+def get_annotations(request: HttpRequest, pk: int):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
@@ -860,10 +860,10 @@ def get_annotations(request: HttpRequest, id: int):
         return {"error": "Recording not found"}
 
 
-@router.get("/{id}/pulse_contours")
-def get_pulse_contours(request: HttpRequest, id: int):
+@router.get("/{pk}/pulse_contours")
+def get_pulse_contours(request: HttpRequest, pk: int):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
         if recording.owner == request.user or recording.public:
             computed_pulse_annotation_qs = PulseMetadata.objects.filter(
                 recording=recording
@@ -879,10 +879,10 @@ def get_pulse_contours(request: HttpRequest, id: int):
         return {"error": "Recording not found"}
 
 
-@router.get("/{id}/pulse_data")
-def get_pulse_data(request: HttpRequest, id: int):
+@router.get("/{pk}/pulse_data")
+def get_pulse_data(request: HttpRequest, pk: int):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
         if recording.owner == request.user or recording.public:
             computed_pulse_annotation_qs = PulseMetadata.objects.filter(
                 recording=recording
@@ -898,10 +898,10 @@ def get_pulse_data(request: HttpRequest, id: int):
         return {"error": "Recording not found"}
 
 
-@router.get("/{id}/annotations/other_users")
-def get_other_user_annotations(request: HttpRequest, id: int):
+@router.get("/{pk}/annotations/other_users")
+def get_other_user_annotations(request: HttpRequest, pk: int):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or request.user.is_superuser:
@@ -951,10 +951,10 @@ def get_other_user_annotations(request: HttpRequest, id: int):
         return {"error": "Recording not found"}
 
 
-@router.get("/{id}/annotations/user/{userId}")
-def get_user_annotations(request: HttpRequest, id: int, userId: int):
+@router.get("/{pk}/annotations/user/{userId}")
+def get_user_annotations(request: HttpRequest, pk: int, userId: int):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
@@ -973,15 +973,15 @@ def get_user_annotations(request: HttpRequest, id: int, userId: int):
         return {"error": "Recording not found"}
 
 
-@router.put("/{id}/annotations")
+@router.put("/{pk}/annotations")
 def put_annotation(
     request,
-    id: int,
+    pk: int,
     annotation: AnnotationSchema,
     species_ids: list[int],
 ):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
         if recording.owner == request.user or recording.public:
             # Create a new annotation
             new_annotation = Annotations.objects.create(
@@ -1014,21 +1014,21 @@ def put_annotation(
         return {"error": "Recording not found"}
 
 
-@router.patch("/{recording_id}/annotations/{id}")
+@router.patch("/{recording_pk}/annotations/{annotation_pk}")
 def patch_annotation(
     request,
-    recording_id: int,
-    id: int,
+    recording_pk: int,
+    annotation_pk: int,
     annotation: UpdateAnnotationsSchema,
     species_ids: list[int] | None,
 ):
     try:
-        recording = Recording.objects.get(pk=recording_id)
+        recording = Recording.objects.get(pk=recording_pk)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             annotation_instance = Annotations.objects.get(
-                pk=id, recording=recording, owner=request.user
+                pk=annotation_pk, recording=recording, owner=request.user
             )
             if annotation_instance is None:
                 return {"error": "Annotation not found"}
@@ -1074,21 +1074,21 @@ def patch_annotation(
         return {"error": "Annotation not found"}
 
 
-@router.patch("/{recording_id}/sequence-annotations/{id}")
+@router.patch("/{recording_pk}/sequence-annotations/{sequence_annotation_pk}")
 def patch_sequence_annotation(
     request,
-    recording_id: int,
-    id: int,
+    recording_pk: int,
+    sequence_annotation_pk: int,
     annotation: UpdateSequenceAnnotationSchema,
     species_ids: list[int] | None,
 ):
     try:
-        recording = Recording.objects.get(pk=recording_id)
+        recording = Recording.objects.get(pk=recording_pk)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             annotation_instance = SequenceAnnotations.objects.get(
-                pk=id, recording=recording, owner=request.user
+                pk=sequence_annotation_pk, recording=recording, owner=request.user
             )
 
             # Update annotation details
@@ -1128,15 +1128,15 @@ def patch_sequence_annotation(
         return {"error": "Annotation not found"}
 
 
-@router.delete("/{recording_id}/annotations/{id}")
-def delete_annotation(request, recording_id: int, id: int):
+@router.delete("/{recording_pk}/annotations/{annotation_pk}")
+def delete_annotation(request, recording_pk: int, annotation_pk: int):
     try:
-        recording = Recording.objects.get(pk=recording_id)
+        recording = Recording.objects.get(pk=recording_pk)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             annotation_instance = Annotations.objects.get(
-                pk=id, recording=recording, owner=request.user
+                pk=annotation_pk, recording=recording, owner=request.user
             )
 
             # Delete the annotation
@@ -1157,10 +1157,10 @@ def delete_annotation(request, recording_id: int, id: int):
 # SEQUENCE ANNOTATIONS
 
 
-@router.get("/{id}/sequence-annotations")
-def get_sequence_annotations(request: HttpRequest, id: int):
+@router.get("/{pk}/sequence-annotations")
+def get_sequence_annotations(request: HttpRequest, pk: int):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
@@ -1184,15 +1184,15 @@ def get_sequence_annotations(request: HttpRequest, id: int):
         return {"error": "Recording not found"}
 
 
-@router.put("/{id}/sequence-annotations")
+@router.put("/{pk}/sequence-annotations")
 def put_sequence_annotation(
     request,
-    id: int,
+    pk: int,
     annotation: SequenceAnnotationSchema,
     species_ids: list[int] | None,
 ):
     try:
-        recording = Recording.objects.get(pk=id)
+        recording = Recording.objects.get(pk=pk)
         if recording.owner == request.user or recording.public:
             # Create a new annotation
             new_annotation = SequenceAnnotations.objects.create(
@@ -1214,15 +1214,15 @@ def put_sequence_annotation(
         return {"error": "Recording not found"}
 
 
-@router.delete("/{recording_id}/sequence-annotations/{id}")
-def delete_sequence_annotation(request, recording_id: int, id: int):
+@router.delete("/{recording_pk}/sequence-annotations/{sequence_annotation_pk}")
+def delete_sequence_annotation(request, recording_pk: int, sequence_annotation_pk: int):
     try:
-        recording = Recording.objects.get(pk=recording_id)
+        recording = Recording.objects.get(pk=recording_pk)
 
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             annotation_instance = SequenceAnnotations.objects.get(
-                pk=id, recording=recording, owner=request.user
+                pk=sequence_annotation_pk, recording=recording, owner=request.user
             )
 
             # Delete the annotation

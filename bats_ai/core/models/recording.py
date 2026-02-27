@@ -64,11 +64,7 @@ class Recording(TimeStampedModel, models.Model):
 
     @property
     def spectrogram(self):
-
-        spectrograms = self.spectrograms
-
-        assert len(spectrograms) >= 1
-        return spectrograms[0]  # most recently created
+        return self.spectrograms.latest("created")
 
     @property
     def has_compressed_spectrogram(self):
@@ -83,10 +79,7 @@ class Recording(TimeStampedModel, models.Model):
 
     @property
     def compressed_spectrogram(self):
-        compressed_spectrograms = self.compressed_spectrograms
-
-        assert len(compressed_spectrograms) >= 1
-        return compressed_spectrograms[0]  # most recently created
+        return self.compressed_spectrograms.latest("created")
 
 
 @receiver(models.signals.pre_delete, sender=Recording)

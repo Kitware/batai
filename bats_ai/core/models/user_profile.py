@@ -13,6 +13,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     verified = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"UserProfile {self.pk} (user={self.user_id})"
+
 
 @receiver(post_save, sender=User, dispatch_uid="create_new_user_profile")
 def _create_new_user_profile(sender, instance, created, **kwargs):

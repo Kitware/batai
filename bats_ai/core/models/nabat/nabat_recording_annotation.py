@@ -39,3 +39,6 @@ class NABatRecordingAnnotation(TimeStampedModel, models.Model):
     class Meta:
         verbose_name = "NABat Recording Annotation"
         verbose_name_plural = "NABat Recording Annotations"
+
+    def __str__(self):
+        return f"NABatRecordingAnnotation {self.pk} (recording={self.nabat_recording_id})"

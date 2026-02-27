@@ -20,7 +20,7 @@ class SequenceAnnotationSchema(Schema):
     owner_email: str = None
 
     @classmethod
-    def from_orm(cls, obj, owner_email=None, **kwargs):
+    def from_orm(cls, obj, owner_email=None):
         return cls(
             start_time=obj.start_time,
             end_time=obj.end_time,
@@ -39,10 +39,10 @@ class UpdateSequenceAnnotationSchema(Schema):
     comments: str | None = None
 
 
-@router.get("/{id}")
-def get_sequence_annotation(request: HttpRequest, id: int):
+@router.get("/{pk}")
+def get_sequence_annotation(request: HttpRequest, pk: int):
     try:
-        annotation = Annotations.objects.get(pk=id)
+        annotation = Annotations.objects.get(pk=pk)
         recording = annotation.recording
 
         # Check if the user owns the recording or if the recording is public

@@ -28,6 +28,9 @@ class NABatSpectrogram(TimeStampedModel, models.Model):
         verbose_name = "NABat Spectrogram"
         verbose_name_plural = "NABat Spectrograms"
 
+    def __str__(self):
+        return f"NABatSpectrogram {self.pk} (recording={self.nabat_recording_id})"
+
     @property
     def image_url_list(self):
         """Ordered list of image URLs for this spectrogram."""

@@ -15,3 +15,8 @@ class SequenceAnnotations(models.Model):
     type = models.TextField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
     species = models.ManyToManyField(Species)
+
+    def __str__(self):
+        return (
+            f"SequenceAnnotation {self.pk} (recording={self.recording_id}, owner={self.owner_id})"
+        )

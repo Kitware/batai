@@ -38,6 +38,9 @@ class Configuration(models.Model):
     non_admin_upload_enabled = models.BooleanField(default=True)
     mark_annotations_completed_enabled = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"Configuration {self.pk}"
+
     def save(self, *args, **kwargs):
         # Ensure only one instance of Configuration exists
         if (not Configuration.objects.exists() and not self.pk) or self.pk:
