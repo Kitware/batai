@@ -7,6 +7,7 @@ from ninja import Router, Schema
 from ninja.errors import HttpError
 
 from bats_ai.core.models import Configuration, Recording, RecordingAnnotation, Species
+from bats_ai.core.models.recording_annotation import RecordingAnnotationSpecies
 from bats_ai.core.views.recording import SpeciesSchema
 
 logger = logging.getLogger(__name__)
@@ -27,8 +28,11 @@ class RecordingAnnotationSchema(Schema):
 
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+        # Ordered list with duplicates via through model
+        species_ordered = obj.recordingannotationspecies_set.order_by("order")
+        species_list = [t.species for t in species_ordered]
         return cls(
-            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            species=[SpeciesSchema.from_orm(s) for s in species_list],
             owner=obj.owner.username,
             confidence=obj.confidence,
             comments=obj.comments,
@@ -53,8 +57,10 @@ class RecordingAnnotationDetailsSchema(Schema):
 
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+        species_ordered = obj.recordingannotationspecies_set.order_by("order")
+        species_list = [t.species for t in species_ordered]
         return cls(
-            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            species=[SpeciesSchema.from_orm(s) for s in species_list],
             owner=obj.owner.username,
             confidence=obj.confidence,
             comments=obj.comments,
@@ -127,10 +133,14 @@ def create_recording_annotation(request: HttpRequest, data: CreateRecordingAnnot
             confidence=data.confidence,
         )
 
-        # Add species
-        for species_id in data.species:
+        # Add species in order (through model allows duplicates)
+        for order, species_id in enumerate(data.species):
             species = Species.objects.get(pk=species_id)
-            annotation.species.add(species)
+            RecordingAnnotationSpecies.objects.create(
+                recording_annotation=annotation,
+                species=species,
+                order=order,
+            )
 
         return "Recording annotation created successfully."
     except Recording.DoesNotExist as e:
@@ -163,10 +173,19 @@ def update_recording_annotation(
         if data.confidence is not None:
             annotation.confidence = data.confidence
         if data.species is not None:
-            species_list = list(Species.objects.filter(pk__in=data.species))
-            if len(species_list) != len(data.species):
+            # Rebuild ordered species with duplicates via through model
+            unique_ids = set(data.species)
+            id_to_species = {s.pk: s for s in Species.objects.filter(pk__in=unique_ids)}
+            if len(id_to_species) != len(unique_ids):
                 raise HttpError(404, "One or more species IDs not found.")
-            annotation.species.set(species_list)
+            RecordingAnnotationSpecies.objects.filter(recording_annotation=annotation).delete()
+            for order, species_id in enumerate(data.species):
+                species = id_to_species[species_id]
+                RecordingAnnotationSpecies.objects.create(
+                    recording_annotation=annotation,
+                    species=species,
+                    order=order,
+                )
 
         annotation.save()
         return "Recording annotation updated successfully."

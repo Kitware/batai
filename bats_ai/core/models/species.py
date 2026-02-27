@@ -23,3 +23,6 @@ class Species(models.Model):
         default="single",
         help_text="Category label: single species, multiple species, frequency, or NoID",
     )
+
+    def __str__(self) -> str:
+        return self.species_code or str(self.pk)

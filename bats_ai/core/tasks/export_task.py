@@ -36,6 +36,14 @@ def build_filters(filters, has_confidence=False):
     return conditions
 
 
+def _annotation_species_ordered(annotation):
+    """Return species list in order; supports RecordingAnnotation (through) and plain M2M."""
+    if hasattr(annotation, "recordingannotationspecies_set"):
+        through = annotation.recordingannotationspecies_set.order_by("order")
+        return [t.species for t in through]
+    return list(annotation.species.all())
+
+
 def annotation_to_dict(
     annotation, include_times=False, include_freqs=False, include_confidence=False
 ):
@@ -45,7 +53,7 @@ def annotation_to_dict(
         "owner": annotation.owner.username,
         "comments": annotation.comments,
         "created": annotation.created.isoformat(),
-        "species": [s.common_name for s in annotation.species.all()],
+        "species": [s.common_name for s in _annotation_species_ordered(annotation)],
     }
     if include_times:
         data.update(
@@ -120,7 +128,9 @@ def export_annotations_task(filters: dict, annotation_types: list, export_id: in
 
             if "recording" in annotation_types:
                 recording_filters = build_filters(filters, has_confidence=True)
-                qs = RecordingAnnotation.objects.filter(**recording_filters)
+                qs = RecordingAnnotation.objects.filter(**recording_filters).prefetch_related(
+                    "recordingannotationspecies_set__species"
+                )
                 write_csv_and_json(zipf, "recording", qs, include_confidence=True)
 
         buffer.seek(0)

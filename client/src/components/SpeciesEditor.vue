@@ -19,7 +19,7 @@ export default defineComponent({
     },
     multiple: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
   emits: ['update:modelValue'],
@@ -111,7 +111,6 @@ export default defineComponent({
       groupedItems,
       customFilter,
       categoryColors,
-      removeChip,
       speciesAutocomplete,
     };
   },
@@ -129,11 +128,10 @@ export default defineComponent({
     item-value="species_code"
     :multiple="multiple"
     chips
-    closable-chips
     :custom-filter="customFilter"
     clearable
     clear-on-select
-    label="Select Labels"
+    label="Select Label"
     :menu-props="{ maxHeight: '300px', maxWidth: '400px' }"
     :disabled="disabled"
   >
@@ -162,40 +160,6 @@ export default defineComponent({
           </v-chip>
         </template>
       </v-list-item>
-    </template>
-    <template #chip="{item}">
-      <v-tooltip
-        location="bottom"
-        open-delay="100"
-      >
-        <template #activator="{ props }">
-          <v-chip
-            v-bind="props"
-            :color="categoryColors[item.raw.category]"
-            @click:close="removeChip($event, item.raw)"
-            @mousedown.stop.prevent
-          >
-            {{ item.raw.species_code }}
-          </v-chip>
-        </template>
-        <v-card class="pa-0 ma-0">
-          <v-card-title
-            :class="categoryColors[item.raw.category] ? `bg-${categoryColors[item.raw.category]}` : ''"
-          >
-            {{ item.raw.category?.toUpperCase() }}
-          </v-card-title>
-          <v-card-text>
-            <v-list>
-              <v-list-item>
-                {{ item.raw.species_code }}
-              </v-list-item>
-              <v-list-item>
-                {{ item.raw.common_name }}
-              </v-list-item>
-            </v-list>
-          </v-card-text>
-        </v-card>
-      </v-tooltip>
     </template>
   </v-autocomplete>
 </template>

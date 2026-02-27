@@ -3,6 +3,14 @@ from __future__ import annotations
 from django.contrib import admin
 
 from bats_ai.core.models import RecordingAnnotation
+from bats_ai.core.models.recording_annotation import RecordingAnnotationSpecies
+
+
+class RecordingAnnotationSpeciesInline(admin.TabularInline):
+    model = RecordingAnnotationSpecies
+    extra = 1
+    autocomplete_fields = ["species"]
+    ordering = ["order"]
 
 
 @admin.register(RecordingAnnotation)
@@ -11,7 +19,7 @@ class RecordingAnnotationAdmin(admin.ModelAdmin):
         "pk",
         "recording",
         "owner",
-        "species_codes",  # Add the custom field here
+        "species_codes",
         "confidence",
         "additional_data",
         "comments",
@@ -19,13 +27,13 @@ class RecordingAnnotationAdmin(admin.ModelAdmin):
         "submitted",
     ]
     list_select_related = True
-    filter_horizontal = ("species",)  # or filter_vertical
+    inlines = [RecordingAnnotationSpeciesInline]
     autocomplete_fields = ["owner"]
 
-    # Custom method to display the species codes as a comma-separated string
+    # Custom method to display the species codes as a comma-separated string (ordered, with duplicates)
     @admin.display(description="Species Codes")
     def species_codes(self, obj):
-        # Assuming species have a `species_code` field
-        return ", ".join([species.species_code for species in obj.species.all()])
+        through = obj.recordingannotationspecies_set.order_by("order")
+        return ", ".join(t.species.species_code for t in through)
 
     # Optionally, you can also add a verbose name for this field

@@ -117,8 +117,10 @@ class RecordingAnnotationSchema(Schema):
 
     @classmethod
     def from_orm(cls, obj: RecordingAnnotation, **kwargs):
+        species_ordered = obj.recordingannotationspecies_set.order_by("order")
+        species_list = [t.species for t in species_ordered]
         return cls(
-            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            species=[SpeciesSchema.from_orm(s) for s in species_list],
             owner=obj.owner.username,
             confidence=obj.confidence,
             comments=obj.comments,
