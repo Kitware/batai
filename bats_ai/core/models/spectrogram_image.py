@@ -39,6 +39,9 @@ class SpectrogramImage(models.Model):
     class Meta:
         ordering = ["index"]
 
+    def __str__(self):
+        return f"SpectrogramImage {self.pk} ({self.type}, index={self.index})"
+
 
 @receiver(models.signals.pre_delete, sender=SpectrogramImage)
 def delete_content(sender, instance, **kwargs):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import contextlib
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 import re
 
@@ -24,7 +24,7 @@ def parse_datetime(datetime_str: str) -> datetime | None:
     if datetime_str:
         try:
             # Try parsing using the custom format
-            return datetime.strptime(datetime_str, "%Y%m%dT%H%M%S")
+            return datetime.strptime(datetime_str, "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
         except ValueError:
             try:
                 # Try parsing using ISO format
@@ -72,7 +72,7 @@ def extract_metadata_from_filename(filename: str) -> dict:
             second = int(timestamp_str[4:6])
 
             # Create datetime object
-            activation_time = datetime(year, month, day, hour, minute, second)
+            activation_time = datetime(year, month, day, hour, minute, second, tzinfo=UTC)
             metadata["nabat_activation_start_time"] = activation_time
         except (ValueError, IndexError):
             pass

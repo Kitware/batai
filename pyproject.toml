@@ -153,18 +153,12 @@ ignore = [
   "TRY003", # raise-vanilla-args
 
   # Project-specific
-  "A002", # builtin-argument-shadowing
-  "ARG003", # unused-class-method-argument
   "BLE001", # blind-except
   "C901", # complex-structure
   "DJ001", # django-nullable-model-string-field
-  "DJ008", # django-model-without-dunder-str
-  "DTZ001", # call-datetime-without-tzinfo
-  "DTZ007", # call-datetime-strptime-without-zone
   "FBT001", # boolean-type-hint-positional-argument
   "FBT002", # boolean-default-value-positional-argument
   "FBT003", # boolean-positional-value-in-call
-  "G004", # logging-f-string
   "INP001", # implicit-namespace-package
   "N802", # invalid-function-name
   "N803", # invalid-argument-name
@@ -179,9 +173,7 @@ ignore = [
   "PLR0915", # too-many-statements
   "PLW2901", # redefined-loop-name
   "PTH", # flake8-use-pathlib
-  "S101", # assert
   "S110", # try-except-pass
-  "S308", # suspicious-mark-safe-usage
   "S310", # suspicious-url-open-usage
   "S311", # suspicious-non-cryptographic-random-usage
   "SLF001", # private-member-access

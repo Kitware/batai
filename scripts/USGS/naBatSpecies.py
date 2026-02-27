@@ -72,7 +72,7 @@ def fetch_and_save():
             logger.exception("Error processing batch data")
             return
     else:
-        logger.error(f"Failed to fetch data: {response.status_code}, {response.text}")
+        logger.error("Failed to fetch data: %s, %s", response.status_code, response.text)
         return
 
 

@@ -19,3 +19,6 @@ class VettingDetails(models.Model):
                 name="reference_materials_max_2000",
             )
         ]
+
+    def __str__(self):
+        return f"VettingDetails {self.pk} (user={self.user_id})"

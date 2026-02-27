@@ -25,10 +25,10 @@ class AnnotationSchema(Schema):
     comments: str
 
 
-@router.get("/{id}")
-def get_annotation(request: HttpRequest, id: int):
+@router.get("/{pk}")
+def get_annotation(request: HttpRequest, pk: int):
     try:
-        annotation = Annotations.objects.get(pk=id)
+        annotation = Annotations.objects.get(pk=pk)
         recording = annotation.recording
 
         # Check if the user owns the recording or if the recording is public

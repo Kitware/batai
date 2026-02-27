@@ -91,7 +91,7 @@ def update_nabat_species(self):
         for species_data in species_list:
             species_id = species_data.get("id")
             if species_id is None:
-                logger.warning(f"Species without an ID encountered: {species_data}")
+                logger.warning("Species without an ID encountered: %s", species_data)
                 continue
 
             Species.objects.update_or_create(
@@ -108,7 +108,7 @@ def update_nabat_species(self):
 
         processing_task.status = ProcessingTask.Status.COMPLETE
         processing_task.save()
-        logger.info(f"Successfully updated {len(species_list)} species.")
+        logger.info("Successfully updated %s species.", len(species_list))
     except Exception as e:
         processing_task.status = ProcessingTask.Status.ERROR
         processing_task.error = f"Error processing species data: {e}"
