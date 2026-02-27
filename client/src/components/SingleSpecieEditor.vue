@@ -171,7 +171,7 @@ export default defineComponent({
     </v-autocomplete>
     <v-btn
       v-if="showDelete"
-      v-tooltip="'Delete species'"
+      v-tooltip="'Delete bat'"
       icon
       size="x-small"
       variant="text"

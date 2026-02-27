@@ -105,7 +105,7 @@ export default defineComponent({
       />
     </div>
     <v-btn
-      v-tooltip="'Add another species'"
+      v-tooltip="'Add another bat'"
       size="small"
       variant="outlined"
       color="primary"
