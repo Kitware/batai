@@ -11,13 +11,11 @@ import {
 } from "../api/api";
 import { deleteNABatFileAnnotation, patchNABatFileAnnotationLocal } from "../api/NABatApi";
 import useState from "@use/useState";
-import SpeciesInfo from "./SpeciesInfo.vue";
 import SpeciesEditor from "./SpeciesEditor.vue";
 import SpeciesNABatSave from "./SpeciesNABatSave.vue";
 export default defineComponent({
   name: "AnnotationEditor",
   components: {
-    SpeciesInfo,
     SpeciesEditor,
     SpeciesNABatSave,
   },
@@ -249,20 +247,11 @@ export default defineComponent({
           :disabled="updatingAnnotation || deletingAnnotation"
           @click="deleteAnnotation()"
         >
-          Delete<v-icon>mdi-delete</v-icon>
+          Delete Annotation<v-icon>mdi-delete</v-icon>
         </v-btn>
       </v-row>
     </v-card-title>
     <v-card-text>
-      <v-row>
-        <SpeciesInfo
-          v-model="speciesEdit"
-          :species-list="species"
-          class="my-2"
-          :disabled="updatingAnnotation || deletingAnnotation"
-          @update:model-value="onSpeciesModelValue"
-        />
-      </v-row>
       <v-row>
         <SpeciesEditor
           :key="`species_${annotation?.id}`"

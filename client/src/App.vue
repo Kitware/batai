@@ -102,19 +102,38 @@ export default defineComponent({
 <template>
   <v-app id="app">
     <v-app-bar app>
-      <v-row align="center" no-gutters>
+      <v-row
+        align="center"
+        no-gutters
+      >
         <v-col cols="auto">
-          <v-tabs v-if="oauthClient.isLoggedIn && activeTab && !isNaBat" v-model="activeTab">
-            <v-tab to="/" value="recordings">
+          <v-tabs
+            v-if="oauthClient.isLoggedIn && activeTab && !isNaBat"
+            v-model="activeTab"
+          >
+            <v-tab
+              to="/"
+              value="recordings"
+            >
               Recordings
             </v-tab>
-            <v-tab v-show="containsSpectro" value="spectrogram">
+            <v-tab
+              v-show="containsSpectro"
+              value="spectrogram"
+            >
               Spectrogram
             </v-tab>
-            <v-tab v-show="isAdmin" to="/admin" value="admin">
+            <v-tab
+              v-show="isAdmin"
+              to="/admin"
+              value="admin"
+            >
               Admin
             </v-tab>
-            <v-tab to="/help" value="help">
+            <v-tab
+              to="/help"
+              value="help"
+            >
               Help
             </v-tab>
           </v-tabs>
@@ -124,7 +143,10 @@ export default defineComponent({
             NABat Spectrogram Viewer
           </h3>
         </v-col>
-        <v-col v-if="containsSpectro && spectrogramFilename" class="app-bar-filename-col">
+        <v-col
+          v-if="containsSpectro && spectrogramFilename"
+          class="app-bar-filename-col"
+        >
           <v-tooltip>
             <template #activator="{ props: subProps }">
               <span
@@ -138,13 +160,21 @@ export default defineComponent({
             <span>{{ spectrogramFilename }}</span>
           </v-tooltip>
         </v-col>
-        <v-col v-else class="app-bar-filename-col" />
+        <v-col
+          v-else
+          class="app-bar-filename-col"
+        />
         <v-col cols="auto">
           <v-tooltip
             v-if="(containsSpectro && nextShared !== false) && !configuration.mark_annotations_completed_enabled"
-            bottom>
+            bottom
+          >
             <template #activator="{ props: subProps }">
-              <v-btn v-bind="subProps" variant="outlined" :to="`/recording/${nextShared.id}/spectrogram`">
+              <v-btn
+                v-bind="subProps"
+                variant="outlined"
+                :to="`/recording/${nextShared.id}/spectrogram`"
+              >
                 Next Shared<v-icon>mdi-chevron-right</v-icon>
               </v-btn>
             </template>
@@ -159,9 +189,15 @@ export default defineComponent({
           </v-tooltip>
         </v-col>
         <v-col cols="auto">
-          <v-row align="center" justify="end">
+          <v-row
+            align="center"
+            justify="end"
+          >
             <help-system />
-            <v-btn v-if="!isNaBat" @click="logInOrOut">
+            <v-btn
+              v-if="!isNaBat"
+              @click="logInOrOut"
+            >
               {{ loginText }}
             </v-btn>
           </v-row>

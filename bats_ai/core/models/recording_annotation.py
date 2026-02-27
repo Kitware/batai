@@ -9,10 +9,30 @@ from .recording import Recording
 from .species import Species
 
 
+class RecordingAnnotationSpecies(models.Model):
+    """Through model for RecordingAnnotation.species to allow duplicate species and ordering."""
+
+    recording_annotation = models.ForeignKey("RecordingAnnotation", on_delete=models.CASCADE)
+    species = models.ForeignKey(Species, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["recording_annotation", "order"]
+        unique_together = [["recording_annotation", "order"]]
+
+    def __str__(self) -> str:
+        return self.species.species_code if self.species_id else ""
+
+
 class RecordingAnnotation(TimeStampedModel, models.Model):
     recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    species = models.ManyToManyField(Species)
+    species = models.ManyToManyField(
+        Species,
+        through="RecordingAnnotationSpecies",
+        through_fields=("recording_annotation", "species"),
+        blank=True,
+    )
     comments = models.TextField(blank=True, null=True)
     # AI Model information if inference used, else "User Defined"
     model = models.TextField(blank=True, null=True)

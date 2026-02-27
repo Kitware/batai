@@ -1,9 +1,11 @@
 <script lang="ts">
-import { defineComponent, PropType, computed, ref, watch, Ref, onMounted, onUnmounted } from 'vue';
-import { Species } from '@api/api';
+import { defineComponent, PropType, ref, watch } from "vue";
+import { Species } from "@api/api";
+import SingleSpecieEditor from "./SingleSpecieEditor.vue";
 
 export default defineComponent({
-  name: 'SpeciesEditor',
+  name: "SpeciesEditor",
+  components: { SingleSpecieEditor },
   props: {
     modelValue: {
       type: Array as PropType<string[]>,
@@ -19,187 +21,142 @@ export default defineComponent({
     },
     multiple: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
-  emits: ['update:modelValue'],
-
+  emits: ["update:modelValue"],
   setup(props, { emit }) {
-    const search = ref('');
-    // Used internally to track selected species by ID
-    const selectedNames = ref<string[]>(props.modelValue);
-    const speciesAutocomplete: Ref<HTMLElement | null> = ref(null);
+    // Internal: one slot per row, at least one. Empty string = no selection in that slot.
+    const localSpeciesList = ref<string[]>(
+      props.modelValue?.length ? [...props.modelValue] : [""]
+    );
+    const addSpeciesConfirmOpen = ref(false);
 
-    // Update selected IDs when v-model changes from outside
-    watch(() => props.modelValue, (newVal) => {
-        selectedNames.value = newVal ?? [];
-    }, { immediate: true });
+    watch(
+      () => props.modelValue,
+      (newVal) => {
+        const arr = newVal ?? [];
+        localSpeciesList.value = arr.length ? [...arr] : [""];
+      },
+      { immediate: true }
+    );
 
-    // Emit when selection changes (parent decides whether to patch based on server state)
-    watch(selectedNames, (newNames) => {
-      emit('update:modelValue', newNames);
-      // Hides the auto-complete menu after making a single selection
-      requestAnimationFrame(() => {
-        if (speciesAutocomplete.value) {
-          speciesAutocomplete.value?.blur();
-        }
-      });
-    }, { deep: true });
+    function emitValue() {
+      const values = localSpeciesList.value.filter((s) => s != null && s !== "");
+      emit("update:modelValue", values);
+    }
 
-    const categoryColors: Record<string, string> =  {
-      'single': 'primary',
-      'multiple': 'secondary',
-      'frequency': 'warning',
-      'noid': '',
-    };
-
-    // Prepare items with headers inserted by category
-    const groupedItems = computed(() => {
-      const groups: Record<string, Species[]> = {};
-      for (const s of props.speciesList) {
-        const cat = s.category.charAt(0).toUpperCase() + s.category.slice(1); // Capitalize
-        if (!groups[cat]) groups[cat] = [];
-        groups[cat].push(s);
+    function onSlotUpdate(index: number, value: string | null) {
+      const code = value ?? "";
+      if (localSpeciesList.value[index] !== code) {
+        localSpeciesList.value[index] = code;
+        emitValue();
       }
+    }
 
-      const result: Array<{ type: 'subheader', title: string } | Species & { category: string}> = [];
-      const groupsOrder = ['Single', 'Multiple', 'Frequency', 'Noid'];
-      groupsOrder.forEach((key) => {
-        result.push({ type: 'subheader', title: key });
-        result.push(...(groups[key] ?? []));
-      });
+    function openAddSpeciesConfirm() {
+      addSpeciesConfirmOpen.value = true;
+    }
 
-      return result;
-    });
-    // Any because the custom Filter is a bit more complicated file structure
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const customFilter = (filter: string, search: string, item: any) => {
-      if (item.type === 'subheader') {
-        return false;
-      }
-      const search_lower = search.toLocaleLowerCase();
-      return item.raw.species_code.toLocaleLowerCase().includes(search_lower) || item.raw.common_name.toLocaleLowerCase().includes(search_lower);
-    };
+    function closeAddSpeciesConfirm() {
+      addSpeciesConfirmOpen.value = false;
+    }
 
-    const removeChip = (event: PointerEvent, item: Species) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const index = selectedNames.value.findIndex((species) => species === item.species_code);
-      if (index !== -1) {
-        selectedNames.value.splice(index, 1);
-        // watch(selectedNames, { deep: true }) emits
-      }
-    };
+    function confirmAddSpecies() {
+      localSpeciesList.value.push("");
+      closeAddSpeciesConfirm();
+      // Don't emit: the new slot is empty so the selected list is unchanged.
+      // Emit will happen when the user picks a species in the new row.
+    }
 
-    // using Shift+S to focus the species input
-    const speciesShortcut = (e: KeyboardEvent) => {
-      if (e.key === 'S' && e.shiftKey) {
-        e.preventDefault();
-        speciesAutocomplete.value?.focus();
-      }
-    };
-    onMounted(() => {
-      window.addEventListener('keydown', speciesShortcut);
-    });
-    onUnmounted(() => {
-      window.removeEventListener('keydown', speciesShortcut);
-    });
+    function removeSpecies(index: number) {
+      if (localSpeciesList.value.length <= 1) return;
+      localSpeciesList.value.splice(index, 1);
+      emitValue();
+    }
 
     return {
-      search,
-      selectedNames,
-      groupedItems,
-      customFilter,
-      categoryColors,
-      removeChip,
-      speciesAutocomplete,
+      localSpeciesList,
+      onSlotUpdate,
+      openAddSpeciesConfirm,
+      closeAddSpeciesConfirm,
+      confirmAddSpecies,
+      addSpeciesConfirmOpen,
+      removeSpecies,
     };
   },
 });
 </script>
 
 <template>
-  <v-autocomplete
-    ref="speciesAutocomplete"
-    v-model="selectedNames"
-    v-model:search-input="search"
-    autocomplete="off"
-    :items="groupedItems"
-    item-title="species_code"
-    item-value="species_code"
-    :multiple="multiple"
-    chips
-    closable-chips
-    :custom-filter="customFilter"
-    clearable
-    clear-on-select
-    label="Select Labels"
-    :menu-props="{ maxHeight: '300px', maxWidth: '400px' }"
-    :disabled="disabled"
-  >
-    <template #subheader="{ props }">
-      <v-list-subheader
-        class="font-weight-bold"
-        :class="categoryColors[props.title.toLowerCase()] ? `bg-${categoryColors[props.title.toLowerCase()]}` : ''"
-      >
-        {{ props.title }}
-      </v-list-subheader>
-    </template>
-    <template #item="{ props, item }">
-      <v-list-item
-        v-bind="props"
-        :title="item.raw.common_name"
-      >
-        <template #subtitle="{}">
-          <span>{{ item.raw.species_code }}</span>
-          <v-chip
-            v-if="item.raw.category"
-            :color="categoryColors[item.raw.category]"
-            small
-            class="ml-2"
+  <div class="species-editor">
+    <div
+      v-for="(slot, index) in localSpeciesList"
+      :key="index"
+      class="species-editor-row mb-2 mt-3"
+    >
+      <SingleSpecieEditor
+        :model-value="slot || null"
+        :species-list="speciesList"
+        :disabled="disabled"
+        :show-delete="localSpeciesList.length > 1"
+        @update:model-value="onSlotUpdate(index, $event)"
+        @delete="removeSpecies(index)"
+      />
+    </div>
+    <v-btn
+      v-tooltip="'Add another bat'"
+      size="small"
+      variant="outlined"
+      color="primary"
+      :disabled="disabled"
+      class="mt-1 mb-2"
+      @click="openAddSpeciesConfirm"
+    >
+      <v-icon start>
+        <v-icon>
+          mdi-plus
+        </v-icon>
+      </v-icon>
+      Add Bat
+    </v-btn>
+    <v-dialog
+      v-model="addSpeciesConfirmOpen"
+      max-width="400"
+      persistent
+    >
+      <v-card>
+        <v-card-title>Add another Bat?</v-card-title>
+        <v-card-text>
+          This is intended only when multiple bats are found in the same recording. Do you want to add a new bat?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            variant="text"
+            @click="closeAddSpeciesConfirm"
           >
-            {{ item.raw.category }}
-          </v-chip>
-        </template>
-      </v-list-item>
-    </template>
-    <template #chip="{item}">
-      <v-tooltip
-        location="bottom"
-        open-delay="100"
-      >
-        <template #activator="{ props }">
-          <v-chip
-            v-bind="props"
-            :color="categoryColors[item.raw.category]"
-            @click:close="removeChip($event, item.raw)"
-            @mousedown.stop.prevent
+            Cancel
+          </v-btn>
+          <v-btn
+            variant="flat"
+            color="primary"
+            @click="confirmAddSpecies"
           >
-            {{ item.raw.species_code }}
-          </v-chip>
-        </template>
-        <v-card class="pa-0 ma-0">
-          <v-card-title
-            :class="categoryColors[item.raw.category] ? `bg-${categoryColors[item.raw.category]}` : ''"
-          >
-            {{ item.raw.category?.toUpperCase() }}
-          </v-card-title>
-          <v-card-text>
-            <v-list>
-              <v-list-item>
-                {{ item.raw.species_code }}
-              </v-list-item>
-              <v-list-item>
-                {{ item.raw.common_name }}
-              </v-list-item>
-            </v-list>
-          </v-card-text>
-        </v-card>
-      </v-tooltip>
-    </template>
-  </v-autocomplete>
+            Add species
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <style scoped>
-/* Optional custom styling */
+.species-editor {
+  width: 100%;
+}
+.species-editor-row {
+  min-width: 0;
+  width: 100%;
+}
 </style>
