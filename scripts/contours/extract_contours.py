@@ -317,9 +317,9 @@ def apply_transparency_mask(mat, threshold_percent):
 
 def extract_contours(
     image_path: Path,
+    *,
     output_path: Path | None = None,
     debug: bool = False,
-    *,
     levels_mode: str,
     percentile_values,
     min_area: float,

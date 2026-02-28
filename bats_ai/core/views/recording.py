@@ -273,6 +273,7 @@ class PulseMetadataSchema(Schema):
 @router.post("/")
 def create_recording(
     request: HttpRequest,
+    *,
     payload: Form[RecordingUploadSchema],
     audio_file: File[UploadedFile],
     publicVal: bool = False,  # noqa: N803
@@ -412,7 +413,7 @@ def _build_recordings_response(
     return items
 
 
-def _base_recordings_queryset(request: HttpRequest, public: bool | None) -> QuerySet[Recording]:
+def _base_recordings_queryset(request: HttpRequest, *, public: bool | None) -> QuerySet[Recording]:
     if public is not None and public:
         return (
             Recording.objects.filter(public=True)
@@ -453,7 +454,7 @@ def get_recordings(
     request: HttpRequest,
     q: Query[RecordingListQuerySchema],
 ):
-    queryset = _base_recordings_queryset(request, q.public)
+    queryset = _base_recordings_queryset(request, public=q.public)
 
     if q.exclude_submitted:
         submitted_by_user = RecordingAnnotation.objects.filter(
@@ -568,8 +569,8 @@ def _unsubmitted_recording_ids_ordered(
             qs = qs.order_by(f"{order_prefix}{sort_by}")
         return qs
 
-    my_qs = apply_filters_and_sort(_base_recordings_queryset(request, False))
-    shared_qs = apply_filters_and_sort(_base_recordings_queryset(request, True))
+    my_qs = apply_filters_and_sort(_base_recordings_queryset(request, public=False))
+    shared_qs = apply_filters_and_sort(_base_recordings_queryset(request, public=True))
 
     my_ids = list(my_qs.values_list("id", flat=True))
     shared_ids = list(shared_qs.values_list("id", flat=True))
