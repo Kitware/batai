@@ -161,7 +161,6 @@ ignore = [
   "FBT003", # boolean-positional-value-in-call
   "INP001", # implicit-namespace-package
   "N802", # invalid-function-name
-  "N803", # invalid-argument-name
   "N806", # non-lowercase-variable-in-function
   "N812", # lowercase-imported-as-non-lowercase
   "N815", # mixed-case-variable-in-class-scope

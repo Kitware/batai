@@ -275,7 +275,7 @@ def create_recording(
     request: HttpRequest,
     payload: Form[RecordingUploadSchema],
     audio_file: File[UploadedFile],
-    publicVal: bool = False,
+    publicVal: bool = False,  # noqa: N803
 ):
     converted_date = date.fromisoformat(payload.recorded_date)
     time_str = payload.recorded_time
@@ -955,7 +955,11 @@ def get_other_user_annotations(request: HttpRequest, pk: int):
 
 
 @router.get("/{pk}/annotations/user/{userId}")
-def get_user_annotations(request: HttpRequest, pk: int, userId: int):
+def get_user_annotations(
+    request: HttpRequest,
+    pk: int,
+    userId: int,  # noqa: N803
+):
     try:
         recording = Recording.objects.get(pk=pk)
 
