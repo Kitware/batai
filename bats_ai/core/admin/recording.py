@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.contrib import admin, messages
-from django.db.models import QuerySet
-from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 
 from bats_ai.core.models import Recording
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+    from django.http import HttpRequest
 
 
 @admin.register(Recording)

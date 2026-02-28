@@ -177,7 +177,6 @@ ignore = [
   "S310", # suspicious-url-open-usage
   "SLF001", # private-member-access
   "T201", # print
-  "TC", # flake8-type-checking
   "TRY300", # try-consider-else
   "TRY301", # raise-within-try
 ]

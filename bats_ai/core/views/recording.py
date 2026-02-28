@@ -3,16 +3,14 @@ from __future__ import annotations
 from datetime import date, datetime, time
 import json
 import logging
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
-from django.http import HttpRequest
 from ninja import File, Form, Query, Schema
-from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import (
@@ -27,12 +25,17 @@ from bats_ai.core.models import (
     Spectrogram,
 )
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
-from bats_ai.core.views.recording_tag import RecordingTagSchema
 from bats_ai.core.views.sequence_annotations import (
     SequenceAnnotationSchema,
     UpdateSequenceAnnotationSchema,
 )
 from bats_ai.core.views.species import SpeciesSchema
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+    from ninja.files import UploadedFile
+
+    from bats_ai.core.views.recording_tag import RecordingTagSchema
 
 logger = logging.getLogger(__name__)
 

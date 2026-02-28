@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from django.http import HttpRequest
+from typing import TYPE_CHECKING
+
 from ninja import Schema
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import Annotations, Recording, SequenceAnnotations
 from bats_ai.core.views.species import SpeciesSchema
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
 
 router = RouterPaginated()
 
