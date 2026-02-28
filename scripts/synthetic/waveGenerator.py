@@ -13,6 +13,8 @@
 #     "scipy",
 # ]
 # ///
+# "random" usage in this file is non-cryptographic
+# ruff: noqa: S311
 from __future__ import annotations
 
 import io
