@@ -306,7 +306,11 @@ def get_spectrogram(request: HttpRequest, pk: int):
 
 
 @router.get("/{pk}/spectrogram/compressed", auth=admin_auth)
-def get_spectrogram_compressed(request: HttpRequest, pk: int, apiToken: str):
+def get_spectrogram_compressed(
+    request: HttpRequest,
+    pk: int,
+    apiToken: str,  # noqa: N803
+):
     try:
         nabat_recording = NABatRecording.objects.get(pk=pk)
     except NABatRecording.DoesNotExist:
@@ -401,33 +405,37 @@ class NABatCreateRecordingAnnotationSchema(Schema):
 def get_nabat_recording_annotation(
     request: HttpRequest,
     nabat_recording_id: int,
-    apiToken: str | None = None,
+    apiToken: str | None = None,  # noqa: N803
 ):
     email_or_response = get_email_if_authorized(request, apiToken, recording_pk=nabat_recording_id)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
 
-    fileAnnotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
+    file_annotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
 
     if request.user.is_authenticated and request.user.is_superuser:
         # If the user is a superuser, return all annotations
         pass
     elif user_email:
-        fileAnnotations = fileAnnotations.filter(
+        file_annotations = file_annotations.filter(
             Q(user_email=user_email) | Q(user_email__isnull=True)
         )
 
-    fileAnnotations = fileAnnotations.order_by("confidence")
+    file_annotations = file_annotations.order_by("confidence")
 
     return [
-        NABatRecordingAnnotationSchema.from_orm(fileAnnotation).dict()
-        for fileAnnotation in fileAnnotations
+        NABatRecordingAnnotationSchema.from_orm(file_annotation).dict()
+        for file_annotation in file_annotations
     ]
 
 
 @router.get("recording-annotation/{pk}", auth=admin_auth, response=NABatRecordingAnnotationSchema)
-def get_recording_annotation(request: HttpRequest, pk: int, apiToken: str):
+def get_recording_annotation(
+    request: HttpRequest,
+    pk: int,
+    apiToken: str,  # noqa: N803
+):
     email_or_response = get_email_if_authorized(request, apiToken, recording_pk=pk)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
@@ -448,7 +456,11 @@ def get_recording_annotation(request: HttpRequest, pk: int, apiToken: str):
     auth=admin_auth,
     response=NABatRecordingAnnotationDetailsSchema,
 )
-def get_recording_annotation_details(request: HttpRequest, pk: int, apiToken: str):
+def get_recording_annotation_details(
+    request: HttpRequest,
+    pk: int,
+    apiToken: str,  # noqa: N803
+):
     email_or_response = get_email_if_authorized(request, apiToken, recording_pk=pk)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
@@ -588,7 +600,12 @@ def update_nabat_recording_annotation(
 
 # TODO: Determine if this will be implemented for NABat
 @router.delete("recording-annotation/{pk}", auth=None, response={200: str})
-def delete_recording_annotation(request: HttpRequest, pk: int, apiToken: str, recordingId: str):
+def delete_recording_annotation(
+    request: HttpRequest,
+    pk: int,
+    apiToken: str,  # noqa: N803
+    recordingId: str,  # noqa: N803
+):
     email_or_response = get_email_if_authorized(request, apiToken, recording_pk=recordingId)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response

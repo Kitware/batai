@@ -205,7 +205,7 @@ class Command(BaseCommand):
                     new_recording.save()
 
                     # Apply a random subset of tags to this recording
-                    k = random.randint(1, len(tag_texts))
+                    k = random.randint(1, len(tag_texts))  # noqa: S311
                     chosen = random.sample(tag_texts, k=k)
                     for text in chosen:
                         tag, _ = RecordingTag.objects.get_or_create(user=owner, text=text)

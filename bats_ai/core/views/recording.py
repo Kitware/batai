@@ -3,16 +3,14 @@ from __future__ import annotations
 from datetime import date, datetime, time
 import json
 import logging
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
-from django.http import HttpRequest
 from ninja import File, Form, Query, Schema
-from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import (
@@ -27,12 +25,17 @@ from bats_ai.core.models import (
     Spectrogram,
 )
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
-from bats_ai.core.views.recording_tag import RecordingTagSchema
 from bats_ai.core.views.sequence_annotations import (
     SequenceAnnotationSchema,
     UpdateSequenceAnnotationSchema,
 )
 from bats_ai.core.views.species import SpeciesSchema
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+    from ninja.files import UploadedFile
+
+    from bats_ai.core.views.recording_tag import RecordingTagSchema
 
 logger = logging.getLogger(__name__)
 
@@ -270,9 +273,10 @@ class PulseMetadataSchema(Schema):
 @router.post("/")
 def create_recording(
     request: HttpRequest,
+    *,
     payload: Form[RecordingUploadSchema],
     audio_file: File[UploadedFile],
-    publicVal: bool = False,
+    publicVal: bool = False,  # noqa: N803
 ):
     converted_date = date.fromisoformat(payload.recorded_date)
     time_str = payload.recorded_time
@@ -409,7 +413,7 @@ def _build_recordings_response(
     return items
 
 
-def _base_recordings_queryset(request: HttpRequest, public: bool | None) -> QuerySet[Recording]:
+def _base_recordings_queryset(request: HttpRequest, *, public: bool | None) -> QuerySet[Recording]:
     if public is not None and public:
         return (
             Recording.objects.filter(public=True)
@@ -450,7 +454,7 @@ def get_recordings(
     request: HttpRequest,
     q: Query[RecordingListQuerySchema],
 ):
-    queryset = _base_recordings_queryset(request, q.public)
+    queryset = _base_recordings_queryset(request, public=q.public)
 
     if q.exclude_submitted:
         submitted_by_user = RecordingAnnotation.objects.filter(
@@ -565,8 +569,8 @@ def _unsubmitted_recording_ids_ordered(
             qs = qs.order_by(f"{order_prefix}{sort_by}")
         return qs
 
-    my_qs = apply_filters_and_sort(_base_recordings_queryset(request, False))
-    shared_qs = apply_filters_and_sort(_base_recordings_queryset(request, True))
+    my_qs = apply_filters_and_sort(_base_recordings_queryset(request, public=False))
+    shared_qs = apply_filters_and_sort(_base_recordings_queryset(request, public=True))
 
     my_ids = list(my_qs.values_list("id", flat=True))
     shared_ids = list(shared_qs.values_list("id", flat=True))
@@ -656,12 +660,12 @@ def get_recording(request: HttpRequest, pk: int):
             )
             recording["userMadeAnnotations"] = user_has_annotations
             # Only expose file-level annotations owned by the current user
-            fileAnnotations = RecordingAnnotation.objects.filter(
+            file_annotations = RecordingAnnotation.objects.filter(
                 recording=pk, owner=request.user
             ).order_by("confidence")
             recording["fileAnnotations"] = [
                 RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
-                for fileAnnotation in fileAnnotations
+                for fileAnnotation in file_annotations
             ]
             return recording
         else:
@@ -680,15 +684,15 @@ def get_recording_annotations(request: HttpRequest, recording_id: int):
         return {"error": "Permission denied. You do not own this recording, and it is not public."}
     # Only return file-level annotations owned by the current user (same as pulse)
     # prefetch_related/select_related avoid N+1 when serializing species and owner
-    fileAnnotations = (
+    file_annotations = (
         RecordingAnnotation.objects.filter(recording=recording_id, owner=request.user)
         .select_related("owner")
         .prefetch_related("species")
         .order_by("confidence")
     )
     return [
-        RecordingAnnotationSchema.from_orm(fileAnnotation).dict()
-        for fileAnnotation in fileAnnotations
+        RecordingAnnotationSchema.from_orm(file_annotation).dict()
+        for file_annotation in file_annotations
     ]
 
 
@@ -952,7 +956,11 @@ def get_other_user_annotations(request: HttpRequest, pk: int):
 
 
 @router.get("/{pk}/annotations/user/{userId}")
-def get_user_annotations(request: HttpRequest, pk: int, userId: int):
+def get_user_annotations(
+    request: HttpRequest,
+    pk: int,
+    userId: int,  # noqa: N803
+):
     try:
         recording = Recording.objects.get(pk=pk)
 

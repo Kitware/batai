@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
 import logging
+from typing import TYPE_CHECKING
 
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -9,6 +9,9 @@ from ninja import Router
 from pydantic import BaseModel, ConfigDict
 
 from bats_ai.core.models import ExportedAnnotationFile
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

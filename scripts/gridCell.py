@@ -23,7 +23,7 @@ def get_gridcell_id(latitude, longitude, data):
     point = Point(x, y)
     for index, feature in enumerate(data):
         if point.within(feature["geometry"]):
-            print(f"Found index {index}, Feature ID: {feature['id']}")
+            click.echo(f"Found index {index}, Feature ID: {feature['id']}")
             return index, feature["id"]  # Returning index and Feature ID
     return None, None
 

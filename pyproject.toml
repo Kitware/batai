@@ -27,6 +27,7 @@ dependencies = [
   "django-stubs-ext",
   "psycopg[binary]",
   "pydantic",
+  "requests",
   "rich",
   "whitenoise[brotli]",
   "tqdm",
@@ -79,6 +80,7 @@ type = [
   "mypy",
   "celery-types",
   "django-stubs[compatible-mypy]",
+  "types-requests",
 ]
 test = [
   "factory-boy",
@@ -156,14 +158,6 @@ ignore = [
   "BLE001", # blind-except
   "C901", # complex-structure
   "DJ001", # django-nullable-model-string-field
-  "FBT001", # boolean-type-hint-positional-argument
-  "FBT002", # boolean-default-value-positional-argument
-  "FBT003", # boolean-positional-value-in-call
-  "INP001", # implicit-namespace-package
-  "N802", # invalid-function-name
-  "N803", # invalid-argument-name
-  "N806", # non-lowercase-variable-in-function
-  "N812", # lowercase-imported-as-non-lowercase
   "N815", # mixed-case-variable-in-class-scope
   "N999", # invalid-module-name
   "PLC0415", # import-outside-top-level
@@ -174,11 +168,7 @@ ignore = [
   "PLW2901", # redefined-loop-name
   "PTH", # flake8-use-pathlib
   "S110", # try-except-pass
-  "S310", # suspicious-url-open-usage
-  "S311", # suspicious-non-cryptographic-random-usage
   "SLF001", # private-member-access
-  "T201", # print
-  "TC", # flake8-type-checking
   "TRY300", # try-consider-else
   "TRY301", # raise-within-try
 ]
@@ -202,6 +192,9 @@ ignore = [
   "PLR0913", # too-many-arguments
   "S", # flake8-bandit
   "SLF001", # private-member-access
+]
+"scripts/**" = [
+  "INP001", # implicit-namespace-package
 ]
 
 [tool.ruff.lint.flake8-boolean-trap]
