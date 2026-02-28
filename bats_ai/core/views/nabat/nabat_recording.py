@@ -412,21 +412,21 @@ def get_nabat_recording_annotation(
         return email_or_response
     user_email = email_or_response  # safe to use
 
-    fileAnnotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
+    file_annotations = NABatRecordingAnnotation.objects.filter(nabat_recording=nabat_recording_id)
 
     if request.user.is_authenticated and request.user.is_superuser:
         # If the user is a superuser, return all annotations
         pass
     elif user_email:
-        fileAnnotations = fileAnnotations.filter(
+        file_annotations = file_annotations.filter(
             Q(user_email=user_email) | Q(user_email__isnull=True)
         )
 
-    fileAnnotations = fileAnnotations.order_by("confidence")
+    file_annotations = file_annotations.order_by("confidence")
 
     return [
-        NABatRecordingAnnotationSchema.from_orm(fileAnnotation).dict()
-        for fileAnnotation in fileAnnotations
+        NABatRecordingAnnotationSchema.from_orm(file_annotation).dict()
+        for file_annotation in file_annotations
     ]
 
 
