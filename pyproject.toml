@@ -161,7 +161,6 @@ ignore = [
   "FBT001", # boolean-type-hint-positional-argument
   "FBT002", # boolean-default-value-positional-argument
   "FBT003", # boolean-positional-value-in-call
-  "INP001", # implicit-namespace-package
   "N815", # mixed-case-variable-in-class-scope
   "N999", # invalid-module-name
   "PLC0415", # import-outside-top-level
@@ -196,6 +195,9 @@ ignore = [
   "PLR0913", # too-many-arguments
   "S", # flake8-bandit
   "SLF001", # private-member-access
+]
+"scripts/**" = [
+  "INP001", # implicit-namespace-package
 ]
 
 [tool.ruff.lint.flake8-boolean-trap]
