@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 import tempfile
-import urllib
-from urllib.request import urlretrieve
 import zipfile
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 import geopandas as gpd
+import requests
 from tqdm import tqdm  # progress bar
 
 from bats_ai.core.models import GRTSCells
@@ -56,6 +56,12 @@ class Command(BaseCommand):
             "--batch-size", type=int, default=5000, help="Batch size for database insertion"
         )
 
+    def _download_file(self, url: str, zip_path: Path) -> None:
+        response = requests.get(url, timeout=120)
+        response.raise_for_status()
+        with zip_path.open("wb") as f:
+            f.write(response.content)
+
     def handle(self, *args, **options):
         batch_size = options["batch_size"]
 
@@ -65,10 +71,12 @@ class Command(BaseCommand):
         for url, sample_frame_id, name, backup_url in SHAPEFILES:
             logger.info("Downloading shapefile for Location %s...", name)
             with tempfile.TemporaryDirectory() as tmpdir:
-                zip_path = os.path.join(tmpdir, "file.zip")
+                tmpdir = Path(tmpdir)
+
+                zip_path = tmpdir / "file.zip"
                 try:
-                    urlretrieve(url, zip_path)
-                except urllib.error.URLError as e:
+                    self._download_file(url, zip_path)
+                except requests.RequestException as e:
                     logger.warning(
                         "Failed to download from primary URL: %s. Attempting backup URL...", e
                     )
@@ -76,8 +84,8 @@ class Command(BaseCommand):
                         logger.warning("No backup URL provided, skipping this shapefile.")
                         continue
                     try:
-                        urlretrieve(backup_url, zip_path)
-                    except urllib.error.URLError as e2:
+                        self._download_file(backup_url, zip_path)
+                    except requests.RequestException as e2:
                         raise CommandError(
                             f"Failed to download from backup URL as well: {e2}"
                         ) from e2

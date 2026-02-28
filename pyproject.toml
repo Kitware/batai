@@ -27,6 +27,7 @@ dependencies = [
   "django-stubs-ext",
   "psycopg[binary]",
   "pydantic",
+  "requests",
   "rich",
   "whitenoise[brotli]",
   "tqdm",
@@ -79,6 +80,7 @@ type = [
   "mypy",
   "celery-types",
   "django-stubs[compatible-mypy]",
+  "types-requests",
 ]
 test = [
   "factory-boy",
@@ -170,7 +172,6 @@ ignore = [
   "PLW2901", # redefined-loop-name
   "PTH", # flake8-use-pathlib
   "S110", # try-except-pass
-  "S310", # suspicious-url-open-usage
   "SLF001", # private-member-access
   "T201", # print
   "TRY300", # try-consider-else
