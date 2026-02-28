@@ -336,21 +336,21 @@ def extract_contours(
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     if apply_noise_filter and noise_threshold is not None:
-        print(f"Applying noise filter: {apply_noise_filter} with threshold: {noise_threshold}")
+        click.echo(f"Applying noise filter: {apply_noise_filter} with threshold: {noise_threshold}")
         # Create mask of pixels above threshold in original image
         # print out min and max of gray
         filtered = gray.copy()
         filtered[filtered < noise_threshold] = 0
-        print(gray.mean())
+        click.echo(gray.mean())
         if debug:
             debug_path = output_path / "filtered.jpg" if output_path else None
             unfiltered_path = output_path / "unfiltered.jpg" if output_path else None
             if debug_path:
                 cv2.imwrite(str(debug_path), filtered)
-                print("Wrote filtered debug image:", debug_path)
+                click.echo(f"Wrote filtered debug image: {debug_path}")
             if unfiltered_path:
                 cv2.imwrite(str(unfiltered_path), gray)
-                print("Wrote unfiltered debug image:", unfiltered_path)
+                click.echo(f"Wrote unfiltered debug image: {unfiltered_path}")
 
     data = gray
 
@@ -361,7 +361,7 @@ def extract_contours(
         **level_kwargs,
     )
 
-    print(levels)
+    click.echo(levels)
 
     contours = []
     for level in levels:

@@ -95,7 +95,7 @@ def fetch_and_save():
     response = requests.post(BASE_URL, json={"query": batch_query}, headers=headers, timeout=30)
     batch_data = {}
 
-    print(response.text)
+    click.echo(response.text)
 
     if response.status_code == 200:
         try:

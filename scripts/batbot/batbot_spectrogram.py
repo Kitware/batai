@@ -403,7 +403,7 @@ def pipeline(filepath, config, output_path, debug):
 def metadata(metadata_filepath):
     """Parse and display BatBot metadata JSON file."""
     metadata = parse_batbot_metadata(metadata_filepath)
-    print(len(metadata.segments), "segments found.")
+    click.echo(f"{len(metadata.segments)} segments found.")
     convert_to_spectrogram_data(metadata)
     compressed_data = convert_to_compressed_spectrogram_data(metadata)
 

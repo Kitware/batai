@@ -151,7 +151,7 @@ def generate_spectrogram(wav_path, output_path, colormap="turbo"):
         return output_path, duration
 
     except Exception as e:
-        print(f"Spectrogram error for {wav_path}: {e}")
+        click.echo(f"Spectrogram error for {wav_path}: {e}")
         return None, None
 
 
@@ -212,7 +212,7 @@ def generate_compressed(img_path, duration, annotation_path, output_path):
             threshold -= 0.05
 
     except Exception as e:
-        print(f"Compression error: {e}")
+        click.echo(f"Compression error: {e}")
     return False
 
 
@@ -244,7 +244,7 @@ def main(num_files, outdir, colormap, spectro):
                 success = generate_compressed(
                     spectrogram_path, spec_duration, annotation_path, compressed_path
                 )
-                print(f"{base}: {'Success' if success else 'Failed'}")
+                click.echo(f"{base}: {'Success' if success else 'Failed'}")
 
 
 if __name__ == "__main__":

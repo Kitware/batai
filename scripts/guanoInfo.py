@@ -12,11 +12,11 @@ def extract_guano_metadata(input_file, output):
         # Load a .WAV file with (or without) GUANO metadata
         g = guano.GuanoFile(input_file)
         # Get and set metadata values like a Python dict
-        print(f"GUANO Version: {g['GUANO|Version']}")
+        click.echo(f"GUANO Version: {g['GUANO|Version']}")
         # Print all the metadata values
-        print("All Metadata:")
+        click.echo("All Metadata:")
         for key, value in g.items():
-            print(f"{key}: {value}")
+            click.echo(f"{key}: {value}")
 
         # Write the updated .WAV file back to disk
 

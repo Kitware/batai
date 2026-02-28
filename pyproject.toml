@@ -173,7 +173,6 @@ ignore = [
   "PTH", # flake8-use-pathlib
   "S110", # try-except-pass
   "SLF001", # private-member-access
-  "T201", # print
   "TRY300", # try-consider-else
   "TRY301", # raise-within-try
 ]
