@@ -279,6 +279,7 @@ def extract_contours(
 
 def process_spectrogram_assets_for_contours(
     assets: dict[str, Any],
+    *,
     levels_mode: str = "percentile",
     percentile_values: list[float] | None = None,
     min_area: float = 30.0,

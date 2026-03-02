@@ -18,7 +18,7 @@ from bats_ai.core.models import (
 )
 
 
-def build_filters(filters, has_confidence=False):
+def build_filters(filters, *, has_confidence=False):
     conditions = {}
     if filters.get("start_date"):
         conditions["created__date__gte"] = filters["start_date"]
@@ -46,7 +46,7 @@ def _annotation_species_ordered(annotation):
 
 
 def annotation_to_dict(
-    annotation, include_times=False, include_freqs=False, include_confidence=False
+    annotation, *, include_times=False, include_freqs=False, include_confidence=False
 ):
     data = {
         "id": annotation.id,
@@ -76,7 +76,13 @@ def annotation_to_dict(
 
 
 def write_csv_and_json(
-    zipf, name_prefix, queryset, include_times=False, include_freqs=False, include_confidence=False
+    zipf,
+    name_prefix,
+    queryset,
+    *,
+    include_times=False,
+    include_freqs=False,
+    include_confidence=False,
 ):
     rows = [
         annotation_to_dict(

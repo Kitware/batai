@@ -3,8 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 import json
 import logging
-from typing import Any, Literal
-import uuid
+from typing import TYPE_CHECKING, Any, Literal
 
 from django.contrib.gis.db.models import functions as gis_functions
 from django.contrib.gis.geos import Point, Polygon
@@ -19,6 +18,9 @@ from bats_ai.core.models import ExportedAnnotationFile, ProcessingTask, Processi
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
 from bats_ai.core.tasks.nabat.nabat_export_task import export_nabat_annotations_task
 from bats_ai.core.tasks.nabat.nabat_update_species import update_nabat_species
+
+if TYPE_CHECKING:
+    import uuid
 
 logger = logging.getLogger(__name__)
 

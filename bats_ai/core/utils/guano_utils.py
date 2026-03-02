@@ -84,7 +84,7 @@ def extract_metadata_from_filename(filename: str) -> dict:
     return metadata
 
 
-def extract_guano_metadata(file_path: str | Path, check_filename: bool = False) -> dict:
+def extract_guano_metadata(file_path: str | Path, *, check_filename: bool = False) -> dict:
     """Extract GUANO metadata from a WAV file.
 
     Args:
