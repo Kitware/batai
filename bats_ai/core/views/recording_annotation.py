@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-from django.http import HttpRequest
 from ninja import Router, Schema
 from ninja.errors import HttpError
 
 from bats_ai.core.models import Configuration, Recording, RecordingAnnotation, Species
 from bats_ai.core.views.recording import SpeciesSchema
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
 
 logger = logging.getLogger(__name__)
 

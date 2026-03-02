@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-from django.http import HttpRequest
 from ninja import Schema
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import Annotations, Recording
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
 
 logger = logging.getLogger(__name__)
 

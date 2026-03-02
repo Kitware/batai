@@ -272,7 +272,7 @@ def working_directory(path):
 
 
 def generate_spectrogram_assets(
-    recording_path: str, output_folder: str, debug: bool = False
+    recording_path: str, *, output_folder: str, debug: bool = False
 ) -> SpectrogramAssets:
     batbot.pipeline(recording_path, output_folder=output_folder, debug=debug)
     # There should be a .metadata.json file in the output_base directory by replacing extentions
@@ -403,7 +403,7 @@ def pipeline(filepath, config, output_path, debug):
 def metadata(metadata_filepath):
     """Parse and display BatBot metadata JSON file."""
     metadata = parse_batbot_metadata(metadata_filepath)
-    print(len(metadata.segments), "segments found.")
+    click.echo(f"{len(metadata.segments)} segments found.")
     convert_to_spectrogram_data(metadata)
     compressed_data = convert_to_compressed_spectrogram_data(metadata)
 

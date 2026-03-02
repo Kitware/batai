@@ -106,6 +106,7 @@ def _try_start_spectrogram_generation(recording_id: int):
 
 
 def _ingest_files_from_manifest(
+    *,
     s3_client,
     bucket: str,
     manifest: Path,
@@ -268,12 +269,12 @@ class Command(BaseCommand):
         if limit:
             self.stdout.write(f"Ingesting the first {limit} files from {manifest}...")
         _ingest_files_from_manifest(
-            s3_client,
-            bucket,
-            manifest,
-            owner,
-            public,
-            limit,
+            s3_client=s3_client,
+            bucket=bucket,
+            manifest=manifest,
+            owner=owner,
+            public=public,
+            limit=limit,
             file_key=file_key,
             tag_keys=tag_keys,
         )

@@ -26,7 +26,7 @@ class GRTSCells(models.Model):
     geom_4326 = models.GeometryField()
 
     @property
-    def sampleFrameMapping(self):
+    def sample_frame_mapping(self):
         return sample_frame_map[self.sample_frame_id]
 
     @staticmethod
