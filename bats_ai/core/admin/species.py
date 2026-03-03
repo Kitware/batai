@@ -18,3 +18,4 @@ class SpeciesAdmin(admin.ModelAdmin):
         "common_name",
     ]
     list_select_related = True
+    search_fields = ["species_code", "common_name", "species", "genus", "family"]

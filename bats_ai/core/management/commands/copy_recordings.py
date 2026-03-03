@@ -27,6 +27,7 @@ from bats_ai.core.models import (
     Spectrogram,
     SpectrogramImage,
 )
+from bats_ai.core.models.recording_annotation import RecordingAnnotationSpecies
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +108,12 @@ def _link_spectrogram_and_annotations(source_recording, new_recording):
             additional_data=src_ann.additional_data,
             submitted=src_ann.submitted,
         )
-        new_ann.species.set(src_ann.species.all())
+        for order, through in enumerate(src_ann.recordingannotationspecies_set.order_by("order")):
+            RecordingAnnotationSpecies.objects.create(
+                recording_annotation=new_ann,
+                species=through.species,
+                order=order,
+            )
 
 
 class Command(BaseCommand):

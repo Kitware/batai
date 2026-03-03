@@ -24,5 +24,5 @@ class Species(models.Model):
         help_text="Category label: single species, multiple species, frequency, or NoID",
     )
 
-    def __str__(self):
-        return self.species_code or f"Species {self.pk}"
+    def __str__(self) -> str:
+        return self.species_code or str(self.pk)
