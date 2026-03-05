@@ -77,11 +77,11 @@ export default defineComponent({
             <span class="text-caption text-medium-emphasis mr-2">Knee</span>
             <span>{{ data.kneeKhz.toFixed(1) }} kHz</span>
           </div>
-          <div v-if="data.slopeAtHiFcKneeKhzPerMs != null"> 
+          <div v-if="data.slopeHiAvg != null"> 
             <span
               class="text-caption ml-4 text-medium-emphasis"
             >
-              ({{ data.slopeAtHiFcKneeKhzPerMs.toFixed(2) }} kHz/ms)
+              <b>Slope Hi Avg:</b> {{ data.slopeHiAvg.toFixed(2) }} kHz/ms
             </span>
           </div>
           <div
@@ -96,14 +96,15 @@ export default defineComponent({
             <span class="text-caption text-medium-emphasis mr-2">Fc</span>
             <span>{{ data.fcKhz.toFixed(1) }} kHz</span>
           </div>
-          <div v-if="data.slopeAtFcKhzPerMs != null"> 
+          <div v-if="data.slopeTotalAvg != null"> 
             <span
               class="text-caption ml-4 text-medium-emphasis"
             >
-              ({{ data.slopeAtFcKhzPerMs.toFixed(2) }} kHz/ms)
+              <b>Slope Total Avg:</b>{{ data.slopeTotalAvg.toFixed(2) }} kHz/ms
             </span>
           </div>
-          <div
+          <!-- DISABLED HEEL FOR NOW -->
+          <!-- <div
             v-if="data.heelKhz != null"
             class="d-flex align-center"
           >
@@ -114,14 +115,7 @@ export default defineComponent({
             />
             <span class="text-caption text-medium-emphasis mr-2">Heel</span>
             <span>{{ data.heelKhz.toFixed(1) }} kHz</span>
-          </div>
-          <div v-if="data.slopeAtLowFcHeelKhzPerMs != null"> 
-            <span
-              class="text-caption ml-4 text-medium-emphasis"
-            >
-              ({{ data.slopeAtLowFcHeelKhzPerMs.toFixed(2) }} kHz/ms)
-            </span>
-          </div>
+          </div> -->
           <div class="d-flex align-center">
             <span class="text-caption text-medium-emphasis mr-2">Duration</span>
             <span>{{ data.durationMs.toFixed(1) }} ms</span>
