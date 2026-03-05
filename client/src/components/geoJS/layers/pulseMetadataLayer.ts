@@ -41,12 +41,10 @@ export interface PulseMetadataTooltipData {
   charFreqColor: string | null;
   heelKhz: number | null;
   kneeKhz: number | null;
-  /** Slope at hi fc:knee (kHz/ms). */
-  slopeAtHiFcKneeKhzPerMs: number | null;
-  /** Slope at fc (kHz/ms). */
-  slopeAtFcKhzPerMs: number | null;
-  /** Slope at low fc:heel (kHz/ms). */
-  slopeAtLowFcHeelKhzPerMs: number | null;
+  /** Slope at Hi Avg. */
+  slopeHiAvg: number | null;
+  /** Slope at Total Avg. */
+  slopeTotalAvg: number | null;
   bbox: { top: number; left: number; width: number; height: number };
 }
 
@@ -62,6 +60,8 @@ const defaultPulseMetadataStyle: PulseMetadataStyle = {
   pointRadius: 5,
   pulseMetadataLabels: 'None',
 };
+
+const DISABLE_HEEL = true;
 
 export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   pulseMetadataList: PulseMetadata[];
@@ -291,9 +291,8 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       heelKhz: pulse.heel ? pulse.heel[1] / 1000 : null,
       kneeKhz: pulse.knee ? pulse.knee[1] / 1000 : null,
       charFreqColor: pulse.char_freq ? charFreqColor : null,
-      slopeAtHiFcKneeKhzPerMs: slopes?.slope_at_hi_fc_knee_khz_per_ms ?? null,
-      slopeAtFcKhzPerMs: slopes?.slope_at_fc_khz_per_ms ?? null,
-      slopeAtLowFcHeelKhzPerMs: slopes?.slope_at_low_fc_heel_khz_per_ms ?? null,
+      slopeHiAvg: slopes?.slope_hi_avg_khz_per_ms ?? null,
+      slopeTotalAvg: slopes?.slope_avg_khz_per_ms ?? null,
       bbox: { top: 0, left, width, height },
     };
   }
@@ -401,7 +400,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           textAlign: 'end',
         });
       }
-      if (pulse.heel && pulse.heel.length >= 2) {
+      if (!DISABLE_HEEL && pulse.heel && pulse.heel.length >= 2) {
         const pos = this.getCompressedPosition(pulse.heel[0], pulse.heel[1], index);
         this.pointData.push({ x: pos.x, y: pos.y, label: 'heel' });
         bboxPoints.push(pos);
