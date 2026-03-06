@@ -143,7 +143,7 @@ export type OtherUserAnnotations = Record<
 export type UploadLocation = null | { latitude?: number; longitude?: number; gridCellId?: number };
 
 export const axiosInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_APP_API_ROOT as string}/api/v1`,
+  baseURL: `${import.meta.env.VITE_APP_API_ROOT}/api/v1`,
 });
 
 export interface RecordingFileParameters {
