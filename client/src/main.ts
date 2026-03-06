@@ -11,7 +11,7 @@ import { axiosInstance } from './api/api';
 import { installPrompt } from './use/prompt-service';
 
 // This is only defined in the release build environment
-const SENTRY_DSN = import.meta.env.VITE_APP_SENTRY_DSN as string | undefined;
+const SENTRY_DSN = import.meta.env.VITE_APP_SENTRY_DSN;
 
 const app = createApp(App);
 const Vuetify = createVuetify({});
