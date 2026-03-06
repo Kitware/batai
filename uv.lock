@@ -272,70 +272,70 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batbot", marker = "extra == 'tasks'" },
-    { name = "celery" },
-    { name = "django", extras = ["argon2"] },
-    { name = "django-allauth" },
-    { name = "django-auth-style" },
-    { name = "django-browser-reload", marker = "extra == 'development'" },
-    { name = "django-celery-results" },
-    { name = "django-click", marker = "extra == 'development'" },
-    { name = "django-cors-headers" },
-    { name = "django-debug-toolbar", marker = "extra == 'development'" },
-    { name = "django-environ" },
-    { name = "django-extensions" },
-    { name = "django-minio-storage", marker = "extra == 'development'" },
-    { name = "django-ninja" },
-    { name = "django-oauth-toolkit" },
-    { name = "django-resonant-settings", extras = ["allauth", "celery"] },
-    { name = "django-resonant-utils", extras = ["allauth", "s3-storage"] },
-    { name = "django-resonant-utils", extras = ["minio-storage"], marker = "extra == 'development'" },
-    { name = "django-s3-file-field", extras = ["minio"], marker = "extra == 'development'" },
-    { name = "django-s3-file-field", extras = ["s3"] },
-    { name = "django-storages", extras = ["s3"] },
-    { name = "django-stubs-ext" },
-    { name = "faker", marker = "extra == 'development'" },
-    { name = "gdal", index = "https://girder.github.io/large_image_wheels/" },
-    { name = "geopandas", specifier = ">=1.1.1" },
-    { name = "guano" },
-    { name = "gunicorn" },
-    { name = "ipython", marker = "extra == 'development'" },
-    { name = "numpy", marker = "extra == 'tasks'" },
-    { name = "opencv-python-headless", marker = "extra == 'tasks'" },
-    { name = "psycopg", extras = ["binary"] },
-    { name = "pydantic" },
-    { name = "requests" },
-    { name = "rich" },
-    { name = "scikit-image", marker = "extra == 'tasks'" },
-    { name = "scipy", marker = "extra == 'tasks'" },
-    { name = "sentry-sdk", extras = ["celery", "django", "pure-eval"] },
-    { name = "tqdm" },
-    { name = "watchdog", marker = "extra == 'development'" },
-    { name = "werkzeug", marker = "extra == 'development'" },
-    { name = "whitenoise", extras = ["brotli"] },
+    { name = "batbot", marker = "extra == 'tasks'", specifier = "==0.1.2" },
+    { name = "celery", specifier = "==5.6.2" },
+    { name = "django", extras = ["argon2"], specifier = "==5.2.11" },
+    { name = "django-allauth", specifier = "==65.14.1" },
+    { name = "django-auth-style", specifier = "==0.14.0" },
+    { name = "django-browser-reload", marker = "extra == 'development'", specifier = "==1.21.0" },
+    { name = "django-celery-results", specifier = "==2.6.0" },
+    { name = "django-click", marker = "extra == 'development'", specifier = "==2.5.0" },
+    { name = "django-cors-headers", specifier = "==4.9.0" },
+    { name = "django-debug-toolbar", marker = "extra == 'development'", specifier = "==6.2.0" },
+    { name = "django-environ", specifier = "==0.12.1" },
+    { name = "django-extensions", specifier = "==4.1" },
+    { name = "django-minio-storage", marker = "extra == 'development'", specifier = "==0.5.9" },
+    { name = "django-ninja", specifier = "==1.5.3" },
+    { name = "django-oauth-toolkit", specifier = "==3.2.0" },
+    { name = "django-resonant-settings", extras = ["allauth", "celery"], specifier = "==0.48.1" },
+    { name = "django-resonant-utils", extras = ["allauth", "s3-storage"], specifier = "==0.18.0" },
+    { name = "django-resonant-utils", extras = ["minio-storage"], marker = "extra == 'development'", specifier = "==0.18.0" },
+    { name = "django-s3-file-field", extras = ["minio"], marker = "extra == 'development'", specifier = "==1.1.0" },
+    { name = "django-s3-file-field", extras = ["s3"], specifier = "==1.1.0" },
+    { name = "django-storages", extras = ["s3"], specifier = "==1.14.6" },
+    { name = "django-stubs-ext", specifier = "==5.2.9" },
+    { name = "faker", marker = "extra == 'development'", specifier = "==40.4.0" },
+    { name = "gdal", specifier = "==3.12.2.1", index = "https://girder.github.io/large_image_wheels/" },
+    { name = "geopandas", specifier = "==1.1.1" },
+    { name = "guano", specifier = "==1.0.16" },
+    { name = "gunicorn", specifier = "==25.0.3" },
+    { name = "ipython", marker = "extra == 'development'", specifier = "==9.10.0" },
+    { name = "numpy", marker = "extra == 'tasks'", specifier = "==2.2.6" },
+    { name = "opencv-python-headless", marker = "extra == 'tasks'", specifier = "==4.11.0.86" },
+    { name = "psycopg", extras = ["binary"], specifier = "==3.3.2" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "requests", specifier = "==2.32.5" },
+    { name = "rich", specifier = "==14.3.2" },
+    { name = "scikit-image", marker = "extra == 'tasks'", specifier = "==0.26.0" },
+    { name = "scipy", marker = "extra == 'tasks'", specifier = "==1.16.0" },
+    { name = "sentry-sdk", extras = ["celery", "django", "pure-eval"], specifier = "==2.52.0" },
+    { name = "tqdm", specifier = "==4.67.3" },
+    { name = "watchdog", marker = "extra == 'development'", specifier = "==6.0.0" },
+    { name = "werkzeug", marker = "extra == 'development'", specifier = "==3.1.5" },
+    { name = "whitenoise", extras = ["brotli"], specifier = "==6.11.0" },
 ]
 provides-extras = ["development", "tasks"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "bats-ai", extras = ["development", "tasks"] },
-    { name = "tox" },
-    { name = "tox-uv" },
+    { name = "tox", specifier = "==4.34.1" },
+    { name = "tox-uv", specifier = "==1.29.0" },
 ]
-lint = [{ name = "ruff" }]
+lint = [{ name = "ruff", specifier = "==0.15.2" }]
 test = [
-    { name = "factory-boy" },
-    { name = "pytest" },
-    { name = "pytest-django" },
-    { name = "pytest-mock" },
-    { name = "pytest-random-order" },
-    { name = "pytest-repeat" },
+    { name = "factory-boy", specifier = "==3.3.3" },
+    { name = "pytest", specifier = "==9.0.2" },
+    { name = "pytest-django", specifier = "==4.11.1" },
+    { name = "pytest-mock", specifier = "==3.15.1" },
+    { name = "pytest-random-order", specifier = "==1.2.0" },
+    { name = "pytest-repeat", specifier = "==0.9.4" },
 ]
 type = [
-    { name = "celery-types" },
-    { name = "django-stubs", extras = ["compatible-mypy"] },
-    { name = "mypy" },
-    { name = "types-requests" },
+    { name = "celery-types", specifier = "==0.24.0" },
+    { name = "django-stubs", extras = ["compatible-mypy"], specifier = "==5.2.9" },
+    { name = "mypy", specifier = "==1.16.1" },
+    { name = "types-requests", specifier = "==2.32.4.20260107" },
 ]
 
 [[package]]
@@ -905,11 +905,11 @@ wheels = [
 
 [[package]]
 name = "django-environ"
-version = "0.12.0"
+version = "0.12.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d6/04/65d2521842c42f4716225f20d8443a50804920606aec018188bbee30a6b0/django_environ-0.12.0.tar.gz", hash = "sha256:227dc891453dd5bde769c3449cf4a74b6f2ee8f7ab2361c93a07068f4179041a", size = 56804, upload-time = "2025-01-13T17:03:37.74Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/3c/b2de27581c28929e3b33c5797e3d075c93541b4a8499ddc84dfd659d550f/django_environ-0.12.1.tar.gz", hash = "sha256:22859c6e905ab7637fa3348d1787543bb4492f38d761104a3ce0519b7b752845", size = 58257, upload-time = "2026-02-14T01:19:50.733Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/b3/0a3bec4ecbfee960f39b1842c2f91e4754251e0a6ed443db9fe3f666ba8f/django_environ-0.12.0-py2.py3-none-any.whl", hash = "sha256:92fb346a158abda07ffe6eb23135ce92843af06ecf8753f43adf9d2366dcc0ca", size = 19957, upload-time = "2025-01-13T17:03:32.918Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/1c/a6c55b856cb2c5824ee2fe5e27d6f54909ac7c228672b359ecbca99a6b41/django_environ-0.12.1-py2.py3-none-any.whl", hash = "sha256:064ba2d5082f833e6d7fe4def4928bde1eedc0248a417575da7db147aeec1c20", size = 20035, upload-time = "2026-02-14T01:19:48.683Z" },
 ]
 
 [[package]]
@@ -967,15 +967,15 @@ wheels = [
 
 [[package]]
 name = "django-resonant-settings"
-version = "0.47.0"
+version = "0.48.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "django-environ" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/24/87/a2009d9b59db167f8ede72331f592e4321647a9dcc92852a6a3f91e84850/django_resonant_settings-0.47.0.tar.gz", hash = "sha256:869d3d1de1e5794395179515b734913ceb91d5a0422bd8bd979ef70989868305", size = 19173, upload-time = "2026-02-19T16:24:18.513Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/93/36/70d9e2441a204e138c50c97b7791efa8e8bc15e17dfea2c2413733d2e576/django_resonant_settings-0.48.1.tar.gz", hash = "sha256:c101ccc60e6922e875140eeb3c2f089aac2bf0ebca63c512f826f91286d16983", size = 19231, upload-time = "2026-03-06T05:01:10.797Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/db/32cb0f425e2c5f99b02f5c0122b5664cdeddbcc63f13c6ca194b2914c0ff/django_resonant_settings-0.47.0-py3-none-any.whl", hash = "sha256:c0b0d4f73628bf96971e766a846dd466b27b9fbd3c8ee5f378eb77761a014249", size = 26099, upload-time = "2026-02-19T16:24:17.132Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/f2/15b8afe28ed7b76e8e7f7d6bac8b49cc977691142659d5468671c0889536/django_resonant_settings-0.48.1-py3-none-any.whl", hash = "sha256:01e494132d05828c4a79b54d1e5013052b4e40cc034e7dd52cf8b4c93a57e4e7", size = 26102, upload-time = "2026-03-06T05:01:09.754Z" },
 ]
 
 [package.optional-dependencies]

@@ -11,57 +11,57 @@ license-files = ["LICENSE", "NOTICE"]
 classifiers = ["Private :: Do Not Upload"]
 dependencies = [
   # Runtime dependendencies, always needed
-  "celery",
-  "django[argon2]",
-  "django-ninja",
-  "django-allauth",
-  "django-auth-style",
-  "django-cors-headers",
-  "django-environ",
-  "django-extensions",
-  "django-oauth-toolkit",
-  "django-resonant-settings[allauth,celery]",
-  "django-resonant-utils[allauth,s3_storage]",
-  "django-s3-file-field[s3]",
-  "django-storages[s3]",
-  "django-stubs-ext",
-  "psycopg[binary]",
-  "pydantic",
-  "requests",
-  "rich",
-  "whitenoise[brotli]",
-  "tqdm",
+  "celery==5.6.2",
+  "django[argon2]==5.2.11",
+  "django-ninja==1.5.3",
+  "django-allauth==65.14.1",
+  "django-auth-style==0.14.0",
+  "django-cors-headers==4.9.0",
+  "django-environ==0.12.1",
+  "django-extensions==4.1",
+  "django-oauth-toolkit==3.2.0",
+  "django-resonant-settings[allauth,celery]==0.48.1",
+  "django-resonant-utils[allauth,s3_storage]==0.18.0",
+  "django-s3-file-field[s3]==1.1.0",
+  "django-storages[s3]==1.14.6",
+  "django-stubs-ext==5.2.9",
+  "psycopg[binary]==3.3.2",
+  "pydantic==2.12.5",
+  "requests==2.32.5",
+  "rich==14.3.2",
+  "whitenoise[brotli]==6.11.0",
+  "tqdm==4.67.3",
   # guano metadata
-  "gdal",
-  "geopandas>=1.1.1",
-  "guano",
-  "django-celery-results",
+  "gdal==3.12.2.1",
+  "geopandas==1.1.1",
+  "guano==1.0.16",
+  "django-celery-results==2.6.0",
   # Production-only
-  "sentry-sdk[celery,django,pure_eval]",
-  "gunicorn",
+  "sentry-sdk[celery,django,pure_eval]==2.52.0",
+  "gunicorn==25.0.3",
 ]
 
 [project.optional-dependencies]
 development = [
-  "django-browser-reload",
-  "django-click",
-  "django-debug-toolbar",
-  "django-minio-storage",
-  "django-resonant-utils[minio_storage]",
-  "django-s3-file-field[minio]",
-  "faker",
-  "ipython",
-  "watchdog",
-  "werkzeug",
+  "django-browser-reload==1.21.0",
+  "django-click==2.5.0",
+  "django-debug-toolbar==6.2.0",
+  "django-minio-storage==0.5.9",
+  "django-resonant-utils[minio_storage]==0.18.0",
+  "django-s3-file-field[minio]==1.1.0",
+  "faker==40.4.0",
+  "ipython==9.10.0",
+  "watchdog==6.0.0",
+  "werkzeug==3.1.5",
 ]
 tasks = [
   # Heavy duty dependencies used for computationally
   # intensive tasks, such as spectrogram generation
-  "batbot",
-  "numpy",
-  "scipy",
-  "scikit-image",
-  "opencv-python-headless",
+  "batbot==0.1.2",
+  "numpy==2.2.6",
+  "scipy==1.16.0",
+  "scikit-image==0.26.0",
+  "opencv-python-headless==4.11.0.86",
 ]
 
 [dependency-groups]
@@ -70,27 +70,27 @@ dev = [
   # The "dev" dependency group is installed by default,
   # so use this to install "development" and "tasks" extras by default too
   "bats-ai[development,tasks]",
-  "tox",
-  "tox-uv",
+  "tox==4.34.1",
+  "tox-uv==1.29.0",
 ]
 lint = [
-  "ruff",
+  "ruff==0.15.2",
 ]
 type = [
-  "mypy",
-  "celery-types",
-  "django-stubs[compatible-mypy]",
-  "types-requests",
+  "mypy==1.16.1",
+  "celery-types==0.24.0",
+  "django-stubs[compatible-mypy]==5.2.9",
+  "types-requests==2.32.4.20260107",
 ]
 test = [
-  "factory-boy",
-  "pytest",
-  "pytest-django",
-  "pytest-mock",
+  "factory-boy==3.3.3",
+  "pytest==9.0.2",
+  "pytest-django==4.11.1",
+  "pytest-mock==3.15.1",
   # Enable with "pytest --random-order ..."
-  "pytest-random-order",
+  "pytest-random-order==1.2.0",
   # Enable with "pytest --count=... ..."
-  "pytest-repeat",
+  "pytest-repeat==0.9.4",
 ]
 
 [tool.hatch.build]
