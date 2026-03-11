@@ -2,38 +2,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ninja import Schema
-from ninja.pagination import RouterPaginated
+from django.shortcuts import get_object_or_404
+from ninja import Field, ModelSchema, Router, Schema
+from ninja.errors import AuthorizationError
 
-from bats_ai.core.models import Annotations, Recording, SequenceAnnotations
+from bats_ai.core.models import Annotations, SequenceAnnotations
 from bats_ai.core.views.species import SpeciesSchema
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
-router = RouterPaginated()
+router = Router()
 
 
-class SequenceAnnotationSchema(Schema):
-    id: int
-    start_time: int
-    end_time: int
-    type: str | None
-    comments: str
+class SequenceAnnotationSchema(ModelSchema):
+    class Meta:
+        model = SequenceAnnotations
+        fields = ["id", "start_time", "end_time", "type", "comments"]
+
     species: list[SpeciesSchema] | None
-    owner_email: str = None
-
-    @classmethod
-    def from_orm(cls, obj, owner_email=None):
-        return cls(
-            start_time=obj.start_time,
-            end_time=obj.end_time,
-            type=obj.type,
-            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
-            comments=obj.comments,
-            id=obj.id,
-            owner_email=owner_email,  # Include owner_email in the schema
-        )
+    owner_email: str | None = Field(None, alias="owner.email")
 
 
 class UpdateSequenceAnnotationSchema(Schema):
@@ -43,30 +31,18 @@ class UpdateSequenceAnnotationSchema(Schema):
     comments: str | None = None
 
 
-@router.get("/{pk}")
+@router.get("/{pk}", response=list[SequenceAnnotationSchema])
 def get_sequence_annotation(request: HttpRequest, pk: int):
-    try:
-        annotation = Annotations.objects.get(pk=pk)
-        recording = annotation.recording
+    annotation = get_object_or_404(Annotations.objects.select_related("recording"), pk=pk)
+    recording = annotation.recording
 
-        # Check if the user owns the recording or if the recording is public
-        if recording.owner == request.user or recording.public:
-            # Query annotations associated with the recording that are owned by the current user
-            annotations_qs = SequenceAnnotations.objects.filter(
-                recording=recording, owner=request.user
-            )
+    # Check if the user owns the recording or if the recording is public
+    if not (recording.owner == request.user or recording.public):
+        raise AuthorizationError
 
-            # Serialize the annotations using AnnotationSchema
-            return [
-                SequenceAnnotationSchema.from_orm(annotation, owner_email=request.user.email).dict()
-                for annotation in annotations_qs
-            ]
-
-        else:
-            return {
-                "error": "Permission denied. You do not own this annotation, or the associated"
-                " recording is not public."
-            }
-
-    except Recording.DoesNotExist:
-        return {"error": "Recording not found"}
+    # Query annotations associated with the recording that are owned by the current user
+    return (
+        SequenceAnnotations.objects.filter(recording=recording, owner=request.user)
+        .select_related("owner")
+        .prefetch_related("species")
+    )
