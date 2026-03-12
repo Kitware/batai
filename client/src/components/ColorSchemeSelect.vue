@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { defineModel } from 'vue';
-
 defineProps({
   colorSchemes: {
     type: Array as () => { value: string; title: string; scheme: (input: number) => string }[],
@@ -24,7 +22,7 @@ defineProps({
   }
 });
 
-const colorScheme = defineModel();
+const colorScheme = defineModel<{ value: string; title: string; scheme: (input: number) => string }>();
 </script>
 
 <template>

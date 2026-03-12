@@ -1,4 +1,3 @@
-/* eslint-disable class-methods-use-this */
 import { SpectroInfo } from "../geoJSUtils";
 import { LayerStyle } from "./types";
 
@@ -53,11 +52,9 @@ export default class CompressedOverlayLayer {
   scaledWidth: number;
   scaledHeight: number;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     spectroInfo: SpectroInfo
   ) {
     this.geoViewerRef = geoViewerRef;

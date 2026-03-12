@@ -8,8 +8,10 @@ import {
   exportNABatAnnotations,
   type RecordingListItem,
   type Annotation,
+  AnnotationExportRequest,
 } from '@api/NABatApi';
 import Exporting from '../Exporting.vue';
+import { SortItem } from 'vuetify/lib/components/VDataTable/composables/sort';
 
 export default defineComponent({
   name: 'NABatAdminBrowser',
@@ -25,8 +27,8 @@ export default defineComponent({
     const totalAnnotations = ref<number>(0);
     const selectedRecordingId = ref<number | null>(null);
     const loading = ref(false);
-    const sortBy = ref([{ key: 'created', order: 'desc' }]);
-    const sortByAnnotations = ref([{ key: 'created', order: 'desc' }]);
+    const sortBy = ref<SortItem[]>([{ key: 'created', order: 'desc' }]);
+    const sortByAnnotations = ref<SortItem[]>([{ key: 'created', order: 'desc' }]);
 
     const filters = ref<{
       recording_id?: number;
@@ -150,7 +152,7 @@ export default defineComponent({
 
     onMounted(() => fetchRecordings({ page: 1, itemsPerPage: 50 }));
 
-    const sortByUpdate = (newSort?: { key: string; order: string }[]) => {
+    const sortByUpdate = (newSort?: SortItem[]) => {
       if (newSort) {
         sortBy.value = newSort;
       } else {
@@ -158,7 +160,7 @@ export default defineComponent({
       }
     };
 
-    const sortByUpdateAnnotations = (newSort?: { key: string; order: string }[]) => {
+    const sortByUpdateAnnotations = (newSort?: SortItem[]) => {
       if (newSort) {
         sortByAnnotations.value = newSort;
       } else {
@@ -168,9 +170,13 @@ export default defineComponent({
 
     const exportId: Ref<null | number> = ref(null);
     const exportRecordingAnnotation = async (item: RecordingListItem) => {
-      const filter = { recording_ids: [item.recording_id]};
+      if (!item.recording_id) {
+        console.error('Recording ID is missing for export');
+        return;
+      }
+      const filter: AnnotationExportRequest = { recording_ids: [item.recording_id]};
       const result = await exportNABatAnnotations(filter);
-      exportId.value = result;
+      exportId.value = result.exportId;
     };
 
     const exportComplete = () => {

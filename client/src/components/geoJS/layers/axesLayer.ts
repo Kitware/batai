@@ -16,7 +16,6 @@ interface Tick {
 }
 
 interface TickTextData extends TextData {
-  textAlign?: 'left' | 'center' | 'right';
   textScaled?: number;
   type?: LabelCategory;
 }
@@ -77,6 +76,11 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
     this.scaledWidth = -1;
     this.xScale = 0;
     this.compressedView = false;
+
+    this.left = 0;
+    this.top = 0;
+    this.right = 0;
+    this.bottom = 0;
 
     this.lineData = [];
     this.gridData = [];
@@ -292,7 +296,7 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
         text: `${(tick.value / 1000).toFixed(0)}kHz`,
         x: gcsTextStart,
         y,
-        textAlign: 'left',
+        textAlign: 'start',
         textScaled: this.textScaled,
       });
 
@@ -403,7 +407,7 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
         text: `▶${tick.value.toFixed(0)}ₘₛ`,
         x,
         y: gcsTextStart,
-        textAlign: 'left',
+        textAlign: 'start',
         textScaled: this.textScaled,
         type: 'time',
       });
@@ -430,7 +434,7 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
           text: `${endTimes[idx - 1].toFixed(0)}ₘₛ◀`,
           x,
           y: gcsTopText,
-          textAlign: 'right',
+          textAlign: 'end',
           textScaled: this.textScaled,
           type: 'time',
         });
@@ -445,7 +449,7 @@ export default class AxesLayer extends BaseTextLayer<TickTextData> {
         text: `${lastTick.value.toFixed(0)}ₘₛ◀`,
         x: lastTick.position.x,
         y: gcsTop,
-        textAlign: 'right',
+        textAlign: 'end',
         textScaled: this.textScaled,
         type: 'time',
     });

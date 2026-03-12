@@ -21,7 +21,8 @@ async function saveReviewerMaterials() {
     loadingMaterials.value = false;
     error.value = '';
   } catch(err) {
-    error.value = 'There was a problem saving your changes. Please try again';
+    error.value = `There was a problem saving your changes. Please try again: ${err}`;
+    loadingMaterials.value = false;
   }
 }
 

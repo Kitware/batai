@@ -10,7 +10,7 @@ import { RecordingMimeTypes } from '../constants';
 import useRequest from '@use/useRequest';
 import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, RecordingFileParameters, RecordingTag } from '../api/api';
 import MapLocation from './MapLocation.vue';
-import { useDate } from 'vuetify/lib/framework.mjs';
+import { useDate } from 'vuetify';
 import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';
 import useState from '@use/useState';
 

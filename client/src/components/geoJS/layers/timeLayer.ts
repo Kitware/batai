@@ -1,4 +1,3 @@
-/* eslint-disable class-methods-use-this */
 import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroSequenceToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
@@ -33,7 +32,6 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
 
   displaying: { sequence: boolean; pulse: boolean };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
@@ -81,7 +79,6 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         const polygon = spectroToGeoJSon(
           annotation,
           this.spectroInfo,
-          1,
           this.scaledWidth,
           this.scaledHeight
         );

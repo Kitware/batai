@@ -1,6 +1,5 @@
 
 
-/* eslint-disable class-methods-use-this */
 import { SpectroInfo } from "../geoJSUtils";
 import { LayerStyle } from "./types";
 import geo from "geojs";
@@ -37,7 +36,6 @@ export default abstract class BaseTextLayer<D> {
 
   compressedView: boolean;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,

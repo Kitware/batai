@@ -1,4 +1,3 @@
-/* eslint-disable class-methods-use-this */
 import { SpectrogramSequenceAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroSequenceToGeoJSon } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
@@ -15,7 +14,6 @@ interface TextData {
 
 export default class SpeciesSequenceLayer extends BaseTextLayer<TextData> {
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,

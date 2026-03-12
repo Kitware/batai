@@ -130,10 +130,12 @@ export default defineComponent({
       speciesList.value = speciesResponse.data.filter(
         (value, index, self) => value.species_code !== "NOISE" && index === self.findIndex((t) => t.species_code === value.species_code)
       );
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
         errorMessage.value = `Failed fetch Spectrogram: ${error.message}:`;
         if (error.response.data.errors?.length) {
-          additionalErrors.value = error.response.data.errors.map((item) => JSON.stringify(item));
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          additionalErrors.value = error.response.data.errors.map((item: any) => JSON.stringify(item));
         } else if (error.response.data.error) {
           additionalErrors.value.push(error.response.data.error);
         } else {

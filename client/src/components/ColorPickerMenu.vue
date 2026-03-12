@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
-import { defineModel, ref } from 'vue';
+import { ref } from 'vue';
 defineProps({
   tooltipText: {
     type: String,
@@ -8,7 +8,7 @@ defineProps({
   },
 });
 const colorpickerMenu = ref(false);
-const color = defineModel({ default: 'rgb(0, 0, 0)'});
+const color = defineModel<string>({ default: 'rgb(0, 0, 0)'});
 function updateColor(colorVal: string) {
   if (colorVal.includes('/')) {
     colorVal = colorVal.replace(' / undefined)', ')');

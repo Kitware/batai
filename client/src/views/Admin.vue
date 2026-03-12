@@ -28,6 +28,7 @@ export default defineComponent({
       nonAdminUploadEnabled: configuration.value.non_admin_upload_enabled,
       markAnnotationsCompletedEnabled: configuration.value.mark_annotations_completed_enabled,
     });
+    const defaultColorScheme = ref(colorSchemes.find((scheme) => scheme.value === settings.defaultColorScheme) || colorSchemes[0]);
     const spectrogramViewOptions = [
       { title: 'Compressed', value: 'compressed' },
       { title: 'Uncompressed', value: 'uncompressed' },
@@ -41,6 +42,7 @@ export default defineComponent({
       settings.defaultBackgroundColor = configuration.value.default_spectrogram_background_color;
       settings.nonAdminUploadEnabled = configuration.value.non_admin_upload_enabled;
       settings.markAnnotationsCompletedEnabled = configuration.value.mark_annotations_completed_enabled;
+      defaultColorScheme.value = colorSchemes.find((scheme) => scheme.value === settings.defaultColorScheme) || colorSchemes[0];
     });
     // Function to save the settings
     const saveSettings = async () => {
@@ -59,12 +61,15 @@ export default defineComponent({
       loadConfiguration();
     };
 
+
+
     return {
       settings,
       saveSettings,
       spectrogramViewOptions,
       tab,
       colorSchemes,
+      defaultColorScheme,
     };
   },
 });
@@ -161,7 +166,7 @@ export default defineComponent({
           <v-row>
             <div class="color-scheme-flex px-4">
               <color-scheme-select
-                v-model="settings.defaultColorScheme"
+                v-model="defaultColorScheme"
                 :color-schemes="colorSchemes"
                 :width="300"
                 label="Default Color Scheme"

@@ -12,20 +12,25 @@ import NABatSpectrogram from '../views/NABat/NABatSpectrogram.vue';
 
 function beforeEach(
   to: RouteLocationNormalized,
-  _: RouteLocationNormalized,
-  next: (route?: string) => void,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _: RouteLocationNormalized
 ) {
+  // Allow navigation by returning nothing (equivalent to next())
   if (to.path.startsWith('/nabat/')) {
-    next();
     return;
   }
+
+  // Redirect by returning the path string (equivalent to next('/login'))
   if (!oauthClient.isLoggedIn && to.name !== 'Login') {
-    next('/login');
-    return;
-  }  if (oauthClient.isLoggedIn && to.name === 'Login') {
-    next('/');
+    return '/login';
   }
-  next();
+
+  if (oauthClient.isLoggedIn && to.name === 'Login') {
+    return '/';
+  }
+
+  // Explicitly return for clarity, though returning nothing also works
+  return;
 }
 const subpath = import.meta.env.VITE_APP_SUBPATH?.replace(/\/+$/, '');
 const routerBase = subpath ? `/${subpath}/` : '/';

@@ -75,7 +75,8 @@ export default class EditAnnotationLayer {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo
   ) {
-    (this.geoViewerRef = geoViewerRef), (this.event = event);
+    this.geoViewerRef = geoViewerRef;
+    this.event = event;
     this.type = "rectangle";
     this.style = {
       strokeColor: "black",

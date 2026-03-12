@@ -125,7 +125,7 @@ export default defineComponent({
     const displayError = ref(false);
     const errorMsg = ref("");
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sequenceEvent = (type: string, data: any) => {
       if (type === "annotation-clicked") {
         // click sequence annotation
@@ -174,7 +174,7 @@ export default defineComponent({
 
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const event = (type: string, data: any) => {
       // Will handle clicking, selecting and editing here
       if (type === "update:mode") {
@@ -469,7 +469,7 @@ export default defineComponent({
               editAnnotationLayer.getMode() === "disabled" &&
               selectedId.value === null
             ) {
-              annotationState.value === 'disabled';
+              annotationState.value = 'disabled';
               editAnnotationLayer.featureLayer.clear();
             }
           });
