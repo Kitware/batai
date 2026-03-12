@@ -13,32 +13,32 @@ dependencies = [
   # Runtime dependendencies, always needed
   "celery==5.6.2",
   "django[argon2]==6.0.3",
-  "django-ninja==1.5.3",
-  "django-allauth==65.14.1",
-  "django-auth-style==0.14.0",
+  "django-ninja==1.6.0",
+  "django-allauth==65.15.0",
+  "django-auth-style==0.15.0",
   "django-cors-headers==4.9.0",
-  "django-environ==0.12.1",
+  "django-environ==0.13.0",
   "django-extensions==4.1",
   "django-oauth-toolkit==3.2.0",
   "django-resonant-settings[allauth,celery]==0.48.1",
-  "django-resonant-utils[allauth,s3_storage]==0.18.0",
+  "django-resonant-utils[allauth,s3_storage]==0.19.0",
   "django-s3-file-field[s3]==1.1.0",
   "django-storages[s3]==1.14.6",
   "django-stubs-ext==5.2.9",
-  "psycopg[binary]==3.3.2",
+  "psycopg[binary]==3.3.3",
   "pydantic==2.12.5",
   "requests==2.32.5",
-  "rich==14.3.2",
-  "whitenoise[brotli]==6.11.0",
+  "rich==14.3.3",
+  "whitenoise[brotli]==6.12.0",
   "tqdm==4.67.3",
   # guano metadata
   "gdal==3.12.2.1",
-  "geopandas==1.1.1",
+  "geopandas==1.1.3",
   "guano==1.0.16",
   "django-celery-results==2.6.0",
   # Production-only
-  "sentry-sdk[celery,django,pure_eval]==2.52.0",
-  "gunicorn==25.0.3",
+  "sentry-sdk[celery,django,pure_eval]==2.54.0",
+  "gunicorn==25.1.0",
 ]
 
 [project.optional-dependencies]
@@ -47,21 +47,21 @@ development = [
   "django-click==2.5.0",
   "django-debug-toolbar==6.2.0",
   "django-minio-storage==0.5.9",
-  "django-resonant-utils[minio_storage]==0.18.0",
+  "django-resonant-utils[minio_storage]==0.19.0",
   "django-s3-file-field[minio]==1.1.0",
-  "faker==40.4.0",
-  "ipython==9.10.0",
+  "faker==40.8.0",
+  "ipython==9.11.0",
   "watchdog==6.0.0",
-  "werkzeug==3.1.5",
+  "werkzeug==3.1.6",
 ]
 tasks = [
   # Heavy duty dependencies used for computationally
   # intensive tasks, such as spectrogram generation
   "batbot==0.1.2",
-  "numpy==2.2.6",
-  "scipy==1.16.0",
+  "numpy==2.4.3",
+  "scipy==1.17.1",
   "scikit-image==0.26.0",
-  "opencv-python-headless==4.11.0.86",
+  "opencv-python-headless==4.13.0.92",
 ]
 
 [dependency-groups]
