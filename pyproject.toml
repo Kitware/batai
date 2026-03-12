@@ -70,22 +70,22 @@ dev = [
   # The "dev" dependency group is installed by default,
   # so use this to install "development" and "tasks" extras by default too
   "bats-ai[development,tasks]",
-  "tox==4.34.1",
-  "tox-uv==1.29.0",
+  "tox==4.49.1",
+  "tox-uv==1.33.2",
 ]
 lint = [
-  "ruff==0.15.2",
+  "ruff==0.15.5",
 ]
 type = [
-  "mypy==1.16.1",
-  "celery-types==0.24.0",
+  "mypy==1.19.1",
+  "celery-types==0.25.0",
   "django-stubs[compatible-mypy]==5.2.9",
   "types-requests==2.32.4.20260107",
 ]
 test = [
   "factory-boy==3.3.3",
   "pytest==9.0.2",
-  "pytest-django==4.11.1",
+  "pytest-django==4.12.0",
   "pytest-mock==3.15.1",
   # Enable with "pytest --random-order ..."
   "pytest-random-order==1.2.0",
