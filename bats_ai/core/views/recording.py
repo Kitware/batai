@@ -11,6 +11,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
 from ninja import File, Form, Query, Schema
+from ninja.files import UploadedFile
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import (
@@ -29,7 +30,6 @@ from bats_ai.core.views.species import SpeciesSchema
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
-    from ninja.files import UploadedFile
 
     from bats_ai.core.views.recording_tag import RecordingTagSchema
 
