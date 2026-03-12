@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.1"
+  required_version = "1.14.7"
 
   cloud {
     organization = "kitware"
@@ -18,7 +18,7 @@ terraform {
     }
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
+      version = "4.52.5"
     }
   }
 }
