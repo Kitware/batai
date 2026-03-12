@@ -11,7 +11,9 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
 from ninja import File, Form, Query, Schema
-from ninja.files import UploadedFile
+
+# Django-Ninja accesses additional params directly, so we need to ignore the type checker.
+from ninja.files import UploadedFile  # noqa: TC002
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import (

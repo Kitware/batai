@@ -5,7 +5,9 @@ from typing import TYPE_CHECKING
 
 from django.http import HttpRequest, JsonResponse
 from ninja import File, Schema
-from ninja.files import UploadedFile
+
+# Django-Ninja accesses additional params directly, so we need to ignore the type checker.
+from ninja.files import UploadedFile  # noqa: TC002
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.utils.guano_utils import extract_guano_metadata
