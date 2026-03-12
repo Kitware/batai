@@ -25,10 +25,6 @@ from bats_ai.core.models import (
     Spectrogram,
 )
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
-from bats_ai.core.views.sequence_annotations import (
-    SequenceAnnotationSchema,
-    UpdateSequenceAnnotationSchema,
-)
 from bats_ai.core.views.species import SpeciesSchema
 
 if TYPE_CHECKING:
@@ -270,6 +266,35 @@ class PulseMetadataSchema(Schema):
             heel=point_to_list(obj.heel),
             slopes=obj.slopes,
         )
+
+
+class SequenceAnnotationSchema(Schema):
+    id: int
+    start_time: int
+    end_time: int
+    type: str | None
+    comments: str
+    species: list[SpeciesSchema] | None
+    owner_email: str = None
+
+    @classmethod
+    def from_orm(cls, obj, owner_email=None):
+        return cls(
+            start_time=obj.start_time,
+            end_time=obj.end_time,
+            type=obj.type,
+            species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
+            comments=obj.comments,
+            id=obj.id,
+            owner_email=owner_email,  # Include owner_email in the schema
+        )
+
+
+class UpdateSequenceAnnotationSchema(Schema):
+    start_time: int = None
+    end_time: int = None
+    type: str | None = None
+    comments: str | None = None
 
 
 @router.post("/")
