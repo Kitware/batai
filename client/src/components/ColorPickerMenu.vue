@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
-import { defineModel, ref } from 'vue';
+import { ref } from 'vue';
 defineProps({
   tooltipText: {
     type: String,

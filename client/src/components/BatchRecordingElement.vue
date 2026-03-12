@@ -3,7 +3,7 @@ import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
 import { RecordingMimeTypes } from "../constants";
 import { getCellLocation, getCellfromLocation, getGuanoMetadata } from "../api/api";
 import MapLocation from "./MapLocation.vue";
-import { useDate } from "vuetify/lib/framework.mjs";
+import { useDate } from "vuetify";
 import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';
 import useState from '@use/useState';
 export interface BatchRecording {
