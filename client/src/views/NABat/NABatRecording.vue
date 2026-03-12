@@ -86,6 +86,7 @@ export default defineComponent({
       } catch (error: any) {
         errorMessage.value = `Failed to start processing: ${error.message}:`;
         if (error.response.data.errors?.length) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           additionalErrors.value = error.response.data.errors.map((item: any) => JSON.stringify(item));
         } else if (error.response.data.error) {
           additionalErrors.value.push(error.response.data.error);
