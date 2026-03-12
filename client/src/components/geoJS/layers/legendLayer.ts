@@ -1,4 +1,3 @@
-/* eslint-disable class-methods-use-this */
 import { SpectroInfo } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
 import { LayerStyle, TextData } from "./types";
@@ -12,7 +11,7 @@ interface LineData {
 
 interface LegendTextData extends TextData {
   type: 'time' | 'freq',
-  textAlign?: 'left' | 'center' | 'right';
+  textAlign?: 'start' | 'center' | 'end';
   textBaseline?: 'top' | 'middle' | 'bottom';
   textScaled?: number | undefined;
   compressedLabel?: boolean;
@@ -30,8 +29,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
 
   textDataX: LegendTextData[];
   textDataY: LegendTextData[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  textLayer: any;
+
 
   gridLines: LineData[];
 
@@ -47,7 +45,6 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
   disabled: boolean;
 
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
@@ -67,7 +64,9 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
     this.scaledWidth  = -1;
     this.gridEnabled = false;
     this.disabled = false;
-
+    this.gridLines = [];
+    this.textStyle = this.createTextStyle();
+    this.lineStyle = this.createLineStyle();
     this.init();
   }
 
@@ -258,7 +257,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
           x: 0 + pixelOffset,
           y: baseYPos + length + (yOffset === 0 ? 18 : -12),
           textScaled: this.textScaled,
-          textAlign: 'left',
+          textAlign: 'start',
           compressedLabel: true,
         });
       }
@@ -270,7 +269,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
           x: width + pixelOffset,
           y: baseTopPos + (baseTopPos === 0 ? -16 : 16),
           textBaseline: baseTopPos === 0 ? 'bottom' : 'top',
-          textAlign: 'right',
+          textAlign: 'end',
           textScaled: this.textScaled,
           compressedLabel: true,
         });
@@ -364,7 +363,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
         text: `${(i + this.spectroInfo.low_freq) / 1000}KHz`,
         x: offset - xBuffer + (offset === 0 ? -45 : 10),
         y: adjustedHeight - i * hzToPixels,
-        textAlign:  offset === 0 ? 'right' : 'left',
+        textAlign:  offset === 0 ? 'end' : 'start',
         offsetY: 0,
         type: 'freq',
         textScaled: this.textScaled,

@@ -1,4 +1,3 @@
-/* eslint-disable class-methods-use-this */
 import geo, { GeoEvent } from "geojs";
 import { SpectroInfo, spectroSequenceToGeoJSon } from "../geoJSUtils";
 import { SpectrogramSequenceAnnotation } from "../../../api/api";
@@ -37,7 +36,6 @@ export default class SequenceLayer {
   scaledWidth: number;
   scaledHeight: number;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,

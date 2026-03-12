@@ -130,7 +130,7 @@ export default defineComponent({
       speciesList.value = speciesResponse.data.filter(
         (value, index, self) => value.species_code !== "NOISE" && index === self.findIndex((t) => t.species_code === value.species_code)
       );
-    } catch (error) {
+    } catch (error: any) {
         errorMessage.value = `Failed fetch Spectrogram: ${error.message}:`;
         if (error.response.data.errors?.length) {
           additionalErrors.value = error.response.data.errors.map((item) => JSON.stringify(item));

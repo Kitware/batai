@@ -92,7 +92,11 @@ export default defineComponent({
               id: props.annotation.id,
               apiToken: props.apiToken,
             };
-            props.type === 'nabat' ? await patchNABatFileAnnotationLocal(props.annotation.id, updateAnnotation) : await patchFileAnnotation(props.annotation.id, updateAnnotation);
+            if (props.type === 'nabat') {
+              await patchNABatFileAnnotationLocal(props.annotation.id, updateAnnotation);
+            } else {
+              await patchFileAnnotation(props.annotation.id, updateAnnotation);
+            }
             emit('update:annotation');
         } finally {
             updatingAnnotation.value = false;
@@ -113,7 +117,11 @@ export default defineComponent({
       if (props.annotation && props.recordingId) {
         deletingAnnotation.value = true;
         try {
-          props.type === 'nabat' ? await deleteNABatFileAnnotation(props.annotation.id, props.apiToken, props.recordingId) : await deleteFileAnnotation(props.annotation.id,);
+          if (props.type === 'nabat') {
+            await deleteNABatFileAnnotation(props.annotation.id, props.apiToken, props.recordingId);
+          } else {
+            await deleteFileAnnotation(props.annotation.id,);
+          }
           emit('delete:annotation');
         } finally {
           deletingAnnotation.value = false;

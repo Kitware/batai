@@ -1,4 +1,3 @@
-/* eslint-disable class-methods-use-this */
 import { SpectrogramAnnotation } from "../../../api/api";
 import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
@@ -12,7 +11,6 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
 
   lineStyle: LayerStyle<LineData>;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,

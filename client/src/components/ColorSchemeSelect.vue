@@ -24,7 +24,7 @@ defineProps({
   }
 });
 
-const colorScheme = defineModel();
+const colorScheme = defineModel<{ value: string; title: string; scheme: (input: number) => string }>();
 </script>
 
 <template>

@@ -59,7 +59,7 @@ export default defineComponent({
           }
         } catch (error) {
           loading.value = false;
-          errorMessage.value = 'Failed to fetch task details';
+          errorMessage.value = `Failed to fetch task details: ${error}`;
         }
       }
       timeoutId = setTimeout(fetchTaskDetails, 1000);
@@ -86,7 +86,7 @@ export default defineComponent({
       } catch (error: any) {
         errorMessage.value = `Failed to start processing: ${error.message}:`;
         if (error.response.data.errors?.length) {
-          additionalErrors.value = error.response.data.errors.map((item) => JSON.stringify(item));
+          additionalErrors.value = error.response.data.errors.map((item: any) => JSON.stringify(item));
         } else if (error.response.data.error) {
           additionalErrors.value.push(error.response.data.error);
         } else {

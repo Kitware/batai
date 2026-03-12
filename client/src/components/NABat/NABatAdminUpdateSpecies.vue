@@ -22,7 +22,7 @@ export default defineComponent({
         fetchTaskDetails();
       } catch (error) {
         loading.value = false;
-        errorMessage.value = 'Failed to start species list update.';
+        errorMessage.value = `Failed to start species list update: ${error}`;
       }
     };
 
@@ -45,7 +45,7 @@ export default defineComponent({
           }
         } catch (error) {
           loading.value = false;
-          errorMessage.value = 'Failed to fetch task details.';
+          errorMessage.value = `Failed to fetch task details: ${error}`;
           clearPolling();
         }
       }

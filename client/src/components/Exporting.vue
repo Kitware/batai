@@ -29,7 +29,7 @@ export default defineComponent({
         }
       } catch (e) {
         clearPolling();
-        error.value = 'An error occurred while checking export status.';
+        error.value = `An error occurred while checking export status: ${e}`;
       }
     };
 

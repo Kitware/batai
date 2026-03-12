@@ -1,4 +1,3 @@
-/* eslint-disable class-methods-use-this */
 import geo, { GeoEvent } from "geojs";
 import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
 import { SpectrogramAnnotation } from "../../../api/api";
@@ -28,7 +27,6 @@ export default class RectangleLayer {
   scaledWidth: number;
   scaledHeight: number;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,

@@ -16,7 +16,7 @@ interface Tick {
 }
 
 interface TickTextData extends TextData {
-  textAlign?: 'left' | 'center' | 'right';
+  textAlign?: 'start' | 'center' | 'end';
   textScaled?: number;
   type?: LabelCategory;
 }
