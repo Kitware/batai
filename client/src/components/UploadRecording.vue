@@ -8,7 +8,7 @@ import {
 } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '@use/useRequest';
-import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, RecordingFileParameters, RecordingTag } from '../api/api';
+import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, RecordingFileParameters } from '../api/api';
 import MapLocation from './MapLocation.vue';
 import { useDate } from 'vuetify';
 import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';
@@ -44,7 +44,7 @@ export default defineComponent({
   emits: ['done', 'cancel'],
   setup(props, { emit }) {
     const { recordingTagList } = useState();
-    const tagOptions = computed(() => recordingTagList.value.map((tag: RecordingTag) => tag.text));
+    const tagOptions = computed(() => [...recordingTagList.value]);
     const initialTags = props.editing ? props.editing.tags : undefined;
     const currentTags: Ref<string[]> = ref(initialTags || []);
 

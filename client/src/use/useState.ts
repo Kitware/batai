@@ -10,7 +10,6 @@ import {
   Recording,
   SpectrogramAnnotation,
   SpectrogramSequenceAnnotation,
-  RecordingTag,
   getComputedPulseContour,
   ComputedPulseContour,
   getVettingDetailsForUser,
@@ -52,7 +51,7 @@ const otherUserAnnotations: Ref<OtherUserAnnotations> = ref({});
 const sharedList: Ref<Recording[]> = ref([]);
 const recordingList: Ref<Recording[]> = ref([]);
 const currentRecordingId: Ref<number | undefined> = ref(undefined);
-const recordingTagList: Ref<RecordingTag[]> = ref([]);
+const recordingTagList: Ref<string[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
 const scaledVals: Ref<{ x: number; y: number }> = ref({ x: 1, y: 1 });
 const viewCompressedOverlay = ref(false);
@@ -116,6 +115,7 @@ const SHARED_FILTER_TAG_STORAGE_KEY = 'bataiSharedFilterTags';
 
 const filterTags: Ref<string[]> = ref([]);
 const sharedFilterTags: Ref<string[]> = ref([]);
+const showSubmittedRecordings = ref(false);
 
 /** Current spectrogram recording filename (for app bar display). Set by Spectrogram view, cleared when not on spectrogram. */
 const spectrogramFilename: Ref<string> = ref("");
@@ -195,8 +195,6 @@ export default function useState() {
     const router = useRouter();
     return router.currentRoute.value.fullPath.includes('nabat');
   }
-
-  const showSubmittedRecordings = ref(false);
 
   // Server filters by exclude_submitted when "Show submitted" is unchecked; we refetch on toggle.
   const myRecordingsDisplay = computed(() => recordingList.value);

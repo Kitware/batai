@@ -36,7 +36,7 @@ export default defineComponent({
   emits: ["done", "cancel", "update", "delete"],
   setup(props, { emit }) {
     const { recordingTagList } = useState();
-    const tagOptions = computed(() => recordingTagList.value.map((tag) => tag.text));
+    const tagOptions = computed(() => [...recordingTagList.value]);
     const initialTags = props.editing ? props.editing.tags : [];
     const currentTags: Ref<string[] | undefined> = ref(initialTags);
     const dateAdapter = useDate();
