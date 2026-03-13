@@ -150,34 +150,41 @@ export default defineComponent({
         @delete="onSlotDelete(index)"
       />
     </div>
-    <v-row dense class="mt-1 mb-2">
+    <v-row
+      dense
+      class="mt-1 mb-2"
+    >
       <v-col>
-      <v-btn
-        v-tooltip="'Add another bat'"
-        size="small"
-        variant="outlined"
-        color="primary"
-        :disabled="disabled"
-        @click="openAddSpeciesConfirm"
-      >
-        <v-icon start>mdi-plus</v-icon>
-        Add Bat
-      </v-btn>
+        <v-btn
+          v-tooltip="'Add another bat'"
+          size="small"
+          variant="outlined"
+          color="primary"
+          :disabled="disabled"
+          @click="openAddSpeciesConfirm"
+        >
+          <v-icon start>
+            mdi-plus
+          </v-icon>
+          Add Bat
+        </v-btn>
       </v-col>
       <v-spacer />
       <v-col>
-      <v-btn
-        v-if="vettingMode"
-        v-tooltip="annotationComment ? `Edit comment: ${annotationComment}` : 'Add optional comment to this annotation'"
-        size="small"
-        variant="outlined"
-        color="primary"
-        :disabled="disabled"
-        @click="openCommentDialog"
-      >
-        <v-icon start>{{ annotationComment ? 'mdi-pencil' : 'mdi-plus' }}</v-icon>
-        Comment
-      </v-btn>
+        <v-btn
+          v-if="vettingMode"
+          v-tooltip="annotationComment ? `Edit comment: ${annotationComment}` : 'Add optional comment to this annotation'"
+          size="small"
+          variant="outlined"
+          color="primary"
+          :disabled="disabled"
+          @click="openCommentDialog"
+        >
+          <v-icon start>
+            {{ annotationComment ? 'mdi-pencil' : 'mdi-plus' }}
+          </v-icon>
+          Comment
+        </v-btn>
       </v-col>
     </v-row>
     <v-dialog
