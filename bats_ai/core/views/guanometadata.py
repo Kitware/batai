@@ -5,6 +5,9 @@ from typing import TYPE_CHECKING
 
 from django.http import HttpRequest, JsonResponse
 from ninja import File, Schema
+
+# Django-Ninja accesses additional params directly, so we need to ignore the type checker.
+from ninja.files import UploadedFile  # noqa: TC002
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.utils.guano_utils import extract_guano_metadata
@@ -12,7 +15,6 @@ from bats_ai.core.utils.guano_utils import extract_guano_metadata
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from ninja.files import UploadedFile
 
 router = RouterPaginated()
 logger = logging.getLogger(__name__)
