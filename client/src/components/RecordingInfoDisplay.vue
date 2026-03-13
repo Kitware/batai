@@ -71,7 +71,10 @@ export default defineComponent({
           <div><b>Comments:</b><span>{{ recordingInfo.comments || 'None' }}</span></div>
         </v-row>
       </div>
-      <v-row v-if="recordingInfo.grts_cell_id && showMetadata" class="mt-2">
+      <v-row
+        v-if="recordingInfo.grts_cell_id && showMetadata && displayMode === 'both' || displayMode === 'metadata'"
+        class="mt-2"
+      >
         <div><b>GRTS CellId:</b><span>{{ recordingInfo.grts_cell_id }}</span></div>
       </v-row>
       <v-row

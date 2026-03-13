@@ -18,8 +18,7 @@ import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import useState from "@use/useState";
-import ColorPickerMenu from "@components/ColorPickerMenu.vue";
-import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
+import ColorSchemeDialog from "@components/ColorSchemeDialog.vue";
 import TransparencyFilterControl from "@/components/TransparencyFilterControl.vue";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import RecordingAnnotations from "@components/RecordingAnnotations.vue";
@@ -33,8 +32,7 @@ export default defineComponent({
     ThumbnailViewer,
     RecordingInfoDialog,
     RecordingAnnotations,
-    ColorPickerMenu,
-    ColorSchemeSelect,
+    ColorSchemeDialog,
     TransparencyFilterControl
   },
   props: {
@@ -53,9 +51,6 @@ export default defineComponent({
       toggleLayerVisibility,
       layerVisibility,
       colorScale,
-      colorSchemes,
-      colorScheme,
-      backgroundColor,
       selectedId,
       selectedType,
       scaledVals,
@@ -82,7 +77,6 @@ export default defineComponent({
     const loadedImage = ref(false);
     const allImagesLoaded: Ref<boolean[]> = ref([]);
     const compressed =  ref(configuration.value.spectrogram_view === 'compressed');
-    const colorpickerMenu = ref(false);
     const errorMessage: Ref<string | null> = ref(null);
     const additionalErrors: Ref<string[]> = ref([]);
 
@@ -158,9 +152,6 @@ export default defineComponent({
     );
     onMounted(() => {
       loadData();
-      colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
-      backgroundColor.value = configuration.value.default_spectrogram_background_color || 'rgb(0, 0, 0)';
-
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parentGeoViewerRef: Ref<any> = ref(null);
@@ -227,11 +218,6 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
-      // Color Scheme
-      colorSchemes,
-      colorScheme,
-      backgroundColor,
-      colorpickerMenu,
       // Other user selection
       selectedUsers,
       colorScale,
@@ -290,7 +276,7 @@ export default defineComponent({
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="32"
+                  size="40"
                   class="ml-2"
                   @click="recordingMap = true"
                 >
@@ -316,33 +302,33 @@ export default defineComponent({
             >
               <div>
                 <b>xScale:</b>
-                <span v-if="timeRef >= 0">{{ scaledVals.x.toFixed(2) }}x</span>
+                <span>{{ scaledVals.x.toFixed(2) }}x</span>
               </div>
               <div>
                 <b>yScale:</b>
-                <span v-if="freqRef >= 0">{{ scaledVals.y.toFixed(2) }}x</span>
+                <span>{{ scaledVals.y.toFixed(2) }}x</span>
               </div>
             </v-col>
+
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="40"
+                  :color="compressed ? 'blue' : ''"
+                  @click="compressed = !compressed"
+                >
+                  mdi-calendar-collapse-horizontal
+                </v-icon>
+              </template>
+              <span> Toggle Compressed View</span>
+            </v-tooltip>
             <v-spacer />
             <v-tooltip>
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
-                  class="mr-5 mt-5"
-                  :color="fixedAxes ? 'blue': ''"
-                  @click="toggleFixedAxes"
-                >
-                  mdi-axis-lock
-                </v-icon>
-              </template>
-              Toggle between locked and floating axes
-            </v-tooltip>
-            <v-tooltip>
-              <template #activator="{ props: subProps }">
-                <v-icon
-                  v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="drawingBoundingBox ? 'blue' : ''"
                   @click="toggleDrawingBoundingBox"
@@ -350,13 +336,13 @@ export default defineComponent({
                   mdi-border-radius
                 </v-icon>
               </template>
-              <span>Draw bounding boxes to measure pulses</span>
+              <span>Draw a bound box to measure pulses</span>
             </v-tooltip>
             <v-tooltip>
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
-                  size="35"
+                  size="25"
                   class="mr-5 mt-5"
                   :color="measuring ? 'blue' : ''"
                   @click="toggleMeasureMode"
@@ -427,7 +413,7 @@ export default defineComponent({
                 <v-btn
                   v-bind="subProps"
                   size="35"
-                  class="mr-5 mt-5"
+                  class="mr-3 mt-5"
                   :color="layerVisibility.includes('freq') ? 'blue' : ''"
                   @click="toggleLayerVisibility('freq')"
                 >
@@ -435,34 +421,6 @@ export default defineComponent({
                 </v-btn>
               </template>
               <span> Turn Time Label On/Off</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template #activator="{ props: subProps }">
-                <v-icon
-                  v-bind="subProps"
-                  size="35"
-                  class="mr-5 mt-5"
-                  :color="gridEnabled ? 'blue' : ''"
-                  @click="gridEnabled = !gridEnabled"
-                >
-                  mdi-grid
-                </v-icon>
-              </template>
-              <span> Turn Legend Grid On/Off</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template #activator="{ props: subProps }">
-                <v-icon
-                  v-bind="subProps"
-                  size="35"
-                  class="mr-5 mt-5"
-                  :color="compressed ? 'blue' : ''"
-                  @click="compressed = !compressed"
-                >
-                  mdi-calendar-collapse-horizontal
-                </v-icon>
-              </template>
-              <span> Toggle Compressed View</span>
             </v-tooltip>
             <v-tooltip
               v-if="!compressed"
@@ -472,7 +430,7 @@ export default defineComponent({
                 <v-icon
                   v-bind="subProps"
                   size="35"
-                  class="mr-5 mt-5"
+                  class="mr-3 mt-5"
                   :color="viewCompressedOverlay ? 'blue' : ''"
                   @click="toggleCompressedOverlay()"
                 >
@@ -481,21 +439,56 @@ export default defineComponent({
               </template>
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
-            <div class="color-scheme-flex">
-              <color-scheme-select
-                v-model="colorScheme"
-                label="Color Scheme"
-                :color-schemes="colorSchemes"
-                class="pt-3"
-              />
-              <color-picker-menu
-                v-model="backgroundColor"
-                tooltip-text="Spectrogram background color"
-              />
-            </div>
-            <div class="mt-4 mr-3">
+            <div class="mr-1 mt-5">
               <transparency-filter-control />
             </div>
+            <v-menu>
+              <template #activator="{ props: subProps }">
+                <v-btn
+                  v-bind="subProps"
+                  icon
+                  size="25"
+                  class="mr-5 mt-5"
+                  variant="text"
+                >
+                  <v-icon>
+                    mdi-cog
+                  </v-icon>
+                </v-btn>
+              </template>
+              <v-list>
+                <v-list-subheader>Settings</v-list-subheader>
+                <v-list-item @click="toggleFixedAxes">
+                  <v-list-item-title>
+                    <v-icon
+                      :color="fixedAxes ? 'blue' : ''"
+                    >
+                      {{ fixedAxes ? 'mdi-axis-lock' : 'mdi-axis' }}
+                    </v-icon>
+                    <span>
+                      Toggle Axes Type
+                    </span>
+                  </v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="gridEnabled = !gridEnabled">
+                  <v-list-item-title>
+                    <v-icon
+                      :color="gridEnabled ? 'blue' : ''"
+                    >
+                      {{ gridEnabled ? 'mdi-grid' : 'mdi-grid-off' }}
+                    </v-icon>
+                    <span>
+                      Toggle Grid
+                    </span>
+                  </v-list-item-title>
+                </v-list-item>
+                <v-list-item>
+                  <v-list-item-title>
+                    <ColorSchemeDialog display-mode="menu" />
+                  </v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
           </v-row>
         </v-container>
       </v-toolbar>
@@ -524,31 +517,37 @@ export default defineComponent({
       <v-card>
         <v-card-title>
           <v-row dense>
-            <v-spacer />
-            <v-tooltip
-              bottom
-            >
-              <template #activator="{ props: subProps }">
-                <v-btn
-                  v-bind="subProps"
-                  :variant="sideTab === 'annotations' ? 'flat' : 'outlined'"
-                  :color="sideTab === 'annotations' ? 'primary' : ''"
-                  class="mx-2"
-                  size="small"
-                  @click="sideTab = 'annotations'"
-                >
-                  Annotations
-                </v-btn>
-              </template>
-              <span>
-                View Annotations in sideTab
-              </span>
-            </v-tooltip>
-            <v-spacer />
+            <v-col cols="2">
+              <v-spacer />
+            </v-col>
+            <v-col cols="4">
+              <v-tooltip bottom>
+                <template #activator="{ props: subProps }">
+                  <v-btn
+                    v-bind="subProps"
+                    :variant="sideTab === 'annotations' ? 'flat' : 'outlined'"
+                    :color="sideTab === 'annotations' ? 'primary' : ''"
+                    class="mx-2"
+                    size="small"
+                    @click="sideTab = 'annotations'"
+                  >
+                    Annotations
+                  </v-btn>
+                </template>
+                <span>
+                  View Annotations in sideTab
+                </span>
+              </v-tooltip>
+            </v-col>
+            <v-col>
+              <v-spacer />
+            </v-col>
           </v-row>
         </v-card-title>
         <v-card-text class="pa-0">
-          <div v-if="sideTab === 'annotations' && speciesList.length">
+          <div
+            v-if="sideTab === 'annotations' && speciesList.length"
+          >
             <RecordingAnnotations
               :species="speciesList"
               :recording-id="parseInt(id)"
