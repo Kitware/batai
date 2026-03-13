@@ -86,7 +86,6 @@ export default defineComponent({
       contoursEnabled,
       clearContours,
       currentRecordingId,
-      viewMaskOverlay,
       filterTags,
       sharedFilterTags,
       spectrogramFilename,
@@ -94,6 +93,8 @@ export default defineComponent({
     const {
       clearPulseMetadata,
       viewPulseMetadataLayer,
+      loadPulseMetadata,
+      pulseMetadataList,
     } = usePulseMetadata();
     const nextUnsubmittedId = ref<number | null>(null);
     const previousUnsubmittedId = ref<number | null>(null);
@@ -148,7 +149,6 @@ export default defineComponent({
     const loading = ref(false);
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
     const loadData = async () => {
-      viewMaskOverlay.value = false;
       const tempViewPulseMetadataLayer = viewPulseMetadataLayer.value;
       viewPulseMetadataLayer.value = false;
       contoursEnabled.value = false;
@@ -184,7 +184,6 @@ export default defineComponent({
         if (tempViewPulseMetadataLayer) {
           viewPulseMetadataLayer.value = true;
         }
-
       } else {
         console.error("No URL found for the spectrogram");
       }
@@ -241,6 +240,14 @@ export default defineComponent({
       } else {
         nextUnsubmittedId.value = null;
         previousUnsubmittedId.value = null;
+      }
+      // Automatically load pulse metadata when the layer is enabled and data has not yet been fetched.
+      if (
+        viewPulseMetadataLayer.value &&
+        currentRecordingId.value != null &&
+        pulseMetadataList.value.length === 0
+      ) {
+        await loadPulseMetadata(currentRecordingId.value);
       }
       loading.value = false;
     };

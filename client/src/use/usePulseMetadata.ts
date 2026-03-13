@@ -61,7 +61,8 @@ function getInitialLabelsMode(): PulseMetadataLabelsMode {
 
 const pulseMetadataList: Ref<PulseMetadata[]> = ref([]);
 const pulseMetadataLoading = ref(false);
-const viewPulseMetadataLayer = ref(stored.viewPulseMetadataLayer ?? false);
+// Default to showing pulse metadata unless user explicitly turned it off.
+const viewPulseMetadataLayer = ref(stored.viewPulseMetadataLayer ?? true);
 
 async function loadPulseMetadata(recordingId: number) {
   pulseMetadataLoading.value = true;
