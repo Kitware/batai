@@ -20,11 +20,9 @@ router = Router()
 def get_recording_tags(request: HttpRequest):
     if not request.user:
         return Http404()
-    # User's own tags + tags on public recordings (so non-admins get suggestions when filtering shared list).
+    # User's own tags + tags on public recordings
     return list(
-        RecordingTag.objects.filter(
-            Q(user=request.user) | Q(recording__public=True)
-        )
+        RecordingTag.objects.filter(Q(user=request.user) | Q(recording__public=True))
         .values_list("text", flat=True)
         .distinct()
     )
