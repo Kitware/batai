@@ -23,14 +23,25 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    vettingMode: {
+      type: Boolean,
+      default: false,
+    },
+    annotationComment: {
+      type: String,
+      default: "",
+    },
+
   },
-  emits: ["update:modelValue", "deleteBlankAnnotation"],
+  emits: ["update:modelValue", "deleteBlankAnnotation", "saveComment"],
   setup(props, { emit }) {
     // Internal: one slot per row, at least one. Empty string = no selection in that slot.
     const localSpeciesList = ref<string[]>(
       props.modelValue?.length ? [...props.modelValue] : [""]
     );
     const addSpeciesConfirmOpen = ref(false);
+    const commentDialogOpen = ref(false);
+    const commentDraft = ref("");
 
     watch(
       () => props.modelValue,
@@ -83,6 +94,26 @@ export default defineComponent({
       emitValue();
     }
 
+    function openCommentDialog() {
+      commentDraft.value = props.annotationComment ?? "";
+      commentDialogOpen.value = true;
+    }
+
+    function closeCommentDialog() {
+      commentDialogOpen.value = false;
+    }
+
+    function saveComment() {
+      emit("saveComment", commentDraft.value);
+      closeCommentDialog();
+    }
+
+    function removeComment() {
+      commentDraft.value = "";
+      emit("saveComment", "");
+      closeCommentDialog();
+    }
+
     return {
       localSpeciesList,
       onSlotUpdate,
@@ -92,6 +123,12 @@ export default defineComponent({
       confirmAddSpecies,
       addSpeciesConfirmOpen,
       removeSpecies,
+      commentDialogOpen,
+      commentDraft,
+      openCommentDialog,
+      closeCommentDialog,
+      saveComment,
+      removeComment,
     };
   },
 });
@@ -113,22 +150,36 @@ export default defineComponent({
         @delete="onSlotDelete(index)"
       />
     </div>
-    <v-btn
-      v-tooltip="'Add another bat'"
-      size="small"
-      variant="outlined"
-      color="primary"
-      :disabled="disabled"
-      class="mt-1 mb-2"
-      @click="openAddSpeciesConfirm"
-    >
-      <v-icon start>
-        <v-icon>
-          mdi-plus
-        </v-icon>
-      </v-icon>
-      Add Bat
-    </v-btn>
+    <v-row dense class="mt-1 mb-2">
+      <v-col>
+      <v-btn
+        v-tooltip="'Add another bat'"
+        size="small"
+        variant="outlined"
+        color="primary"
+        :disabled="disabled"
+        @click="openAddSpeciesConfirm"
+      >
+        <v-icon start>mdi-plus</v-icon>
+        Add Bat
+      </v-btn>
+      </v-col>
+      <v-spacer />
+      <v-col>
+      <v-btn
+        v-if="vettingMode"
+        v-tooltip="annotationComment ? `Edit comment: ${annotationComment}` : 'Add optional comment to this annotation'"
+        size="small"
+        variant="outlined"
+        color="primary"
+        :disabled="disabled"
+        @click="openCommentDialog"
+      >
+        <v-icon start>{{ annotationComment ? 'mdi-pencil' : 'mdi-plus' }}</v-icon>
+        Comment
+      </v-btn>
+      </v-col>
+    </v-row>
     <v-dialog
       v-model="addSpeciesConfirmOpen"
       max-width="400"
@@ -153,6 +204,51 @@ export default defineComponent({
             @click="confirmAddSpecies"
           >
             Add species
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog
+      v-model="commentDialogOpen"
+      max-width="500"
+      persistent
+    >
+      <v-card>
+        <v-card-title>Comment</v-card-title>
+        <v-card-text>
+          <p class="text-medium-emphasis mb-3">
+            This is an optional comment field that can be attached to the annotation.
+          </p>
+          <v-textarea
+            v-model="commentDraft"
+            label="Comment"
+            rows="4"
+            variant="outlined"
+            auto-grow
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+            v-if="commentDraft || annotationComment"
+            variant="text"
+            color="error"
+            @click="removeComment"
+          >
+            Remove comment
+          </v-btn>
+          <v-spacer />
+          <v-btn
+            variant="text"
+            @click="closeCommentDialog"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            variant="flat"
+            color="primary"
+            @click="saveComment"
+          >
+            Save
           </v-btn>
         </v-card-actions>
       </v-card>

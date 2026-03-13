@@ -113,6 +113,11 @@ export default defineComponent({
       updateAnnotation();
     };
 
+    const onSaveComment = (newComment: string) => {
+      comments.value = newComment;
+      updateAnnotation();
+    };
+
     const deleteAnnotation = async () => {
       if (props.annotation && props.recordingId) {
         deletingAnnotation.value = true;
@@ -186,6 +191,7 @@ export default defineComponent({
         comments,
         updateAnnotation,
         onSpeciesModelValue,
+        onSaveComment,
         deleteAnnotation,
         submitAnnotation,
         confirmSubmitAnnotation,
@@ -264,8 +270,11 @@ export default defineComponent({
           v-model="speciesEdit"
           :species-list="species"
           :disabled="annotation?.submitted || updatingAnnotation || deletingAnnotation"
+          :vetting-mode="configuration.mark_annotations_completed_enabled"
+          :annotation-comment="comments"
           @update:model-value="onSpeciesModelValue"
           @delete-blank-annotation="deleteAnnotation"
+          @save-comment="onSaveComment"
         />
       </v-row>
       <v-row v-if="type === 'nabat'">
