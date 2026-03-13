@@ -145,6 +145,26 @@ export default defineComponent({
       return ( currentUserAnnotations.length > 0 && props.type === 'nabat');
     });
 
+    const vettingMode = computed(() => configuration.value.mark_annotations_completed_enabled);
+    // Count all annotations owned by current user (submitted and unsubmitted) for vetting one-annotation limit
+    const userAnnotationCount = computed(() =>
+      annotations.value.filter(
+        (a: FileAnnotation) => a.owner === currentUser.value
+      ).length
+    );
+    const vettingModeAddDisabled = computed(() =>
+      vettingMode.value && userAnnotationCount.value > 0
+    );
+    const addButtonDisabled = computed(() =>
+      addingAnnotation.value || disableNaBatAnnotations.value || vettingModeAddDisabled.value
+    );
+    const addButtonTooltip = computed(() => {
+      if (vettingModeAddDisabled.value) {
+        return 'In vetting mode you may only add one annotation per recording.';
+      }
+      return '';
+    });
+
     function getConfidenceLabelText(confidence: number) {
       return `Confidence: ${confidence.toFixed(2)}`;
     }
@@ -167,6 +187,11 @@ export default defineComponent({
       userSubmittedAnnotationId,
       handleSubmitAnnotation,
       configuration,
+      addButtonDisabled,
+      addButtonTooltip,
+      userAnnotationCount,
+      vettingModeAddDisabled,
+      vettingMode,
     };
   },
 });
@@ -194,8 +219,26 @@ export default defineComponent({
       </v-col>
       <v-spacer />
       <v-col v-if="!isNaBat() || !disableNaBatAnnotations">
+        <v-tooltip
+          v-if="addButtonTooltip"
+          location="bottom"
+        >
+          <template #activator="{ props: tooltipProps }">
+            <div v-bind="tooltipProps">
+              <v-btn
+                :disabled="addButtonDisabled"
+                :loading="addingAnnotation"
+                @click="addAnnotation()"
+              >
+                Add<v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </div>
+          </template>
+          {{ addButtonTooltip }}
+        </v-tooltip>
         <v-btn
-          :disabled="addingAnnotation || disableNaBatAnnotations"
+          v-else
+          :disabled="addButtonDisabled"
           :loading="addingAnnotation"
           @click="addAnnotation()"
         >
