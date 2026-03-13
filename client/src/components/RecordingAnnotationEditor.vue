@@ -113,6 +113,11 @@ export default defineComponent({
       updateAnnotation();
     };
 
+    const onSaveComment = (newComment: string) => {
+      comments.value = newComment;
+      updateAnnotation();
+    };
+
     const deleteAnnotation = async () => {
       if (props.annotation && props.recordingId) {
         deletingAnnotation.value = true;
@@ -170,13 +175,11 @@ export default defineComponent({
     });
 
     const deleteEnabled = computed(() => {
-      return (
-        props.type !== 'nabat'
-        && (
-          configuration.value.is_admin
-          || !configuration.value.mark_annotations_completed_enabled
-        )
-      );
+      if (props.type === 'nabat') return false;
+      if (configuration.value.is_admin) return true;
+      if (!configuration.value.mark_annotations_completed_enabled) return true;
+      // In vetting mode, non-admins may only delete blank annotations
+      return speciesEdit.value.length === 0;
     });
 
     return {
@@ -188,6 +191,7 @@ export default defineComponent({
         comments,
         updateAnnotation,
         onSpeciesModelValue,
+        onSaveComment,
         deleteAnnotation,
         submitAnnotation,
         confirmSubmitAnnotation,
@@ -266,7 +270,11 @@ export default defineComponent({
           v-model="speciesEdit"
           :species-list="species"
           :disabled="annotation?.submitted || updatingAnnotation || deletingAnnotation"
+          :vetting-mode="configuration.mark_annotations_completed_enabled"
+          :annotation-comment="comments"
           @update:model-value="onSpeciesModelValue"
+          @delete-blank-annotation="deleteAnnotation"
+          @save-comment="onSaveComment"
         />
       </v-row>
       <v-row v-if="type === 'nabat'">
