@@ -273,11 +273,6 @@ interface GRTSCellBbox {
   };
 }
 
-export interface RecordingTag {
-  id: number;
-  text: string;
-  user_id: number;
-}
 
 /** Params for paginated recording list (v-data-table-server compatible). */
 export interface RecordingListParams {
@@ -358,7 +353,7 @@ async function getUnsubmittedNeighbors(
 }
 
 async function getRecordingTags() {
-  return axiosInstance.get<RecordingTag[]>(`/recording-tag/`);
+  return axiosInstance.get<string[]>(`/recording-tag/`);
 }
 
 async function deleteRecording(id: number) {

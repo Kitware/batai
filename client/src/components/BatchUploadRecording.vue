@@ -2,7 +2,7 @@
 import { computed, defineComponent, ref, Ref, watch } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '@use/useRequest';
-import { UploadLocation, uploadRecordingFile, getCellLocation, RecordingFileParameters, getGuanoMetadata, RecordingTag } from '../api/api';
+import { UploadLocation, uploadRecordingFile, getCellLocation, RecordingFileParameters, getGuanoMetadata } from '../api/api';
 import BatchRecordingElement, { BatchRecording } from './BatchRecordingElement.vue';
 import { cloneDeep } from 'lodash';
 import { extractDateTimeComponents, getCurrentTime } from '@use/useUtils';
@@ -24,7 +24,7 @@ export default defineComponent({
   emits: ['done', 'cancel'],
   setup(props, { emit }) {
     const { recordingTagList } = useState();
-    const tagOptions = computed(() => recordingTagList.value.map((tag: RecordingTag) => tag.text));
+    const tagOptions = computed(() => [...recordingTagList.value]);
 
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref();
