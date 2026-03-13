@@ -88,6 +88,7 @@ export default defineComponent({
 
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
+    const recordingMap = ref(false);
 
     const disabledFeatures = ref(['speciesLabel', 'endpointLabels', 'durationLabels', 'timeLabels']);
     const loadData = async () => {
@@ -238,6 +239,7 @@ export default defineComponent({
       recordingInfo,
       // Disabled Featuers not in NABat
       disabledFeatures,
+      recordingMap,
     };
   },
 });
@@ -254,7 +256,18 @@ export default defineComponent({
     >
       <recording-info-dialog
         :id="id"
+        display-mode="both"
         @close="recordingInfo = false"
+      />
+    </v-dialog>
+    <v-dialog
+      v-model="recordingMap"
+      width="600"
+    >
+      <recording-info-dialog
+        :id="id"
+        display-mode="map"
+        @close="recordingMap = false"
       />
     </v-dialog>
     <v-col>
@@ -272,6 +285,19 @@ export default defineComponent({
                 </v-icon>
               </template>
               <span> Recording Information </span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="32"
+                  class="ml-2"
+                  @click="recordingMap = true"
+                >
+                  mdi-map
+                </v-icon>
+              </template>
+              <span> Recording Location Map </span>
             </v-tooltip>
 
             <v-col cols="2">
