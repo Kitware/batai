@@ -86,7 +86,6 @@ export default defineComponent({
       contoursEnabled,
       clearContours,
       currentRecordingId,
-      viewMaskOverlay,
       filterTags,
       sharedFilterTags,
       spectrogramFilename,
@@ -94,6 +93,8 @@ export default defineComponent({
     const {
       clearPulseMetadata,
       viewPulseMetadataLayer,
+      loadPulseMetadata,
+      pulseMetadataList,
     } = usePulseMetadata();
     const nextUnsubmittedId = ref<number | null>(null);
     const previousUnsubmittedId = ref<number | null>(null);
@@ -106,6 +107,7 @@ export default defineComponent({
     const allImagesLoaded: Ref<boolean[]> = ref([]);
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
+    const recordingMap = ref(false);
     const compressed = ref(configuration.value.spectrogram_view === 'compressed');
     const colorpickerMenu = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
@@ -147,7 +149,6 @@ export default defineComponent({
     const loading = ref(false);
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
     const loadData = async () => {
-      viewMaskOverlay.value = false;
       const tempViewPulseMetadataLayer = viewPulseMetadataLayer.value;
       viewPulseMetadataLayer.value = false;
       contoursEnabled.value = false;
@@ -183,7 +184,6 @@ export default defineComponent({
         if (tempViewPulseMetadataLayer) {
           viewPulseMetadataLayer.value = true;
         }
-
       } else {
         console.error("No URL found for the spectrogram");
       }
@@ -241,6 +241,14 @@ export default defineComponent({
         nextUnsubmittedId.value = null;
         previousUnsubmittedId.value = null;
       }
+      // Automatically load pulse metadata when the layer is enabled and data has not yet been fetched.
+      if (
+        viewPulseMetadataLayer.value &&
+        currentRecordingId.value != null &&
+        pulseMetadataList.value.length === 0
+      ) {
+        await loadPulseMetadata(currentRecordingId.value);
+      }
       loading.value = false;
     };
     const setSelection = (annotationId: number) => {
@@ -297,6 +305,9 @@ export default defineComponent({
       freqRef.value = freq;
     };
     watch(compressed, () => {
+      // Reset zoom and compressed overlay state when toggling views
+      scaledVals.value = { x: 1, y: 1 };
+      viewCompressedOverlay.value = false;
       loadData();
       if (drawingBoundingBox.value) {
         toggleDrawingBoundingBox();
@@ -400,6 +411,7 @@ export default defineComponent({
       goToPreviousUnreviewed,
       nextUnsubmittedId,
       previousUnsubmittedId,
+      recordingMap,
     };
   },
 });
@@ -413,7 +425,18 @@ export default defineComponent({
     >
       <recording-info-dialog
         :id="id"
+        display-mode="both"
         @close="recordingInfo = false"
+      />
+    </v-dialog>
+    <v-dialog
+      v-model="recordingMap"
+      width="600"
+    >
+      <recording-info-dialog
+        :id="id"
+        display-mode="map"
+        @close="recordingMap = false"
       />
     </v-dialog>
     <v-col>
@@ -431,6 +454,19 @@ export default defineComponent({
                 </v-icon>
               </template>
               <span> Recording Information </span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="40"
+                  class="ml-2"
+                  @click="recordingMap = true"
+                >
+                  mdi-map
+                </v-icon>
+              </template>
+              <span> Recording Location Map </span>
             </v-tooltip>
 
             <v-col cols="2">
@@ -458,15 +494,29 @@ export default defineComponent({
             </v-col>
 
             <v-col
+              v-if="annotationState !== '' && annotationState !== 'disabled'"
               cols="1"
               class="px-0"
               style="font-size: 20px"
             >
-              <div v-if="annotationState !== '' && annotationState !== 'disabled'">
+              <div>
                 <b>Mode:</b>
                 <span> {{ annotationState }}</span>
               </div>
             </v-col>
+            <v-tooltip bottom>
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="40"
+                  :color="compressed ? 'blue' : ''"
+                  @click="compressed = !compressed"
+                >
+                  mdi-calendar-collapse-horizontal
+                </v-icon>
+              </template>
+              <span> Toggle Compressed View</span>
+            </v-tooltip>
             <v-spacer />
             <v-progress-circular
               v-if="loading"
@@ -483,20 +533,6 @@ export default defineComponent({
                 :user-emails="Object.keys(otherUserAnnotations)"
               />
             </div>
-            <v-tooltip>
-              <template #activator="{ props: subProps }">
-                <v-icon
-                  v-bind="subProps"
-                  size="25"
-                  class="mr-5 mt-5"
-                  :color="fixedAxes ? 'blue': ''"
-                  @click="toggleFixedAxes"
-                >
-                  mdi-axis-lock
-                </v-icon>
-              </template>
-              Toggle between locked and floating axes
-            </v-tooltip>
             <v-tooltip>
               <template #activator="{ props: subProps }">
                 <v-badge
@@ -602,34 +638,6 @@ export default defineComponent({
               </template>
               <span> Turn Time Label On/Off</span>
             </v-tooltip>
-            <v-tooltip bottom>
-              <template #activator="{ props: subProps }">
-                <v-icon
-                  v-bind="subProps"
-                  size="25"
-                  class="mr-3 mt-5"
-                  :color="gridEnabled ? 'blue' : ''"
-                  @click="gridEnabled = !gridEnabled"
-                >
-                  mdi-grid
-                </v-icon>
-              </template>
-              <span> Turn Legend Grid On/Off</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template #activator="{ props: subProps }">
-                <v-icon
-                  v-bind="subProps"
-                  size="30"
-                  class="mr-3 mt-5"
-                  :color="compressed ? 'blue' : ''"
-                  @click="compressed = !compressed"
-                >
-                  mdi-calendar-collapse-horizontal
-                </v-icon>
-              </template>
-              <span> Toggle Compressed View</span>
-            </v-tooltip>
             <v-tooltip
               v-if="!compressed"
               bottom
@@ -654,9 +662,6 @@ export default defineComponent({
               />
             </div>
             <div class="mr-1 mt-5">
-              <color-scheme-dialog />
-            </div>
-            <div class="mr-1 mt-5">
               <spectrogram-image-content-menu
                 :compressed="compressed"
                 :has-mask-urls="maskImages.length > 0"
@@ -665,6 +670,53 @@ export default defineComponent({
             <div class="mr-1 mt-5">
               <transparency-filter-control />
             </div>
+            <v-menu>
+              <template #activator="{ props: subProps }">
+                <v-btn
+                  v-bind="subProps"
+                  icon
+                  size="25"
+                  class="mr-5 mt-5"
+                  variant="text"
+                >                  
+                  <v-icon>
+                    mdi-cog
+                  </v-icon>
+                </v-btn>
+              </template>
+              <v-list>
+                <v-list-subheader>Settings</v-list-subheader>
+                <v-list-item @click="toggleFixedAxes">
+                  <v-list-item-title>
+                    <v-icon
+                      :color="fixedAxes ? 'blue' : ''"
+                    >
+                      {{ fixedAxes ? 'mdi-axis-lock' : 'mdi-axis' }}
+                    </v-icon>
+                    <span>
+                      Toggle Axes Type
+                    </span>
+                  </v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="gridEnabled = !gridEnabled">
+                  <v-list-item-title>
+                    <v-icon
+                      :color="gridEnabled ? 'blue' : ''"
+                    >
+                      {{ gridEnabled ? 'mdi-grid' : 'mdi-grid-off' }}
+                    </v-icon>
+                    <span>
+                      Toggle Grid
+                    </span>
+                  </v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="colorpickerMenu = !colorpickerMenu">
+                  <v-list-item-title>
+                    <color-scheme-dialog display-mode="menu" />
+                  </v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
           </v-row>
         </v-container>
       </v-toolbar>

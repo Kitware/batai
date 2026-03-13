@@ -93,7 +93,8 @@ const contoursEnabled = ref(false);
 const imageOpacity = ref(1.0);
 const contourOpacity = ref(1.0);
 const contoursLoading = ref(false);
-const viewMaskOverlay = ref(false);
+// Default mask overlay to visible at 50% opacity.
+const viewMaskOverlay = ref(true);
 const maskOverlayOpacity = ref(0.50);
 const setContoursEnabled = (value: boolean) => {
   contoursEnabled.value = value;

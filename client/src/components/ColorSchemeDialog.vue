@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
+import { onMounted, watch, PropType } from 'vue';
 import useState from '@use/useState';
 import ColorSchemeSelect from './ColorSchemeSelect.vue';
 import ColorPickerMenu from './ColorPickerMenu.vue';
@@ -10,6 +10,13 @@ const {
   colorScheme,
   backgroundColor,
 } = useState();
+
+defineProps({
+  displayMode: {
+    type: String as PropType<'dialog' | 'menu'>,
+    default: 'dialog',
+  },
+});
 
 onMounted(() => {
   const localBackgroundColor = localStorage.getItem('spectrogramBackgroundColor');
@@ -40,11 +47,19 @@ watch(colorScheme, () => {
       <v-tooltip>
         <template #activator="{ props: tooltipProps }">
           <v-icon
+            v-if="displayMode === 'dialog'"
             v-bind="{ ...modalProps, ...tooltipProps }"
             size="30"
           >
             mdi-palette
           </v-icon>
+          <span
+            v-else
+            v-bind="{ ...modalProps, ...tooltipProps }"
+          >
+            <v-icon size="30">mdi-palette</v-icon>
+            <span>Change Color Scheme</span>
+          </span>
         </template>
         View spectrogram color options
       </v-tooltip>
