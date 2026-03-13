@@ -24,7 +24,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["update:modelValue"],
+  emits: ["update:modelValue", "deleteBlankAnnotation"],
   setup(props, { emit }) {
     // Internal: one slot per row, at least one. Empty string = no selection in that slot.
     const localSpeciesList = ref<string[]>(
@@ -54,6 +54,14 @@ export default defineComponent({
       }
     }
 
+    function onSlotDelete(index: number) {
+      if (localSpeciesList.value.length <= 1 && (localSpeciesList.value[0] ?? "") === "") {
+        emit("deleteBlankAnnotation");
+      } else {
+        removeSpecies(index);
+      }
+    }
+
     function openAddSpeciesConfirm() {
       addSpeciesConfirmOpen.value = true;
     }
@@ -78,6 +86,7 @@ export default defineComponent({
     return {
       localSpeciesList,
       onSlotUpdate,
+      onSlotDelete,
       openAddSpeciesConfirm,
       closeAddSpeciesConfirm,
       confirmAddSpecies,
@@ -101,7 +110,7 @@ export default defineComponent({
         :disabled="disabled"
         :show-delete="localSpeciesList.length > 1"
         @update:model-value="onSlotUpdate(index, $event)"
-        @delete="removeSpecies(index)"
+        @delete="onSlotDelete(index)"
       />
     </div>
     <v-btn

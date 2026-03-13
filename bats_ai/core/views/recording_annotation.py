@@ -206,16 +206,19 @@ def delete_recording_annotation(request: HttpRequest, pk: int):
         vetting_enabled = (
             configuration.mark_annotations_completed_enabled if configuration else False
         )
-        if vetting_enabled and not request.user.is_staff:
-            raise HttpError(
-                403, "Permission denied. Annotations cannot be deleted while vetting is enabled"
-            )
-
         annotation = RecordingAnnotation.objects.get(pk=pk)
 
         # Check permission: only the annotation owner may delete their own
         if annotation.owner != request.user:
             raise HttpError(403, "Permission denied.")
+
+        # In vetting mode, non-staff may only delete blank annotations (no species)
+        if vetting_enabled and not request.user.is_staff and annotation.species.exists():
+            raise HttpError(
+                403,
+                "Permission denied. Only blank annotations can be deleted "
+                "while vetting is enabled.",
+            )
 
         annotation.delete()
         return "Recording annotation deleted successfully."

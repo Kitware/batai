@@ -99,6 +99,14 @@ export default defineComponent({
     onMounted(() => window.addEventListener("keydown", speciesShortcut));
     onUnmounted(() => window.removeEventListener("keydown", speciesShortcut));
 
+    const onClearOrDeleteClick = () => {
+      if (selectedCode.value) {
+        selectedCode.value = null;
+      } else {
+        emit("delete");
+      }
+    };
+
     return {
       search,
       selectedCode,
@@ -106,6 +114,7 @@ export default defineComponent({
       customFilter,
       categoryColors,
       speciesAutocomplete,
+      onClearOrDeleteClick,
     };
   },
 });
@@ -129,7 +138,6 @@ export default defineComponent({
       item-value="species_code"
       :multiple="false"
       :custom-filter="customFilter"
-      clearable
       clear-on-select
       label="Select species"
       :menu-props="{ maxHeight: '300px', maxWidth: '400px' }"
@@ -138,6 +146,16 @@ export default defineComponent({
       density="compact"
       hide-details
     >
+      <template #append-inner>
+        <v-icon
+          size="small"
+          class="cursor-pointer"
+          :title="selectedCode ? 'Clear species' : 'Delete blank annotation'"
+          @click.stop="onClearOrDeleteClick"
+        >
+          mdi-close
+        </v-icon>
+      </template>
       <template #subheader="{ props: subProps }">
         <v-list-subheader
           class="font-weight-bold"
