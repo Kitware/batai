@@ -305,6 +305,9 @@ export default defineComponent({
       freqRef.value = freq;
     };
     watch(compressed, () => {
+      // Reset zoom and compressed overlay state when toggling views
+      scaledVals.value = { x: 1, y: 1 };
+      viewCompressedOverlay.value = false;
       loadData();
       if (drawingBoundingBox.value) {
         toggleDrawingBoundingBox();
