@@ -27,6 +27,8 @@ class SpectrogramMetadata(BaseModel):
     uncompressed_path: list[str] = Field(alias="uncompressed.path")
     compressed_path: list[str] = Field(alias="compressed.path")
     mask_path: list[str] = Field(alias="mask.path")
+    waveplot_path: list[str] = Field(alias="waveplot.path")
+    waveplot_compressed_path: list[str] = Field(alias="waveplot.compressed.path")
 
 
 class UncompressedSize(BaseModel):
@@ -371,6 +373,8 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
     uncompressed_paths = metadata.spectrogram.uncompressed_path
     compressed_paths = metadata.spectrogram.compressed_path
     mask_paths = metadata.spectrogram.mask_path
+    waveplot_paths = metadata.spectrogram.waveplot_path
+    compressed_waveplot_paths = metadata.spectrogram.waveplot_compressed_path
 
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
     segment_curve_data = convert_to_segment_data(metadata)
@@ -380,12 +384,14 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
         "freq_max": metadata.frequencies.max_hz,
         "normal": {
             "paths": uncompressed_paths,
+            "waveplot_paths": waveplot_paths,
             "width": metadata.size.uncompressed.width_px,
             "height": metadata.size.uncompressed.height_px,
         },
         "compressed": {
             "paths": compressed_paths,
             "masks": mask_paths,
+            "waveplot_paths": compressed_waveplot_paths,
             "width": metadata.size.compressed.width_px,
             "height": metadata.size.compressed.height_px,
             "widths": compressed_metadata.widths,

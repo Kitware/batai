@@ -185,7 +185,7 @@ wheels = [
 [[package]]
 name = "batbot"
 version = "0.1.2"
-source = { git = "https://github.com/Kitware/batbot?branch=tas%2Fupdate-metadata#5e04bc7b8d25b71e7a27ba54e96171d41969d0bd" }
+source = { git = "https://github.com/Kitware/batbot?branch=restructure-waveplot-metadata#a450bf8f922acda17a2ef6f61abe2c2c102e7b9b" }
 dependencies = [
     { name = "click" },
     { name = "cryptography" },
@@ -255,6 +255,7 @@ tasks = [
     { name = "batbot" },
     { name = "numpy" },
     { name = "opencv-python-headless" },
+    { name = "pillow" },
     { name = "scikit-image" },
     { name = "scipy" },
 ]
@@ -285,7 +286,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batbot", marker = "extra == 'tasks'", git = "https://github.com/Kitware/batbot?branch=tas%2Fupdate-metadata" },
+    { name = "batbot", marker = "extra == 'tasks'", git = "https://github.com/Kitware/batbot?branch=restructure-waveplot-metadata" },
     { name = "celery", specifier = "==5.6.2" },
     { name = "django", extras = ["argon2"], specifier = "==6.0.3" },
     { name = "django-allauth", specifier = "==65.15.0" },
@@ -315,6 +316,7 @@ requires-dist = [
     { name = "ipython", marker = "extra == 'development'", specifier = "==9.11.0" },
     { name = "numpy", marker = "extra == 'tasks'", specifier = "==2.4.3" },
     { name = "opencv-python-headless", marker = "extra == 'tasks'", specifier = "==4.13.0.92" },
+    { name = "pillow", marker = "extra == 'tasks'", specifier = ">=11.0.0" },
     { name = "psycopg", extras = ["binary"], specifier = "==3.3.3" },
     { name = "pydantic", specifier = "==2.12.5" },
     { name = "requests", specifier = "==2.32.5" },

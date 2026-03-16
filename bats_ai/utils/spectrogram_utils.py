@@ -2,19 +2,21 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 
 from bats_ai.core.models import SpectrogramImage
 from bats_ai.core.models.nabat import NABatCompressedSpectrogram, NABatRecording, NABatSpectrogram
+from bats_ai.core.utils.image_utils import waveplot_to_grayscale_transparent
 
 logger = logging.getLogger(__name__)
 
 
 class SpectrogramAssetResult(TypedDict):
     paths: list[str]
+    waveplot_paths: NotRequired[list[str]]
     width: int
     height: int
 
@@ -22,6 +24,7 @@ class SpectrogramAssetResult(TypedDict):
 class SpectrogramCompressedAssetResult(TypedDict):
     paths: list[str]
     masks: list[str]
+    waveplot_paths: NotRequired[list[str]]
     width: int
     height: int
     widths: list[float]
@@ -70,6 +73,19 @@ def generate_nabat_spectrogram(
                 },
             )
 
+    for idx, img_path in enumerate(results["normal"].get("waveplot_paths", [])):
+        buf = waveplot_to_grayscale_transparent(img_path)
+        base = os.path.splitext(os.path.basename(img_path))[0]
+        SpectrogramImage.objects.get_or_create(
+            content_type=ContentType.objects.get_for_model(spectrogram),
+            object_id=spectrogram.id,
+            index=idx,
+            defaults={
+                "image_file": File(buf, name=f"{base}.png"),
+                "type": "waveform_uncompressed",
+            },
+        )
+
     return spectrogram
 
 
@@ -115,5 +131,18 @@ def generate_nabat_compressed_spectrogram(
                     "image_file": File(f, name=os.path.basename(mask_path)),
                 },
             )
+
+    for idx, waveplot_path in enumerate(compressed_results.get("waveplot_paths", [])):
+        buf = waveplot_to_grayscale_transparent(waveplot_path)
+        base = os.path.splitext(os.path.basename(waveplot_path))[0]
+        SpectrogramImage.objects.get_or_create(
+            content_type=ContentType.objects.get_for_model(compressed_obj),
+            object_id=compressed_obj.id,
+            index=idx,
+            type="waveform_compressed",
+            defaults={
+                "image_file": File(buf, name=f"{base}.png"),
+            },
+        )
 
     return compressed_obj
