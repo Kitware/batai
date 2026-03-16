@@ -74,6 +74,9 @@ const useGeoJS = () => {
     opacity: number
   ) => {
     if (images.length === 0) return;
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+      return;
+    }
     layer.node().css("opacity", String(opacity));
     while (features.length > images.length) {
       const feature = features.pop();
@@ -81,6 +84,9 @@ const useGeoJS = () => {
     }
     let previousWidth = 0;
     const totalBaseWidth = images.reduce((sum, img) => sum + img.naturalWidth, 0);
+    if (!Number.isFinite(totalBaseWidth) || totalBaseWidth <= 0) {
+      return;
+    }
     images.forEach((image, index) => {
       const scale = width / totalBaseWidth;
       const currentWidth = image.width * scale;

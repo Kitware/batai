@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref, Ref, watch } from 'vue';
+import { defineComponent, onMounted, ref, Ref, watch, PropType } from 'vue';
 import { getRecording, Recording } from '../api/api';
 import useState from '@use/useState';
 import RecordingInfoDisplay from './RecordingInfoDisplay.vue';
@@ -14,6 +14,10 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    displayMode: {
+      type: String as PropType<'both' | 'metadata' | 'map'>,
+      default: 'both',
+    }
   },
   emits: ['close'],
   setup(props) {
@@ -39,6 +43,7 @@ export default defineComponent({
     v-if="recordingInfo"
     :recording-info="recordingInfo"
     :minimal-metadata="configuration.mark_annotations_completed_enabled"
+    :display-mode="displayMode"
     @close="$emit('close')"
   />
 </template>
