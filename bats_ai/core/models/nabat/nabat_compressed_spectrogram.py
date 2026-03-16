@@ -41,3 +41,9 @@ class NABatCompressedSpectrogram(TimeStampedModel, models.Model):
         """Ordered list of mask image URLs for this spectrogram."""
         images = self.images.filter(type="masks").order_by("index")
         return [default_storage.url(img.image_file.name) for img in images]
+
+    @property
+    def waveplot_url_list(self):
+        """Ordered list of waveplot image URLs for this compressed spectrogram."""
+        images = self.images.filter(type="waveform_compressed").order_by("index")
+        return [default_storage.url(img.image_file.name) for img in images]
