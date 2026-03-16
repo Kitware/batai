@@ -234,7 +234,6 @@ class PulseMetadataSlopesSchema(Schema):
     slope_lo_avg_khz_per_ms: float | None
     slope_box_khz_per_ms: float | None
     slope_hi_box_khz_per_ms: float | None
-    slope_mid_box_khz_per_ms: float | None
     slope_lo_box_khz_per_ms: float | None
 
 

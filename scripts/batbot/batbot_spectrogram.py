@@ -109,7 +109,6 @@ class Segment(BaseModel):
     slope_lo_avg_khz_per_ms: float | None = Field(None, alias="slope/lo[avg].khz/ms")
     slope_box_khz_per_ms: float | None = Field(None, alias="slope[box].khz/ms")
     slope_hi_box_khz_per_ms: float | None = Field(None, alias="slope/hi[box].khz/ms")
-    slope_mid_box_khz_per_ms: float | None = Field(None, alias="slope/mid[box].khz/ms")
     slope_lo_box_khz_per_ms: float | None = Field(None, alias="slope/lo[box].khz/ms")
 
     @field_validator("curve_hz_ms", mode="before")
