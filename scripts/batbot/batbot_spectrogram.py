@@ -7,7 +7,7 @@
 # ]
 #
 # [tool.uv.sources]
-# batbot = { git = "https://github.com/Kitware/batbot" }
+# batbot = { git = "https://github.com/Kitware/batbot", branch= "tas/update-metadata" }
 # ///
 from __future__ import annotations
 

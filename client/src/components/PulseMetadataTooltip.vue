@@ -77,13 +77,6 @@ export default defineComponent({
             <span class="text-caption text-medium-emphasis mr-2">Knee</span>
             <span>{{ data.kneeKhz.toFixed(1) }} kHz</span>
           </div>
-          <div v-if="data.slopeHiAvg != null"> 
-            <span
-              class="text-caption ml-4 text-medium-emphasis"
-            >
-              <b>Slope Hi Avg:</b> {{ data.slopeHiAvg.toFixed(2) }} kHz/ms
-            </span>
-          </div>
           <div
             v-if="data.fcKhz != null"
             class="d-flex align-center"
@@ -96,11 +89,25 @@ export default defineComponent({
             <span class="text-caption text-medium-emphasis mr-2">Fc</span>
             <span>{{ data.fcKhz.toFixed(1) }} kHz</span>
           </div>
-          <div v-if="data.slopeTotalAvg != null"> 
+          <div v-if="data.slopeHi != null"> 
             <span
-              class="text-caption ml-4 text-medium-emphasis"
+              class="text-caption text-medium-emphasis"
             >
-              <b>Slope Total Avg:</b>{{ data.slopeTotalAvg.toFixed(2) }} kHz/ms
+              <b>Slope Hi:</b> {{ data.slopeHi.toFixed(2) }} kHz/ms
+            </span>
+          </div>
+          <div v-if="data.slopeTotal != null"> 
+            <span
+              class="text-caption text-medium-emphasis"
+            >
+              <b>Slope Total:</b>{{ data.slopeTotal.toFixed(2) }} kHz/ms
+            </span>
+          </div>
+          <div v-if="data.slopeLow != null"> 
+            <span
+              class="text-caption text-medium-emphasis"
+            >
+              <b>Slope Low:</b> {{ data.slopeLow.toFixed(2) }} kHz/ms
             </span>
           </div>
           <!-- DISABLED HEEL FOR NOW -->

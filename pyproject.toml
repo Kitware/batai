@@ -112,6 +112,7 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
+batbot = { git = "https://github.com/Kitware/batbot", branch= "tas/update-metadata" }
 
 [tool.ruff]
 line-length = 100
