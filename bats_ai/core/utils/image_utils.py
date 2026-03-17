@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from io import BytesIO
 
-from PIL import Image
-
 
 def waveplot_to_grayscale_transparent(source_path: str) -> BytesIO:
     """
@@ -14,6 +12,8 @@ def waveplot_to_grayscale_transparent(source_path: str) -> BytesIO:
     Reads the image from source_path, converts it to grayscale, and makes
     near-white background pixels transparent. Returns PNG bytes in a BytesIO.
     """
+    from PIL import Image
+
     img = Image.open(source_path)
     gray = img.convert("L")
     # Treat luminance >= 200 as background (white)
