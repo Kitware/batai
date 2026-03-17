@@ -314,7 +314,7 @@ export default defineComponent({
       timeRef.value = time;
       freqRef.value = freq;
     };
-    watch(compressed, (isCompressed) => {
+    watch(compressed, () => {
       // Reset zoom and compressed overlay state when toggling views
       scaledVals.value = { x: 1, y: 1 };
       viewCompressedOverlay.value = false;

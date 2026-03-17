@@ -203,7 +203,7 @@ export default defineComponent({
       } else {
         geoJS.clearWaveplotQuadFeatures(true);
       }
-    })
+    });
 
     return {
       containerRef,
