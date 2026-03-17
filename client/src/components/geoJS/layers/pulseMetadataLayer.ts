@@ -292,7 +292,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       charFreqColor: pulse.char_freq ? charFreqColor : null,
       slopeHi: slopes?.slope_hi_box_khz_per_ms ?? null,
       slopeLow: slopes?.slope_lo_box_khz_per_ms ?? null,
-      slopeTotal: slopes?.slope_avg_khz_per_ms ?? null,
+      slopeTotal: slopes?.slope_box_khz_per_ms ?? null,
       bbox: { top: 0, left, width, height },
     };
   }
