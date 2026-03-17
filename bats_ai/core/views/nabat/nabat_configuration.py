@@ -10,6 +10,7 @@ from django.contrib.gis.geos import Point, Polygon
 from django.db import transaction
 from django.db.models import Count
 from django.http import HttpRequest, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from ninja import Query, Router, Schema
 from ninja.pagination import paginate
@@ -161,10 +162,7 @@ def recording_annotations(
     if not request.user.is_authenticated or not request.user.is_superuser:
         return JsonResponse({"error": "Permission denied"}, status=403)
 
-    try:
-        recording = NABatRecording.objects.get(pk=recording_id)
-    except NABatRecording.DoesNotExist:
-        return JsonResponse({"error": "Recording not found"}, status=404)
+    recording = get_object_or_404(NABatRecording, pk=recording_id)
 
     annotations = NABatRecordingAnnotation.objects.filter(nabat_recording=recording)
 

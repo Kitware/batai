@@ -172,53 +172,45 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
 
 
 def create_nabat_recording_from_response(response_data, recording_id, survey_event_id):
-    try:
-        # Extract the batch data from the response
-        nabat_recording_data = response_data["data"]
+    # Extract the batch data from the response
+    nabat_recording_data = response_data["data"]
 
-        # Optional fields
-        recording_location_data = nabat_recording_data["surveyEventById"][
-            "eventGeometryByEventGeometryId"
-        ]["geom"]["geojson"]
-        file_name = nabat_recording_data["acousticFileById"]["fileName"]
+    # Optional fields
+    recording_location_data = nabat_recording_data["surveyEventById"][
+        "eventGeometryByEventGeometryId"
+    ]["geom"]["geojson"]
+    file_name = nabat_recording_data["acousticFileById"]["fileName"]
 
-        # Create geometry for the recording location if available
-        if recording_location_data:
-            coordinates = recording_location_data.get("coordinates", [])
-            recording_location = (
-                Point(coordinates[0], coordinates[1]) if len(coordinates) == 2 else None
-            )
-        else:
-            recording_location = None
-
-        # Create the NABatRecording instance
-        nabat_recording = NABatRecording.objects.create(
-            recording_id=recording_id,
-            survey_event_id=survey_event_id,
-            name=file_name,
-            recording_location=recording_location,
+    # Create geometry for the recording location if available
+    if recording_location_data:
+        coordinates = recording_location_data.get("coordinates", [])
+        recording_location = (
+            Point(coordinates[0], coordinates[1]) if len(coordinates) == 2 else None
         )
+    else:
+        recording_location = None
 
-        acoustic_batches_nodes = nabat_recording_data["surveyEventById"][
-            "acousticBatchesBySurveyEventId"
-        ]["nodes"]
-        if len(acoustic_batches_nodes) > 0:
-            batch_data = acoustic_batches_nodes[0]["acousticFileBatchesByBatchId"]["nodes"]
-            for node in batch_data:
-                species_id = node.get("manualId", False)
-                if species_id is not False:
-                    annotation = NABatRecordingAnnotation.objects.create(
-                        nabat_recording=nabat_recording,
-                        user_email=node["vetter"],
-                    )
-                    species = Species.objects.get(pk=species_id)
-                    annotation.species.add(species)
+    # Create the NABatRecording instance
+    nabat_recording = NABatRecording.objects.create(
+        recording_id=recording_id,
+        survey_event_id=survey_event_id,
+        name=file_name,
+        recording_location=recording_location,
+    )
 
-        return nabat_recording
+    acoustic_batches_nodes = nabat_recording_data["surveyEventById"][
+        "acousticBatchesBySurveyEventId"
+    ]["nodes"]
+    if len(acoustic_batches_nodes) > 0:
+        batch_data = acoustic_batches_nodes[0]["acousticFileBatchesByBatchId"]["nodes"]
+        for node in batch_data:
+            species_id = node.get("manualId", False)
+            if species_id is not False:
+                annotation = NABatRecordingAnnotation.objects.create(
+                    nabat_recording=nabat_recording,
+                    user_email=node["vetter"],
+                )
+                species = Species.objects.get(pk=species_id)
+                annotation.species.add(species)
 
-    except KeyError:
-        logger.exception("Missing key")
-        raise
-    except Exception:
-        logger.exception("Error creating NABatRecording")
-        raise
+    return nabat_recording

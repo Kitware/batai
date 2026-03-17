@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.contrib.gis.geos import Point, Polygon
 from django.http import HttpRequest, JsonResponse
+from django.shortcuts import get_list_or_404
 from ninja import Query
 from ninja.pagination import RouterPaginated
 
@@ -34,88 +35,82 @@ def get_grid_cell_id(
 
 @router.get("/{pk}")
 def get_cell_center(request: HttpRequest, pk: int, quadrant: str | None = None):
-    try:
-        cells = GRTSCells.objects.filter(grts_cell_id=pk)
+    cells = get_list_or_404(GRTSCells, grts_cell_id=pk)
 
-        # Define a custom order for sample_frame_id
-        custom_order = GRTSCells.sort_order()  # Define your custom order here
+    # Define a custom order for sample_frame_id
+    custom_order = GRTSCells.sort_order()  # Define your custom order here
 
-        # Define a custom key function to sort cells based on the custom order
-        def custom_sort_key(cell):
-            return custom_order.index(cell.sample_frame_id)
+    # Define a custom key function to sort cells based on the custom order
+    def custom_sort_key(cell):
+        return custom_order.index(cell.sample_frame_id)
 
-        # Sort the cells queryset based on the custom order
-        sorted_cells = sorted(cells, key=custom_sort_key)
-        cell = sorted_cells[0]
-        geom_4326 = cell.geom_4326
+    # Sort the cells queryset based on the custom order
+    sorted_cells = sorted(cells, key=custom_sort_key)
+    cell = sorted_cells[0]
+    geom_4326 = cell.geom_4326
 
-        # Get the centroid of the entire cell polygon
-        center = geom_4326.centroid
+    # Get the centroid of the entire cell polygon
+    center = geom_4326.centroid
 
-        if quadrant:
-            # If quadrant is specified, divide the cell polygon into quadrants
-            min_x, min_y, max_x, max_y = geom_4326.extent
-            mid_x = (min_x + max_x) / 2
-            mid_y = (min_y + max_y) / 2
+    if quadrant:
+        # If quadrant is specified, divide the cell polygon into quadrants
+        min_x, min_y, max_x, max_y = geom_4326.extent
+        mid_x = (min_x + max_x) / 2
+        mid_y = (min_y + max_y) / 2
 
-            # Determine the bounding box coordinates of the specified quadrant
-            if quadrant.upper() == "NW":
-                bbox = (min_x, mid_y, mid_x, max_y)
-            elif quadrant.upper() == "SE":
-                bbox = (mid_x, min_y, max_x, mid_y)
-            elif quadrant.upper() == "SW":
-                bbox = (min_x, min_y, mid_x, mid_y)
-            elif quadrant.upper() == "NE":
-                bbox = (mid_x, mid_y, max_x, max_y)
+        # Determine the bounding box coordinates of the specified quadrant
+        if quadrant.upper() == "NW":
+            bbox = (min_x, mid_y, mid_x, max_y)
+        elif quadrant.upper() == "SE":
+            bbox = (mid_x, min_y, max_x, mid_y)
+        elif quadrant.upper() == "SW":
+            bbox = (min_x, min_y, mid_x, mid_y)
+        elif quadrant.upper() == "NE":
+            bbox = (mid_x, mid_y, max_x, max_y)
 
-            quadrant_polygon = Polygon.from_bbox(bbox)
+        quadrant_polygon = Polygon.from_bbox(bbox)
 
-            # Intersect the cell polygon with the specified quadrant's polygon
-            quadrant_polygon = geom_4326.intersection(quadrant_polygon)
+        # Intersect the cell polygon with the specified quadrant's polygon
+        quadrant_polygon = geom_4326.intersection(quadrant_polygon)
 
-            # Get the centroid of the intersected polygon
-            center = quadrant_polygon.centroid
+        # Get the centroid of the intersected polygon
+        center = quadrant_polygon.centroid
 
-        # Get the latitude and longitude of the centroid
-        center_latitude = center.y
-        center_longitude = center.x
+    # Get the latitude and longitude of the centroid
+    center_latitude = center.y
+    center_longitude = center.x
 
-        return JsonResponse({"latitude": center_latitude, "longitude": center_longitude})
-    except GRTSCells.DoesNotExist:
-        return JsonResponse({"error": f"Cell with cellId={pk} does not exist"}, status=200)
+    return JsonResponse({"latitude": center_latitude, "longitude": center_longitude})
 
 
 @router.get("/{pk}/bbox")
 def get_grts_cell_bbox(request: HttpRequest, pk: int):
-    try:
-        cells = GRTSCells.objects.filter(grts_cell_id=pk)
-        custom_order = GRTSCells.sort_order()
+    cells = get_list_or_404(GRTSCells, grts_cell_id=pk)
+    custom_order = GRTSCells.sort_order()
 
-        def custom_sort_key(cell):
-            return custom_order.index(cell.sample_frame_id)
+    def custom_sort_key(cell):
+        return custom_order.index(cell.sample_frame_id)
 
-        sorted_cells = sorted(cells, key=custom_sort_key)
-        cell = sorted_cells[0]
-        geom = cell.geom_4326
+    sorted_cells = sorted(cells, key=custom_sort_key)
+    cell = sorted_cells[0]
+    geom = cell.geom_4326
 
-        min_x, min_y, max_x, max_y = geom.extent
+    min_x, min_y, max_x, max_y = geom.extent
 
-        geojson = {
-            "type": "Feature",
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [
-                    [min_x, min_y],
-                    [min_x, max_y],
-                    [max_x, max_y],
-                    [max_x, min_y],
-                ],
-            },
-            "properties": {
-                "grts_cell_id": pk,
-                "annotationType": "rectangle",
-            },
-        }
-        return JsonResponse(geojson)
-    except (GRTSCells.DoesNotExist, IndexError):
-        return JsonResponse({"error": f"Cell with id {pk} does not exist"}, status=200)
+    geojson = {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+                [min_x, min_y],
+                [min_x, max_y],
+                [max_x, max_y],
+                [max_x, min_y],
+            ],
+        },
+        "properties": {
+            "grts_cell_id": pk,
+            "annotationType": "rectangle",
+        },
+    }
+    return JsonResponse(geojson)
