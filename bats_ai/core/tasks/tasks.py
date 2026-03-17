@@ -134,7 +134,7 @@ def recording_compute_spectrogram(self, recording_id: int):
                         },
                     )
 
-            # Save waveform images that are created during compression (from batbot metadata compressed.waveplot.path)
+            # Save waveform images that are created during compression
             for idx, waveplot_path in enumerate(compressed.get("waveplot_paths", [])):
                 buf = waveplot_to_grayscale_transparent(waveplot_path)
                 base = os.path.splitext(os.path.basename(waveplot_path))[0]

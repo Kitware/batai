@@ -23,6 +23,7 @@ export default defineComponent({
   props: {
     images: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
     maskImages: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
+    waveplotImages: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
     spectroInfo: { type: Object as PropType<SpectroInfo>, required: true },
     recordingId: { type: String as PropType<string | null>, required: true },
     compressed: { type: Boolean, required: true }
@@ -43,6 +44,7 @@ export default defineComponent({
       contoursEnabled,
       imageOpacity,
       viewMaskOverlay,
+      viewWaveplot,
       maskOverlayOpacity,
     } = useState();
 
@@ -54,6 +56,13 @@ export default defineComponent({
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
 
     const setCursor = (newCursor: string) => { cursor.value = newCursor; };
+
+    const baseDimensions = computed(() => getImageDimensions(props.images, props.spectroInfo));
+    const waveplotDisplayHeight = computed(() => Math.floor(baseDimensions.value.height / 5));
+    const showWaveplot = computed(() => Boolean(viewWaveplot.value && props.waveplotImages.length && waveplotDisplayHeight.value > 0));
+    const totalDisplayHeight = computed(() =>
+      scaledHeight.value + (showWaveplot.value ? waveplotDisplayHeight.value : 0)
+    );
 
     function updateScaledDimensions() {
       const { width, height } = getImageDimensions(props.images, props.spectroInfo);
@@ -125,10 +134,25 @@ export default defineComponent({
 
     const effectiveImageOpacity = computed(() => (contoursEnabled.value ? imageOpacity.value : 1));
 
+    function drawWaveplotIfEnabled() {
+      if (showWaveplot.value) {
+        geoJS.drawWaveplotImages(
+          props.waveplotImages,
+          scaledWidth.value,
+          waveplotDisplayHeight.value,
+          scaledHeight.value,
+          1
+        );
+      } else {
+        geoJS.clearWaveplotQuadFeatures(true);
+      }
+    }
+
     function initializeViewerAndImages() {
       updateScaledDimensions();
+      const totalHeight = totalDisplayHeight.value;
       if (containerRef.value && !geoJS.getGeoViewer().value) {
-        geoJS.initializeViewer(containerRef.value, scaledWidth.value, scaledHeight.value, false, props.images.length);
+        geoJS.initializeViewer(containerRef.value, scaledWidth.value, totalHeight, false, props.images.length);
         geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
       }
       if (props.images.length) {
@@ -137,6 +161,7 @@ export default defineComponent({
       if (viewMaskOverlay.value && props.maskImages.length) {
         geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
       }
+      drawWaveplotIfEnabled();
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
 
@@ -149,6 +174,7 @@ export default defineComponent({
         if (viewMaskOverlay.value && props.maskImages.length) {
           geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
         }
+        drawWaveplotIfEnabled();
       }
     }
 
@@ -176,6 +202,7 @@ export default defineComponent({
       if (viewMaskOverlay.value && props.maskImages.length) {
         geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
       }
+      drawWaveplotIfEnabled();
     });
 
     const updateAnnotation = async (
@@ -237,6 +264,7 @@ export default defineComponent({
         if (viewMaskOverlay.value && props.maskImages.length) {
           geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
         }
+        drawWaveplotIfEnabled();
       } else if (event.shiftKey) {
         scaledVals.value.y += event.deltaY > 0 ? -incrementY : incrementY;
         if (scaledVals.value.y < 1) scaledVals.value.y = 1;
@@ -247,6 +275,7 @@ export default defineComponent({
         if (viewMaskOverlay.value && props.maskImages.length) {
           geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
         }
+        drawWaveplotIfEnabled();
       }
     };
 
@@ -264,6 +293,11 @@ export default defineComponent({
       } else {
         geoJS.clearMaskQuadFeatures(true);
       }
+    });
+
+    watch([showWaveplot], () => {
+      const totalHeight = totalDisplayHeight.value;
+      drawWaveplotIfEnabled();
     });
 
     function onPulseMetadataTooltip(data: PulseMetadataTooltipData | null) {
@@ -285,7 +319,7 @@ export default defineComponent({
       wheelEvent,
       scaledWidth,
       scaledHeight,
-      backgroundColor
+      backgroundColor,
     };
   },
 });

@@ -15,6 +15,10 @@ const useGeoJS = () => {
   const maskQuadFeatures: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let maskQuadFeatureLayer: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const waveplotQuadFeatures: any[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let waveplotQuadFeatureLayer: any;
 
   const thumbnail = ref(false);
 
@@ -61,6 +65,18 @@ const useGeoJS = () => {
     }
   };
 
+  const clearWaveplotQuadFeatures = (redraw?: boolean) => {
+    waveplotQuadFeatures.forEach((feature) => {
+      if (waveplotQuadFeatureLayer) {
+        waveplotQuadFeatureLayer.removeFeature(feature);
+      }
+    });
+    waveplotQuadFeatures.splice(0, waveplotQuadFeatures.length);
+    if (redraw && waveplotQuadFeatureLayer) {
+      waveplotQuadFeatureLayer.draw();
+    }
+  };
+
   /**
    * Positions and draws image quads on a layer. Shared by drawImages and drawMaskImages.
    */
@@ -98,6 +114,52 @@ const useGeoJS = () => {
           {
             ul: { x: previousWidth, y: 0 },
             lr: { x: previousWidth + currentWidth, y: height },
+            image,
+          },
+        ])
+        .draw();
+      previousWidth += currentWidth;
+    });
+  };
+
+  /**
+   * Draws waveplot image quads in a horizontal strip at the given y offset (same segment widths as spectrogram).
+   */
+  /* eslint-disable @typescript-eslint/no-explicit-any -- geoJS layer/feature types */
+  const drawQuadsToLayerStrip = (
+    layer: any,
+    features: any[],
+    images: HTMLImageElement[],
+    totalWidth: number,
+    stripHeight: number,
+    yOffset: number,
+    opacity: number
+  ) => {
+    if (images.length === 0) return;
+    if (!Number.isFinite(totalWidth) || !Number.isFinite(stripHeight) || totalWidth <= 0 || stripHeight <= 0) {
+      return;
+    }
+    layer.node().css("opacity", String(opacity));
+    while (features.length > images.length) {
+      const feature = features.pop();
+      if (feature) layer.removeFeature(feature);
+    }
+    let previousWidth = 0;
+    const totalBaseWidth = images.reduce((sum, img) => sum + img.naturalWidth, 0);
+    if (!Number.isFinite(totalBaseWidth) || totalBaseWidth <= 0) {
+      return;
+    }
+    images.forEach((image, index) => {
+      const scale = totalWidth / totalBaseWidth;
+      const currentWidth = image.naturalWidth * scale;
+      if (features[index] === undefined) {
+        features[index] = layer.createFeature("quad");
+      }
+      features[index]
+        .data([
+          {
+            ul: { x: previousWidth, y: yOffset },
+            lr: { x: previousWidth + currentWidth, y: yOffset + stripHeight },
             image,
           },
         ])
@@ -194,10 +256,42 @@ const useGeoJS = () => {
       });
       maskQuadFeatureLayer.node().css("filter", "url(#svg-filters)");
     }
+    if (!waveplotQuadFeatureLayer) {
+      waveplotQuadFeatureLayer = geoViewer.value.createLayer("feature", {
+        features: ["quad"],
+        autoshareRenderer: false,
+        renderer: "canvas",
+      });
+    }
+    waveplotQuadFeatureLayer.node().css("filter", "url(#svg-filters)");
+    clearWaveplotQuadFeatures();
     quadFeatureLayer.node().css("filter", "url(#svg-filters)");
     for (let i = 0; i < imageCount; i += 1) {
       quadFeatures.push(quadFeatureLayer.createFeature("quad"));
     }
+  };
+
+  const drawWaveplotImages = (
+    images: HTMLImageElement[],
+    totalWidth: number,
+    stripHeight: number,
+    yOffset: number,
+    opacity = 1
+  ) => {
+    if (!waveplotQuadFeatureLayer) return;
+    if (images.length === 0) {
+      clearWaveplotQuadFeatures(true);
+      return;
+    }
+    drawQuadsToLayerStrip(
+      waveplotQuadFeatureLayer,
+      waveplotQuadFeatures,
+      images,
+      totalWidth,
+      stripHeight,
+      yOffset,
+      opacity
+    );
   };
 
   const drawImages = (images: HTMLImageElement[], width = 0, height = 0, resetCam = true, imageOpacity = 1) => {
@@ -294,9 +388,11 @@ const useGeoJS = () => {
     initializeViewer,
     drawImages,
     drawMaskImages,
+    drawWaveplotImages,
     resetMapDimensions,
     clearQuadFeatures,
     clearMaskQuadFeatures,
+    clearWaveplotQuadFeatures,
     resetZoom,
     destroyGeoViewer,
   };

@@ -21,7 +21,7 @@ def waveplot_to_grayscale_transparent(source_path: str) -> BytesIO:
     data = list(gray.getdata())
     alpha = [0 if p >= threshold else 255 for p in data]
     out = Image.new("RGBA", gray.size)
-    out.putdata([(p, p, p, a) for p, a in zip(data, alpha)])
+    out.putdata([(p, p, p, a) for p, a in zip(data, alpha, strict=False)])
     buf = BytesIO()
     out.save(buf, format="PNG")
     buf.seek(0)

@@ -185,7 +185,7 @@ wheels = [
 [[package]]
 name = "batbot"
 version = "0.1.2"
-source = { git = "https://github.com/Kitware/batbot?branch=restructure-waveplot-metadata#a450bf8f922acda17a2ef6f61abe2c2c102e7b9b" }
+source = { git = "https://github.com/Kitware/batbot?branch=restructure-waveplot-metadata#c8438bceddb553d13341b745a9e15c7db1e49e21" }
 dependencies = [
     { name = "click" },
     { name = "cryptography" },

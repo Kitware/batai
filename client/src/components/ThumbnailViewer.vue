@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script lang="ts">
-import { defineComponent, nextTick, PropType, ref, Ref, watch } from "vue";
+import { computed, defineComponent, nextTick, PropType, ref, Ref, watch } from "vue";
 import { SpectroInfo, useGeoJS } from './geoJS/geoJSUtils';
 import { OtherUserAnnotations, SpectrogramAnnotation } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
@@ -15,6 +15,7 @@ export default defineComponent({
   props: {
     images: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
     maskImages: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
+    waveplotImages: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
     spectroInfo: { type: Object as PropType<SpectroInfo | undefined>, default: () => undefined },
     annotations: { type: Array as PropType<SpectrogramAnnotation[]>, default: () => [] },
     otherUserAnnotations: { type: Object as PropType<OtherUserAnnotations>, default: () => ({}) },
@@ -37,7 +38,34 @@ export default defineComponent({
       backgroundColor,
       viewMaskOverlay,
       maskOverlayOpacity,
+      viewWaveplot,
     } = useState();
+
+    const baseDimensions = computed(() => getImageDimensions(props.images, props.spectroInfo ?? { width: 0, height: 0 }));
+    const waveplotDisplayHeight = computed(() => {
+      if (!props.waveplotImages.length) return Math.floor(baseDimensions.value.height / 5);
+      const totalWaveplotWidth = props.waveplotImages.reduce((sum, img) => sum + img.naturalWidth, 0);
+      const waveplotHeight = props.waveplotImages[0]?.naturalHeight ?? 0;
+      if (!totalWaveplotWidth || !waveplotHeight) return Math.floor(baseDimensions.value.height / 5);
+      const aspectHeight = baseDimensions.value.width * (waveplotHeight / totalWaveplotWidth);
+      const capped = Math.min(aspectHeight, baseDimensions.value.height / 3);
+      return Math.max(Math.floor(capped), 1);
+    });
+    const showWaveplot = computed(() =>(viewWaveplot.value && props.waveplotImages.length && waveplotDisplayHeight.value > 0));
+
+    function drawWaveplotIfEnabled(finalW: number, spectroHeight: number) {
+      if (showWaveplot.value) {
+        geoJS.drawWaveplotImages(
+          props.waveplotImages,
+          finalW,
+          waveplotDisplayHeight.value,
+          spectroHeight,
+          1
+        );
+      } else {
+        geoJS.clearWaveplotQuadFeatures(true);
+      }
+    }
 
     function updateViewerAndImages() {
       const { width, height } = getImageDimensions(props.images);
@@ -45,12 +73,14 @@ export default defineComponent({
         clientHeight.value = containerRef.value.clientHeight;
       }
 
-      if (containerRef.value && !geoJS.getGeoViewer().value) {
-        geoJS.initializeViewer(containerRef.value, width, height, true);
-      }
       const finalWidth = scaledWidth.value || width;
       const finalHeight = scaledHeight.value || height;
-      geoJS.resetMapDimensions(finalWidth, finalHeight, 0.3, true);
+      const totalHeight = finalHeight + (showWaveplot.value ? waveplotDisplayHeight.value : 0);
+
+      if (containerRef.value && !geoJS.getGeoViewer().value) {
+        geoJS.initializeViewer(containerRef.value, finalWidth, totalHeight, true, props.images.length);
+      }
+      geoJS.resetMapDimensions(finalWidth, totalHeight, 0.3, true);
 
       if (props.images.length) {
         geoJS.drawImages(props.images, finalWidth, finalHeight);
@@ -60,6 +90,7 @@ export default defineComponent({
       } else {
         geoJS.clearMaskQuadFeatures(true);
       }
+      drawWaveplotIfEnabled(finalWidth, finalHeight);
       initialized.value = true;
       nextTick(() => createPolyLayer());
     }
@@ -138,7 +169,9 @@ export default defineComponent({
       const { width, height } = getImageDimensions(props.images);
       const finalWidth = scaledWidth.value || width;
       const finalHeight = scaledHeight.value || height;
-      geoJS.resetMapDimensions(finalWidth, finalHeight, 0.3, true);
+      const totalHeight = finalHeight + (showWaveplot.value ? waveplotDisplayHeight.value : 0);
+      geoJS.resetMapDimensions(finalWidth, totalHeight, 0.3, true);
+      geoJS.getGeoViewer().value?.bounds({ left: 0, top: 0, bottom: totalHeight, right: finalWidth });
       if (props.images.length) {
         geoJS.drawImages(props.images, finalWidth, finalHeight);
       }
@@ -147,6 +180,7 @@ export default defineComponent({
       } else {
         geoJS.clearMaskQuadFeatures(true);
       }
+      drawWaveplotIfEnabled(finalWidth, finalHeight);
     });
 
     watch([viewMaskOverlay, maskOverlayOpacity, () => props.maskImages], () => {
@@ -159,6 +193,17 @@ export default defineComponent({
         geoJS.clearMaskQuadFeatures(true);
       }
     });
+
+    watch(viewWaveplot, () => {
+      const { width, height } = getImageDimensions(props.images);
+      const finalWidth = scaledWidth.value || width;
+      const finalHeight = scaledHeight.value || height;
+      if (viewWaveplot.value) {
+        geoJS.drawWaveplotImages(props.waveplotImages, finalWidth, waveplotDisplayHeight.value, finalHeight, 1);
+      } else {
+        geoJS.clearWaveplotQuadFeatures(true);
+      }
+    })
 
     return {
       containerRef,
@@ -217,6 +262,7 @@ export default defineComponent({
   .playback-container {
     flex: 1;
   }
+
   .loadingSpinnerContainer {
     z-index: 20;
     margin: 0;
