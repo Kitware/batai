@@ -59,7 +59,7 @@ export default defineComponent({
 
     const baseDimensions = computed(() => getImageDimensions(props.images, props.spectroInfo));
     const waveplotDisplayHeight = computed(() => Math.floor(baseDimensions.value.height / 5));
-    const showWaveplot = computed(() => Boolean(viewWaveplot.value && props.waveplotImages.length && waveplotDisplayHeight.value > 0));
+    const showWaveplot = computed(() => (viewWaveplot.value && props.waveplotImages.length && waveplotDisplayHeight.value > 0));
     const totalDisplayHeight = computed(() =>
       scaledHeight.value + (showWaveplot.value ? waveplotDisplayHeight.value : 0)
     );
@@ -161,7 +161,6 @@ export default defineComponent({
       if (viewMaskOverlay.value && props.maskImages.length) {
         geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
       }
-      drawWaveplotIfEnabled();
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
 
@@ -296,7 +295,6 @@ export default defineComponent({
     });
 
     watch([showWaveplot], () => {
-      const totalHeight = totalDisplayHeight.value;
       drawWaveplotIfEnabled();
     });
 
