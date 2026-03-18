@@ -80,7 +80,7 @@ export default defineComponent({
       if (containerRef.value && !geoJS.getGeoViewer().value) {
         geoJS.initializeViewer(containerRef.value, finalWidth, totalHeight, true, props.images.length);
       }
-      geoJS.resetMapDimensions(finalWidth, totalHeight, 0.3, true);
+      geoJS.resetMapDimensions(finalWidth, totalHeight, 0.1, true);
 
       if (props.images.length) {
         geoJS.drawImages(props.images, finalWidth, finalHeight);
@@ -170,7 +170,7 @@ export default defineComponent({
       const finalWidth = scaledWidth.value || width;
       const finalHeight = scaledHeight.value || height;
       const totalHeight = finalHeight + (showWaveplot.value ? waveplotDisplayHeight.value : 0);
-      geoJS.resetMapDimensions(finalWidth, totalHeight, 0.3, true);
+      geoJS.resetMapDimensions(finalWidth, totalHeight, 0.1, true);
       geoJS.getGeoViewer().value?.bounds({ left: 0, top: 0, bottom: totalHeight, right: finalWidth });
       if (props.images.length) {
         geoJS.drawImages(props.images, finalWidth, finalHeight);

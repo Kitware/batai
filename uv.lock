@@ -185,7 +185,7 @@ wheels = [
 [[package]]
 name = "batbot"
 version = "0.1.2"
-source = { git = "https://github.com/Kitware/batbot?branch=restructure-waveplot-metadata#c8438bceddb553d13341b745a9e15c7db1e49e21" }
+source = { git = "https://github.com/Kitware/batbot?branch=tas%2Fupdate-metadata#5fd3093c84e0d993d620f167fedd975574b306f3" }
 dependencies = [
     { name = "click" },
     { name = "cryptography" },
@@ -286,7 +286,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batbot", marker = "extra == 'tasks'", git = "https://github.com/Kitware/batbot?branch=restructure-waveplot-metadata" },
+    { name = "batbot", marker = "extra == 'tasks'", git = "https://github.com/Kitware/batbot?branch=tas%2Fupdate-metadata" },
     { name = "celery", specifier = "==5.6.2" },
     { name = "django", extras = ["argon2"], specifier = "==6.0.3" },
     { name = "django-allauth", specifier = "==65.15.0" },

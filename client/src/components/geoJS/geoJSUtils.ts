@@ -339,9 +339,10 @@ const useGeoJS = () => {
           bottom: originalBounds.bottom,
         }
       : {
-          left: -geoViewer.value.bounds().right * 0.1,
+          // Thumbnails don't need extra horizontal padding; keep them tight
+          left: 0,
           top: 0,
-          right: geoViewer.value.bounds().right * 1.1,
+          right: geoViewer.value.bounds().right,
           bottom: geoViewer.value.bounds().bottom,
         };
     const zoomAndCenter = geoViewer.value.zoomAndCenterFromBounds(bounds, 0);
@@ -359,8 +360,8 @@ const useGeoJS = () => {
     });
     const params = geo.util.pixelCoordinateParams(container.value, width, height, width, height);
     const { right, bottom } = params.map.maxBounds;
-    // For thumbnails, use 0.1 margin for left and right, keep default margin for top/bottom
-    const horizontalMargin = thumbnail.value ? 0.1 : margin;
+    // For thumbnails, keep horizontal bounds tight to reduce side gutters
+    const horizontalMargin = thumbnail.value ? 0.02 : margin;
     const verticalMargin = margin;
     geoViewer.value.maxBounds({
       left: 0 - right * horizontalMargin,

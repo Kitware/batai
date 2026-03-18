@@ -322,7 +322,6 @@ export default defineComponent({
       if (drawingBoundingBox.value) {
         toggleDrawingBoundingBox();
       }
-      
     });
 
     const keyboardEvent = (e: KeyboardEvent) => {

@@ -134,6 +134,41 @@ export default defineComponent({
 
     const effectiveImageOpacity = computed(() => (contoursEnabled.value ? imageOpacity.value : 1));
 
+    function resetViewerBounds(resetCam = false) {
+      const viewer = geoJS.getGeoViewer().value;
+      if (!viewer) return;
+      const totalHeight = totalDisplayHeight.value;
+      const prevCenter = viewer.center?.();
+      const prevZoom = viewer.zoom?.();
+
+      // Always reset maxBounds/clamping to current content size, but avoid the default "fit everything"
+      // camera reset (we want a left-anchored view that fits vertical height).
+      geoJS.resetMapDimensions(scaledWidth.value, totalHeight, 0.3, false);
+
+      if (!resetCam) {
+        // Preserve current view when just resizing content extents.
+        if (prevZoom != null) viewer.zoom(prevZoom);
+        if (prevCenter != null) viewer.center(prevCenter);
+        return;
+      }
+
+      const viewport = viewer.camera?.()?.viewport;
+      const viewportW = viewport?.width ?? 0;
+      const viewportH = viewport?.height ?? 0;
+      const aspect = viewportW > 0 && viewportH > 0 ? viewportW / viewportH : 1;
+
+      // Show the left edge (with padding) and fit the full vertical height.
+      const pad = Math.max(10, scaledWidth.value * 0.01);
+      const desiredWidth = Math.max(200, totalHeight * aspect);
+      const left = -pad;
+      const right = Math.min(scaledWidth.value + pad, left + desiredWidth);
+      const viewBounds = { left, top: 0, right, bottom: totalHeight };
+
+      const zoomAndCenter = viewer.zoomAndCenterFromBounds(viewBounds, 0);
+      viewer.zoom(zoomAndCenter.zoom);
+      viewer.center(zoomAndCenter.center);
+    }
+
     function drawWaveplotIfEnabled() {
       if (showWaveplot.value) {
         geoJS.drawWaveplotImages(
@@ -161,12 +196,14 @@ export default defineComponent({
       if (viewMaskOverlay.value && props.maskImages.length) {
         geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
       }
+      resetViewerBounds(true);
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
 
       if (props.compressed) {
         scaledVals.value = { x: configuration.value.spectrogram_x_stretch, y: 1 };
         updateScaledDimensions();
+        resetViewerBounds(true);
         if (props.images.length) {
           geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
         }
@@ -188,13 +225,7 @@ export default defineComponent({
 
     watch(() => props.spectroInfo, () => {
       updateScaledDimensions();
-      geoJS.resetMapDimensions(scaledWidth.value, scaledHeight.value);
-      geoJS.getGeoViewer().value.bounds({
-        left: 0,
-        top: 0,
-        bottom: scaledHeight.value,
-        right: scaledWidth.value,
-      });
+      resetViewerBounds(true);
       if (props.images.length) {
         geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity.value);
       }
@@ -257,6 +288,7 @@ export default defineComponent({
         scaledVals.value.x += event.deltaY > 0 ? -incrementX : incrementX;
         if (scaledVals.value.x < 1) scaledVals.value.x = 1;
         updateScaledDimensions();
+        resetViewerBounds(false);
         if (props.images.length) {
           geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
         }
@@ -268,6 +300,7 @@ export default defineComponent({
         scaledVals.value.y += event.deltaY > 0 ? -incrementY : incrementY;
         if (scaledVals.value.y < 1) scaledVals.value.y = 1;
         updateScaledDimensions();
+        resetViewerBounds(false);
         if (props.images.length) {
           geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
         }
@@ -295,6 +328,7 @@ export default defineComponent({
     });
 
     watch([showWaveplot], () => {
+      resetViewerBounds(false);
       drawWaveplotIfEnabled();
     });
 

@@ -41,7 +41,7 @@ export interface PulseMetadataTooltipData {
   charFreqColor: string | null;
   heelKhz: number | null;
   kneeKhz: number | null;
-  slopeLow: number | null
+  slopeLow: number | null;
   slopeHi: number | null;
   slopeTotal: number | null;
   bbox: { top: number; left: number; width: number; height: number };
