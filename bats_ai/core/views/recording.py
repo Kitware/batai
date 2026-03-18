@@ -234,7 +234,6 @@ class PulseMetadataSlopesSchema(Schema):
     slope_lo_avg_khz_per_ms: float | None
     slope_box_khz_per_ms: float | None
     slope_hi_box_khz_per_ms: float | None
-    slope_mid_box_khz_per_ms: float | None
     slope_lo_box_khz_per_ms: float | None
 
 
@@ -810,6 +809,7 @@ def get_spectrogram_compressed(request: HttpRequest, pk: int):
     spectro_data = {
         "urls": compressed_spectrogram.image_url_list,
         "mask_urls": compressed_spectrogram.mask_url_list,
+        "waveplot_urls": compressed_spectrogram.waveplot_url_list,
         "filename": recording.name,
         "spectroInfo": {
             "spectroId": compressed_spectrogram.pk,

@@ -57,7 +57,8 @@ development = [
 tasks = [
   # Heavy duty dependencies used for computationally
   # intensive tasks, such as spectrogram generation
-  "batbot==0.1.2",
+  "batbot==0.1.3",
+  "Pillow>=11.0.0",
   "numpy==2.4.3",
   "scipy==1.17.1",
   "scikit-image==0.26.0",
@@ -112,6 +113,7 @@ explicit = true
 
 [tool.uv.sources]
 gdal = { index = "large_image_wheels" }
+batbot = { git = "https://github.com/Kitware/batbot", branch= "tas/update-metadata" }
 
 [tool.ruff]
 line-length = 100

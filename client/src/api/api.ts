@@ -122,6 +122,7 @@ export interface UpdateFileAnnotation {
 export interface Spectrogram {
   urls: string[];
   mask_urls: string[];
+  waveplot_urls?: string[];
   filename?: string;
   annotations?: SpectrogramAnnotation[];
   fileAnnotations: FileAnnotation[];
@@ -665,7 +666,6 @@ export interface PulseMetadataSlopes {
   slope_lo_avg_khz_per_ms?: number;
   slope_box_khz_per_ms?: number;
   slope_hi_box_khz_per_ms?: number;
-  slope_mid_box_khz_per_ms?: number;
   slope_lo_box_khz_per_ms?: number;
 }
 

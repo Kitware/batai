@@ -41,10 +41,9 @@ export interface PulseMetadataTooltipData {
   charFreqColor: string | null;
   heelKhz: number | null;
   kneeKhz: number | null;
-  /** Slope at Hi Avg. */
-  slopeHiAvg: number | null;
-  /** Slope at Total Avg. */
-  slopeTotalAvg: number | null;
+  slopeLow: number | null;
+  slopeHi: number | null;
+  slopeTotal: number | null;
   bbox: { top: number; left: number; width: number; height: number };
 }
 
@@ -291,8 +290,9 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       heelKhz: pulse.heel ? pulse.heel[1] / 1000 : null,
       kneeKhz: pulse.knee ? pulse.knee[1] / 1000 : null,
       charFreqColor: pulse.char_freq ? charFreqColor : null,
-      slopeHiAvg: slopes?.slope_hi_avg_khz_per_ms ?? null,
-      slopeTotalAvg: slopes?.slope_avg_khz_per_ms ?? null,
+      slopeHi: slopes?.slope_hi_box_khz_per_ms ?? null,
+      slopeLow: slopes?.slope_lo_box_khz_per_ms ?? null,
+      slopeTotal: slopes?.slope_box_khz_per_ms ?? null,
       bbox: { top: 0, left, width, height },
     };
   }

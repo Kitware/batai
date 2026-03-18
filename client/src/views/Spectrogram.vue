@@ -73,6 +73,7 @@ export default defineComponent({
       selectedType,
       scaledVals,
       viewCompressedOverlay,
+      viewWaveplot,
       sideTab,
       configuration,
       measuring,
@@ -101,6 +102,7 @@ export default defineComponent({
     const router = useRouter();
     const images: Ref<HTMLImageElement[]> = ref([]);
     const maskImages: Ref<HTMLImageElement[]> = ref([]);
+    const waveplotImages: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
@@ -193,6 +195,14 @@ export default defineComponent({
           const image = new Image();
           image.src = url;
           maskImages.value.push(image);
+        });
+      }
+      waveplotImages.value = [];
+      if (spectrogramData.value.waveplot_urls?.length) {
+        spectrogramData.value.waveplot_urls.forEach((url) => {
+          const image = new Image();
+          image.src = url;
+          waveplotImages.value.push(image);
         });
       }
       spectroInfo.value = response.data["spectroInfo"];
@@ -366,6 +376,7 @@ export default defineComponent({
       loading,
       images,
       maskImages,
+      waveplotImages,
       spectroInfo,
       annotations,
       selectedId,
@@ -385,6 +396,7 @@ export default defineComponent({
       freqRef,
       toggleCompressedOverlay,
       viewCompressedOverlay,
+      viewWaveplot,
       sideTab,
       colorSchemes,
       colorScheme,
@@ -661,6 +673,23 @@ export default defineComponent({
                 :compressed="compressed"
               />
             </div>
+            <v-tooltip
+              v-if="compressed && waveplotImages.length"
+              bottom
+            >
+              <template #activator="{ props: subProps }">
+                <v-icon
+                  v-bind="subProps"
+                  size="25"
+                  class="mr-1 mt-5"
+                  :color="viewWaveplot ? 'blue' : ''"
+                  @click="viewWaveplot = !viewWaveplot"
+                >
+                  mdi-waveform
+                </v-icon>
+              </template>
+              <span>Toggle wave plot below spectrogram</span>
+            </v-tooltip>
             <div class="mr-1 mt-5">
               <spectrogram-image-content-menu
                 :compressed="compressed"
@@ -724,6 +753,7 @@ export default defineComponent({
         v-if="loadedImage && spectroInfo"
         :images="images"
         :mask-images="maskImages"
+        :waveplot-images="waveplotImages"
         :spectro-info="spectroInfo"
         :recording-id="id"
         :compressed="compressed"
@@ -738,6 +768,7 @@ export default defineComponent({
         v-if="loadedImage && parentGeoViewerRef"
         :images="images"
         :mask-images="maskImages"
+        :waveplot-images="waveplotImages"
         :spectro-info="spectroInfo"
         :recording-id="id"
         :parent-geo-viewer-ref="parentGeoViewerRef"

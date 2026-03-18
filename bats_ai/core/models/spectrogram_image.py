@@ -23,13 +23,15 @@ class SpectrogramImage(models.Model):
         ("spectrogram", "Spectrogram"),
         ("compressed", "Compressed"),
         ("masks", "Masks"),
+        ("waveform_compressed", "Waveform Compressed"),
+        ("waveform_uncompressed", "Waveform Uncompressed"),
     ]
     content_object = GenericForeignKey("content_type", "object_id")
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     type = models.CharField(
-        max_length=20,
+        max_length=128,
         choices=SPECTROGRAM_TYPE_CHOICES,
         default="spectrogram",
     )

@@ -19,6 +19,7 @@ from bats_ai.core.models import (
     Spectrogram,
     SpectrogramImage,
 )
+from bats_ai.core.utils.image_utils import waveplot_to_grayscale_transparent
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NABatDataRetrieval")
@@ -81,7 +82,18 @@ def recording_compute_spectrogram(self, recording_id: int):
                             "type": "spectrogram",
                         },
                     )
-
+            for idx, img_path in enumerate(results["normal"].get("waveplot_paths", [])):
+                buf = waveplot_to_grayscale_transparent(img_path)
+                base = os.path.splitext(os.path.basename(img_path))[0]
+                SpectrogramImage.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(spectrogram),
+                    object_id=spectrogram.id,
+                    index=idx,
+                    defaults={
+                        "image_file": File(buf, name=f"{base}.png"),
+                        "type": "waveform_uncompressed",
+                    },
+                )
             # Create or get CompressedSpectrogram
             compressed = results["compressed"]
             compressed_obj, _ = CompressedSpectrogram.objects.get_or_create(
@@ -122,6 +134,19 @@ def recording_compute_spectrogram(self, recording_id: int):
                         },
                     )
 
+            # Save waveform images that are created during compression
+            for idx, waveplot_path in enumerate(compressed.get("waveplot_paths", [])):
+                buf = waveplot_to_grayscale_transparent(waveplot_path)
+                base = os.path.splitext(os.path.basename(waveplot_path))[0]
+                SpectrogramImage.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(compressed_obj),
+                    object_id=compressed_obj.id,
+                    index=idx,
+                    type="waveform_compressed",
+                    defaults={
+                        "image_file": File(buf, name=f"{base}.png"),
+                    },
+                )
             # Create SpectrogramContour objects for each segment
             segment_index_map = {}
             for segment in compressed["contours"]["segments"]:

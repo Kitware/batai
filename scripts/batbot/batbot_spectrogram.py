@@ -7,7 +7,7 @@
 # ]
 #
 # [tool.uv.sources]
-# batbot = { git = "https://github.com/Kitware/batbot" }
+# batbot = { git = "https://github.com/Kitware/batbot", branch= "restructure-waveplot-metadata" }
 # ///
 from __future__ import annotations
 
@@ -30,6 +30,8 @@ class SpectrogramMetadata(BaseModel):
     uncompressed_path: list[str] = Field(alias="uncompressed.path")
     compressed_path: list[str] = Field(alias="compressed.path")
     mask_path: list[str] = Field(alias="mask.path")
+    waveplot_path: list[str] = Field(alias="waveplot.path")
+    waveplot_compressed_path: list[str] = Field(alias="waveplot.compressed.path")
 
 
 class UncompressedSize(BaseModel):
@@ -107,7 +109,6 @@ class Segment(BaseModel):
     slope_lo_avg_khz_per_ms: float | None = Field(None, alias="slope/lo[avg].khz/ms")
     slope_box_khz_per_ms: float | None = Field(None, alias="slope[box].khz/ms")
     slope_hi_box_khz_per_ms: float | None = Field(None, alias="slope/hi[box].khz/ms")
-    slope_mid_box_khz_per_ms: float | None = Field(None, alias="slope/mid[box].khz/ms")
     slope_lo_box_khz_per_ms: float | None = Field(None, alias="slope/lo[box].khz/ms")
 
     @field_validator("curve_hz_ms", mode="before")
@@ -274,7 +275,9 @@ def working_directory(path):
 def generate_spectrogram_assets(
     recording_path: str, *, output_folder: str, debug: bool = False
 ) -> SpectrogramAssets:
-    batbot.pipeline(recording_path, output_folder=output_folder, debug=debug)
+    batbot.pipeline(
+        recording_path, output_folder=output_folder, debug=debug, plot_uncompressed_amplitude=True
+    )
     # There should be a .metadata.json file in the output_base directory by replacing extentions
     metadata_file = Path(recording_path).with_suffix(".metadata.json").name
     metadata_file = Path(output_folder) / metadata_file
@@ -290,6 +293,8 @@ def generate_spectrogram_assets(
     uncompressed_paths = _normalize_paths(metadata.spectrogram.uncompressed_path)
     compressed_paths = _normalize_paths(metadata.spectrogram.compressed_path)
     mask_paths = _normalize_paths(metadata.spectrogram.mask_path)
+    waveplot_paths = _normalize_paths(metadata.spectrogram.waveplot_path)
+    compressed_waveplot_paths = _normalize_paths(metadata.spectrogram.waveplot_compressed_path)
 
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
 
@@ -319,6 +324,7 @@ def generate_spectrogram_assets(
         "noise_filter_threshold": noise_threshold_percent,
         "normal": {
             "paths": uncompressed_paths,
+            "waveplots": waveplot_paths,
             "width": metadata.size.uncompressed.width_px,
             "height": metadata.size.uncompressed.height_px,
             "widths": uncompressed_widths,
@@ -326,6 +332,7 @@ def generate_spectrogram_assets(
         "compressed": {
             "paths": compressed_paths,
             "masks": mask_paths,
+            "waveplots": compressed_waveplot_paths,
             "width": metadata.size.compressed.width_px,
             "height": metadata.size.compressed.height_px,
             "widths": compressed_metadata.widths,

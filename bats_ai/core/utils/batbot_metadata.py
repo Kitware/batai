@@ -27,6 +27,8 @@ class SpectrogramMetadata(BaseModel):
     uncompressed_path: list[str] = Field(alias="uncompressed.path")
     compressed_path: list[str] = Field(alias="compressed.path")
     mask_path: list[str] = Field(alias="mask.path")
+    waveplot_path: list[str] = Field(alias="waveplot.path")
+    waveplot_compressed_path: list[str] = Field(alias="waveplot.compressed.path")
 
 
 class UncompressedSize(BaseModel):
@@ -104,7 +106,6 @@ class Segment(BaseModel):
     slope_lo_avg_khz_per_ms: float | None = Field(None, alias="slope/lo[avg].khz/ms")
     slope_box_khz_per_ms: float | None = Field(None, alias="slope[box].khz/ms")
     slope_hi_box_khz_per_ms: float | None = Field(None, alias="slope/hi[box].khz/ms")
-    slope_mid_box_khz_per_ms: float | None = Field(None, alias="slope/mid[box].khz/ms")
     slope_lo_box_khz_per_ms: float | None = Field(None, alias="slope/lo[box].khz/ms")
 
     @field_validator("curve_hz_ms", mode="before")
@@ -279,7 +280,6 @@ class BatBotSlopes(TypedDict, total=False):
     slope_lo_avg_khz_per_ms: float | None
     slope_box_khz_per_ms: float | None
     slope_hi_box_khz_per_ms: float | None
-    slope_mid_box_khz_per_ms: float | None
     slope_lo_box_khz_per_ms: float | None
 
 
@@ -294,7 +294,6 @@ _SEGMENT_SLOPE_KEYS: tuple[str, ...] = (
     "slope_lo_avg_khz_per_ms",
     "slope_box_khz_per_ms",
     "slope_hi_box_khz_per_ms",
-    "slope_mid_box_khz_per_ms",
     "slope_lo_box_khz_per_ms",
 )
 
@@ -371,6 +370,8 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
     uncompressed_paths = metadata.spectrogram.uncompressed_path
     compressed_paths = metadata.spectrogram.compressed_path
     mask_paths = metadata.spectrogram.mask_path
+    waveplot_paths = metadata.spectrogram.waveplot_path
+    compressed_waveplot_paths = metadata.spectrogram.waveplot_compressed_path
 
     compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
     segment_curve_data = convert_to_segment_data(metadata)
@@ -380,12 +381,14 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
         "freq_max": metadata.frequencies.max_hz,
         "normal": {
             "paths": uncompressed_paths,
+            "waveplot_paths": waveplot_paths,
             "width": metadata.size.uncompressed.width_px,
             "height": metadata.size.uncompressed.height_px,
         },
         "compressed": {
             "paths": compressed_paths,
             "masks": mask_paths,
+            "waveplot_paths": compressed_waveplot_paths,
             "width": metadata.size.compressed.width_px,
             "height": metadata.size.compressed.height_px,
             "widths": compressed_metadata.widths,

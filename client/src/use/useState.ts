@@ -95,6 +95,8 @@ const contoursLoading = ref(false);
 // Default mask overlay to visible at 50% opacity.
 const viewMaskOverlay = ref(true);
 const maskOverlayOpacity = ref(0.50);
+// Waveplot below compressed spectrogram; on by default when available.
+const viewWaveplot = ref(true);
 const setContoursEnabled = (value: boolean) => {
   contoursEnabled.value = value;
 };
@@ -283,6 +285,7 @@ export default function useState() {
     loadReviewerMaterials,
     viewMaskOverlay,
     maskOverlayOpacity,
+    viewWaveplot,
     filterTags,
     sharedFilterTags,
     saveFilterTags,
