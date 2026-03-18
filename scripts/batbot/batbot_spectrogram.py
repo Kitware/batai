@@ -6,8 +6,6 @@
 #     "pydantic",
 # ]
 #
-# [tool.uv.sources]
-# batbot = { git = "https://github.com/Kitware/batbot", branch= "restructure-waveplot-metadata" }
 # ///
 from __future__ import annotations
 
