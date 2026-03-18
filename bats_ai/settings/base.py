@@ -109,6 +109,10 @@ STATIC_URL = "static/"
 LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 
+# Override resonant_settings.allauth defaults
+# Prevents safelinks from breaking email confirmation by using a GET request
+ACCOUNT_CONFIRM_EMAIL_ON_GET = False
+
 CORS_ALLOWED_ORIGINS: list[str] = env.list("DJANGO_CORS_ALLOWED_ORIGINS", cast=str, default=[])
 CORS_ALLOWED_ORIGIN_REGEXES: list[str] = env.list(
     "DJANGO_CORS_ALLOWED_ORIGIN_REGEXES", cast=str, default=[]
