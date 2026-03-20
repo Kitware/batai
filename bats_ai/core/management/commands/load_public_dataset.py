@@ -113,17 +113,23 @@ def _ingest_files_from_manifest(
     owner: User,
     public: bool,
     limit: int | None,
+    offset: int | None,
     file_key: str = "file_key",
     tag_keys: list[str] | None = None,
 ):
     if tag_keys is None:
         tag_keys = []
 
+    if offset is None:
+        offset = 0
+
     iterations = 0
 
     with open(manifest) as manifest_file:
         reader = DictReader(manifest_file)
-        for line in reader:
+        for idx, line in enumerate(reader):
+            if idx < offset:
+                continue
             if limit and iterations >= limit:
                 return
             iterations += 1
@@ -224,6 +230,9 @@ class Command(BaseCommand):
             help="Limit the number of WAV files to be imported",
         )
         parser.add_argument(
+            "--offset", type=int, help="Begin ingest from the specified position in the manifest"
+        )
+        parser.add_argument(
             "--filekey",
             type=str,
             help="Column header denoting the AWS S3 file key.",
@@ -265,7 +274,10 @@ class Command(BaseCommand):
 
         public = options.get("public", False)
         limit = options.get("limit")
+        offset = options.get("limit")
         file_key = options.get("filekey", "file_key")
+        if offset:
+            self.stdout.write(f"Skipping the first {offset} row(s)...")
         if limit:
             self.stdout.write(f"Ingesting the first {limit} files from {manifest}...")
         _ingest_files_from_manifest(
@@ -275,6 +287,7 @@ class Command(BaseCommand):
             owner=owner,
             public=public,
             limit=limit,
+            offset=offset,
             file_key=file_key,
             tag_keys=tag_keys,
         )
