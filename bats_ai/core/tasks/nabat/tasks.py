@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 from typing import TYPE_CHECKING
 
+from django.conf import settings
 from django.contrib.gis.geos import LineString, Point, Polygon
 import requests
 
@@ -63,7 +64,8 @@ def generate_spectrograms(
             nabat_recording, spectrogram, compressed
         )
         segment_index_map = {}
-        for segment in compressed["contours"]["segments"]:
+        contour_segments = compressed.get("contours", {}).get("segments", [])
+        for segment in contour_segments:
             pulse_metadata_obj, _ = PulseMetadata.objects.get_or_create(
                 recording=compressed_obj.recording,
                 index=segment["segment_index"],
@@ -83,16 +85,19 @@ def generate_spectrograms(
             segment_index_map[segment["segment_index"]] = pulse_metadata_obj
         for segment in compressed["segments"]:
             if segment["segment_index"] not in segment_index_map:
+                defaults = {
+                    "curve": LineString([Point(x[1], x[0]) for x in segment["curve_hz_ms"]]),
+                    "char_freq": Point(segment["char_freq_ms"], segment["char_freq_hz"]),
+                    "knee": Point(segment["knee_ms"], segment["knee_hz"]),
+                    "heel": Point(segment["heel_ms"], segment["heel_hz"]),
+                    "slopes": segment.get("slopes"),
+                }
+                if not settings.BATAI_SAVE_SPECTROGRAM_CONTOURS:
+                    defaults["contours"] = []
                 PulseMetadata.objects.update_or_create(
                     recording=compressed_obj.recording,
                     index=segment["segment_index"],
-                    defaults={
-                        "curve": LineString([Point(x[1], x[0]) for x in segment["curve_hz_ms"]]),
-                        "char_freq": Point(segment["char_freq_ms"], segment["char_freq_hz"]),
-                        "knee": Point(segment["knee_ms"], segment["knee_hz"]),
-                        "heel": Point(segment["heel_ms"], segment["heel_hz"]),
-                        "slopes": segment.get("slopes"),
-                    },
+                    defaults=defaults,
                 )
             else:
                 pulse_metadata_obj = segment_index_map[segment["segment_index"]]
@@ -107,6 +112,8 @@ def generate_spectrograms(
                 slopes = segment.get("slopes")
                 if slopes:
                     pulse_metadata_obj.slopes = slopes
+                if not settings.BATAI_SAVE_SPECTROGRAM_CONTOURS:
+                    pulse_metadata_obj.contours = []
                 pulse_metadata_obj.save()
 
         processing_task.status = ProcessingTask.Status.COMPLETE

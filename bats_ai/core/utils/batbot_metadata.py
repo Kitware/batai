@@ -14,6 +14,7 @@ except ImportError as exc:
         "Spectrogram generation requires additional dependencies specified by the [tasks] extra."
     ) from exc
 
+from django.conf import settings
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .contour_utils import process_spectrogram_assets_for_contours
@@ -398,7 +399,9 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
         },
     }
 
-    contour_segments_data = process_spectrogram_assets_for_contours(result)
-    result["compressed"]["contours"] = contour_segments_data
+    if settings.BATAI_SAVE_SPECTROGRAM_CONTOURS:
+        result["compressed"]["contours"] = process_spectrogram_assets_for_contours(result)
+    else:
+        result["compressed"]["contours"] = {"segments": [], "total_segments": 0}
 
     return result

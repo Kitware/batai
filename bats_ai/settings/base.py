@@ -101,6 +101,10 @@ BATAI_NABAT_API_URL: str = env.str(
     "DJANGO_BATAI_NABAT_API_URL", default="https://api.sciencebase.gov/nabat-graphql/graphql"
 )
 
+# DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS: when false (default), spectrogram tasks skip contour
+# extraction and store empty PulseMetadata.contours.
+BATAI_SAVE_SPECTROGRAM_CONTOURS: bool = env.bool("DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS", default=False)
+
 # Django's docs suggest that STATIC_URL should be a relative path,
 # for convenience serving a site on a subpath.
 STATIC_URL = "static/"
