@@ -10,7 +10,6 @@
     "format": "eslint --fix src",
     "lint:eslint": "eslint src",
     "lint": "eslint src && vue-tsc --noEmit",
-    "test": "jest",
     "lint:typescript": "vue-tsc --noEmit"
   },
   "dependencies": {
@@ -32,13 +31,11 @@
   "devDependencies": {
     "@sentry/vite-plugin": "5.1.1",
     "@types/geojson": "7946.0.16",
-    "@types/jest": "30.0.0",
     "@types/lodash": "4.17.24",
     "@vitejs/plugin-vue": "6.0.5",
     "@vue/eslint-config-typescript": "14.7.0",
     "eslint": "10.0.3",
     "eslint-plugin-vue": "10.8.0",
-    "jest": "30.3.0",
     "sass": "1.98.0",
     "typescript": "5.9.3",
     "vite": "8.0.0",
