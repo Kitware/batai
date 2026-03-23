@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -303,7 +303,7 @@ requires-dist = [
     { name = "django-environ", specifier = "==0.13.0" },
     { name = "django-extensions", specifier = "==4.1" },
     { name = "django-minio-storage", marker = "extra == 'development'", specifier = "==0.5.9" },
-    { name = "django-ninja", specifier = "==1.6.0" },
+    { name = "django-ninja", specifier = "==1.6.2" },
     { name = "django-oauth-toolkit", specifier = "==3.2.0" },
     { name = "django-resonant-settings", extras = ["allauth", "celery"], specifier = "==0.48.1" },
     { name = "django-resonant-utils", extras = ["allauth", "s3-storage"], specifier = "==0.19.0" },
@@ -312,22 +312,22 @@ requires-dist = [
     { name = "django-s3-file-field", extras = ["s3"], specifier = "==1.1.0" },
     { name = "django-storages", extras = ["s3"], specifier = "==1.14.6" },
     { name = "django-stubs-ext", specifier = "==5.2.9" },
-    { name = "faker", marker = "extra == 'development'", specifier = "==40.11.0" },
-    { name = "gdal", specifier = "==3.12.2.1", index = "https://girder.github.io/large_image_wheels/" },
+    { name = "faker", marker = "extra == 'development'", specifier = "==40.11.1" },
+    { name = "gdal", specifier = "==3.12.3.1", index = "https://girder.github.io/large_image_wheels/" },
     { name = "geopandas", specifier = "==1.1.3" },
     { name = "guano", specifier = "==1.0.16" },
     { name = "gunicorn", specifier = "==25.1.0" },
     { name = "ipython", marker = "extra == 'development'", specifier = "==9.11.0" },
     { name = "numpy", marker = "extra == 'tasks'", specifier = "==2.4.3" },
     { name = "opencv-python-headless", marker = "extra == 'tasks'", specifier = "==4.13.0.92" },
-    { name = "pillow", marker = "extra == 'tasks'", specifier = ">=11.0.0" },
+    { name = "pillow", marker = "extra == 'tasks'", specifier = "==12.1.1" },
     { name = "psycopg", extras = ["binary"], specifier = "==3.3.3" },
     { name = "pydantic", specifier = "==2.12.5" },
     { name = "requests", specifier = "==2.32.5" },
     { name = "rich", specifier = "==14.3.3" },
     { name = "scikit-image", marker = "extra == 'tasks'", specifier = "==0.26.0" },
     { name = "scipy", marker = "extra == 'tasks'", specifier = "==1.17.1" },
-    { name = "sentry-sdk", extras = ["celery", "django", "pure-eval"], specifier = "==2.54.0" },
+    { name = "sentry-sdk", extras = ["celery", "django", "pure-eval"], specifier = "==2.55.0" },
     { name = "tqdm", specifier = "==4.67.3" },
     { name = "watchdog", marker = "extra == 'development'", specifier = "==6.0.0" },
     { name = "werkzeug", marker = "extra == 'development'", specifier = "==3.1.6" },
@@ -921,15 +921,15 @@ wheels = [
 
 [[package]]
 name = "django-ninja"
-version = "1.6.0"
+version = "1.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8d/28/e2b28ea02da0cd408f035f81c20b8c9f7c7661c773779a508827ab8d55b1/django_ninja-1.6.0.tar.gz", hash = "sha256:dd84230931f511503a251ac090200c65fd0be25a16ba2b9140073b814decc201", size = 3684883, upload-time = "2026-03-12T08:45:00.211Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/7c/3307e17b872f545c88314b2737a22f965785dfb5a120d739b0131d0492c3/django_ninja-1.6.2.tar.gz", hash = "sha256:d56ae5aa4791068ef4ac9a66cfdf2fc11f507413ded35abb79c51d0d52ad6412", size = 3685599, upload-time = "2026-03-18T20:06:47.284Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fc/ff/51e518a434f1af18932d4fe52a4c46985b7c15a75e394aeed5ed87ff6f98/django_ninja-1.6.0-py3-none-any.whl", hash = "sha256:44c6e3f5f1b929cf51f645004715b36326ea32fddf1a94026c4917de8d230135", size = 2374822, upload-time = "2026-03-12T08:44:58.345Z" },
+    { url = "https://files.pythonhosted.org/packages/21/0c/25f72060a39632fbd2d90e9c8b6052a09cd45b0598fc06c0758d313f0052/django_ninja-1.6.2-py3-none-any.whl", hash = "sha256:20095f5900bada22ea00cf1a58af50bdb285b2354c61a9d9b47d0dc89ac462d6", size = 2374994, upload-time = "2026-03-18T20:06:45.676Z" },
 ]
 
 [[package]]
@@ -1108,14 +1108,14 @@ wheels = [
 
 [[package]]
 name = "faker"
-version = "40.11.0"
+version = "40.11.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/94/dc/b68e5378e5a7db0ab776efcdd53b6fe374b29d703e156fd5bb4c5437069e/faker-40.11.0.tar.gz", hash = "sha256:7c419299103b13126bd02ec14bd2b47b946edb5a5eedf305e66a193b25f9a734", size = 1957570, upload-time = "2026-03-13T14:36:11.844Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/e5/b16bf568a2f20fe7423282db4a4059dbcadef70e9029c1c106836f8edd84/faker-40.11.1.tar.gz", hash = "sha256:61965046e79e8cfde4337d243eac04c0d31481a7c010033141103b43f603100c", size = 1957415, upload-time = "2026-03-23T14:05:50.233Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/fa/a86c6ba66f0308c95b9288b1e3eaccd934b545646f63494a86f1ec2f8c8e/faker-40.11.0-py3-none-any.whl", hash = "sha256:0e9816c950528d2a37d74863f3ef389ea9a3a936cbcde0b11b8499942e25bf90", size = 1989457, upload-time = "2026-03-13T14:36:09.792Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/ec/3c4b78eb0d2f6a81fb8cc9286745845bff661e6815741eff7a6ac5fcc9ea/faker-40.11.1-py3-none-any.whl", hash = "sha256:3af3a213ba8fb33ce6ba2af7aef2ac91363dae35d0cec0b2b0337d189e5bee2a", size = 1989484, upload-time = "2026-03-23T14:05:48.793Z" },
 ]
 
 [[package]]
@@ -1162,17 +1162,17 @@ wheels = [
 
 [[package]]
 name = "gdal"
-version = "3.12.2.1"
+version = "3.12.3.1"
 source = { registry = "https://girder.github.io/large_image_wheels/" }
 wheels = [
-    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.2.1-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:61b26ae32b0ebdf66d72f35e92734a548edd35978db3dd75fb71e46b71c1ef51" },
-    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.2.1-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:3cec2c8fa2e89bf18fa5d99674d789c6d6b3537b33ddc955f76d4d564c89b2f9" },
-    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.2.1-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:3ac1b349f299af26183f9ed4d6e62a69ffe4ab2079c8334e87fd5358dbab40d8" },
-    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.2.1-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:d94214784c797509dfcf72b89f9119cc79efd09e178710d9c80d266052ee90e5" },
-    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.2.1-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:c8c3d0eccffd36780c40be07a0da7ea1cc4ff18fafe2211bf5965505b79786d0" },
-    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.2.1-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:9cfb750c947064dd61773c837d31334442a2c5d5e4914ecc93f7f46b84537963" },
-    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.2.1-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:9339b51751b313e40960109f9f256c2f2c1e48ef1dfe9a2d5c7e6d318c767c25" },
-    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.2.1-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:bf3744c74e670a947946071f179da8f8ae5c8b98b0cab6be1207c8c0eeaa6157" },
+    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.3.1-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:a7d346329068fb09d1b526c6a08cde8dd58f82e569194608c51904c9d7290fef" },
+    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.3.1-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:37a6080ff2fbc7cdad1b173edd6a525d7f96bd9cec19b2dbdfb8d9e1e3255a87" },
+    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.3.1-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:c8d45cf208073d0fc93558ef74e7ef36c317c6ae9e55a5a8331c90b9e7173610" },
+    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.3.1-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:fa6a1e2bc6631b04a83fad093f121f5f15f3fca82cad84453bbfc974f52e1461" },
+    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.3.1-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:edb30482579c9b0900189022d71a30f922e0ed11ff7234e7db11ac29ab772c62" },
+    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.3.1-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:2cef6ea1cebd60c4dbab6b55c9fd4a6a6845836169292afdadfca1b847040aa4" },
+    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.3.1-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:b17b794b98c8dfdd1114c3a2ac4af429d339bfe335855e8ea9c87c74e81fe9a1" },
+    { url = "https://github.com/girder/large_image_wheels/raw/wheelhouse/GDAL-3.12.3.1-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:c3988ba2e47ea01ecd9316fe3f6ad984c70e7f254d990efc32b19e697a210992" },
 ]
 
 [[package]]
@@ -2672,15 +2672,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.54.0"
+version = "2.55.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c8/e9/2e3a46c304e7fa21eaa70612f60354e32699c7102eb961f67448e222ad7c/sentry_sdk-2.54.0.tar.gz", hash = "sha256:2620c2575128d009b11b20f7feb81e4e4e8ae08ec1d36cbc845705060b45cc1b", size = 413813, upload-time = "2026-03-02T15:12:41.355Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/b8/285293dc60fc198fffc3fcdbc7c6d4e646e0f74e61461c355d40faa64ceb/sentry_sdk-2.55.0.tar.gz", hash = "sha256:3774c4d8820720ca4101548131b9c162f4c9426eb7f4d24aca453012a7470f69", size = 424505, upload-time = "2026-03-17T14:15:51.707Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/53/39/be412cc86bc6247b8f69e9383d7950711bd86f8d0a4a4b0fe8fad685bc21/sentry_sdk-2.54.0-py2.py3-none-any.whl", hash = "sha256:fd74e0e281dcda63afff095d23ebcd6e97006102cdc8e78a29f19ecdf796a0de", size = 439198, upload-time = "2026-03-02T15:12:39.546Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/66/20465097782d7e1e742d846407ea7262d338c6e876ddddad38ca8907b38f/sentry_sdk-2.55.0-py2.py3-none-any.whl", hash = "sha256:97026981cb15699394474a196b88503a393cbc58d182ece0d3abe12b9bd978d4", size = 449284, upload-time = "2026-03-17T14:15:49.604Z" },
 ]
 
 [package.optional-dependencies]
