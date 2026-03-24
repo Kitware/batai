@@ -78,7 +78,7 @@ export default defineComponent({
         <div><b>GRTS CellId:</b><span>{{ recordingInfo.grts_cell_id }}</span></div>
       </v-row>
       <v-row
-        v-if="recordingInfo.recording_location && showMap"
+        v-if="(recordingInfo.recording_location || recordingInfo.grts_cell_id) && showMap"
         class="justify-center"
       >
         <map-location
