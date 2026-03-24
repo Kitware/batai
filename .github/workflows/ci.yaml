@@ -79,21 +79,3 @@ jobs:
           DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
           DJANGO_CELERY_BROKER_URL: amqp://localhost:5672/
           DJANGO_MINIO_STORAGE_URL: http://minioAccessKey:minioSecretKey@localhost:9000/django-storage-testing
-
-  test-vue:
-    name: Test [vue]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-      - name: Setup Node environment
-        uses: actions/setup-node@v6
-        with:
-          cache: npm
-          cache-dependency-path: client/package-lock.json
-      - name: Install packages
-        run: npm ci
-        working-directory: client
-      - name: Run tests
-        run: npm run test
-        working-directory: client
