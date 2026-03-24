@@ -253,10 +253,10 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   .geojs-map {
-    margin:2px;
+    margin: 2px;
     &.geojs-map:focus {
       outline: none;
-    }  
+    }
   }
 
   .playback-container {
