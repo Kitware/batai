@@ -50,8 +50,6 @@ def get_cell_center(request: HttpRequest, pk: int, quadrant: str | None = None):
         geom_4326 = cell.geom_4326
 
         # Get the centroid of the entire cell polygon
-        center = geom_4326.centroid
-
         if quadrant:
             # If quadrant is specified, divide the cell polygon into quadrants
             min_x, min_y, max_x, max_y = geom_4326.extent
@@ -75,6 +73,9 @@ def get_cell_center(request: HttpRequest, pk: int, quadrant: str | None = None):
 
             # Get the centroid of the intersected polygon
             center = quadrant_polygon.centroid
+        else:
+            # Prefer the stored centroid (precomputed on import/migration).
+            center = cell.centroid_4326 if cell.centroid_4326 is not None else geom_4326.centroid
 
         # Get the latitude and longitude of the centroid
         center_latitude = center.y
