@@ -92,8 +92,35 @@ def generate_spectrograms(
                     "heel": Point(segment["heel_ms"], segment["heel_hz"]),
                     "slopes": segment.get("slopes"),
                 }
+                # `PulseMetadata.bounding_box` is non-nullable, so always populate it
+                # for rows not created from `compressed["contours"]`.
+                segment_bbox = segment.get("bbox")
+                if segment_bbox and len(segment_bbox) == 4:
+                    t_start, t_end, f_lo, f_hi = segment_bbox
+                else:
+                    # Fallback: derive bounds from curve points.
+                    curve = segment.get("curve_hz_ms") or []
+                    if not curve:
+                        segment_index = segment.get("segment_index")
+                        raise ValueError(
+                            f"Missing bbox and curve_hz_ms for segment_index={segment_index}"
+                        )
+                    times = [pt[1] for pt in curve]
+                    freqs = [pt[0] for pt in curve]
+                    t_start, t_end = min(times), max(times)
+                    f_lo, f_hi = min(freqs), max(freqs)
+                defaults["bounding_box"] = Polygon(
+                    (
+                        (t_start, f_hi),
+                        (t_end, f_hi),
+                        (t_end, f_lo),
+                        (t_start, f_lo),
+                        (t_start, f_hi),
+                    )
+                )
                 if not settings.BATAI_SAVE_SPECTROGRAM_CONTOURS:
                     defaults["contours"] = []
+
                 PulseMetadata.objects.update_or_create(
                     recording=compressed_obj.recording,
                     index=segment["segment_index"],

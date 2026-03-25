@@ -308,6 +308,7 @@ class BatBotMetadataCurve(TypedDict):
     knee_hz: float
     heel_ms: float
     heel_hz: float
+    bbox: list[float] | None
     slopes: NotRequired[BatBotSlopes]
 
 
@@ -346,6 +347,13 @@ def convert_to_segment_data(
             if value is not None:
                 slopes[key] = value
 
+        bbox = [
+            segment.start_ms,
+            segment.end_ms,
+            # Use min/max frequency if available, otherwise fallback to min.max for display
+            segment.lo_f_hz if segment.lo_f_hz is not None else 5000,
+            segment.hi_f_hz if segment.hi_f_hz is not None else 120000,
+        ]
         segment_data_item: BatBotMetadataCurve = {
             "segment_index": index,
             "curve_hz_ms": segment.curve_hz_ms,
@@ -356,6 +364,7 @@ def convert_to_segment_data(
             "heel_ms": segment.lo_fc_heel_ms,
             "heel_hz": segment.lo_fc_heel_hz,
             "slopes": slopes,
+            "bbox": bbox,
         }
         segment_data.append(segment_data_item)
     return segment_data
