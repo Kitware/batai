@@ -5,9 +5,9 @@ import os
 import shutil
 import tempfile
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import LineString, Point, Polygon
-from django.conf import settings
 from django.core.files import File
 
 from bats_ai.celery import app
@@ -172,9 +172,7 @@ def recording_compute_spectrogram(self, recording_id: int):
             for segment in compressed["segments"]:
                 if segment["segment_index"] not in segment_index_map:
                     defaults = {
-                        "curve": LineString(
-                            [Point(x[1], x[0]) for x in segment["curve_hz_ms"]]
-                        ),
+                        "curve": LineString([Point(x[1], x[0]) for x in segment["curve_hz_ms"]]),
                         "char_freq": Point(segment["char_freq_ms"], segment["char_freq_hz"]),
                         "knee": Point(segment["knee_ms"], segment["knee_hz"]),
                         "heel": Point(segment["heel_ms"], segment["heel_hz"]),
