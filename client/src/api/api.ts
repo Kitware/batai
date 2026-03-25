@@ -1,6 +1,7 @@
 import axios from "axios";
 import { AxiosError } from "axios";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
+import type { FeatureCollection, Point } from "geojson";
 
 export interface Recording {
   id: number;
@@ -30,6 +31,13 @@ export interface Recording {
   unusual_occurrences?: string;
   tags_text?: string[];
 }
+
+export type RecordingLocationsFeatureProperties = {
+  recording_id: number;
+  filename: string;
+};
+
+export type RecordingLocationsGeoJson = FeatureCollection<Point, RecordingLocationsFeatureProperties>;
 
 export interface Species {
   species_code: string;
@@ -455,6 +463,26 @@ async function getCellBbox(cellId: number) {
   return await axiosInstance.get<GRTSCellBbox>(`/grts/${cellId}/bbox`);
 }
 
+export interface RecordingLocationsParams {
+  exclude_submitted?: boolean;
+  /** Comma-separated or array of tag texts; recording must have all listed tags. */
+  tags?: string | string[];
+  /** Bounding box filter (lon/lat) as `[min_lon, min_lat, max_lon, max_lat]`. */
+  bbox?: [number, number, number, number];
+}
+
+async function getRecordingLocations(params?: RecordingLocationsParams) {
+  const query = new URLSearchParams();
+  if (params?.exclude_submitted !== undefined) query.set("exclude_submitted", String(params.exclude_submitted));
+  if (params?.tags !== undefined) {
+    const tagStr = Array.isArray(params.tags) ? params.tags.join(",") : params.tags;
+    if (tagStr) query.set("tags", tagStr);
+  }
+  if (params?.bbox) query.set("bbox", JSON.stringify(params.bbox));
+  const qs = query.toString();
+  return axiosInstance.get<RecordingLocationsGeoJson>(`/recording-locations/${qs ? `?${qs}` : ""}`);
+}
+
 async function getFileAnnotations(recordingId: number) {
   return axiosInstance.get<FileAnnotation[]>(`recording/${recordingId}/recording-annotations`);
 }
@@ -706,6 +734,7 @@ export {
   getCellLocation,
   getCellBbox,
   getCellfromLocation,
+  getRecordingLocations,
   getGuanoMetadata,
   getFileAnnotations,
   putFileAnnotation,

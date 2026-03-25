@@ -9,7 +9,6 @@ import {
   type PropType,
 } from 'vue';
 import { getRecordings, type Recording, type FileAnnotation, type RecordingListParams } from '../api/api';
-import MapLocation from '@components/MapLocation.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
 import useState from '@use/useState';
@@ -27,7 +26,6 @@ export interface RecordingTableHeader {
 export default defineComponent({
   name: 'RecordingTable',
   components: {
-    MapLocation,
     RecordingInfoDisplay,
     RecordingAnnotationSummary,
   },
@@ -35,6 +33,10 @@ export default defineComponent({
     variant: {
       type: String as PropType<'my' | 'shared'>,
       required: true,
+    },
+    tags: {
+      type: Array as PropType<string[] | undefined>,
+      default: undefined,
     },
     editRecording: {
       type: Function as PropType<(item: Recording) => void>,
@@ -45,8 +47,8 @@ export default defineComponent({
       default: undefined,
     },
   },
-  emits: [],
-  setup(props, { expose }) {
+  emits: ['update:tags'],
+  setup(props, { emit, expose }) {
     const {
       configuration,
       showSubmittedRecordings,
@@ -66,13 +68,17 @@ export default defineComponent({
     let intervalRef: number | null = null;
 
     const filterTagsModel = computed({
-      get: () => (props.variant === 'my' ? filterTags.value : sharedFilterTags.value),
+      get: () => {
+        if (props.tags !== undefined) return props.tags;
+        return props.variant === 'my' ? filterTags.value : sharedFilterTags.value;
+      },
       set: (v: string[]) => {
-        if (props.variant === 'my') {
-          filterTags.value = v;
-        } else {
-          sharedFilterTags.value = v;
+        if (props.tags !== undefined) {
+          emit('update:tags', v);
+          return;
         }
+        if (props.variant === 'my') filterTags.value = v;
+        else sharedFilterTags.value = v;
       },
     });
 
@@ -330,15 +336,6 @@ export default defineComponent({
 
     const tableClass = computed(() => (props.variant === 'my' ? 'my-recordings' : 'shared-recordings'));
 
-    const listStyles = computed(() => {
-      const markEnabled = configuration.value.mark_annotations_completed_enabled;
-      let sectionHeight = markEnabled ? '35vh' : '40vh';
-      if (props.variant === 'shared' && !configuration.value.is_admin && !configuration.value.non_admin_upload_enabled) {
-        sectionHeight = '75vh';
-      }
-      return { height: sectionHeight, 'max-height': sectionHeight };
-    });
-
     const showTotalCount = computed(() => (
       totalCount.value > 0
       && configuration.value.mark_annotations_completed_enabled
@@ -379,7 +376,6 @@ export default defineComponent({
       onUpdateOptions,
       onUpdateSortBy,
       tableClass,
-      listStyles,
       showTotalCount,
       rawHeaders,
       isColumnVisible,
@@ -402,7 +398,6 @@ export default defineComponent({
     density="compact"
     class="elevation-1"
     :class="tableClass"
-    :style="listStyles"
     @update:options="onUpdateOptions"
     @update:sort-by="onUpdateSortBy"
   >
@@ -518,33 +513,7 @@ export default defineComponent({
     </template>
 
     <template #item.grts_cell_id="{ item }">
-      <span class="d-flex align-center gap-1">
-        <div>{{ item.grts_cell_id ?? '—' }}</div>
-        <v-menu
-          v-if="item.recording_location || (configuration.mark_annotations_completed_enabled && item.grts_cell_id)"
-          open-on-hover
-          :close-on-content-click="false"
-        >
-          <template #activator="{ props }">
-            <v-icon 
-              v-bind="props" 
-              color="primary" 
-              class="ml-2"
-              size="x-large"
-            >
-              mdi-map
-            </v-icon>
-          </template>
-          <v-card>
-            <map-location
-              :editor="false"
-              :size="{ width: 400, height: 400 }"
-              :location="getItemLocation(item)"
-              :grts-cell-id="configuration.mark_annotations_completed_enabled ? item.grts_cell_id || undefined : undefined"
-            />
-          </v-card>
-        </v-menu>
-      </span>
+      {{ item.grts_cell_id ?? '—' }}
     </template>
 
     <template #item.comments="{ item }">

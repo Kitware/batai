@@ -1,4 +1,5 @@
 import '@mdi/font/css/materialdesignicons.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import 'vuetify/styles';
 import * as Sentry from '@sentry/vue';
 import { createApp, } from 'vue';
