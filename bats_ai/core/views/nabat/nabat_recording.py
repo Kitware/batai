@@ -8,6 +8,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpRequest, JsonResponse
+from django.shortcuts import get_object_or_404
 from ninja import Form, Schema
 from ninja.pagination import RouterPaginated
 from oauth2_provider.models import AccessToken
@@ -115,13 +116,9 @@ def get_email_if_authorized(
             return JsonResponse(
                 {"error": "Either recording_id or recording_pk must be provided"}, status=400
             )
-        try:
-            nabat_recording = NABatRecording.objects.get(pk=recording_pk)
-            recording_id = nabat_recording.recording_id
-        except NABatRecording.DoesNotExist:
-            return JsonResponse(
-                {"error": f"NABatRecording with id {recording_pk} does not exist"}, status=404
-            )
+
+        nabat_recording = get_object_or_404(NABatRecording, pk=recording_pk)
+        recording_id = nabat_recording.recording_id
 
     # Verify access with NABat API
     headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
@@ -269,10 +266,7 @@ def generate_nabat_recording(
 
 @router.get("/{pk}/spectrogram", auth=admin_auth)
 def get_spectrogram(request: HttpRequest, pk: int):
-    try:
-        nabat_recording = NABatRecording.objects.get(pk=pk)
-    except NABatRecording.DoesNotExist:
-        return {"error": "Recording not found"}
+    nabat_recording = get_object_or_404(NABatRecording, pk=pk)
 
     spectrogram = nabat_recording.spectrogram
 
@@ -311,10 +305,7 @@ def get_spectrogram_compressed(
     pk: int,
     apiToken: str,  # noqa: N803
 ):
-    try:
-        nabat_recording = NABatRecording.objects.get(pk=pk)
-    except NABatRecording.DoesNotExist:
-        return JsonResponse({"error": "Recording does not exist"}, status=404)
+    nabat_recording = get_object_or_404(NABatRecording, pk=pk)
 
     email_or_response = get_email_if_authorized(request, apiToken, nabat_recording.recording_id)
     if isinstance(email_or_response, JsonResponse):
@@ -441,15 +432,13 @@ def get_recording_annotation(
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
-    try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=pk)
 
-        if user_email:
-            annotation = annotation.filter(Q(user_email=user_email) | Q(user_email__isnull=True))
+    annotation = get_object_or_404(NABatRecordingAnnotation, pk=pk)
 
-        return NABatRecordingAnnotationSchema.from_orm(annotation).dict()
-    except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({"error": "Recording annotation not found."}, 404)
+    if user_email:
+        annotation = annotation.filter(Q(user_email=user_email) | Q(user_email__isnull=True))
+
+    return NABatRecordingAnnotationSchema.from_orm(annotation).dict()
 
 
 @router.get(
@@ -466,14 +455,12 @@ def get_recording_annotation_details(
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
-    try:
-        annotation = NABatRecordingAnnotation.objects.get(
-            Q(pk=pk) & (Q(user_email=user_email) | Q(user_email__isnull=True))
-        )
 
-        return NABatRecordingAnnotationDetailsSchema.from_orm(annotation).dict()
-    except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({"error": "Recording annotation not found."}, 404)
+    annotation = get_object_or_404(
+        NABatRecordingAnnotation, Q(pk=pk) & (Q(user_email=user_email) | Q(user_email__isnull=True))
+    )
+
+    return NABatRecordingAnnotationDetailsSchema.from_orm(annotation).dict()
 
 
 @router.put("recording-annotation", auth=None, response={200: str})
@@ -488,28 +475,23 @@ def create_recording_annotation(request: HttpRequest, data: NABatCreateRecording
     token_data = decode_jwt(data.apiToken)
     user_id = token_data["sub"]
 
-    try:
-        recording = NABatRecording.objects.get(pk=data.recordingId)
+    recording = get_object_or_404(NABatRecording, pk=data.recordingId)
 
-        # Create the recording annotation
-        annotation = NABatRecordingAnnotation.objects.create(
-            nabat_recording=recording,
-            user_email=user_email,
-            user_id=user_id,
-            comments=data.comments,
-            model=data.model,
-            confidence=data.confidence,
-        )
+    # Create the recording annotation
+    annotation = NABatRecordingAnnotation.objects.create(
+        nabat_recording=recording,
+        user_email=user_email,
+        user_id=user_id,
+        comments=data.comments,
+        model=data.model,
+        confidence=data.confidence,
+    )
 
-        # Add species
-        for species_id in data.species:
-            species = Species.objects.get(pk=species_id)
-            annotation.species.add(species)
-        return "Recording annotation created successfully."
-    except NABatRecording.DoesNotExist:
-        return JsonResponse({"error": "Recording not found."}, 404)
-    except Species.DoesNotExist:
-        return JsonResponse({"error": "One or more species IDs not found."}, 404)
+    # Add species
+    for species_id in data.species:
+        species = get_object_or_404(Species, pk=species_id)
+        annotation.species.add(species)
+    return "Recording annotation created successfully."
 
 
 @router.patch("recording-annotation/{pk}", auth=None, response={200: str})
@@ -531,29 +513,25 @@ def update_recording_annotation(
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
-    try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=pk, user_email=user_email)
-        # Check permission
 
-        # Update fields if provided
-        if data.comments is not None:
-            annotation.comments = data.comments
-        if data.model is not None:
-            annotation.model = data.model
-        if data.confidence is not None:
-            annotation.confidence = data.confidence
-        if data.species is not None:
-            annotation.species.clear()  # Clear existing species
-            for species_id in data.species:
-                species = Species.objects.get(pk=species_id)
-                annotation.species.add(species)
+    annotation = get_object_or_404(NABatRecordingAnnotation, pk=pk, user_email=user_email)
+    # Check permission
 
-        annotation.save()
-        return "Recording annotation updated successfully."
-    except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({"error": "Recording not found."}, 404)
-    except Species.DoesNotExist:
-        return JsonResponse({"error": "One or more species IDs not found."}, 404)
+    # Update fields if provided
+    if data.comments is not None:
+        annotation.comments = data.comments
+    if data.model is not None:
+        annotation.model = data.model
+    if data.confidence is not None:
+        annotation.confidence = data.confidence
+    if data.species is not None:
+        annotation.species.clear()  # Clear existing species
+        for species_id in data.species:
+            species = get_object_or_404(Species, pk=species_id)
+            annotation.species.add(species)
+
+    annotation.save()
+    return "Recording annotation updated successfully."
 
 
 @router.patch("recording-annotation/{pk}/push-to-nabat", auth=None, response={200: str})
@@ -568,35 +546,30 @@ def update_nabat_recording_annotation(
         return email_or_response
     user_email = email_or_response  # safe to use
 
-    try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=pk, user_email=user_email)
-        # Check permission
+    annotation = get_object_or_404(NABatRecordingAnnotation, pk=pk, user_email=user_email)
+    # Check permission
 
-        # Update fields if provided
-        if data.comments is not None:
-            annotation.comments = data.comments
-        if data.model is not None:
-            annotation.model = data.model
-        if data.confidence is not None:
-            annotation.confidence = data.confidence
-        if data.species is not None:
-            if len(data.species) == 1:
-                species_id = data.species[0]
-                return update_nabat_species(
-                    species_id,
-                    data.apiToken,
-                    annotation.nabat_recording.recording_id,
-                    annotation.nabat_recording.survey_event_id,
-                )
-            elif len(data.species) > 1:
-                return JsonResponse(
-                    {"error": "NABat only supports one species per recording annotation."},
-                    status=400,
-                )
-    except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({"error": "Recording not found."}, 404)
-    except Species.DoesNotExist:
-        return JsonResponse({"error": "One or more species IDs not found."}, 404)
+    # Update fields if provided
+    if data.comments is not None:
+        annotation.comments = data.comments
+    if data.model is not None:
+        annotation.model = data.model
+    if data.confidence is not None:
+        annotation.confidence = data.confidence
+    if data.species is None:
+        return JsonResponse({"error": "Species not provided"}, status=400)
+    if len(data.species) != 1:
+        return JsonResponse(
+            {"error": "NABat only supports one species per recording annotation."},
+            status=400,
+        )
+    species_id = data.species[0]
+    return update_nabat_species(
+        species_id,
+        data.apiToken,
+        annotation.nabat_recording.recording_id,
+        annotation.nabat_recording.survey_event_id,
+    )
 
 
 # TODO: Determine if this will be implemented for NABat
@@ -611,11 +584,9 @@ def delete_recording_annotation(
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
-    try:
-        annotation = NABatRecordingAnnotation.objects.get(pk=pk, user_email=user_email)
 
-        # Check permission
-        annotation.delete()
-        return "Recording annotation deleted successfully."
-    except NABatRecordingAnnotation.DoesNotExist:
-        return JsonResponse({"error": "Recording not found for this user."}, 404)
+    annotation = get_object_or_404(NABatRecordingAnnotation, pk=pk, user_email=user_email)
+
+    # Check permission
+    annotation.delete()
+    return "Recording annotation deleted successfully."
