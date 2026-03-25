@@ -19,6 +19,7 @@ from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import (
     Annotations,
+    GRTSCells,
     PulseMetadata,
     Recording,
     RecordingAnnotation,
@@ -512,7 +513,9 @@ def get_recordings(
     if q.bbox and q.bbox.strip():
         min_lon, min_lat, max_lon, max_lat = _parse_bbox(q.bbox)
         bbox_poly = Polygon.from_bbox((min_lon, min_lat, max_lon, max_lat))
-        queryset = queryset.filter(recording_location__intersects=bbox_poly)
+        # Need to check the GRTSCells centroids as well as the recording_location
+        grts_cell_ids = GRTSCells.objects.filter(centroid_4326__intersects=bbox_poly).values_list("grts_cell_id", flat=True)
+        queryset = queryset.filter(recording_location__intersects=bbox_poly) | queryset.filter(grts_cell_id__in=grts_cell_ids)
 
     sort_field = q.sort_by or "created"
     order_prefix = "" if q.sort_direction == "asc" else "-"

@@ -5,7 +5,6 @@ import { getRecordingLocations, type RecordingLocationsGeoJson } from '@api/api'
 
 export default defineComponent({
   name: 'RecordingLocationsMap',
-  emits: ['boundsChange'],
   props: {
     height: {
       type: [Number, String] as PropType<number | string>,
@@ -33,6 +32,7 @@ export default defineComponent({
       default: 1500,
     },
   },
+  emits: ['boundsChange'],
   setup(props, { emit }) {
     const mapContainer = ref<HTMLDivElement | null>(null);
     const mapRef = ref<Map | null>(null);

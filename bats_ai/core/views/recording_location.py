@@ -115,8 +115,6 @@ def _parse_bbox(bbox: str | None) -> tuple[float, float, float, float] | None:
     except Exception as e:
         raise HttpError(400, f"bbox values must be numbers: {e}") from e
 
-    if not (-180.0 <= min_lon <= 180.0 and -180.0 <= max_lon <= 180.0):
-        raise HttpError(400, "bbox longitude values must be within [-180, 180]")
     if not (-90.0 <= min_lat <= 90.0 and -90.0 <= max_lat <= 90.0):
         raise HttpError(400, "bbox latitude values must be within [-90, 90]")
 
