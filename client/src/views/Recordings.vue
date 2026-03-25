@@ -24,6 +24,8 @@ export default defineComponent({
       saveFilterTags,
     } = useState();
     const showMap = ref(false);
+    const filterListsByMap = ref(false);
+    const mapBounds = ref<[number, number, number, number] | null>(null);
     const mapResizeTick = ref(0);
     const editingRecording: Ref<EditingRecording | null> = ref(null);
     const uploadDialog = ref(false);
@@ -99,12 +101,28 @@ export default defineComponent({
 
     watch(showMap, (open) => {
       if (open) mapResizeTick.value += 1;
+      else {
+        filterListsByMap.value = false;
+        mapBounds.value = null;
+      }
     });
+
+    const listBboxFilter = computed((): [number, number, number, number] | null => {
+      if (!showMap.value || !filterListsByMap.value) return null;
+      return mapBounds.value;
+    });
+
+    function onMapBounds(bounds: [number, number, number, number]) {
+      mapBounds.value = bounds;
+    }
 
     return {
       configuration,
       showSubmittedRecordings,
       showMap,
+      filterListsByMap,
+      listBboxFilter,
+      onMapBounds,
       showMyTable,
       mapHeight,
       mapResizeTick,
@@ -145,8 +163,19 @@ export default defineComponent({
               v-model="showMap"
               class="mr-4"
               inset
+              :color="showMap ? 'primary' : 'grey'"
               density="compact"
               label="Map"
+              hide-details
+            />
+            <v-switch
+              v-if="showMap"
+              v-model="filterListsByMap"
+              class="mr-4"
+              inset
+              :color="filterListsByMap ? 'primary' : 'grey'"
+              density="compact"
+              label="Filter lists to map"
               hide-details
             />
             <v-menu v-if="showMyTable">
@@ -183,6 +212,8 @@ export default defineComponent({
                 :tags="filterTags"
                 :exclude-submitted="configuration.mark_annotations_completed_enabled && !showSubmittedRecordings"
                 :resize-tick="mapResizeTick"
+                :report-bounds="showMap && filterListsByMap"
+                @bounds-change="onMapBounds"
               />
             </v-card-text>
           </v-card>
@@ -219,6 +250,7 @@ export default defineComponent({
           :class="{ 'my-files-with-map': showMap, 'my-files': !showMap }"
           variant="my"
           :tags="filterTags"
+          :bbox-filter="listBboxFilter"
           :edit-recording="editRecording"
           :open-delete-recording-dialog="openDeleteRecordingDialog"
           @update:tags="setUnifiedTags"
@@ -262,6 +294,7 @@ export default defineComponent({
         <recording-table
           variant="shared"
           :tags="filterTags"
+          :bbox-filter="listBboxFilter"
           @update:tags="setUnifiedTags"
         />
       </v-card-text>

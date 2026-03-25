@@ -295,6 +295,8 @@ export interface RecordingListParams {
   sort_direction?: 'asc' | 'desc';
   page?: number;
   limit?: number;
+  /** WGS84 [minLon, minLat, maxLon, maxLat]; recordings must intersect this box. */
+  bbox?: [number, number, number, number];
 }
 
 /** Paginated recording list response (v-data-table-server compatible). */
@@ -323,6 +325,13 @@ async function getRecordings(getPublic = false, params?: RecordingListParams) {
     if (params.sort_direction) query.set('sort_direction', params.sort_direction);
     if (params.page !== undefined) query.set('page', String(params.page));
     if (params.limit !== undefined) query.set('limit', String(params.limit));
+    if (
+      params.bbox !== undefined &&
+      params.bbox.length === 4 &&
+      params.bbox.every((n) => Number.isFinite(n))
+    ) {
+      query.set('bbox', JSON.stringify(params.bbox));
+    }
   }
   if (!params?.page) query.set('page', '1');
   if (!params?.limit) query.set('limit', '20');

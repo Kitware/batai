@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from django.contrib.auth.models import User
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, Polygon
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
@@ -28,6 +28,7 @@ from bats_ai.core.models import (
     Spectrogram,
 )
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
+from bats_ai.core.views.recording_location import _parse_bbox
 from bats_ai.core.views.species import SpeciesSchema
 
 if TYPE_CHECKING:
@@ -62,6 +63,8 @@ class RecordingListQuerySchema(Schema):
     annotation_completed: bool | None = None
     search: str | None = None
     tags: str | None = None  # Comma-separated tag texts; recording must have all listed tags
+    # [min_lon, min_lat, max_lon, max_lat] as JSON array or comma-separated (see _parse_bbox).
+    bbox: str | None = None
     sort_by: (
         Literal["id", "name", "created", "modified", "recorded_date", "owner_username"] | None
     ) = "created"
@@ -516,6 +519,11 @@ def get_recordings(
             for tag in tag_list:
                 queryset = queryset.filter(tags__text=tag)
             queryset = queryset.distinct()
+
+    if q.bbox and q.bbox.strip():
+        min_lon, min_lat, max_lon, max_lat = _parse_bbox(q.bbox)
+        bbox_poly = Polygon.from_bbox((min_lon, min_lat, max_lon, max_lat))
+        queryset = queryset.filter(recording_location__intersects=bbox_poly)
 
     sort_field = q.sort_by or "created"
     order_prefix = "" if q.sort_direction == "asc" else "-"

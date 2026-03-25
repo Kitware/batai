@@ -5,6 +5,7 @@ import { getRecordingLocations, type RecordingLocationsGeoJson } from '@api/api'
 
 export default defineComponent({
   name: 'RecordingLocationsMap',
+  emits: ['boundsChange'],
   props: {
     height: {
       type: [Number, String] as PropType<number | string>,
@@ -22,12 +23,49 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
+    /** When true, emit current map bounds (debounced on pan/zoom; immediate when enabled). */
+    reportBounds: {
+      type: Boolean,
+      default: false,
+    },
+    boundsDebounceMs: {
+      type: Number,
+      default: 1500,
+    },
   },
-  setup(props) {
+  setup(props, { emit }) {
     const mapContainer = ref<HTMLDivElement | null>(null);
     const mapRef = ref<Map | null>(null);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    let boundsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function clearBoundsDebounce() {
+      if (boundsDebounceTimer !== null) {
+        clearTimeout(boundsDebounceTimer);
+        boundsDebounceTimer = null;
+      }
+    }
+
+    function emitCurrentBounds() {
+      if (!props.reportBounds || !mapRef.value) return;
+      const b = mapRef.value.getBounds();
+      emit('boundsChange', [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()] as [
+        number,
+        number,
+        number,
+        number,
+      ]);
+    }
+
+    function scheduleDebouncedBounds() {
+      if (!props.reportBounds) return;
+      clearBoundsDebounce();
+      boundsDebounceTimer = setTimeout(() => {
+        boundsDebounceTimer = null;
+        emitCurrentBounds();
+      }, props.boundsDebounceMs);
+    }
 
     async function loadGeoJson(): Promise<RecordingLocationsGeoJson> {
       const res = await getRecordingLocations({
@@ -190,6 +228,13 @@ export default defineComponent({
           map.on('mouseleave', 'clusters', () => (map.getCanvas().style.cursor = ''));
           map.on('mouseenter', 'unclustered-point', () => (map.getCanvas().style.cursor = 'pointer'));
           map.on('mouseleave', 'unclustered-point', () => (map.getCanvas().style.cursor = ''));
+
+          map.on('moveend', () => {
+            scheduleDebouncedBounds();
+          });
+          if (props.reportBounds) {
+            emitCurrentBounds();
+          }
         } catch (e) {
           error.value = e instanceof Error ? e.message : String(e);
         } finally {
@@ -212,7 +257,19 @@ export default defineComponent({
       }
     );
 
+    watch(
+      () => props.reportBounds,
+      (on) => {
+        if (on) {
+          emitCurrentBounds();
+        } else {
+          clearBoundsDebounce();
+        }
+      }
+    );
+
     onBeforeUnmount(() => {
+      clearBoundsDebounce();
       mapRef.value?.remove();
       mapRef.value = null;
     });

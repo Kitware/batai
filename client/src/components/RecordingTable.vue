@@ -9,6 +9,7 @@ import {
   type PropType,
 } from 'vue';
 import { getRecordings, type Recording, type FileAnnotation, type RecordingListParams } from '../api/api';
+import MapLocation from '@components/MapLocation.vue';
 import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
 import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
 import useState from '@use/useState';
@@ -26,6 +27,7 @@ export interface RecordingTableHeader {
 export default defineComponent({
   name: 'RecordingTable',
   components: {
+    MapLocation,
     RecordingInfoDisplay,
     RecordingAnnotationSummary,
   },
@@ -45,6 +47,11 @@ export default defineComponent({
     openDeleteRecordingDialog: {
       type: Function as PropType<(recording: Recording) => void>,
       default: undefined,
+    },
+    /** When set, list requests include this WGS84 bbox [minLon, minLat, maxLon, maxLat]. */
+    bboxFilter: {
+      type: Array as unknown as PropType<[number, number, number, number] | null>,
+      default: null,
     },
   },
   emits: ['update:tags'],
@@ -249,6 +256,10 @@ export default defineComponent({
       if (props.variant === 'shared') {
         params.public = true;
       }
+      const bf = props.bboxFilter;
+      if (bf && bf.length === 4 && bf.every((n) => Number.isFinite(n))) {
+        params.bbox = bf;
+      }
       return params;
     }
 
@@ -350,6 +361,14 @@ export default defineComponent({
     watch(showSubmittedRecordings, () => {
       fetchRecordings(lastOptions.value);
     });
+
+    watch(
+      () => props.bboxFilter,
+      () => {
+        fetchRecordings(lastOptions.value);
+      },
+      { deep: true }
+    );
 
     onMounted(() => {
       fetchRecordings({ page: 1, itemsPerPage: 20 });
@@ -513,7 +532,33 @@ export default defineComponent({
     </template>
 
     <template #item.grts_cell_id="{ item }">
-      {{ item.grts_cell_id ?? '—' }}
+      <span class="d-flex align-center gap-1">
+        <div>{{ item.grts_cell_id ?? '—' }}</div>
+        <v-menu
+          v-if="item.recording_location || (configuration.mark_annotations_completed_enabled && item.grts_cell_id)"
+          open-on-hover
+          :close-on-content-click="false"
+        >
+          <template #activator="{ props }">
+            <v-icon 
+              v-bind="props" 
+              color="primary" 
+              class="ml-2"
+              size="x-large"
+            >
+              mdi-map
+            </v-icon>
+          </template>
+          <v-card>
+            <map-location
+              :editor="false"
+              :size="{ width: 400, height: 400 }"
+              :location="getItemLocation(item)"
+              :grts-cell-id="configuration.mark_annotations_completed_enabled ? item.grts_cell_id || undefined : undefined"
+            />
+          </v-card>
+        </v-menu>
+      </span>
     </template>
 
     <template #item.comments="{ item }">
