@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from django.db import migrations, models
+from django.contrib.gis.db import models
+from django.db import migrations
 
 
 def backfill_centroids(apps, schema_editor) -> None:
