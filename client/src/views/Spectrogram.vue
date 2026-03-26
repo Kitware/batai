@@ -155,6 +155,9 @@ export default defineComponent({
     const loading = ref(false);
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
     const loadData = async () => {
+      // Load the map filter bounds from the local storage
+      // This is used to filter the unsubmitted neighbors
+      mapFilterBounds.value = loadMapFilterBounds();
       const tempViewPulseMetadataLayer = viewPulseMetadataLayer.value;
       viewPulseMetadataLayer.value = false;
       contoursEnabled.value = false;

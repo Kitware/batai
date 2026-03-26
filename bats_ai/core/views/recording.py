@@ -519,8 +519,8 @@ def get_recordings(
         grts_cell_ids = GRTSCells.objects.filter(centroid_4326__intersects=bbox_poly).values_list(
             "grts_cell_id", flat=True
         )
-        queryset = queryset.filter(recording_location__intersects=bbox_poly) | queryset.filter(
-            grts_cell_id__in=grts_cell_ids
+        queryset = queryset.filter(
+            Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
         )
 
     sort_field = q.sort_by or "created"
@@ -604,8 +604,8 @@ def _unsubmitted_recording_ids_ordered(
             grts_cell_ids = GRTSCells.objects.filter(
                 centroid_4326__intersects=bbox_poly
             ).values_list("grts_cell_id", flat=True)
-            qs = qs.filter(recording_location__intersects=bbox_poly) | qs.filter(
-                grts_cell_id__in=grts_cell_ids
+            qs = qs.filter(
+                Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
             )
         order_prefix = "" if sort_direction == "asc" else "-"
         if sort_by == "owner_username":

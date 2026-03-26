@@ -4,11 +4,17 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any, Literal
 
-from django.db.models import Q, QuerySet
+from django.contrib.gis.geos import Polygon
+from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 from ninja import Query, Router, Schema
 from ninja.errors import HttpError
 
-from bats_ai.core.models import Configuration, GRTSCells, Recording, RecordingAnnotation
+from bats_ai.core.models import (
+    Configuration,
+    GRTSCells,
+    Recording,
+    RecordingAnnotation,
+)
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
@@ -17,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 router = Router()
 
-_GRTS_CUSTOM_ORDER: list[int] = GRTSCells.sort_order()
-_GRTS_ORDER_MAP: dict[int, int] = {frame_id: idx for idx, frame_id in enumerate(_GRTS_CUSTOM_ORDER)}
+# Continental US sample frame ID, defaulting to CONUS GRTS.
+_CONUS_SAMPLE_FRAME_ID = 14
 
 
 class RecordingLocationsQuerySchema(Schema):
@@ -60,14 +66,13 @@ def _split_tags(tags: str | None) -> list[str]:
 def _apply_recording_filters_and_sort(
     *,
     qs: QuerySet[Recording],
-    request: HttpRequest,
-    exclude_submitted: bool | None,
+    exclude_submitted: bool,
+    submitted_by_user: QuerySet[int] | None,
     tags: str | None,
+    bbox_poly: Polygon | None,
+    grts_cell_ids: QuerySet[int] | None,
 ) -> QuerySet[Recording]:
-    if exclude_submitted:
-        submitted_by_user = RecordingAnnotation.objects.filter(
-            owner=request.user, submitted=True
-        ).values_list("recording_id", flat=True)
+    if exclude_submitted and submitted_by_user is not None:
         qs = qs.exclude(pk__in=submitted_by_user)
 
     tag_list = _split_tags(tags)
@@ -76,20 +81,13 @@ def _apply_recording_filters_and_sort(
             qs = qs.filter(tags__text=tag)
         qs = qs.distinct()
 
+    if bbox_poly is not None and grts_cell_ids is not None:
+        qs = qs.filter(
+            Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
+        )
+
     # Keep deterministic ordering even though we don't expose sorting params.
     return qs.order_by("-created")
-
-
-def _coords_in_bbox(
-    coords: list[float],
-    *,
-    min_lon: float,
-    min_lat: float,
-    max_lon: float,
-    max_lat: float,
-) -> bool:
-    lon, lat = coords
-    return min_lon <= lon <= max_lon and min_lat <= lat <= max_lat
 
 
 def _parse_bbox(bbox: str | None) -> tuple[float, float, float, float] | None:
@@ -137,40 +135,41 @@ def _get_recording_location_coords(recording: Recording) -> list[float] | None:
     return None
 
 
-def _precompute_grts_cell_centroids(cell_ids: set[int]) -> dict[int, list[float]]:
+def _precompute_grts_cell_centroids(
+    cell_ids: set[int],
+) -> dict[int, list[float]]:
     """Precompute centroid coordinates for each `grts_cell_id`.
 
-    Choose the same "best" cell as `core/views/grts_cells.py` does, then compute
-    `[lon, lat]` from its centroid.
+    Choose the same "best" cell as `core/views/grts_cells.py` does,
+    then compute `[lon, lat]` from its centroid.
     """
     if not cell_ids:
         return {}
 
-    centroids: dict[int, list[float]] = {}
+    # Default to Continental US (sample_frame_id=14). We currently only import
+    # CONUS GRTS, so this keeps centroid selection aligned with loaded data.
+    frame_rank = Case(
+        When(sample_frame_id=_CONUS_SAMPLE_FRAME_ID, then=Value(0)),
+        default=Value(1),
+        output_field=IntegerField(),
+    )
 
-    cells = GRTSCells.objects.filter(grts_cell_id__in=cell_ids)
-    cells_by_id: dict[int, list[GRTSCells]] = {}
-    for cell in cells:
-        cells_by_id.setdefault(cell.grts_cell_id, []).append(cell)
+    rows = (
+        GRTSCells.objects.filter(
+            grts_cell_id__in=cell_ids,
+            centroid_4326__isnull=False,
+        )
+        .annotate(frame_rank=frame_rank)
+        .order_by("grts_cell_id", "frame_rank")
+        .distinct("grts_cell_id")
+        .values_list("grts_cell_id", "centroid_4326")
+    )
 
-    for cell_id in cell_ids:
-        candidates = cells_by_id.get(cell_id, [])
-        if not candidates:
-            continue
-
-        # Pick the same "best" cell as core/views/grts_cells.py.
-        best = sorted(
-            candidates,
-            key=lambda c: _GRTS_ORDER_MAP.get(c.sample_frame_id, len(_GRTS_CUSTOM_ORDER)),
-        )[0]
-
-        # Prefer the stored centroid (computed during GRTS import / migrations).
-        if best.centroid_4326 is None:
-            continue
-
-        centroids[cell_id] = [float(best.centroid_4326.x), float(best.centroid_4326.y)]
-
-    return centroids
+    return {
+        int(cell_id): [float(centroid.x), float(centroid.y)]
+        for cell_id, centroid in rows
+        if centroid is not None
+    }
 
 
 @router.get("/", response=RecordingLocationsResponseSchema)
@@ -187,28 +186,53 @@ def get_recording_locations(
         Q(owner=request.user) | Q(spectrogram__isnull=True)
     )
 
+    exclude_submitted = bool(q.exclude_submitted)
+    submitted_by_user = None
+    if exclude_submitted:
+        submitted_by_user = RecordingAnnotation.objects.filter(
+            owner=request.user, submitted=True
+        ).values_list("recording_id", flat=True)
+
+    bbox = _parse_bbox(q.bbox)
+    bbox_poly: Polygon | None = None
+    grts_cell_ids: QuerySet[int] | None = None
+    if bbox is not None:
+        bbox_poly = Polygon.from_bbox((bbox[0], bbox[1], bbox[2], bbox[3]))
+        grts_cell_ids = GRTSCells.objects.filter(centroid_4326__intersects=bbox_poly).values_list(
+            "grts_cell_id", flat=True
+        )
+
     my_qs = _apply_recording_filters_and_sort(
         qs=my_qs,
-        request=request,
-        exclude_submitted=q.exclude_submitted,
+        exclude_submitted=exclude_submitted,
+        submitted_by_user=submitted_by_user,
         tags=q.tags,
+        bbox_poly=bbox_poly,
+        grts_cell_ids=grts_cell_ids,
     )
     shared_qs = _apply_recording_filters_and_sort(
         qs=shared_qs,
-        request=request,
-        exclude_submitted=q.exclude_submitted,
+        exclude_submitted=exclude_submitted,
+        submitted_by_user=submitted_by_user,
         tags=q.tags,
+        bbox_poly=bbox_poly,
+        grts_cell_ids=grts_cell_ids,
     )
 
-    # Evaluate querysets: we need in-Python centroid/geojson conversion.
-    my_list = list(my_qs)
-    shared_list = list(shared_qs)
+    my_list = list(my_qs.only("id", "audio_file", "recording_location", "grts_cell_id", "created"))
+    shared_list = list(
+        shared_qs.only(
+            "id",
+            "audio_file",
+            "recording_location",
+            "grts_cell_id",
+            "created",
+        )
+    )
     recordings = my_list + shared_list
 
     required_cell_ids = {r.grts_cell_id for r in recordings if r.grts_cell_id is not None}
     centroids_by_cell_id = _precompute_grts_cell_centroids(required_cell_ids)
-
-    bbox = _parse_bbox(q.bbox)
 
     features: list[dict[str, Any]] = []
     for rec in recordings:
@@ -219,7 +243,7 @@ def get_recording_locations(
             # and not the direct recording location
             if rec.grts_cell_id is not None:
                 coords = centroids_by_cell_id.get(rec.grts_cell_id)
-            # If we can't resolve a centroid, fall back to recording_location if present.
+            # If we can't resolve a centroid, fall back to recording_location.
             if coords is None:
                 coords = _get_recording_location_coords(rec)
         else:
@@ -228,15 +252,6 @@ def get_recording_locations(
                 coords = centroids_by_cell_id.get(rec.grts_cell_id)
 
         if coords is None:
-            continue
-
-        if bbox is not None and not _coords_in_bbox(
-            coords,
-            min_lon=bbox[0],
-            min_lat=bbox[1],
-            max_lon=bbox[2],
-            max_lat=bbox[3],
-        ):
             continue
 
         features.append(

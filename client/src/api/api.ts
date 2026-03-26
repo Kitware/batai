@@ -496,7 +496,9 @@ async function getRecordingLocations(params?: RecordingLocationsParams) {
     const tagStr = Array.isArray(params.tags) ? params.tags.join(",") : params.tags;
     if (tagStr) query.set("tags", tagStr);
   }
-  if (params?.bbox) query.set("bbox", params.bbox.join(','));
+  if (params?.bbox !== undefined && params.bbox.length === 4 && params.bbox.every((n) => Number.isFinite(n))) {
+    query.set("bbox", params.bbox.join(','));
+  }
   const qs = query.toString();
   return axiosInstance.get<RecordingLocationsGeoJson>(`/recording-locations/${qs ? `?${qs}` : ""}`);
 }
