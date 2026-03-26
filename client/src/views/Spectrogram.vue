@@ -32,6 +32,7 @@ import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import ReferenceMaterialsDialog from "@/components/ReferenceMaterialsDialog.vue";
 import SpectrogramImageContentMenu from "@/components/SpectrogramImageContentMenu.vue";
 import PulseMetadataButton from "@/components/PulseMetadataButton.vue";
+import MapLocation from "@components/MapLocation.vue";
 import useState from "@use/useState";
 import usePulseMetadata from "@use/usePulseMetadata";
 export default defineComponent({
@@ -48,6 +49,7 @@ export default defineComponent({
     SpectrogramImageContentMenu,
     TransparencyFilterControl,
     PulseMetadataButton,
+    MapLocation,
   },
   props: {
     id: {
@@ -89,6 +91,7 @@ export default defineComponent({
       currentRecordingId,
       filterTags,
       sharedFilterTags,
+      loadMapFilterBounds,
       spectrogramFilename,
     } = useState();
     const {
@@ -147,6 +150,7 @@ export default defineComponent({
     };
 
     const combinedTags = computed(() => Array.from (new Set([...filterTags.value, ...sharedFilterTags.value])));
+    const mapFilterBounds = ref<[number, number, number, number] | null>(loadMapFilterBounds());
 
     const loading = ref(false);
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
@@ -411,6 +415,7 @@ export default defineComponent({
       toggleFixedAxes,
       contoursLoading,
       combinedTags,
+      mapFilterBounds,
       // Other user selection
       otherUserAnnotations,
       sequenceAnnotations,
@@ -780,7 +785,7 @@ export default defineComponent({
         <v-card-title>
           <v-row dense>
             <v-col cols="2">
-              <v-tooltip v-if="combinedTags.length">
+              <v-tooltip v-if="combinedTags.length || mapFilterBounds">
                 <template #activator="{ props: subProps }">
                   <v-icon v-bind="subProps">
                     mdi-filter
@@ -793,6 +798,20 @@ export default defineComponent({
                 >
                   {{ tag }}
                 </v-chip>
+                <div
+                  v-if="mapFilterBounds"
+                  class="mt-2"
+                  style="min-width: 280px"
+                >
+                  <div class="text-caption mb-1">
+                    Map bounds filter
+                  </div>
+                  <map-location
+                    :editor="false"
+                    :bbox="mapFilterBounds"
+                    :size="{ width: 280, height: 180 }"
+                  />
+                </div>
               </v-tooltip>
               <v-spacer v-else />
             </v-col>
