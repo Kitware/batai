@@ -18,6 +18,7 @@ module "django" {
   django_settings_module = "bats_ai.settings.heroku_production"
 
   heroku_worker_dyno_quantity  = 0
+  heroku_postgresql_plan       = "essential-1"
   ec2_worker_instance_quantity = 1
   ec2_worker_ssh_public_key    = file("${path.module}/ssh-key.pub")
   ec2_worker_instance_type     = "t3.medium"

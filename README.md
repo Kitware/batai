@@ -189,3 +189,11 @@ Lastly, the GitLab CI/CD infrastructure runs the same `pre-commit` configuration
 on all pipelines for new MRs.  The automated checks in GitLab are optional, but
 it is highly recommended to perform these checks locally prior to pushing new
 commits.
+
+
+
+### Spectrogram contours
+
+Spectrogram processing tasks honor `DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS` environment variable. 
+Set to `False` by default so workers skip contour extraction (less DB storage space); set to `True` if you need
+contours in the UI (UI for contours currently disabled due to performance)

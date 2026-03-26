@@ -14,6 +14,7 @@ except ImportError as exc:
         "Spectrogram generation requires additional dependencies specified by the [tasks] extra."
     ) from exc
 
+from django.conf import settings
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .contour_utils import process_spectrogram_assets_for_contours
@@ -307,6 +308,7 @@ class BatBotMetadataCurve(TypedDict):
     knee_hz: float
     heel_ms: float
     heel_hz: float
+    bbox: list[float] | None
     slopes: NotRequired[BatBotSlopes]
 
 
@@ -345,6 +347,13 @@ def convert_to_segment_data(
             if value is not None:
                 slopes[key] = value
 
+        bbox = [
+            segment.start_ms,
+            segment.end_ms,
+            # Use min/max frequency if available, otherwise fallback to min.max for display
+            segment.lo_f_hz if segment.lo_f_hz is not None else 5000,
+            segment.hi_f_hz if segment.hi_f_hz is not None else 120000,
+        ]
         segment_data_item: BatBotMetadataCurve = {
             "segment_index": index,
             "curve_hz_ms": segment.curve_hz_ms,
@@ -355,6 +364,7 @@ def convert_to_segment_data(
             "heel_ms": segment.lo_fc_heel_ms,
             "heel_hz": segment.lo_fc_heel_hz,
             "slopes": slopes,
+            "bbox": bbox,
         }
         segment_data.append(segment_data_item)
     return segment_data
@@ -398,7 +408,9 @@ def generate_spectrogram_assets(recording_path: str, output_folder: str):
         },
     }
 
-    contour_segments_data = process_spectrogram_assets_for_contours(result)
-    result["compressed"]["contours"] = contour_segments_data
+    if settings.BATAI_SAVE_SPECTROGRAM_CONTOURS:
+        result["compressed"]["contours"] = process_spectrogram_assets_for_contours(result)
+    else:
+        result["compressed"]["contours"] = {"segments": [], "total_segments": 0}
 
     return result
