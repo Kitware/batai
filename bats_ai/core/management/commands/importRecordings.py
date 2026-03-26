@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import random
 from pathlib import Path
+import random
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point

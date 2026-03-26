@@ -32,7 +32,7 @@ from bats_ai.core.models.recording_annotation import RecordingAnnotationSpecies
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TAGS = ["test", "data", "sample","foo", "bar"]
+DEFAULT_TAGS = ["test", "data", "sample", "foo", "bar"]
 
 
 def _link_spectrogram_and_annotations(source_recording, new_recording):
@@ -175,9 +175,7 @@ class Command(BaseCommand):
                 .distinct()
             )
             if not valid_grts_cell_ids:
-                raise CommandError(
-                    "No valid GRTS Cell IDs were found in GRTSCells."
-                )
+                raise CommandError("No valid GRTS Cell IDs were found in GRTSCells.")
 
         owner = None
         if owner_username:
