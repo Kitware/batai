@@ -21,6 +21,7 @@ from django.db import transaction
 
 from bats_ai.core.models import (
     CompressedSpectrogram,
+    GRTSCells,
     Recording,
     RecordingAnnotation,
     RecordingTag,
@@ -31,7 +32,7 @@ from bats_ai.core.models.recording_annotation import RecordingAnnotationSpecies
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TAGS = ["test", "foo", "bar"]
+DEFAULT_TAGS = ["test", "data", "sample","foo", "bar"]
 
 
 def _link_spectrogram_and_annotations(source_recording, new_recording):
@@ -141,6 +142,14 @@ class Command(BaseCommand):
             help="Username of the owner for the new recordings\
             (default: use source recording owner)",
         )
+        parser.add_argument(
+            "--random-grts-cell-id",
+            action="store_true",
+            help=(
+                "Assign a random valid GRTS Cell ID to each copied recording. "
+                "When enabled, recording_location and grts_cell are cleared."
+            ),
+        )
 
     def handle(self, *args, **options):
         count = options["count"]
@@ -149,6 +158,7 @@ class Command(BaseCommand):
         if not tag_texts:
             tag_texts = DEFAULT_TAGS
         owner_username = options.get("owner")
+        randomize_grts_cell_id = options.get("random_grts_cell_id", False)
 
         if count < 1:
             raise CommandError("--count must be at least 1.")
@@ -156,6 +166,18 @@ class Command(BaseCommand):
         recordings = list(Recording.objects.all().order_by("id"))
         if not recordings:
             raise CommandError("No existing recordings found. Create or import some first.")
+
+        valid_grts_cell_ids: list[int] = []
+        if randomize_grts_cell_id:
+            valid_grts_cell_ids = list(
+                GRTSCells.objects.exclude(grts_cell_id__isnull=True)
+                .values_list("grts_cell_id", flat=True)
+                .distinct()
+            )
+            if not valid_grts_cell_ids:
+                raise CommandError(
+                    "No valid GRTS Cell IDs were found in GRTSCells."
+                )
 
         owner = None
         if owner_username:
@@ -190,6 +212,14 @@ class Command(BaseCommand):
                         ext = "." + source.audio_file.name.rsplit(".", 1)[-1]
                     save_name = new_name + ext if ext else new_name
 
+                    grts_cell_id = source.grts_cell_id
+                    grts_cell = source.grts_cell
+                    recording_location = source.recording_location
+                    if randomize_grts_cell_id:
+                        grts_cell_id = random.choice(valid_grts_cell_ids)  # noqa: S311
+                        grts_cell = None
+                        recording_location = None
+
                     new_recording = Recording(
                         name=new_name,
                         owner=owner,
@@ -198,9 +228,9 @@ class Command(BaseCommand):
                         recorded_time=source.recorded_time,
                         equipment=source.equipment,
                         comments=source.comments,
-                        recording_location=source.recording_location,
-                        grts_cell_id=source.grts_cell_id,
-                        grts_cell=source.grts_cell,
+                        recording_location=recording_location,
+                        grts_cell_id=grts_cell_id,
+                        grts_cell=grts_cell,
                         public=source.public,
                         software=source.software,
                         detector=source.detector,
