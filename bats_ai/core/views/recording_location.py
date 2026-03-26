@@ -97,15 +97,8 @@ def _parse_bbox(bbox: str | None) -> tuple[float, float, float, float] | None:
         return None
 
     raw = bbox.strip()
-    try:
-        # Prefer JSON array format: bbox=[43,73,42,45]
-        if raw.startswith("[") and raw.endswith("]"):
-            values = json.loads(raw)
-        else:
-            # Allow bbox=43,73,42,45 as a convenience.
-            values = [v.strip() for v in raw.split(",")]
-    except Exception as e:  # pragma: no cover
-        raise HttpError(400, f"Invalid bbox format: {e}") from e
+    # Allow bbox=lon1,lat1,lon2,lat2 
+    values = [v.strip() for v in raw.split(",")]
 
     if not isinstance(values, list) or len(values) != 4:
         raise HttpError(400, "bbox must contain exactly 4 numbers")
@@ -222,6 +215,8 @@ def get_recording_locations(
         coords: list[float] | None = None
 
         if vetting_enabled:
+            # when vetting is enabled, we only show the centroid of the grts cell
+            # and not the direct recording location
             if rec.grts_cell_id is not None:
                 coords = centroids_by_cell_id.get(rec.grts_cell_id)
             # If we can't resolve a centroid, fall back to recording_location if present.
