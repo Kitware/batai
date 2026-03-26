@@ -97,7 +97,7 @@ def _parse_bbox(bbox: str | None) -> tuple[float, float, float, float] | None:
         return None
 
     raw = bbox.strip()
-    # Allow bbox=lon1,lat1,lon2,lat2 
+    # Allow bbox=lon1,lat1,lon2,lat2
     values = [v.strip() for v in raw.split(",")]
 
     if not isinstance(values, list) or len(values) != 4:

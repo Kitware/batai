@@ -237,6 +237,10 @@ export default function useState() {
     localStorage.setItem(MAP_FILTER_BOUNDS_STORAGE_KEY, JSON.stringify(bounds));
   }
 
+function clearMapFilterBounds() {
+  localStorage.removeItem(MAP_FILTER_BOUNDS_STORAGE_KEY);
+}
+
   function loadMapFilterBounds(): [number, number, number, number] | null {
     try {
       const raw = localStorage.getItem(MAP_FILTER_BOUNDS_STORAGE_KEY);
@@ -320,6 +324,7 @@ export default function useState() {
     saveFilterTags,
     loadFilterTags,
     saveMapFilterBounds,
+    clearMapFilterBounds,
     loadMapFilterBounds,
     spectrogramFilename,
   };

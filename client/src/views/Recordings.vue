@@ -24,6 +24,7 @@ export default defineComponent({
       saveFilterTags,
       loadMapFilterBounds,
       saveMapFilterBounds,
+      clearMapFilterBounds,
     } = useState();
     const showMap = ref(true);
     const filterListsByMap = ref(false);
@@ -110,6 +111,14 @@ export default defineComponent({
       else {
         filterListsByMap.value = false;
         mapBounds.value = null;
+        clearMapFilterBounds();
+      }
+    });
+
+    watch(filterListsByMap, (enabled) => {
+      if (!enabled) {
+        mapBounds.value = null;
+        clearMapFilterBounds();
       }
     });
 

@@ -189,7 +189,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"  Created recording ID: {recording.pk}"))
 
                 if assign_random_tags:
-                    tag_text = random.choice(_RANDOM_TAG_POOL)
+                    tag_text = random.choice(_RANDOM_TAG_POOL)  # noqa: S311
                     tag, _ = RecordingTag.objects.get_or_create(user=owner, text=tag_text)
                     recording.tags.add(tag)
                     self.stdout.write(self.style.SUCCESS(f"  Assigned random tag: {tag_text}"))
