@@ -244,7 +244,7 @@ export default defineComponent({
         ? sortByFirst.key
         : 'created';
       const sort_direction = sortByFirst?.order === 'asc' ? 'asc' : 'desc';
-      const tags = props.variant === 'my' ? filterTags.value : sharedFilterTags.value;
+      const tags = filterTagsModel.value;
       const params: RecordingListParams = {
         page: options.page,
         limit: options.itemsPerPage,
@@ -330,9 +330,8 @@ export default defineComponent({
     }
 
     function addTagToFilter(tag: string) {
-      const arr = props.variant === 'my' ? filterTags : sharedFilterTags;
-      if (!arr.value.includes(tag)) {
-        arr.value = [...arr.value, tag];
+      if (!filterTagsModel.value.includes(tag)) {
+        filterTagsModel.value = [...filterTagsModel.value, tag];
       }
     }
 

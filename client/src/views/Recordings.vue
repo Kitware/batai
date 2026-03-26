@@ -22,8 +22,10 @@ export default defineComponent({
       filterTags,
       sharedFilterTags,
       saveFilterTags,
+      loadMapFilterBounds,
+      saveMapFilterBounds,
     } = useState();
-    const showMap = ref(false);
+    const showMap = ref(true);
     const filterListsByMap = ref(false);
     const mapBounds = ref<[number, number, number, number] | null>(null);
     const mapResizeTick = ref(0);
@@ -37,6 +39,13 @@ export default defineComponent({
     async function fetchRecordingTags() {
       const tags = await getRecordingTags();
       recordingTagList.value = tags.data;
+    }
+
+    // Restore the saved map bounds and enable "Filter lists to map" on load.
+    const savedMapBounds = loadMapFilterBounds();
+    if (savedMapBounds) {
+      filterListsByMap.value = true;
+      mapBounds.value = savedMapBounds;
     }
 
     const uploadDone = () => {
@@ -90,9 +99,6 @@ export default defineComponent({
     });
 
     const showMyTable = computed(() => configuration.value.is_admin || configuration.value.non_admin_upload_enabled);
-    const visibleTablesCount = computed(() => (showMyTable.value ? 1 : 0) + 1);
-    const mapHeight = computed(() => (visibleTablesCount.value === 1 ? '33vh' : '25vh'));
-
     function setUnifiedTags(v: string[]) {
       filterTags.value = v;
       sharedFilterTags.value = v;
@@ -114,6 +120,10 @@ export default defineComponent({
 
     function onMapBounds(bounds: [number, number, number, number]) {
       mapBounds.value = bounds;
+      // Only persist when filtering is enabled (bounds-change is only emitted then).
+      if (filterListsByMap.value) {
+        saveMapFilterBounds(bounds);
+      }
     }
 
     return {
@@ -124,8 +134,8 @@ export default defineComponent({
       listBboxFilter,
       onMapBounds,
       showMyTable,
-      mapHeight,
       mapResizeTick,
+      mapBounds,
       filterTags,
       setUnifiedTags,
       uploadDialog,
@@ -145,7 +155,7 @@ export default defineComponent({
 
 <template>
   <div class="recordings-scroll">
-    <v-card>
+    <v-card class="mb-3">
       <v-card-title>
         <v-row>
           <div v-if="showMyTable">
@@ -199,26 +209,13 @@ export default defineComponent({
           </div>
         </v-row>
       </v-card-title>
-      <v-card-text>
-        <v-expand-transition>
-          <v-card
-            v-if="showMap"
-            class="mb-3"
-          >
-            <v-card-text>
-              <RecordingLocationsMap
-                :class="{ 'map-with-my-files': showMap && showMyTable, 'map-with-shared-files': showMap && !showMyTable, 'map-alone': !showMap && !showMyTable }"
-                :height="mapHeight"
-                :tags="filterTags"
-                :exclude-submitted="configuration.mark_annotations_completed_enabled && !showSubmittedRecordings"
-                :resize-tick="mapResizeTick"
-                :report-bounds="showMap && filterListsByMap"
-                @bounds-change="onMapBounds"
-              />
-            </v-card-text>
-          </v-card>
-        </v-expand-transition>
+    </v-card>
 
+    <div
+      class="recordings-layout"
+      :class="{ 'with-map': showMap }"
+    >
+      <div class="recordings-lists">
         <v-dialog
           v-model="deleteDialogOpen"
           width="auto"
@@ -244,61 +241,88 @@ export default defineComponent({
             </v-card-actions>
           </v-card>
         </v-dialog>
-        <recording-table
+
+        <v-card
           v-if="showMyTable"
-          ref="myRecordingsTableRef"
-          :class="{ 'my-files-with-map': showMap, 'my-files': !showMap }"
-          variant="my"
-          :tags="filterTags"
-          :bbox-filter="listBboxFilter"
-          :edit-recording="editRecording"
-          :open-delete-recording-dialog="openDeleteRecordingDialog"
-          @update:tags="setUnifiedTags"
-        />
-      </v-card-text>
-      <v-dialog
-        v-model="uploadDialog"
-        width="700"
-      >
-        <upload-recording
-          :editing="editingRecording"
-          @done="uploadDone()"
-          @cancel="uploadDialog = false; editingRecording = null"
-        />
-      </v-dialog>
-      <v-dialog
-        v-model="batchUploadDialog"
-        width="700"
-      >
-        <batch-upload-recording
-          @done="uploadDone()"
-          @cancel="batchUploadDialog = false; editingRecording = null"
-        />
-      </v-dialog>
-    </v-card>
-    <v-card
-      class="mt-3"
-      :class="{
-        'shared-with-my-files': showMap && showMyTable,
-        'shared-dual-no-map': !showMap && showMyTable,
-        'shared-alone-with-map': showMap && !showMyTable,
-        'shared-alone': !showMap && !showMyTable,
-      }"
+        >
+          <v-card-text>
+            <recording-table
+              ref="myRecordingsTableRef"
+              :class="{ 'my-files-with-map': showMap, 'my-files': !showMap }"
+              variant="my"
+              :tags="filterTags"
+              :bbox-filter="listBboxFilter"
+              :edit-recording="editRecording"
+              :open-delete-recording-dialog="openDeleteRecordingDialog"
+              @update:tags="setUnifiedTags"
+            />
+          </v-card-text>
+        </v-card>
+
+        <v-card
+          :class="{
+            'shared-with-my-files': showMap && showMyTable,
+            'shared-dual-no-map': !showMap && showMyTable,
+            'shared-alone-with-map': showMap && !showMyTable,
+            'shared-alone': !showMap && !showMyTable,
+          }"
+        >
+          <v-card-title>
+            <v-row class="py-2">
+              <div>Shared</div>
+            </v-row>
+          </v-card-title>
+          <v-card-text>
+            <recording-table
+              variant="shared"
+              :tags="filterTags"
+              :bbox-filter="listBboxFilter"
+              @update:tags="setUnifiedTags"
+            />
+          </v-card-text>
+        </v-card>
+      </div>
+
+      <v-expand-x-transition>
+        <v-card
+          v-if="showMap"
+          class="recordings-map-panel"
+        >
+          <v-card-text class="pa-3 h-100">
+            <RecordingLocationsMap
+              class="map-right"
+              height="100%"
+              :tags="filterTags"
+              :exclude-submitted="configuration.mark_annotations_completed_enabled && !showSubmittedRecordings"
+              :resize-tick="mapResizeTick"
+              :report-bounds="showMap && filterListsByMap"
+              @bounds-change="onMapBounds"
+              :initial-bounds="mapBounds"
+            />
+          </v-card-text>
+        </v-card>
+      </v-expand-x-transition>
+    </div>
+
+    <v-dialog
+      v-model="uploadDialog"
+      width="700"
     >
-      <v-card-title>
-        <v-row class="py-2">
-          <div>Shared</div>
-        </v-row>
-      </v-card-title>
-      <v-card-text>
-        <recording-table
-          variant="shared"
-          :tags="filterTags"
-          :bbox-filter="listBboxFilter"
-          @update:tags="setUnifiedTags"
-        />
-      </v-card-text>
-    </v-card>
+      <upload-recording
+        :editing="editingRecording"
+        @done="uploadDone()"
+        @cancel="uploadDialog = false; editingRecording = null"
+      />
+    </v-dialog>
+    <v-dialog
+      v-model="batchUploadDialog"
+      width="700"
+    >
+      <batch-upload-recording
+        @done="uploadDone()"
+        @cancel="batchUploadDialog = false; editingRecording = null"
+      />
+    </v-dialog>
   </div>
 </template>
 
@@ -309,6 +333,27 @@ export default defineComponent({
   padding-bottom: 16px;
 }
 
+.recordings-layout {
+  display: block;
+}
+
+.recordings-layout.with-map {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.recordings-lists {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.recordings-map-panel {
+  flex: 0 0 min(42vw, 680px);
+  min-width: 360px;
+  max-height: calc(100vh - 150px);
+}
+
 /* My recordings: classes are on <recording-table> (merged onto v-data-table root). */
 :deep(.my-recordings.my-files) {
   height: calc(40vh - 64px);
@@ -316,44 +361,34 @@ export default defineComponent({
 }
 
 :deep(.my-recordings.my-files-with-map) {
-  height: calc(30vh - 64px);
-  max-height: calc(30vh - 64px);
+  height: calc(45vh - 75px);
+  max-height: calc(45vh - 75px);
 }
 
 /* Shared: layout classes are on the v-card; size the inner table. */
 .shared-with-my-files :deep(.shared-recordings) {
-  height: calc(30vh - 64px);
-  max-height: calc(30vh - 64px);
+  height: calc(45vh - 75px);
+  max-height: calc(45vh - 75px);
 }
 
 .shared-dual-no-map :deep(.shared-recordings) {
-  height: calc(40vh - 64px);
-  max-height: calc(40vh - 64px);
+  height: calc(90vh - 75px);
+  max-height: calc(90vh - 75px);
 }
 
 .shared-alone-with-map :deep(.shared-recordings) {
-  height: calc(50vh - 64px);
-  max-height: calc(50vh - 64px);
+  height: calc(85vh - 75px);
+  max-height: calc(85vh - 75px);
 }
 
 .shared-alone :deep(.shared-recordings) {
-  height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
+  height: calc(90vh - 75px);
+  max-height: calc(90vh - 75px);
 }
 
-.map-with-my-files {
-  height: calc(35vh - 64px);
-  max-height: calc(35vh - 64px);
-}
-
-.map-with-shared-files {
-  height: calc(35vh - 64px);
-  max-height: calc(35vh - 64px);
-}
-
-.map-alone {
-  height: calc(50vh - 64px);
-  max-height: calc(50vh - 64px);
+.map-right {
+  height: 100%;
+  max-height: 100%;
 }
 
 :deep(.my-recordings),

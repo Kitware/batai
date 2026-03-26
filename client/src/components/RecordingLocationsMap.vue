@@ -31,6 +31,11 @@ export default defineComponent({
       type: Number,
       default: 1500,
     },
+    /** Optional bounds to restore the map viewport (west,south,east,north). */
+    initialBounds: {
+      type: Array as unknown as PropType<[number, number, number, number] | null>,
+      default: null,
+    },
   },
   emits: ['boundsChange'],
   setup(props, { emit }) {
@@ -228,6 +233,20 @@ export default defineComponent({
           map.on('mouseleave', 'clusters', () => (map.getCanvas().style.cursor = ''));
           map.on('mouseenter', 'unclustered-point', () => (map.getCanvas().style.cursor = 'pointer'));
           map.on('mouseleave', 'unclustered-point', () => (map.getCanvas().style.cursor = ''));
+
+          // If we have saved bounds, align the viewport before emitting the current bounds.
+          if (props.initialBounds) {
+            const [west, south, east, north] = props.initialBounds;
+            if ([west, south, east, north].every((n) => Number.isFinite(n))) {
+              map.fitBounds(
+                [
+                  [west, south],
+                  [east, north],
+                ],
+                { padding: 20, duration: 0 },
+              );
+            }
+          }
 
           map.on('moveend', () => {
             scheduleDebouncedBounds();
