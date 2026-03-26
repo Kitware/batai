@@ -83,6 +83,8 @@ class UnsubmittedNeighborsQuerySchema(Schema):
     ) = "created"
     sort_direction: Literal["asc", "desc"] | None = "desc"
     tags: str | None = None  # Comma-separated tag texts; recording must have all listed tags
+    # [min_lon, min_lat, max_lon, max_lat] as JSON array or comma-separated (see _parse_bbox).
+    bbox: str | None = None
 
 
 class UnsubmittedNeighborsResponse(Schema):
@@ -581,6 +583,7 @@ def _unsubmitted_recording_ids_ordered(
     sort_by: str = "created",
     sort_direction: str = "desc",
     tags: str | None = None,
+    bbox: str | None = None,
 ) -> list[int]:
     submitted_by_user = RecordingAnnotation.objects.filter(
         owner=request.user, submitted=True
@@ -594,6 +597,16 @@ def _unsubmitted_recording_ids_ordered(
                 qs = qs.filter(tags__text=tag)
             if tag_list:
                 qs = qs.distinct()
+        if bbox and bbox.strip():
+            min_lon, min_lat, max_lon, max_lat = _parse_bbox(bbox)
+            bbox_poly = Polygon.from_bbox((min_lon, min_lat, max_lon, max_lat))
+            # Need to check the GRTSCells centroids as well as the recording_location
+            grts_cell_ids = GRTSCells.objects.filter(
+                centroid_4326__intersects=bbox_poly
+            ).values_list("grts_cell_id", flat=True)
+            qs = qs.filter(recording_location__intersects=bbox_poly) | qs.filter(
+                grts_cell_id__in=grts_cell_ids
+            )
         order_prefix = "" if sort_direction == "asc" else "-"
         if sort_by == "owner_username":
             qs = qs.order_by(f"{order_prefix}owner__username")
@@ -626,7 +639,7 @@ def get_unsubmitted_neighbors(
     sort_by = q.sort_by or "created"
     sort_direction = q.sort_direction or "desc"
     raw_ids = _unsubmitted_recording_ids_ordered(
-        request, sort_by=sort_by, sort_direction=sort_direction, tags=q.tags
+        request, sort_by=sort_by, sort_direction=sort_direction, tags=q.tags, bbox=q.bbox
     )
     # One entry per recording, order preserved (my + shared can duplicate ids)
     ids = list(dict.fromkeys(int(x) for x in raw_ids))

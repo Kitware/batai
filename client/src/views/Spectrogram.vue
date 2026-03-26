@@ -244,6 +244,7 @@ export default defineComponent({
             sort_by: 'created',
             sort_direction: 'desc',
             tags: tags,
+            bbox: mapFilterBounds.value ?? undefined,
           });
           nextUnsubmittedId.value = neighborsRes.data.next_id;
           previousUnsubmittedId.value = neighborsRes.data.previous_id;

@@ -346,6 +346,8 @@ export interface UnsubmittedNeighborsParams {
   sort_direction?: 'asc' | 'desc';
   /** Comma-separated or array of tag texts; recording must have all listed tags. */
   tags?: string | string[];
+  /** Bounding box filter (lon/lat) as `[min_lon, min_lat, max_lon, max_lat]`. */
+  bbox?: [number, number, number, number];
 }
 
 export interface UnsubmittedNeighborsResponse {
@@ -363,6 +365,13 @@ async function getUnsubmittedNeighbors(
   if (params?.tags !== undefined) {
     const tagStr = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
     if (tagStr) query.set('tags', tagStr);
+  }
+  if (
+    params?.bbox !== undefined &&
+    params.bbox.length === 4 &&
+    params.bbox.every((n) => Number.isFinite(n))
+  ) {
+    query.set('bbox', params.bbox.join(','));
   }
   const response = await axiosInstance.get<UnsubmittedNeighborsResponse>(
     `/recording/unsubmitted-neighbors/?${query.toString()}`
