@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -120,19 +119,12 @@ def _parse_bbox(bbox: str | None) -> tuple[float, float, float, float] | None:
 
 def _get_recording_location_coords(recording: Recording) -> list[float] | None:
     """Return `[lon, lat]` for `Recording.recording_location` if present."""
-    if not recording.recording_location:
+    point = recording.recording_location
+    if not point:
         return None
 
-    # GeoDjango geometry -> GeoJSON -> coordinates.
-    location_geojson = json.loads(recording.recording_location.json)
-    coords = location_geojson.get("coordinates")
-    if (
-        isinstance(coords, list)
-        and len(coords) == 2
-        and all(isinstance(v, (int, float)) for v in coords)
-    ):
-        return [float(coords[0]), float(coords[1])]
-    return None
+    # Prefer direct GEOS access instead of serializing geometry to JSON.
+    return [float(point.x), float(point.y)]
 
 
 def _precompute_grts_cell_centroids(
@@ -239,8 +231,8 @@ def get_recording_locations(
         coords: list[float] | None = None
 
         if vetting_enabled:
-            # when vetting is enabled, we only show the centroid of the grts cell
-            # and not the direct recording location
+            # When vetting is enabled, we only show the centroid of the
+            # GRTS cell and not the direct recording location.
             if rec.grts_cell_id is not None:
                 coords = centroids_by_cell_id.get(rec.grts_cell_id)
             # If we can't resolve a centroid, fall back to recording_location.
