@@ -10,15 +10,13 @@ import initRouter from './router';
 import { axiosInstance } from './api/api';
 import { installPrompt } from './use/prompt-service';
 
-// This is only defined in the release build environment
-const SENTRY_DSN = import.meta.env.VITE_APP_SENTRY_DSN;
-
 const app = createApp(App);
 const Vuetify = createVuetify({});
 
 Sentry.init({
   app,
-  dsn: SENTRY_DSN,
+  // This is only defined in the release build environment
+  dsn: import.meta.env.VITE_APP_SENTRY_DSN,
   sendDefaultPii: true,
 });
 
