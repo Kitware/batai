@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from django.contrib.auth.models import User
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, Polygon
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
@@ -19,6 +19,7 @@ from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import (
     Annotations,
+    GRTSCells,
     PulseMetadata,
     Recording,
     RecordingAnnotation,
@@ -28,6 +29,7 @@ from bats_ai.core.models import (
     Spectrogram,
 )
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
+from bats_ai.core.views.recording_location import _parse_bbox
 from bats_ai.core.views.species import SpeciesSchema
 
 if TYPE_CHECKING:
@@ -62,6 +64,8 @@ class RecordingListQuerySchema(Schema):
     annotation_completed: bool | None = None
     search: str | None = None
     tags: str | None = None  # Comma-separated tag texts; recording must have all listed tags
+    # [min_lon, min_lat, max_lon, max_lat] as JSON array or comma-separated (see _parse_bbox).
+    bbox: str | None = None
     sort_by: (
         Literal["id", "name", "created", "modified", "recorded_date", "owner_username"] | None
     ) = "created"
@@ -79,6 +83,8 @@ class UnsubmittedNeighborsQuerySchema(Schema):
     ) = "created"
     sort_direction: Literal["asc", "desc"] | None = "desc"
     tags: str | None = None  # Comma-separated tag texts; recording must have all listed tags
+    # [min_lon, min_lat, max_lon, max_lat] as JSON array or comma-separated (see _parse_bbox).
+    bbox: str | None = None
 
 
 class UnsubmittedNeighborsResponse(Schema):
@@ -506,6 +512,17 @@ def get_recordings(
                 queryset = queryset.filter(tags__text=tag)
             queryset = queryset.distinct()
 
+    if q.bbox and q.bbox.strip():
+        min_lon, min_lat, max_lon, max_lat = _parse_bbox(q.bbox)
+        bbox_poly = Polygon.from_bbox((min_lon, min_lat, max_lon, max_lat))
+        # Need to check the GRTSCells centroids as well as the recording_location
+        grts_cell_ids = GRTSCells.objects.filter(centroid_4326__intersects=bbox_poly).values_list(
+            "grts_cell_id", flat=True
+        )
+        queryset = queryset.filter(
+            Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
+        )
+
     sort_field = q.sort_by or "created"
     order_prefix = "" if q.sort_direction == "asc" else "-"
     if sort_field == "owner_username":
@@ -566,6 +583,7 @@ def _unsubmitted_recording_ids_ordered(
     sort_by: str = "created",
     sort_direction: str = "desc",
     tags: str | None = None,
+    bbox: str | None = None,
 ) -> list[int]:
     submitted_by_user = RecordingAnnotation.objects.filter(
         owner=request.user, submitted=True
@@ -579,6 +597,16 @@ def _unsubmitted_recording_ids_ordered(
                 qs = qs.filter(tags__text=tag)
             if tag_list:
                 qs = qs.distinct()
+        if bbox and bbox.strip():
+            min_lon, min_lat, max_lon, max_lat = _parse_bbox(bbox)
+            bbox_poly = Polygon.from_bbox((min_lon, min_lat, max_lon, max_lat))
+            # Need to check the GRTSCells centroids as well as the recording_location
+            grts_cell_ids = GRTSCells.objects.filter(
+                centroid_4326__intersects=bbox_poly
+            ).values_list("grts_cell_id", flat=True)
+            qs = qs.filter(
+                Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
+            )
         order_prefix = "" if sort_direction == "asc" else "-"
         if sort_by == "owner_username":
             qs = qs.order_by(f"{order_prefix}owner__username")
@@ -611,7 +639,7 @@ def get_unsubmitted_neighbors(
     sort_by = q.sort_by or "created"
     sort_direction = q.sort_direction or "desc"
     raw_ids = _unsubmitted_recording_ids_ordered(
-        request, sort_by=sort_by, sort_direction=sort_direction, tags=q.tags
+        request, sort_by=sort_by, sort_direction=sort_direction, tags=q.tags, bbox=q.bbox
     )
     # One entry per recording, order preserved (my + shared can duplicate ids)
     ids = list(dict.fromkeys(int(x) for x in raw_ids))
