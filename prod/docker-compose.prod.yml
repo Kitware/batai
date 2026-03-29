@@ -94,7 +94,7 @@ services:
       context: ..
       dockerfile: ./prod/client.Dockerfile
       args:
-        VITE_APP_API_ROOT: ${VITE_APP_API_ROOT}
+        VITE_API_ROOT: ${VITE_API_ROOT}
         DJANGO_BATAI_URL_PATH: ${DJANGO_BATAI_URL_PATH}
         DJANGO_MINIO_STORAGE_URL: ${DJANGO_MINIO_STORAGE_URL}
 

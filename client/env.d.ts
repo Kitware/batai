@@ -5,10 +5,10 @@ interface ViteTypeOptions {
 }
 
 interface ImportMetaEnv {
-  readonly VITE_APP_API_ROOT: string;
-  readonly VITE_APP_SUBPATH?: string;
+  readonly VITE_API_ROOT: string;
+  readonly VITE_SUBPATH?: string;
   // This is not set in development
-  readonly VITE_APP_SENTRY_DSN?: string;
+  readonly VITE_SENTRY_DSN?: string;
 }
 
 interface ImportMeta {

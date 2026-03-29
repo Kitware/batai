@@ -7,16 +7,15 @@ import Vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 
 // Build sanity check, to ensure environment is defined;
 // this will not load from .env files (unless we used a different Vite syntax),
-// but we set VITE_APP_API_ROOT at the process level.
-if (!process.env.VITE_APP_API_ROOT) {
-  throw new Error("VITE_APP_API_ROOT must be defined.");
+// but we set VITE_API_ROOT at the process level.
+if (!process.env.VITE_API_ROOT) {
+  throw new Error("VITE_API_ROOT must be defined.");
 }
 
-const subpath = process.env.VITE_APP_SUBPATH || "/";
+const subpath = process.env.VITE_SUBPATH || "/";
 
 export default defineConfig({
   base: subpath.endsWith("/") ? subpath : `${subpath}/`,
-  envPrefix: "VITE_APP_",
   plugins: [
     Vue({
       template: { transformAssetUrls },
