@@ -5,12 +5,11 @@ import Vue from '@vitejs/plugin-vue';
 import Vuetify from 'vite-plugin-vuetify';
 import process from 'node:process';
 
-const subpath = process.env.VITE_APP_SUBPATH || '/';
+const subpath = process.env.VITE_SUBPATH || '/';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: subpath.endsWith('/') ? subpath : `${subpath}/`,
-  envPrefix: 'VITE_APP_',
   plugins: [
     Vue(),
     Vuetify({

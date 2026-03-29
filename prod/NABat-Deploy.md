@@ -10,7 +10,7 @@ the docker compose
 docker build\
     --build-arg BUILD_ENV=prod\
     --build-arg DJANGO_BATAI_URL_PATH=${DJANGO_BATAI_URL_PATH}\
-    --build-arg VITE_APP_API_ROOT=${VITE_APP_API_ROOT}\
+    --build-arg VITE_API_ROOT=${VITE_API_ROOT}\
     -t ${AWS_IMAGE_LATEST}\
     --pull -f ${DOCKER_FILE_LOCATION} .
 ```
