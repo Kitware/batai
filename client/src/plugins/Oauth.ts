@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 const CLIENT_ID = 'HSJWFZ2cIpWQOvNyCXyStV9hiOd7DfWeBOCzo4pP';
 
-const authorizationServerBaseUrl = new URL(`${import.meta.env.VITE_APP_API_ROOT}/oauth/`);
+const authorizationServerBaseUrl = new URL(`${import.meta.env.VITE_API_ROOT}/oauth/`);
 const oauthClient = new OauthClient(authorizationServerBaseUrl, CLIENT_ID);
 
 export const loggedIn = ref(oauthClient.isLoggedIn);

@@ -127,6 +127,6 @@ for a list of environment variables that you'll need to populate for your deploy
   spectrogram masks and save them to `PulseMetadata.contours`. When `false` or unset, contour
   extraction is skipped and stored contours are empty, which lowers DB storage size. Set to
   `true` if you need pulse contour data (e.g. the spectrogram contour overlay in the client).
-- `VITE_APP_API_ROUTE`: this tells the Vue application where the backend (Django) API can be found.
+- `VITE_API_ROUTE`: this tells the Vue application where the backend (Django) API can be found.
 - `DJANGO_BATAI_URL_PATH`: this allows the Django application to be mounted at a subpath in a URL.
    It is used by the Django application itself and the nginx configuration at nginx.subpath.template
