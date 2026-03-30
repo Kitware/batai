@@ -32,7 +32,7 @@ function beforeEach(
   // Explicitly return for clarity, though returning nothing also works
   return;
 }
-const subpath = import.meta.env.VITE_SUBPATH?.replace(/\/+$/, '');
+const subpath = import.meta.env.VITE_APP_SUBPATH?.replace(/\/+$/, '');
 const routerBase = subpath ? `/${subpath}/` : '/';
 
 
