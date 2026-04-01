@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import logging
 from pathlib import Path
+import random
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
@@ -10,11 +11,13 @@ from django.core.files import File
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from bats_ai.core.models import Recording
+from bats_ai.core.models import Recording, RecordingTag
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 from bats_ai.core.utils.guano_utils import extract_guano_metadata
 
 logger = logging.getLogger(__name__)
+
+_RANDOM_TAG_POOL = ("foo", "bar", "test", "sample", "data")
 
 
 class Command(BaseCommand):
@@ -43,12 +46,21 @@ class Command(BaseCommand):
             type=int,
             help="Limit the number of WAV files to import (useful for testing)",
         )
+        parser.add_argument(
+            "--assign-random-tags",
+            action="store_true",
+            help=(
+                "Assign each imported recording one tag chosen at random from: "
+                + ", ".join(_RANDOM_TAG_POOL)
+            ),
+        )
 
     def handle(self, *args, **options):
         directory_path = Path(options["directory"])
         owner_username = options.get("owner")
         is_public = options.get("public", False)
         limit = options.get("limit")
+        assign_random_tags = options.get("assign_random_tags", False)
 
         # Validate directory
         if not directory_path.exists():
@@ -175,6 +187,12 @@ class Command(BaseCommand):
                     recording.save()
 
                 self.stdout.write(self.style.SUCCESS(f"  Created recording ID: {recording.pk}"))
+
+                if assign_random_tags:
+                    tag_text = random.choice(_RANDOM_TAG_POOL)  # noqa: S311
+                    tag, _ = RecordingTag.objects.get_or_create(user=owner, text=tag_text)
+                    recording.tags.add(tag)
+                    self.stdout.write(self.style.SUCCESS(f"  Assigned random tag: {tag_text}"))
 
                 # Generate spectrogram synchronously
                 self.stdout.write("  Generating spectrogram...")

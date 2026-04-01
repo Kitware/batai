@@ -7,6 +7,7 @@ from .guanometadata import router as guano_metadata_router
 from .processing_tasks import router as processing_task_router
 from .recording import router as recording_router
 from .recording_annotation import router as recording_annotation_router
+from .recording_location import router as recording_locations_router
 from .recording_tag import router as recording_tag_router
 from .species import router as species_router
 from .vetting_details import router as vetting_router
@@ -18,6 +19,7 @@ __all__ = [
     "guano_metadata_router",
     "processing_task_router",
     "recording_annotation_router",
+    "recording_locations_router",
     "recording_router",
     "recording_tag_router",
     "species_router",

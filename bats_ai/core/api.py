@@ -28,6 +28,10 @@ def global_auth(request):
 api = NinjaAPI(auth=global_auth)
 
 api.add_router("/recording/", views.recording_router)
+api.add_router(
+    "/recording-locations/",
+    views.recording_locations_router,
+)
 api.add_router("/species/", views.species_router)
 api.add_router("/grts/", views.grts_cells_router)
 api.add_router("/guano/", views.guano_metadata_router)
