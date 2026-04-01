@@ -86,6 +86,7 @@ class UnsubmittedNeighborsQuerySchema(Schema):
     # [min_lon, min_lat, max_lon, max_lat] as JSON array or comma-separated (see _parse_bbox).
     bbox: str | None = None
 
+
 class UnsubmittedNeighborsResponse(Schema):
     """Response for unsubmitted neighbors: next and previous recording IDs in the vetting order."""
 
