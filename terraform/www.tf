@@ -38,10 +38,11 @@ resource "cloudflare_pages_project" "www" {
         local.www_env_vars,
         {
           VITE_APP_SENTRY_DSN = "https://a224627951abd0f0606d8578cacef5d6@o267860.ingest.us.sentry.io/4510829950730240"
-          # SENTRY_AUTH_TOKEN is also set manually in the Cloudflare Pages console,
-          # but it's a secret, so don't include it here.
         },
       )
+      secrets = {
+        SENTRY_AUTH_TOKEN = var.SENTRY_AUTH_TOKEN
+      }
     }
   }
 }

@@ -3,9 +3,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import Vue from '@vitejs/plugin-vue';
 import Vuetify from 'vite-plugin-vuetify';
-
-// Defined by: https://developers.cloudflare.com/pages/configuration/build-configuration/#environment-variables
-const GIT_SHA = process.env.CF_PAGES_COMMIT_SHA;
+import process from 'node:process';
 
 const subpath = process.env.VITE_APP_SUBPATH || '/';
 
@@ -21,8 +19,10 @@ export default defineConfig({
     sentryVitePlugin({
       org: "kitware-data",
       project: "bats-ai-client",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
       release: {
-        name: GIT_SHA,
+        // Defined by: https://developers.cloudflare.com/pages/configuration/build-configuration/#environment-variables
+        name: process.env.CF_PAGES_COMMIT_SHA,
       }
     }),
   ],
