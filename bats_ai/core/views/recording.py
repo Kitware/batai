@@ -86,7 +86,6 @@ class UnsubmittedNeighborsQuerySchema(Schema):
     # [min_lon, min_lat, max_lon, max_lat] as JSON array or comma-separated (see _parse_bbox).
     bbox: str | None = None
 
-
 class UnsubmittedNeighborsResponse(Schema):
     """Response for unsubmitted neighbors: next and previous recording IDs in the vetting order."""
 
@@ -522,17 +521,6 @@ def get_recordings(
             for tag in tag_list:
                 queryset = queryset.filter(tags__text=tag)
             queryset = queryset.distinct()
-    if q.bbox and q.bbox.strip():
-        min_lon, min_lat, max_lon, max_lat = _parse_bbox(q.bbox)
-        bbox_poly = Polygon.from_bbox((min_lon, min_lat, max_lon, max_lat))
-        # Need to check the GRTSCells centroids as well as the recording_location
-        grts_cell_ids = GRTSCells.objects.filter(centroid_4326__intersects=bbox_poly).values_list(
-            "grts_cell_id", flat=True
-        )
-        queryset = queryset.filter(
-            Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
-        )
-
     if q.bbox and q.bbox.strip():
         min_lon, min_lat, max_lon, max_lat = _parse_bbox(q.bbox)
         bbox_poly = Polygon.from_bbox((min_lon, min_lat, max_lon, max_lat))
