@@ -24,6 +24,8 @@ class GRTSCells(models.Model):
     grts_geom = models.GeometryField(blank=True, null=True)
     # continue defining all fields similarly
     geom_4326 = models.GeometryField()
+    # Precomputed centroid of `geom_4326` for faster lookup of cell centers.
+    centroid_4326 = models.PointField(srid=4326, blank=True, null=True)
 
     @property
     def sample_frame_mapping(self):

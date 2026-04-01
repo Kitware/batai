@@ -53,7 +53,10 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--batch-size", type=int, default=5000, help="Batch size for database insertion"
+            "--batch-size",
+            type=int,
+            default=5000,
+            help="Batch size for database insertion",
         )
 
     def _download_file(self, url: str, zip_path: Path) -> None:
@@ -78,7 +81,8 @@ class Command(BaseCommand):
                     self._download_file(url, zip_path)
                 except requests.RequestException as e:
                     logger.warning(
-                        "Failed to download from primary URL: %s. Attempting backup URL...", e
+                        "Failed to download from primary URL: %s. Attempting backup URL...",
+                        e,
                     )
                     if backup_url is None:
                         logger.warning("No backup URL provided, skipping this shapefile.")
@@ -117,7 +121,9 @@ class Command(BaseCommand):
                 count_new = 0
 
                 for idx, row in tqdm(
-                    gdf.iterrows(), total=len(gdf), desc=f"Importing {sample_frame_id}"
+                    gdf.iterrows(),
+                    total=len(gdf),
+                    desc=f"Importing {sample_frame_id}",
                 ):
                     # Hard fail if GRTS_ID is missing
                     if "GRTS_ID" not in row or row["GRTS_ID"] is None:
@@ -131,6 +137,7 @@ class Command(BaseCommand):
                         continue
 
                     geom_4326 = row.geometry.wkt
+                    centroid_4326 = row.geometry.centroid.wkt
                     if gdf.crs and gdf.crs.to_epsg() != 4326:
                         grts_geom = row.geometry.to_wkt()
                     else:
@@ -142,6 +149,7 @@ class Command(BaseCommand):
                         sample_frame_id=sample_frame_id,
                         grts_geom=grts_geom,
                         geom_4326=geom_4326,
+                        centroid_4326=centroid_4326,
                     )
                     records_to_create.append(cell)
                     count_new += 1
