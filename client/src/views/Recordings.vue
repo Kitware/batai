@@ -305,8 +305,8 @@ export default defineComponent({
               :exclude-submitted="configuration.mark_annotations_completed_enabled && !showSubmittedRecordings"
               :resize-tick="mapResizeTick"
               :report-bounds="showMap && filterListsByMap"
-              @bounds-change="onMapBounds"
               :initial-bounds="mapBounds"
+              @bounds-change="onMapBounds"
             />
           </v-card-text>
         </v-card>
