@@ -52,6 +52,9 @@ def _get_metadata(filename: str, line: dict[str, str]) -> dict[str, Any]:
     if guano_metadata.get("nabat_grid_cell_grts_id"):
         with contextlib.suppress(ValueError, TypeError):
             metadata["grts_cell_id"] = int(guano_metadata["nabat_grid_cell_grts_id"])
+    if guano_metadata.get("nabat_sample_frame_id"):
+        with contextlib.suppress(ValueError, TypeError):
+            metadata["sample_frame_id"] = int(guano_metadata["nabat_sample_frame_id"])
     if guano_metadata.get("nabat_species_list"):
         metadata["species_list_str"] = ",".join(guano_metadata["nabat_species_list"])
 
@@ -162,6 +165,7 @@ def _ingest_files_from_manifest(
                         recorded_time=metadata.get("recorded_time"),
                         equipment=None,
                         grts_cell_id=metadata.get("grts_cell_id"),
+                        sample_frame_id=metadata.get("sample_frame_id"),
                         recording_location=metadata.get("point"),
                         public=public,
                         comments=metadata.get("comments"),

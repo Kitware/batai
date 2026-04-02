@@ -147,7 +147,7 @@ class Command(BaseCommand):
             action="store_true",
             help=(
                 "Assign a random valid GRTS Cell ID to each copied recording. "
-                "When enabled, recording_location and grts_cell are cleared."
+                "When enabled, recording_location and sample_frame_id are cleared."
             ),
         )
 
@@ -211,11 +211,11 @@ class Command(BaseCommand):
                     save_name = new_name + ext if ext else new_name
 
                     grts_cell_id = source.grts_cell_id
-                    grts_cell = source.grts_cell
+                    sample_frame_id = source.sample_frame_id
                     recording_location = source.recording_location
                     if randomize_grts_cell_id:
                         grts_cell_id = random.choice(valid_grts_cell_ids)  # noqa: S311
-                        grts_cell = None
+                        sample_frame_id = None
                         recording_location = None
 
                     new_recording = Recording(
@@ -228,7 +228,7 @@ class Command(BaseCommand):
                         comments=source.comments,
                         recording_location=recording_location,
                         grts_cell_id=grts_cell_id,
-                        grts_cell=grts_cell,
+                        sample_frame_id=sample_frame_id,
                         public=source.public,
                         software=source.software,
                         detector=source.detector,

@@ -36,7 +36,7 @@ class Recording(TimeStampedModel, models.Model):
     comments = models.TextField(blank=True, null=True)
     recording_location = models.GeometryField(srid=4326, blank=True, null=True)
     grts_cell_id = models.IntegerField(blank=True, null=True)
-    grts_cell = models.IntegerField(blank=True, null=True)
+    sample_frame_id = models.IntegerField(blank=True, null=True)
     public = models.BooleanField(default=False)
     software = models.TextField(blank=True, null=True)
     detector = models.TextField(blank=True, null=True)

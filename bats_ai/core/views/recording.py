@@ -52,7 +52,7 @@ class RecordingSchema(Schema):
     comments: str
     recording_location: str | None
     grts_cell_id: int | None
-    grts_cell: int | None
+    sample_frame_id: int | None
     tags: list[RecordingTagSchema] = []
 
 
@@ -151,7 +151,7 @@ class RecordingListItemSchema(Schema):
     comments: str | None
     recording_location: dict[str, Any] | None
     grts_cell_id: int | None
-    grts_cell: int | None
+    sample_frame_id: int | None
     public: bool
     created: datetime
     modified: datetime
@@ -423,7 +423,7 @@ def _build_recordings_response(
                 comments=rec.comments,
                 recording_location=location,
                 grts_cell_id=rec.grts_cell_id,
-                grts_cell=rec.grts_cell,
+                sample_frame_id=rec.sample_frame_id,
                 public=rec.public,
                 created=rec.created,
                 modified=rec.modified,

@@ -18,7 +18,7 @@ export interface Recording {
   comments?: string;
   recording_location?: null | GeoJSON.Point;
   grts_cell_id?: null | number;
-  grts_cell?: null | number;
+  sample_frame_id?: null | number;
   public: boolean;
   userMadeAnnotations: boolean;
   userAnnotations: number;
