@@ -1,6 +1,7 @@
 import axios from "axios";
 import { AxiosError } from "axios";
 import { SpectroInfo } from "@components/geoJS/geoJSUtils";
+import type { FeatureCollection, Point } from "geojson";
 
 export interface Recording {
   id: number;
@@ -30,6 +31,13 @@ export interface Recording {
   unusual_occurrences?: string;
   tags_text?: string[];
 }
+
+export type RecordingLocationsFeatureProperties = {
+  recording_id: number;
+  filename: string;
+};
+
+export type RecordingLocationsGeoJson = FeatureCollection<Point, RecordingLocationsFeatureProperties>;
 
 export interface Species {
   species_code: string;
@@ -287,6 +295,8 @@ export interface RecordingListParams {
   sort_direction?: 'asc' | 'desc';
   page?: number;
   limit?: number;
+  /** WGS84 [minLon, minLat, maxLon, maxLat]; recordings must intersect this box. */
+  bbox?: [number, number, number, number];
 }
 
 /** Paginated recording list response (v-data-table-server compatible). */
@@ -315,6 +325,13 @@ async function getRecordings(getPublic = false, params?: RecordingListParams) {
     if (params.sort_direction) query.set('sort_direction', params.sort_direction);
     if (params.page !== undefined) query.set('page', String(params.page));
     if (params.limit !== undefined) query.set('limit', String(params.limit));
+    if (
+      params.bbox !== undefined &&
+      params.bbox.length === 4 &&
+      params.bbox.every((n) => Number.isFinite(n))
+    ) {
+      query.set('bbox', params.bbox.join(','));
+    }
   }
   if (!params?.page) query.set('page', '1');
   if (!params?.limit) query.set('limit', '20');
@@ -329,6 +346,8 @@ export interface UnsubmittedNeighborsParams {
   sort_direction?: 'asc' | 'desc';
   /** Comma-separated or array of tag texts; recording must have all listed tags. */
   tags?: string | string[];
+  /** Bounding box filter (lon/lat) as `[min_lon, min_lat, max_lon, max_lat]`. */
+  bbox?: [number, number, number, number];
 }
 
 export interface UnsubmittedNeighborsResponse {
@@ -346,6 +365,13 @@ async function getUnsubmittedNeighbors(
   if (params?.tags !== undefined) {
     const tagStr = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
     if (tagStr) query.set('tags', tagStr);
+  }
+  if (
+    params?.bbox !== undefined &&
+    params.bbox.length === 4 &&
+    params.bbox.every((n) => Number.isFinite(n))
+  ) {
+    query.set('bbox', params.bbox.join(','));
   }
   const response = await axiosInstance.get<UnsubmittedNeighborsResponse>(
     `/recording/unsubmitted-neighbors/?${query.toString()}`
@@ -453,6 +479,28 @@ async function getCellLocation(cellId: number, quadrant?: "SW" | "NE" | "NW" | "
 
 async function getCellBbox(cellId: number) {
   return await axiosInstance.get<GRTSCellBbox>(`/grts/${cellId}/bbox`);
+}
+
+export interface RecordingLocationsParams {
+  exclude_submitted?: boolean;
+  /** Comma-separated or array of tag texts; recording must have all listed tags. */
+  tags?: string | string[];
+  /** Bounding box filter (lon/lat) as `[min_lon, min_lat, max_lon, max_lat]`. */
+  bbox?: [number, number, number, number];
+}
+
+async function getRecordingLocations(params?: RecordingLocationsParams) {
+  const query = new URLSearchParams();
+  if (params?.exclude_submitted !== undefined) query.set("exclude_submitted", String(params.exclude_submitted));
+  if (params?.tags !== undefined) {
+    const tagStr = Array.isArray(params.tags) ? params.tags.join(",") : params.tags;
+    if (tagStr) query.set("tags", tagStr);
+  }
+  if (params?.bbox !== undefined && params.bbox.length === 4 && params.bbox.every((n) => Number.isFinite(n))) {
+    query.set("bbox", params.bbox.join(','));
+  }
+  const qs = query.toString();
+  return axiosInstance.get<RecordingLocationsGeoJson>(`/recording-locations/${qs ? `?${qs}` : ""}`);
 }
 
 async function getFileAnnotations(recordingId: number) {
@@ -706,6 +754,7 @@ export {
   getCellLocation,
   getCellBbox,
   getCellfromLocation,
+  getRecordingLocations,
   getGuanoMetadata,
   getFileAnnotations,
   putFileAnnotation,

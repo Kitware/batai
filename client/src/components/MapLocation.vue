@@ -21,6 +21,10 @@ export default defineComponent({
       type: Object as PropType<{ x?: number; y?: number } | undefined>,
       default: () => undefined,
     },
+    bbox: {
+      type: Array as unknown as PropType<[number, number, number, number] | null>,
+      default: null,
+    },
     grtsCellId: {
       type: Number,
       default: undefined,
@@ -63,8 +67,35 @@ export default defineComponent({
           position: { bottom: 10, left: 10},
         });
 
+        const drawBbox = (bounds: [number, number, number, number]) => {
+          const [west, south, east, north] = bounds;
+          const data = [
+            { x: west, y: south },
+            { x: east, y: south },
+            { x: east, y: north },
+            { x: west, y: north },
+            { x: west, y: south },
+          ];
+          bboxFeature.value.data([data]).style({
+            stroke: true,
+            strokeWidth: 2,
+            strokeColor: "black",
+            fill: true,
+            fillColor: "orange",
+            fillOpacity: 0.15,
+          }).draw();
+          bboxLayer.value.draw();
+          map.value.center({ x: (west + east) / 2, y: (south + north) / 2 });
+          map.value.zoom(6);
+        };
 
-        if (props.grtsCellId !== undefined) {
+        if (
+          props.bbox
+          && props.bbox.length === 4
+          && props.bbox.every((n) => Number.isFinite(n))
+        ) {
+          drawBbox(props.bbox);
+        } else if (props.grtsCellId !== undefined) {
           const annotation = await getCellBbox(props.grtsCellId);
           const coordinates = annotation.data.geometry.coordinates;
           const data = coordinates.map((point: number[]) => ({ x: point[0], y: point[1] }));
@@ -123,7 +154,36 @@ export default defineComponent({
       }
     });
     watch(() =>  props.updateMap, () => {
-      if (props.location?.x && props.location?.y) {
+      if (
+        props.bbox
+        && props.bbox.length === 4
+        && props.bbox.every((n) => Number.isFinite(n))
+        && bboxFeature.value
+        && map.value
+      ) {
+        const [west, south, east, north] = props.bbox;
+        const data = [
+          { x: west, y: south },
+          { x: east, y: south },
+          { x: east, y: north },
+          { x: west, y: north },
+          { x: west, y: south },
+        ];
+        bboxFeature.value
+          .data([data])
+          .style({
+            stroke: true,
+            strokeWidth: 2,
+            strokeColor: "black",
+            fill: true,
+            fillColor: "orange",
+            fillOpacity: 0.15,
+          })
+          .draw();
+        bboxLayer.value?.draw();
+        map.value.center({ x: (west + east) / 2, y: (south + north) / 2 });
+        map.value.zoom(6);
+      } else if (props.location?.x && props.location?.y) {
             markerLocation.value = { x: props.location?.x, y: props.location.y };
             markerFeature.value
               .data([markerLocation.value])

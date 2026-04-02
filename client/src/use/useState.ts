@@ -115,6 +115,7 @@ const transparencyThreshold = ref(0); // 0-100 percentage
 
 const FILTER_TAG_STORAGE_KEY = 'bataiFilterTags';
 const SHARED_FILTER_TAG_STORAGE_KEY = 'bataiSharedFilterTags';
+const MAP_FILTER_BOUNDS_STORAGE_KEY = 'bataiMapFilterBounds';
 
 const filterTags: Ref<string[]> = ref([]);
 const sharedFilterTags: Ref<string[]> = ref([]);
@@ -225,6 +226,38 @@ export default function useState() {
 
   }
 
+  function saveMapFilterBounds(bounds: [number, number, number, number]) {
+    if (
+      !bounds
+      || bounds.length !== 4
+      || bounds.some((n) => !Number.isFinite(n))
+    ) {
+      return;
+    }
+    localStorage.setItem(MAP_FILTER_BOUNDS_STORAGE_KEY, JSON.stringify(bounds));
+  }
+
+  function clearMapFilterBounds() {
+    localStorage.removeItem(MAP_FILTER_BOUNDS_STORAGE_KEY);
+  }
+
+  function loadMapFilterBounds(): [number, number, number, number] | null {
+    try {
+      const raw = localStorage.getItem(MAP_FILTER_BOUNDS_STORAGE_KEY);
+      if (!raw) return null;
+
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed) || parsed.length !== 4) return null;
+
+      const nums = parsed.map((v) => (typeof v === 'number' ? v : Number(v)));
+      if (nums.some((n) => !Number.isFinite(n))) return null;
+
+      return nums as [number, number, number, number];
+    } catch {
+      return null;
+    }
+  }
+
   return {
     annotationState,
     creationType,
@@ -290,6 +323,9 @@ export default function useState() {
     sharedFilterTags,
     saveFilterTags,
     loadFilterTags,
+    saveMapFilterBounds,
+    clearMapFilterBounds,
+    loadMapFilterBounds,
     spectrogramFilename,
   };
 }
