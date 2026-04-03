@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import contextlib
+from csv import DictReader
+from datetime import date
 import hashlib
 import logging
 import os
-from csv import DictReader
-from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -150,6 +150,7 @@ def _ingest_files_from_manifest(
                 if not object_exists:
                     if not data_dir:
                         logger.warning("Could not HEAD object with key %s. Skipping...", s3_key)
+                        continue
                     else:
                         logger.info(
                             "Could not HEAD object with key %s. Checking local directory %s",
@@ -163,7 +164,9 @@ def _ingest_files_from_manifest(
                     s3_client.download_file(bucket, s3_key, filename)
                     logger.info("Creating recording for %s", s3_key)
                 else:
-                    assert data_dir
+                    if not data_dir:
+                        logger.warning("No local data directory specified. Skipping...")
+                        continue
                     filename = str(data_dir / s3_key)
                     if Path(filename).exists():
                         logger.info("Found local file match for %s.", s3_key)
