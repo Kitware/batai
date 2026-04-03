@@ -820,6 +820,8 @@ def get_spectrogram(request: HttpRequest, pk: int):
 
     spectro_data["annotations"] = annotations_data
     spectro_data["sequence"] = sequence_annotations_data
+    spectro_data["grts_cell_id"] = recording.grts_cell_id
+    spectro_data["sample_frame_id"] = recording.sample_frame_id
     return spectro_data
 
 
@@ -892,6 +894,8 @@ def get_spectrogram_compressed(request: HttpRequest, pk: int):
 
     spectro_data["annotations"] = annotations_data
     spectro_data["sequence"] = sequence_annotations_data
+    spectro_data["grts_cell_id"] = recording.grts_cell_id
+    spectro_data["sample_frame_id"] = recording.sample_frame_id
     return spectro_data
 
 

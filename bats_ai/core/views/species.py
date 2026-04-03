@@ -26,6 +26,7 @@ _SPECIES_SCHEMA_FIELDS = (
     "species",
     "common_name",
     "species_code_6",
+    "category",
     "pk",
 )
 
@@ -37,6 +38,7 @@ class SpeciesSchema(Schema):
     species: str | None
     common_name: str | None
     species_code_6: str | None
+    category: str | None = None
     pk: int | None = None
     in_range: bool | None = None
 
