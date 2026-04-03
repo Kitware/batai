@@ -147,6 +147,9 @@ export interface Spectrogram {
   };
   currentUser?: string;
   otherUsers?: UserInfo[];
+  /** Present on recording spectrogram payloads when the server includes location context. */
+  grts_cell_id?: number | null;
+  sample_frame_id?: number | null;
 }
 
 export type OtherUserAnnotations = Record<
