@@ -12,7 +12,20 @@ import { axiosInstance } from './api/api';
 import { installPrompt } from './use/prompt-service';
 
 const app = createApp(App);
-const Vuetify = createVuetify({});
+const Vuetify = createVuetify({
+  theme: {
+    themes: {
+      light: {
+        colors: {
+          primary: "#1976d2",
+          secondary: "#9c27b0",
+          warning: "#fb8c00",
+          golden: "#b8860b",
+        }
+      }
+    }
+  }
+});
 
 Sentry.init({
   app,

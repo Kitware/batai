@@ -58,21 +58,46 @@ export default defineComponent({
       single: "primary",
       multiple: "secondary",
       frequency: "warning",
+      "suggested species by range location": "success",
       noid: "",
     };
 
+    const categoryPriority: Record<string, number> = {
+      "suggested species by range location": 0,
+      single: 1,
+      multiple: 2,
+      frequency: 3,
+      noid: 4,
+    };
+
+    const inRangeTooltip =
+      "This species is in the same range as the recording.";
+
     const groupedItems = computed(() => {
+      const inRangeSpecies = props.speciesList.filter((s) => s.in_range === true);
+      const rest = props.speciesList.filter((s) => s.in_range !== true);
+
       const groups: Record<string, Species[]> = {};
-      for (const s of props.speciesList) {
+      for (const s of rest) {
         const cat =
           s.category.charAt(0).toUpperCase() + s.category.slice(1);
         if (!groups[cat]) groups[cat] = [];
         groups[cat].push(s);
       }
       const result: Array<
-        { type: "subheader"; title: string } | (Species & { category: string })
+        { type: "subheader"; title: string } | Species
       > = [];
-      const groupsOrder = ["Single", "Multiple", "Frequency", "Noid"];
+      if (inRangeSpecies.length > 0) {
+        result.push({ type: "subheader", title: "Suggested Species by Range Location" });
+        const sortedInRange = [...inRangeSpecies].sort((a, b) => {
+          const aCat = categoryPriority[a.category] ?? 999;
+          const bCat = categoryPriority[b.category] ?? 999;
+          if (aCat !== bCat) return aCat - bCat;
+          return a.species_code.localeCompare(b.species_code);
+        });
+        result.push(...sortedInRange);
+      }
+      const groupsOrder = ["In range", "Single", "Multiple", "Frequency", "Noid"];
       groupsOrder.forEach((key) => {
         result.push({ type: "subheader", title: key });
         result.push(...(groups[key] ?? []));
@@ -115,6 +140,7 @@ export default defineComponent({
       categoryColors,
       speciesAutocomplete,
       onClearOrDeleteClick,
+      inRangeTooltip,
     };
   },
 });
@@ -164,6 +190,7 @@ export default defineComponent({
               ? `bg-${categoryColors[String(subProps.title).toLowerCase()]}`
               : ''
           "
+
         >
           {{ subProps.title }}
         </v-list-subheader>
@@ -183,6 +210,18 @@ export default defineComponent({
             >
               {{ (item.raw as Species).category }}
             </v-chip>
+          </template>
+          <template
+            v-if="(item.raw as Species).in_range === true"
+            #append
+          >
+            <v-icon
+              v-tooltip="inRangeTooltip"
+              size="small"
+              color="#b8860b"
+            >
+              mdi-map
+            </v-icon>
           </template>
         </v-list-item>
       </template>

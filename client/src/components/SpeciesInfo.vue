@@ -74,6 +74,9 @@ export default defineComponent({
 
     const orderedSpecies = ref<Species[]>([]);
 
+    const inRangeTooltip =
+      "This species is in the same range as the recording.";
+
     function sortSpecies(species: Species[], selectedCodes: string[]) {
       const copied = cloneDeep(species);
       copied.sort((a, b) => {
@@ -82,6 +85,11 @@ export default defineComponent({
 
         if (aSelected && !bSelected) return -1;
         if (!aSelected && bSelected) return 1;
+
+        const aIn = a.in_range === true;
+        const bIn = b.in_range === true;
+        if (aIn && !bIn) return -1;
+        if (!aIn && bIn) return 1;
 
         const aCat = categoryPriority[a.category] ?? 999;
         const bCat = categoryPriority[b.category] ?? 999;
@@ -153,6 +161,7 @@ export default defineComponent({
       hasChanges,
       closeDialog,
       saveAndClose,
+      inRangeTooltip,
     };
   },
 });
@@ -217,7 +226,12 @@ export default defineComponent({
             class="elevation-1 my-recordings"
           >
             <template #item="{ item }">
-              <tr :class="item.selected ? 'selected-row' : ''">
+              <tr
+                :class="[
+                  item.selected ? 'selected-row' : '',
+                  item.in_range === true ? 'species-in-range-row' : '',
+                ]"
+              >
                 <td>
                   <v-checkbox
                     :model-value="item.selected"
@@ -227,7 +241,19 @@ export default defineComponent({
                     @update:model-value="toggleSpecies(item.species_code)"
                   />
                 </td>
-                <td>{{ item.species_code }}</td>
+                <td>
+                  <span class="d-inline-flex align-center flex-nowrap ga-1">
+                    <span>{{ item.species_code }}</span>
+                    <v-icon
+                      v-if="item.in_range === true"
+                      v-tooltip="inRangeTooltip"
+                      size="small"
+                      class="species-in-range-map-icon flex-shrink-0"
+                    >
+                      mdi-map
+                    </v-icon>
+                  </span>
+                </td>
                 <td>
                   <span :class="categoryColors[item.category] ? `text-${categoryColors[item.category]}` : ''">
                     {{ item.category.charAt(0).toUpperCase() + item.category.slice(1) }}
@@ -270,9 +296,18 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.selected-row {
+.species-in-range-row:not(.selected-row) {
+  background-color: rgba(212, 175, 55, 0.14);
+}
+.selected-row:not(.species-in-range-row) {
   background-color: rgba(0, 0, 255, 0.05);
-  /* Light blue tint */
+}
+.selected-row.species-in-range-row {
+  background-color: rgba(212, 175, 55, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(25, 118, 210, 0.35);
+}
+.species-in-range-map-icon {
+  color: #b8860b;
 }
 
 .text-primary {
