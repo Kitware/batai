@@ -11,10 +11,10 @@ license-files = ["LICENSE", "NOTICE"]
 classifiers = ["Private :: Do Not Upload"]
 dependencies = [
   # Runtime dependendencies, always needed
-  "celery==5.6.2",
+  "celery==5.6.3",
   "django[argon2]==6.0.3",
   "django-ninja==1.6.2",
-  "django-allauth==65.15.0",
+  "django-allauth==65.15.1",
   "django-auth-style==0.15.0",
   "django-cors-headers==4.9.0",
   "django-environ==0.13.0",
@@ -27,7 +27,7 @@ dependencies = [
   "django-stubs-ext==5.2.9",
   "psycopg[binary]==3.3.3",
   "pydantic==2.12.5",
-  "requests==2.32.5",
+  "requests==2.33.1",
   "rich==14.3.3",
   "whitenoise[brotli]==6.12.0",
   "tqdm==4.67.3",
@@ -37,29 +37,29 @@ dependencies = [
   "guano==1.0.16",
   "django-celery-results==2.6.0",
   # Production-only
-  "sentry-sdk[celery,django,pure_eval]==2.55.0",
-  "gunicorn==25.1.0",
+  "sentry-sdk[celery,django,pure_eval]==2.57.0",
+  "gunicorn==25.3.0",
 ]
 
 [project.optional-dependencies]
 development = [
   "django-browser-reload==1.21.0",
   "django-click==2.5.0",
-  "django-debug-toolbar==6.2.0",
+  "django-debug-toolbar==6.3.0",
   "django-minio-storage==0.5.9",
   "django-resonant-utils[minio_storage]==0.19.0",
   "django-s3-file-field[minio]==1.1.0",
-  "faker==40.11.1",
-  "ipython==9.11.0",
+  "faker==40.12.0",
+  "ipython==9.12.0",
   "watchdog==6.0.0",
-  "werkzeug==3.1.6",
+  "werkzeug==3.1.8",
 ]
 tasks = [
   # Heavy duty dependencies used for computationally
   # intensive tasks, such as spectrogram generation
   "batbot==0.1.3",
-  "Pillow==12.1.1",
-  "numpy==2.4.3",
+  "Pillow==12.2.0",
+  "numpy==2.4.4",
   "scipy==1.17.1",
   "scikit-image==0.26.0",
   "opencv-python-headless==4.13.0.92",

@@ -55,7 +55,7 @@ services:
         condition: service_healthy
 
   client:
-    image: node:24.14.0
+    image: node:24.14.1
     working_dir: /app
     command: >
       sh -c "
