@@ -10,7 +10,7 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.db import migrations, models
 import django.db.models.deletion
 
-DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai/core/data/species.geojson"
+DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai" / "core" / "data" / "species.geojson"
 
 
 def load_species_ranges_from_default_geojson(apps, schema_editor) -> None:
