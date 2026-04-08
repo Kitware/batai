@@ -52,7 +52,7 @@ class Command(BaseCommand):
                 'Expected a GeoJSON FeatureCollection ("type": "FeatureCollection").'
             )
 
-        features = doc.get("features") or []
+        features = doc.get("features", [])
         if not features:
             raise CommandError("No features in FeatureCollection.")
 
