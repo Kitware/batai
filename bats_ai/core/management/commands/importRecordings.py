@@ -163,7 +163,7 @@ class Command(BaseCommand):
                 species_list_str = None
                 if metadata.get("nabat_species_list"):
                     species_list_str = ",".join(metadata["nabat_species_list"])
-
+                sample_frame_id = metadata.get("nabat_sample_frame_id")
                 # Create recording
                 self.stdout.write("  Creating recording...")
                 with open(wav_file, "rb") as f:
@@ -175,6 +175,7 @@ class Command(BaseCommand):
                         recorded_time=recorded_time,
                         equipment=None,  # Not in GUANO metadata
                         grts_cell_id=grts_cell_id,
+                        sample_frame_id=sample_frame_id,
                         recording_location=point,
                         public=is_public,
                         comments=metadata.get("nabat_comments"),

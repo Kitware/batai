@@ -18,6 +18,7 @@ from .recording_annotations import RecordingAnnotationAdmin
 from .recording_tag import RecordingTagAdmin
 from .sequence_annotations import SequenceAnnotationsAdmin
 from .species import SpeciesAdmin
+from .species_range import SpeciesRangeAdmin
 from .spectrogram import SpectrogramAdmin
 from .spectrogram_image import SpectrogramImageAdmin
 from .user import UserAdmin
@@ -41,6 +42,7 @@ __all__ = [
     "RecordingTagAdmin",
     "SequenceAnnotationsAdmin",
     "SpeciesAdmin",
+    "SpeciesRangeAdmin",
     "SpectrogramAdmin",
     "SpectrogramImageAdmin",
     "UserAdmin",

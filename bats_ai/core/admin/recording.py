@@ -30,7 +30,7 @@ class RecordingAdmin(admin.ModelAdmin):
         "comments",
         "recording_location",
         "grts_cell_id",
-        "grts_cell",
+        "sample_frame_id",
         "site_name",
         "detector",
         "software",

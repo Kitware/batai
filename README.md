@@ -190,10 +190,18 @@ on all pipelines for new MRs.  The automated checks in GitLab are optional, but
 it is highly recommended to perform these checks locally prior to pushing new
 commits.
 
-
-
 ### Spectrogram contours
 
-Spectrogram processing tasks honor `DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS` environment variable. 
+Spectrogram processing tasks honor `DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS` environment variable.
 Set to `False` by default so workers skip contour extraction (less DB storage space); set to `True` if you need
 contours in the UI (UI for contours currently disabled due to performance)
+
+### Species Suggestions by Range
+
+The suggested species for a given location are determined by spatial data stored in `/bats_ai/core/data/species-range.geojson`.
+As part of the default migrations this data is ingested into the SpeciesRange database and used for determining suggested
+species based on  a Recording (internal GRTS_Cell_ID and sample_frame_id).
+The if the same species is found multiple times in the geojson the last geometry will be used.
+In the future if species-ranges change the managment command of `./manage.py load_species_geojson [optional Geojson Path]`
+can be used to reload the default species-range.geojson
+if no path is provided or a new one and will update/replace any previous data.

@@ -12,6 +12,7 @@ from .recording_annotation import RecordingAnnotation
 from .recording_annotation_status import RecordingAnnotationStatus
 from .sequence_annotations import SequenceAnnotations
 from .species import Species
+from .species_range import SpeciesRange
 from .spectrogram import Spectrogram
 from .spectrogram_image import SpectrogramImage
 from .user_profile import UserProfile
@@ -32,6 +33,7 @@ __all__ = [
     "RecordingTag",
     "SequenceAnnotations",
     "Species",
+    "SpeciesRange",
     "Spectrogram",
     "SpectrogramImage",
     "UserProfile",

@@ -18,7 +18,7 @@ export interface Recording {
   comments?: string;
   recording_location?: null | GeoJSON.Point;
   grts_cell_id?: null | number;
-  grts_cell?: null | number;
+  sample_frame_id?: null | number;
   public: boolean;
   userMadeAnnotations: boolean;
   userAnnotations: number;
@@ -142,6 +142,9 @@ export interface Spectrogram {
   };
   currentUser?: string;
   otherUsers?: UserInfo[];
+  /** Present on recording spectrogram payloads when the server includes location context. */
+  grts_cell_id?: number | null;
+  sample_frame_id?: number | null;
 }
 
 export type OtherUserAnnotations = Record<

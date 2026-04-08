@@ -46,6 +46,7 @@ def extract_metadata_from_filename(filename: str) -> dict:
         return {}
 
     # Extract matched groups
+    sample_id = match.group(0)
     cell_id = match.group(1)
     label_name = match.group(2)
     date_str = match.group(3)
@@ -57,6 +58,7 @@ def extract_metadata_from_filename(filename: str) -> dict:
     if cell_id:
         with contextlib.suppress(ValueError):
             metadata["nabat_grid_cell_grts_id"] = str(int(cell_id))
+            metadata["nabat_sample_id"] = sample_id
 
     # Extract date and time
     if date_str and len(date_str) == 8 and timestamp_str and len(timestamp_str) == 6:
