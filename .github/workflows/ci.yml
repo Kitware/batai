@@ -3,12 +3,12 @@ on:
   pull_request:
   push:
     branches:
-      - "main"
+      - main
 permissions:
   contents: read
 jobs:
   lint-client:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -26,7 +26,7 @@ jobs:
         working-directory: client
   test-python:
     name: Test Python
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgis/postgis:latest
@@ -49,7 +49,7 @@ jobs:
           - 5672:5672
       minio:
         # This image does not require any command arguments (which GitHub Actions don't support)
-        image: bitnamilegacy/minio:2025.7.23
+        image: bitnamilegacy/minio:latest
         env:
           MINIO_ROOT_USER: minioAccessKey
           MINIO_ROOT_PASSWORD: minioSecretKey
@@ -60,17 +60,16 @@ jobs:
           --health-start-interval 2s
         ports:
           - 9000:9000
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Install uv
         uses: astral-sh/setup-uv@v7
-
       - name: Run tests
-        run: uv run tox
+        run: |
+          uv run tox
         env:
           DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
           DJANGO_CELERY_BROKER_URL: amqp://localhost:5672/
-          DJANGO_MINIO_STORAGE_URL: http://minioAccessKey:minioSecretKey@localhost:9000/django-storage-testing
+          DJANGO_MINIO_STORAGE_URL: http://minioAccessKey:minioSecretKey@localhost:9000/django-storage
           DJANGO_BATAI_WEB_URL: http://localhost:8080/
