@@ -15,6 +15,5 @@ class SpeciesRange(models.Model):
     source_feature_id = models.CharField(
         max_length=255,
         blank=True,
-        null=True,
         help_text="Optional id from the source GeoJSON feature properties.",
     )

@@ -11,7 +11,9 @@ from bats_ai.core.models import Species, SpeciesRange
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_GEOJSON = Path(__file__).resolve().parents[2] / "data" / "species.geojson"
+from django.conf import settings
+
+DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai/core/data/species.geojson"
 
 
 class Command(BaseCommand):
@@ -99,7 +101,7 @@ class Command(BaseCommand):
                 continue
 
             fid = props.get("id")
-            source_feature_id = str(fid) if fid is not None else None
+            source_feature_id = str(fid) if fid is not None else ""
 
             SpeciesRange.objects.update_or_create(
                 species=species,
