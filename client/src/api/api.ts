@@ -39,6 +39,10 @@ export type RecordingLocationsFeatureProperties = {
 
 export type RecordingLocationsGeoJson = FeatureCollection<Point, RecordingLocationsFeatureProperties>;
 
+export interface SpeciesResponse {
+  items: Species[];
+  count: number;
+}
 export interface Species {
   species_code: string;
   family: string;
@@ -48,6 +52,7 @@ export interface Species {
   species?: string;
   id: number;
   category: "single" | "multiple" | "frequency" | "noid";
+  in_range?: boolean;
 }
 
 export interface SpectrogramAnnotation {
@@ -408,8 +413,8 @@ async function getSequenceAnnotations(recordingId: string) {
   );
 }
 
-async function getSpecies() {
-  return axiosInstance.get<Species[]>("/species/");
+async function getSpecies({recordingId, grtsCellId, sampleFrameId}: {recordingId?: number, grtsCellId?: number, sampleFrameId?: number}) {
+  return axiosInstance.get<SpeciesResponse>("/species/", { params: { recording_id: recordingId, grts_cell_id: grtsCellId, sample_frame_id: sampleFrameId } });
 }
 
 async function patchAnnotation(

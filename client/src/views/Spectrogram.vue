@@ -228,9 +228,9 @@ export default defineComponent({
       if (spectrogramData.value.currentUser) {
         currentUser.value = spectrogramData.value.currentUser;
       }
-      const speciesResponse = await getSpecies();
+      const speciesResponse = await getSpecies({ recordingId: parseInt(props.id) });
       // Removing NOISE species from list and any duplicates
-      speciesList.value = speciesResponse.data .filter(
+      speciesList.value = speciesResponse.data.items.filter(
         (value, index, self) => index === self.findIndex((t) => t.species_code === value.species_code)
       );
       if (spectrogramData.value.otherUsers && spectroInfo.value) {
