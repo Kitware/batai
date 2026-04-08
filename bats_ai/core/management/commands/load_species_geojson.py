@@ -13,7 +13,7 @@ from bats_ai.core.models import Species, SpeciesRange
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai" / "core" / "data" / "species.geojson"
+DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai" / "core" / "data" / "species-ranges.geojson"
 
 
 class Command(BaseCommand):
