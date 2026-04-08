@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 from django.conf import settings
 
-DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai/data/species.geojson"
+DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai/core/data/species.geojson"
 
 
 class Command(BaseCommand):
