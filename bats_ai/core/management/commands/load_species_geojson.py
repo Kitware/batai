@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand, CommandError
 
@@ -11,7 +12,6 @@ from bats_ai.core.models import Species, SpeciesRange
 
 logger = logging.getLogger(__name__)
 
-from django.conf import settings
 
 DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai/core/data/species.geojson"
 
