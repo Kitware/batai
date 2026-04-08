@@ -19,6 +19,9 @@ from bats_ai.core.models import GRTSCells, Recording, Species, SpeciesRange
 
 router = RouterPaginated()
 
+# Continental US sample frame ID, defaulting to CONUS GRTS when not specified.
+CONUS_SAMPLE_FRAME_ID = 14
+
 _SPECIES_SCHEMA_FIELDS = (
     "species_code",
     "family",
@@ -73,7 +76,7 @@ def _species_values_qs(qs):
 def get_species(
     request: HttpRequest,
     grts_cell_id: int | None = Query(None),
-    sample_frame_id: int = Query(14),
+    sample_frame_id: int = Query(CONUS_SAMPLE_FRAME_ID),
     recording_id: int | None = Query(None),
 ):
     if recording_id is not None:
@@ -82,7 +85,11 @@ def get_species(
             pk=recording_id,
         )
         grts_cell_id = recording.grts_cell_id
-        sample_frame_id = recording.sample_frame_id if recording.sample_frame_id is not None else 14
+        sample_frame_id = (
+            recording.sample_frame_id
+            if recording.sample_frame_id is not None
+            else CONUS_SAMPLE_FRAME_ID
+        )
 
     null_in_range = Value(None, output_field=BooleanField(null=True))
 
