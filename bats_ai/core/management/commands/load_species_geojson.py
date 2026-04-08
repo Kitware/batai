@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 from pathlib import Path
 
 from django.conf import settings
@@ -9,9 +8,6 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand, CommandError
 
 from bats_ai.core.models import Species, SpeciesRange
-
-logger = logging.getLogger(__name__)
-
 
 DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai" / "core" / "data" / "species-ranges.geojson"
 
@@ -81,11 +77,7 @@ class Command(BaseCommand):
                 errors.append(f"Feature {i} ({code}): missing geometry")
                 continue
 
-            try:
-                geom = GEOSGeometry(json.dumps(geom_json))
-            except Exception as e:
-                errors.append(f"Feature {i} ({code}): invalid geometry: {e}")
-                continue
+            geom = GEOSGeometry(json.dumps(geom_json))
 
             if geom.srid in (None, 0):
                 geom.srid = 4326
@@ -96,7 +88,6 @@ class Command(BaseCommand):
             if species is None:
                 skipped_unknown += 1
                 warning_str = f"No Species with species_code matching {code} (feature {i})"
-                logger.warning(warning_str)
                 errors.append(warning_str)
                 continue
 
