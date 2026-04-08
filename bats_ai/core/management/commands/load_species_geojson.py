@@ -11,7 +11,9 @@ from bats_ai.core.models import Species, SpeciesRange
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_GEOJSON = Path(__file__).resolve().parents[2] / "data" / "species.geojson"
+from django.conf import settings
+
+DEFAULT_GEOJSON = settings.BASE_DIR / "bats_ai / "data" / "species.geojson"
 
 
 class Command(BaseCommand):
