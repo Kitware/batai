@@ -49,6 +49,8 @@ def load_species_ranges_from_default_geojson(apps, schema_editor) -> None:
 
         fid = props.get("id")
         source_feature_id = str(fid) if fid is not None else ""
+        # If the same species is already in the SpeciesRange table,
+        # update its geometry and source_feature_id to use the last in the array
         SpeciesRange.objects.update_or_create(
             species=species,
             defaults={

@@ -34,6 +34,10 @@ class SpeciesSchema(Schema):
     species_code_6: str | None
     category: str | None = None
     pk: int | None = None
+    # in_range indicates whether the species' range intersects the specified GRTS cell Id
+    # True: if grts_cell_id geometry exists and intercepts the species range geometry
+    # False: if grts_cell_id geometry exists but does not intersect the species range
+    # None: if grts_cell_id geometry does not exist
     in_range: bool | None = None
 
 
