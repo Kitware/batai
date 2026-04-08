@@ -6,7 +6,6 @@ from django.db.models import (
     BooleanField,
     Case,
     Exists,
-    F,
     OuterRef,
     Value,
     When,
@@ -61,7 +60,6 @@ def get_species(
 
     if grts_cell_id is None:
         qs = Species.objects.annotate(
-            pk=F("id"),
             in_range=null_in_range,
         )
     else:
@@ -76,7 +74,6 @@ def get_species(
         )
         if cell_geom is None:
             qs = Species.objects.annotate(
-                pk=F("id"),
                 in_range=null_in_range,
             )
         else:
@@ -85,10 +82,9 @@ def get_species(
                 geom__intersects=cell_geom,
             )
             qs = Species.objects.annotate(
-                pk=F("id"),
                 in_range=Case(
                     When(Exists(overlaps_cell), then=Value(True)),
-                    default=null_in_range,
+                    default=False,
                     output_field=BooleanField(null=True),
                 ),
             )
