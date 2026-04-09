@@ -120,7 +120,7 @@ export default defineComponent({
         spectroInfo.value.end_times = response.data.compressed.end_times;
         viewCompressedOverlay.value = false;
       }
-      const speciesResponse = await getSpecies({recordingId: parseInt(props.id)});
+      const speciesResponse = await getSpecies({ recordingId: parseInt(props.id) });
       // Removing NOISE species from list and any duplicates
       speciesList.value = speciesResponse.data.items.filter(
         (value, index, self) => value.species_code !== "NOISE" && index === self.findIndex((t) => t.species_code === value.species_code)
