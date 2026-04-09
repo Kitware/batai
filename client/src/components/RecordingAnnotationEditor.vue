@@ -79,10 +79,12 @@ export default defineComponent({
             speciesEdit.value.forEach((item) => {
                 const found = props.species.find((specie) => specie.species_code === item);
                 if (found) {
-                  speciesIds.push(found.id);
+                  speciesIds.push(found.pk);
                 }
             });
-
+            console.log("speciesEdit", speciesEdit.value);
+            console.log("speciesIds", speciesIds);
+            console.log("props.species", props.species);
             const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
               recordingId: props.recordingId,
               comments: comments.value,
