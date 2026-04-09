@@ -11,15 +11,14 @@ from django.db.models import (
     When,
 )
 from django.shortcuts import get_object_or_404
-from ninja import Query, Schema
-from ninja.pagination import RouterPaginated
+from ninja import Query, Router, Schema
 
 from bats_ai.core.models import GRTSCells, Recording, Species, SpeciesRange
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
-router = RouterPaginated()
+router = Router()
 
 # Continental US sample frame ID, defaulting to CONUS GRTS when not specified.
 CONUS_SAMPLE_FRAME_ID = 14
