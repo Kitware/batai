@@ -190,7 +190,6 @@ export default defineComponent({
               ? `bg-${categoryColors[String(subProps.title).toLowerCase()]}`
               : ''
           "
-
         >
           {{ subProps.title }}
         </v-list-subheader>
