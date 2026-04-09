@@ -230,7 +230,7 @@ export default defineComponent({
       }
       const speciesResponse = await getSpecies({ recordingId: parseInt(props.id) });
       // Removing NOISE species from list and any duplicates
-      speciesList.value = speciesResponse.data.items.filter(
+      speciesList.value = speciesResponse.data.filter(
         (value, index, self) => index === self.findIndex((t) => t.species_code === value.species_code)
       );
       if (spectrogramData.value.otherUsers && spectroInfo.value) {

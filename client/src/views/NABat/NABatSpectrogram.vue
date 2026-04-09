@@ -122,7 +122,7 @@ export default defineComponent({
       }
       const speciesResponse = await getSpecies({ recordingId: parseInt(props.id) });
       // Removing NOISE species from list and any duplicates
-      speciesList.value = speciesResponse.data.items.filter(
+      speciesList.value = speciesResponse.data.filter(
         (value, index, self) => value.species_code !== "NOISE" && index === self.findIndex((t) => t.species_code === value.species_code)
       );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
