@@ -137,7 +137,7 @@ export default defineComponent({
             <v-radio
               v-for="species in filteredSpecies"
               :key="species.species_code"
-              :value="species.id"
+              :value="species.pk"
               style="border: 1px solid black"
             >
               <template #label>
