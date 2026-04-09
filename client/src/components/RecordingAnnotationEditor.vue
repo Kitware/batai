@@ -82,9 +82,6 @@ export default defineComponent({
                   speciesIds.push(found.pk);
                 }
             });
-            console.log("speciesEdit", speciesEdit.value);
-            console.log("speciesIds", speciesIds);
-            console.log("props.species", props.species);
             const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
               recordingId: props.recordingId,
               comments: comments.value,
