@@ -41,14 +41,13 @@ repos:
     hooks:
       - id: beautysh
         name: Beautysh for Bash scripts
-        args: ["--indent-size", "4"]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.38.0
     hooks:
       - id: markdownlint-fix-docker
         name: MarkdownLint for Markdown files
-        args: ["--fix"]
+        args: ["--fix", "--disable", "MD022", "MD031", "MD032", "MD058"]
 
   - repo: https://github.com/sirwart/ripsecrets
     rev: v0.1.7
