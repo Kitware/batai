@@ -5,6 +5,13 @@ import Vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vite";
 import Vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 
+// Build sanity check, to ensure environment is defined;
+// this will not load from .env files (unless we used a different Vite syntax),
+// but we set VITE_APP_API_ROOT at the process level.
+if (!process.env.VITE_APP_API_ROOT) {
+  throw new Error("VITE_APP_API_ROOT must be defined.");
+}
+
 const subpath = process.env.VITE_APP_SUBPATH || "/";
 
 export default defineConfig({
@@ -39,12 +46,6 @@ export default defineConfig({
   },
   server: {
     port: 8080,
-    proxy: {
-      "/api": {
-        target: `http://localhost:8000`,
-        xfwd: true,
-      },
-    },
     strictPort: true,
   },
   preview: {
