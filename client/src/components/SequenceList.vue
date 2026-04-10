@@ -1,7 +1,7 @@
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
-import { SpectroInfo } from './geoJS/geoJSUtils';
-import { SpectrogramSequenceAnnotation } from "../api/api";
+import { defineComponent, type PropType } from "vue";
+import type { SpectroInfo } from './geoJS/geoJSUtils';
+import type { SpectrogramSequenceAnnotation } from "../api/api";
 import useState from "@use/useState";
 import { watch } from "vue";
 

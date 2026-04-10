@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref, Ref, } from 'vue';
+import { defineComponent, ref, type Ref, } from 'vue';
 import NABatAdminUpdateSpecies from '@components/NABat/NABatAdminUpdateSpecies.vue';
 import NABatAdminBrowser from '@components/NABat/NABatAdminBrowser.vue';
 

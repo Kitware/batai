@@ -1,4 +1,4 @@
-import { ref, Ref } from "vue";
+import { ref, type Ref } from "vue";
 import geo from "geojs";
 
 const annotationSpreadAcrossPulsesWarning = 'Start or End Time spread across pulses.  This is not allowed in compressed annotations';
@@ -399,7 +399,7 @@ const useGeoJS = () => {
   };
 };
 
-import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
+import type { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
 
 export interface SpectroInfo {
   spectroId: number;

@@ -1,7 +1,7 @@
-import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
-import { SpectroInfo, spectroSequenceToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
+import type { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
+import { type SpectroInfo, spectroSequenceToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
-import { LayerStyle } from "./types";
+import type { LayerStyle } from "./types";
 
 interface LineData {
   line: GeoJSON.LineString;

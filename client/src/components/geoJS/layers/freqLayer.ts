@@ -1,7 +1,7 @@
-import { SpectrogramAnnotation } from "../../../api/api";
-import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
+import type { SpectrogramAnnotation } from "../../../api/api";
+import { type SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
-import { LayerStyle, LineData, TextData } from "./types";
+import type { LayerStyle, LineData, TextData } from "./types";
 
 export default class FreqLayer extends BaseTextLayer<TextData> {
   lineData: LineData[];

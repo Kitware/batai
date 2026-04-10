@@ -1,34 +1,28 @@
 name: CI
 on:
   pull_request:
-    # types: [opened, synchronize]
-    # TODO: why is this here?
   push:
     branches:
       - "main"
 permissions:
   contents: read
 jobs:
-  lint-node:
-    strategy:
-      fail-fast: false
-      matrix:
-        linter: [eslint, typescript]
-    name: Lint [${{ matrix.linter }}]
+  lint-client:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-      - name: Setup Node environment
+      - name: Install npm
         uses: actions/setup-node@v6
         with:
+          node-version: 24.14.0
           cache: npm
           cache-dependency-path: client/package-lock.json
       - name: Install packages
         run: npm ci
         working-directory: client
-      - name: Run ${{ matrix.linter }}
-        run: npm run lint:${{ matrix.linter }}
+      - name: Run client tests
+        run: npm run test
         working-directory: client
   test-python:
     name: Test Python

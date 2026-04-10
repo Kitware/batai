@@ -1,7 +1,7 @@
 <script lang="ts">
-import { computed, defineComponent, onMounted, PropType, Ref, watch } from "vue";
+import { computed, defineComponent, onMounted, type PropType, type Ref, watch } from "vue";
 import { ref } from "vue";
-import { FileAnnotation, getFileAnnotations, putFileAnnotation, Species, UpdateFileAnnotation } from "@api/api";
+import { type FileAnnotation, getFileAnnotations, putFileAnnotation, type Species, type UpdateFileAnnotation } from "@api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
 import { getNABatRecordingFileAnnotations, putNABatFileAnnotation } from "@api/NABatApi";
 import RecordingAnnotationDetails from "./RecordingAnnotationDetails.vue";

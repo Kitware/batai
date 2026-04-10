@@ -1,5 +1,5 @@
-import { SpectroInfo } from '../geoJSUtils';
-import {
+import type { SpectroInfo } from '../geoJSUtils';
+import type {
   ComputedPulseContour,
   Contour,
 } from '@api/api';

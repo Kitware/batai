@@ -1,4 +1,4 @@
-import { createApp, App, inject } from 'vue';
+import { createApp, type App, inject } from 'vue';
 import { createVuetify } from 'vuetify';
 import Prompt from './Prompt.vue';
 

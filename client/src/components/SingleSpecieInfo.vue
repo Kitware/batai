@@ -1,6 +1,6 @@
 <script lang="ts">
-import { computed, defineComponent, PropType, ref, watch } from "vue";
-import { Species } from "../api/api";
+import { computed, defineComponent, type PropType, ref, watch } from "vue";
+import type { Species } from "../api/api";
 import { cloneDeep } from "lodash";
 
 export default defineComponent({

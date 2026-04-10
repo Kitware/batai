@@ -1,6 +1,6 @@
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
-import { FileAnnotation } from "../api/api";
+import { defineComponent, type PropType } from "vue";
+import type { FileAnnotation } from "../api/api";
 export default defineComponent({
   name: "AnnotationList",
   components: {

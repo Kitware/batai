@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
     "preview": "vite preview",
+    "build": "vite build",
     "format": "eslint --fix src",
-    "lint:eslint": "eslint src",
-    "lint": "eslint src && vue-tsc --noEmit",
-    "lint:typescript": "vue-tsc --noEmit"
+    "test:lint": "eslint --no-fix src",
+    "test:type": "vue-tsc --build",
+    "test": "npm-run-all test:lint test:type"
   },
   "dependencies": {
     "@jamescoyle/vue-icon": "0.1.2",
@@ -31,12 +31,16 @@
   },
   "devDependencies": {
     "@sentry/vite-plugin": "5.1.1",
+    "@tsconfig/node24": "^24.0.4",
     "@types/geojson": "7946.0.16",
     "@types/lodash": "4.17.24",
+    "@types/node": "^25.5.0",
     "@vitejs/plugin-vue": "6.0.5",
     "@vue/eslint-config-typescript": "14.7.0",
+    "@vue/tsconfig": "^0.9.0",
     "eslint": "10.1.0",
     "eslint-plugin-vue": "10.8.0",
+    "npm-run-all2": "^8.0.4",
     "sass-embedded": "1.98.0",
     "typescript": "5.9.3",
     "vite": "8.0.3",

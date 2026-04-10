@@ -4,7 +4,7 @@ import {
   defineComponent,
   onMounted,
   onUnmounted,
-  Ref,
+  type Ref,
   ref,
   watch,
 } from "vue";
@@ -13,15 +13,15 @@ import {
   getSpecies,
   getAnnotations,
   getSpectrogram,
-  Species,
-  Spectrogram,
+  type Species,
+  type Spectrogram,
   getSpectrogramCompressed,
   getOtherUserAnnotations,
   getSequenceAnnotations,
   getUnsubmittedNeighbors,
 } from "../api/api";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
-import { SpectroInfo } from "@components/geoJS/geoJSUtils";
+import type { SpectroInfo } from "@components/geoJS/geoJSUtils";
 import AnnotationList from "@components/AnnotationList.vue";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import RecordingList from "@components/RecordingList.vue";

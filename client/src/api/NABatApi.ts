@@ -1,4 +1,4 @@
-import { axiosInstance, FileAnnotation, FileAnnotationDetails, ProcessingTask, Spectrogram, UpdateFileAnnotation } from "./api";
+import { axiosInstance, type FileAnnotation, type FileAnnotationDetails, type ProcessingTask, type Spectrogram, type UpdateFileAnnotation } from "./api";
 
 export interface NABatRecordingCompleteResponse {
     error?: string;

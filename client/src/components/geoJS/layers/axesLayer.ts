@@ -1,6 +1,6 @@
-import { SpectroInfo } from "../geoJSUtils";
+import type { SpectroInfo } from "../geoJSUtils";
 import geo from "geojs";
-import { LayerStyle, TextData } from "./types";
+import type { LayerStyle, TextData } from "./types";
 import BaseTextLayer from "./baseTextLayer";
 
 type LabelCategory = 'time' | 'frequency';

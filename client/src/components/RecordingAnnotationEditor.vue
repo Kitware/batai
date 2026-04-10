@@ -1,12 +1,12 @@
 <script lang="ts">
-import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
-import { SpectroInfo } from './geoJS/geoJSUtils';
+import { computed, defineComponent, type PropType, ref, type Ref, watch } from "vue";
+import type { SpectroInfo } from './geoJS/geoJSUtils';
 import {
   deleteFileAnnotation,
-  FileAnnotation,
+  type FileAnnotation,
   patchFileAnnotation,
-  Species,
-  UpdateFileAnnotation,
+  type Species,
+  type UpdateFileAnnotation,
   submitFileAnnotation,
 } from "../api/api";
 import { deleteNABatFileAnnotation, patchNABatFileAnnotationLocal } from "../api/NABatApi";

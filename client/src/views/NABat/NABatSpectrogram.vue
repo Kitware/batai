@@ -2,20 +2,20 @@
 import {
   defineComponent,
   onMounted,
-  Ref,
+  type Ref,
   ref,
   watch,
 } from "vue";
 import {
   getSpecies,
-  Species,
+  type Species,
 } from "@api/api";
 import {
   getNABatSpectrogram,
   getNABatSpectrogramCompressed,
 } from "@api/NABatApi";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
-import { SpectroInfo } from "@components/geoJS/geoJSUtils";
+import type { SpectroInfo } from "@components/geoJS/geoJSUtils";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import useState from "@use/useState";
 import ColorSchemeDialog from "@components/ColorSchemeDialog.vue";

@@ -1,15 +1,15 @@
 <script lang="ts">
 import {
   defineComponent,
-  PropType,
+  type PropType,
   computed,
   ref,
   watch,
-  Ref,
+  type Ref,
   onMounted,
   onUnmounted,
 } from "vue";
-import { Species } from "@api/api";
+import type { Species } from "@api/api";
 import SingleSpecieInfo from "./SingleSpecieInfo.vue";
 
 export default defineComponent({

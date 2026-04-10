@@ -1,7 +1,7 @@
-import { SpectrogramAnnotation } from "../../../api/api";
-import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
+import type { SpectrogramAnnotation } from "../../../api/api";
+import { type SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
-import { LayerStyle } from "./types";
+import type { LayerStyle } from "./types";
 
 interface TextData {
   text: string;

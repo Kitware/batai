@@ -1,7 +1,7 @@
 <script lang="ts">
-import { computed, defineComponent, ref, Ref, onMounted, watch } from 'vue';
-import { deleteRecording, Recording, getRecordingTags } from '../api/api';
-import UploadRecording, { EditingRecording } from '@components/UploadRecording.vue';
+import { computed, defineComponent, ref, type Ref, onMounted, watch } from 'vue';
+import { deleteRecording, type Recording, getRecordingTags } from '../api/api';
+import UploadRecording, { type EditingRecording } from '@components/UploadRecording.vue';
 import useState from '@use/useState';
 import BatchUploadRecording from '@components/BatchUploadRecording.vue';
 import RecordingTable from '@components/RecordingTable.vue';

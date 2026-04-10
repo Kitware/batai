@@ -1,6 +1,6 @@
 import axios from "axios";
 import { AxiosError } from "axios";
-import { SpectroInfo } from "@components/geoJS/geoJSUtils";
+import type { SpectroInfo } from "@components/geoJS/geoJSUtils";
 import type { FeatureCollection, Point } from "geojson";
 
 export interface Recording {
