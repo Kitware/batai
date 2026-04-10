@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
     "preview": "vite preview",
+    "build": "vite build",
     "format": "eslint --fix src",
     "lint:eslint": "eslint src",
     "lint": "eslint src && vue-tsc --noEmit",
