@@ -1,5 +1,5 @@
-import { SpectroInfo } from "../geoJSUtils";
-import { LayerStyle } from "./types";
+import type { SpectroInfo } from "../geoJSUtils";
+import type { LayerStyle } from "./types";
 
 interface RectCompressedGeoJSData {
   polygon: GeoJSON.Polygon;

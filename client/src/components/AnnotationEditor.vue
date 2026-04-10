@@ -1,7 +1,7 @@
 <script lang="ts">
-import { computed, defineComponent, PropType, ref, Ref, watch } from "vue";
-import { SpectroInfo } from './geoJS/geoJSUtils';
-import { deleteAnnotation, deleteSequenceAnnotation, patchAnnotation, patchSequenceAnnotation, Species, SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../api/api";
+import { computed, defineComponent, type PropType, ref, type Ref, watch } from "vue";
+import type { SpectroInfo } from './geoJS/geoJSUtils';
+import { deleteAnnotation, deleteSequenceAnnotation, patchAnnotation, patchSequenceAnnotation, type Species, type SpectrogramAnnotation, type SpectrogramSequenceAnnotation } from "../api/api";
 import useState from "@use/useState";
 import SpeciesInfo from "./SpeciesInfo.vue";
 export default defineComponent({

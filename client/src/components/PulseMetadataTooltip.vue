@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, nextTick, PropType, ref, watch } from "vue";
+import { defineComponent, nextTick, type PropType, ref, watch } from "vue";
 import type { PulseMetadataTooltipData } from "./geoJS/layers/pulseMetadataLayer";
 
 const MIN_WIDTH = 180;

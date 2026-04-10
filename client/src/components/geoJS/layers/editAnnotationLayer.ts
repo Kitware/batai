@@ -1,16 +1,16 @@
 /*eslint class-methods-use-this: "off"*/
-import geo, { GeoEvent } from "geojs";
+import geo, { type GeoEvent } from "geojs";
 import {
-  SpectroInfo,
+  type SpectroInfo,
   spectroToGeoJSon,
   reOrdergeoJSON,
   spectroSequenceToGeoJSon,
   rectVertex,
   rectEdge,
 } from "../geoJSUtils";
-import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
-import { LayerStyle, RectGeoJSData, EditAnnotationTypes } from "./types";
-import { GeoJSON } from 'geojson';
+import type { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
+import { type LayerStyle, type EditAnnotationTypes, type RectGeoJSData } from "./types";
+import type { GeoJSON } from 'geojson';
 
 const typeMapper = new Map([
   ["LineString", "line"],

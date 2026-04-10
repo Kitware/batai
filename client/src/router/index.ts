@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteLocationNormalized } from 'vue-router';
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router';
 import HelpPage from '../views/HelpPage.vue';
 import Recordings from '../views/Recordings.vue';
 import Spectrogram from '../views/Spectrogram.vue';

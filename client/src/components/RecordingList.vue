@@ -1,8 +1,8 @@
 <script lang="ts">
-import { defineComponent, ref, Ref, onMounted, computed, watch, CSSProperties } from 'vue';
-import { FileAnnotation, getRecordings, Recording, Species, type RecordingListParams } from '../api/api';
+import { defineComponent, ref, type Ref, onMounted, computed, watch, type CSSProperties } from 'vue';
+import { type FileAnnotation, getRecordings, type Recording, type Species, type RecordingListParams } from '../api/api';
 import useState from '@use/useState';
-import  { EditingRecording } from './UploadRecording.vue';
+import  { type EditingRecording } from './UploadRecording.vue';
 
 export default defineComponent({
   setup() {

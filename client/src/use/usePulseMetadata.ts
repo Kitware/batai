@@ -1,5 +1,5 @@
-import { ref, Ref, watch } from "vue";
-import { getPulseMetadata, PulseMetadata } from "../api/api";
+import { ref, type Ref, watch } from "vue";
+import { getPulseMetadata, type PulseMetadata } from "../api/api";
 
 const STORAGE_KEY = "pulseMetadata";
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, Ref, watch} from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, type Ref, watch} from 'vue';
 import { getProcessingTaskDetails } from '@api/api';
-import { NABatRecordingDataResponse, postNABatRecording } from '@api/NABatApi';
+import { type NABatRecordingDataResponse, postNABatRecording } from '@api/NABatApi';
 import { useRouter } from 'vue-router';
 import { usePrompt } from '@use/prompt-service';
 import { useJWTToken } from '@use/useJWTToken';

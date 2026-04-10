@@ -2,13 +2,13 @@
 import {
   computed,
   defineComponent,
-  PropType,
+  type PropType,
   ref,
-  Ref,
+  type Ref,
 } from 'vue';
 import { RecordingMimeTypes } from '../constants';
 import useRequest from '@use/useRequest';
-import { UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, RecordingFileParameters } from '../api/api';
+import { type UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, type RecordingFileParameters } from '../api/api';
 import MapLocation from './MapLocation.vue';
 import { useDate } from 'vuetify';
 import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';

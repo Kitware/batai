@@ -1,11 +1,11 @@
 <script lang="ts">
-import { defineComponent, nextTick, onMounted, onUnmounted, PropType, Ref, ref, watch } from "vue";
+import { defineComponent, nextTick, onMounted, onUnmounted, type PropType, type Ref, ref, watch } from "vue";
 import * as d3 from "d3";
-import { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
+import type { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
 import {
   annotationSpreadAcrossPulsesWarning,
   geojsonToSpectro,
-  SpectroInfo,
+  type SpectroInfo,
   textColorFromBackground,
 } from "./geoJSUtils";
 import EditAnnotationLayer from "./layers/editAnnotationLayer";

@@ -1,7 +1,7 @@
-import geo, { GeoEvent } from "geojs";
-import { SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
-import { SpectrogramAnnotation } from "../../../api/api";
-import { LayerStyle, RectGeoJSData } from "./types";
+import geo, { type GeoEvent } from "geojs";
+import { type SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
+import type { SpectrogramAnnotation } from "../../../api/api";
+import type { LayerStyle, RectGeoJSData } from "./types";
 
 
 export default class RectangleLayer {

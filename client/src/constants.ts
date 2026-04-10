@@ -10,5 +10,7 @@ type SpectrogramView = 'image' | 'contour' | 'both';
 
 export {
     RecordingMimeTypes,
+};
+export type {
     SpectrogramView,
 };

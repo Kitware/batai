@@ -1,6 +1,6 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref, Ref, watch, PropType } from 'vue';
-import { getRecording, Recording } from '../api/api';
+import { defineComponent, onMounted, ref, type Ref, watch, type PropType } from 'vue';
+import { getRecording, type Recording } from '../api/api';
 import useState from '@use/useState';
 import RecordingInfoDisplay from './RecordingInfoDisplay.vue';
 

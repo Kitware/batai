@@ -1,7 +1,7 @@
-import geo, { GeoEvent } from "geojs";
-import { SpectroInfo, spectroSequenceToGeoJSon } from "../geoJSUtils";
-import { SpectrogramSequenceAnnotation } from "../../../api/api";
-import { LayerStyle } from "./types";
+import geo, { type GeoEvent } from "geojs";
+import { type SpectroInfo, spectroSequenceToGeoJSon } from "../geoJSUtils";
+import type { SpectrogramSequenceAnnotation } from "../../../api/api";
+import type { LayerStyle } from "./types";
 
 interface RectGeoJSData {
   id: number;

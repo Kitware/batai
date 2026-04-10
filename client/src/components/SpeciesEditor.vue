@@ -1,6 +1,6 @@
 <script lang="ts">
-import { defineComponent, PropType, ref, watch } from "vue";
-import { Species } from "@api/api";
+import { defineComponent, type PropType, ref, watch } from "vue";
+import type { Species } from "@api/api";
 import SingleSpecieEditor from "./SingleSpecieEditor.vue";
 
 export default defineComponent({

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, Ref, watch } from 'vue';
-import { ScaleOrdinal } from 'd3';
+import { ref, type Ref, watch } from 'vue';
+import type { ScaleOrdinal } from 'd3';
 import useState from '@use/useState';
 
 const props = defineProps<{

@@ -1,17 +1,17 @@
-import { computed, ref, Ref, watch } from "vue";
+import { computed, ref, type Ref, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import {
-  Configuration,
+  type Configuration,
   getConfiguration,
   getCurrentUser,
-  OtherUserAnnotations,
-  Recording,
-  SpectrogramAnnotation,
-  SpectrogramSequenceAnnotation,
+  type OtherUserAnnotations,
+  type Recording,
+  type SpectrogramAnnotation,
+  type SpectrogramSequenceAnnotation,
   getComputedPulseContour,
-  ComputedPulseContour,
+  type ComputedPulseContour,
   getVettingDetailsForUser,
 } from "../api/api";
 import {

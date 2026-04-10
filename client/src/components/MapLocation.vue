@@ -1,9 +1,9 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script lang="ts">
-import { defineComponent, PropType, Ref, ref, onMounted } from "vue";
+import { defineComponent, type PropType, type Ref, ref, onMounted } from "vue";
 import { watch } from "vue";
 import { getCellBbox } from "@api/api";
-import geo, { GeoEvent } from "geojs";
+import geo, { type GeoEvent } from "geojs";
 
 export default defineComponent({
   name: "MapLocation",

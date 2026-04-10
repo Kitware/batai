@@ -1,18 +1,18 @@
 <script lang="ts">
-import { computed, defineComponent, onMounted, onUnmounted, PropType, ref, Ref, watch } from "vue";
-import { SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
+import { computed, defineComponent, onMounted, onUnmounted, type PropType, ref, type Ref, watch } from "vue";
+import { type SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
 import {
   patchAnnotation,
   patchSequenceAnnotation,
   putAnnotation,
   putSequenceAnnotation,
-  SpectrogramAnnotation,
-  SpectrogramSequenceAnnotation,
+  type SpectrogramAnnotation,
+  type SpectrogramSequenceAnnotation,
 } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
 import PulseMetadataTooltip from "./PulseMetadataTooltip.vue";
 import type { PulseMetadataTooltipData } from "./geoJS/layers/pulseMetadataLayer";
-import { GeoEvent } from "geojs";
+import type { GeoEvent } from "geojs";
 import geo from "geojs";
 import useState from "@use/useState";
 import { getImageDimensions } from "@use/useUtils";

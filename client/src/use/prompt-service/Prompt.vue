@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  ref, Ref, watch, defineComponent,
+  ref, type Ref, watch, defineComponent,
 } from 'vue';
 
 export default defineComponent({

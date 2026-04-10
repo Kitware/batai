@@ -1,5 +1,5 @@
 <script lang="ts">
-import { reactive, defineComponent, watch, ref, Ref, } from 'vue';
+import { reactive, defineComponent, watch, ref, type Ref, } from 'vue';
 import useState from '@use/useState';
 import { patchConfiguration } from '../api/api';
 import NABatAdmin from './NABat/NABatAdmin.vue';

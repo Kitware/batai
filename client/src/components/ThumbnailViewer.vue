@@ -1,10 +1,10 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script lang="ts">
-import { computed, defineComponent, nextTick, PropType, ref, Ref, watch } from "vue";
-import { SpectroInfo, useGeoJS } from './geoJS/geoJSUtils';
-import { OtherUserAnnotations, SpectrogramAnnotation } from "../api/api";
+import { computed, defineComponent, nextTick, type PropType, ref, type Ref, watch } from "vue";
+import { type SpectroInfo, useGeoJS } from './geoJS/geoJSUtils';
+import { type OtherUserAnnotations, type SpectrogramAnnotation } from "../api/api";
 import LayerManager from "./geoJS/LayerManager.vue";
-import geo, { GeoEvent } from "geojs";
+import geo, { type GeoEvent } from "geojs";
 import { getImageDimensions } from "@use/useUtils";
 import useState from "@use/useState";
 

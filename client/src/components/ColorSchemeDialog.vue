@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch, PropType } from 'vue';
+import { onMounted, watch, type PropType } from 'vue';
 import useState from '@use/useState';
 import ColorSchemeSelect from './ColorSchemeSelect.vue';
 import ColorPickerMenu from './ColorPickerMenu.vue';

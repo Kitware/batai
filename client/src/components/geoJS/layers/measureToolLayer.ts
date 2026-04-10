@@ -1,6 +1,6 @@
-import geo, { GeoEvent } from 'geojs';
-import { SpectroInfo } from '../geoJSUtils';
-import { LayerStyle, LineData, TextData } from './types';
+import geo, { type GeoEvent } from 'geojs';
+import type { SpectroInfo } from '../geoJSUtils';
+import type { LayerStyle, LineData, TextData } from './types';
 import BaseTextLayer from './baseTextLayer';
 
 function _determineRulerColor(isDragging: boolean, isDarkMode: boolean) {

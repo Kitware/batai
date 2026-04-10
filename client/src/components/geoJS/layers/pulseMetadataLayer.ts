@@ -1,9 +1,9 @@
-import geo, { GeoEvent } from 'geojs';
-import { SpectroInfo } from '../geoJSUtils';
-import { PulseMetadata } from '@api/api';
-import { LayerStyle, LineData, TextData } from './types';
+import geo, { type GeoEvent } from 'geojs';
+import type { SpectroInfo } from '../geoJSUtils';
+import type { PulseMetadata } from '@api/api';
+import type { LayerStyle, LineData, TextData } from './types';
 import BaseTextLayer from './baseTextLayer';
-import { PulseMetadataLabelsMode } from '@use/usePulseMetadata';
+import type { PulseMetadataLabelsMode } from '@use/usePulseMetadata';
 
 /** Point data for char_freq, knee, heel with pixel coords and label. */
 interface PulsePointData {

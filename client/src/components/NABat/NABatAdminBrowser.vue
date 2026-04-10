@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref, onMounted, Ref } from 'vue';
+import { defineComponent, ref, onMounted, type Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import MapLocation from '@components/MapLocation.vue';
 import {
@@ -8,7 +8,7 @@ import {
   exportNABatAnnotations,
   type RecordingListItem,
   type Annotation,
-  AnnotationExportRequest,
+  type AnnotationExportRequest,
 } from '@api/NABatApi';
 import Exporting from '../Exporting.vue';
 import { SortItem } from 'vuetify/lib/components/VDataTable/composables/sort';

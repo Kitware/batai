@@ -1,7 +1,7 @@
-import geo, { GeoEvent } from 'geojs';
+import geo, { type GeoEvent } from 'geojs';
 import BaseTextLayer from "./baseTextLayer";
-import { geojsonToSpectro, SpectroInfo } from '../geoJSUtils';
-import { LayerStyle, RectGeoJSData, TextData } from './types';
+import { geojsonToSpectro, type SpectroInfo } from '../geoJSUtils';
+import type { LayerStyle, RectGeoJSData, TextData } from './types';
 
 type BoundingBoxTextData = TextData & { textAlign?: 'start' | 'end' | 'center', textBaseline?: 'top' | 'middle' | 'bottom' };
 

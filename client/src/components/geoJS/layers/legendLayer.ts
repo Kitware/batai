@@ -1,6 +1,6 @@
-import { SpectroInfo } from "../geoJSUtils";
+import type { SpectroInfo } from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
-import { LayerStyle, TextData } from "./types";
+import type { LayerStyle, TextData } from "./types";
 import geo from "geojs";
 
 interface LineData {

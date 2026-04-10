@@ -1,6 +1,6 @@
 <script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
-import { Recording } from '../api/api';
+import { computed, defineComponent, type PropType } from 'vue';
+import type { Recording } from '../api/api';
 import MapLocation from './MapLocation.vue';
 
 

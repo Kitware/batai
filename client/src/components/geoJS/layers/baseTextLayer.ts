@@ -1,7 +1,7 @@
 
 
-import { SpectroInfo } from "../geoJSUtils";
-import { LayerStyle } from "./types";
+import type { SpectroInfo } from "../geoJSUtils";
+import type { LayerStyle } from "./types";
 import geo from "geojs";
 
 

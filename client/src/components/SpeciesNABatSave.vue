@@ -1,6 +1,6 @@
 <script lang="ts">
-import { defineComponent, PropType, ref, computed } from 'vue';
-import { FileAnnotation, Species, UpdateFileAnnotation } from '@api/api';
+import { defineComponent, type PropType, ref, computed } from 'vue';
+import type { FileAnnotation, Species, UpdateFileAnnotation } from '@api/api';
 import { pushNABatFileAnnotationToNABat } from '../api/NABatApi';
 
 export default defineComponent({
