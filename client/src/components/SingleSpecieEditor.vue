@@ -11,7 +11,7 @@ import {
 } from "vue";
 import { Species } from "@api/api";
 import SingleSpecieInfo from "./SingleSpecieInfo.vue";
-
+const suggestedSpeciesKey = "suggested species by range location";
 export default defineComponent({
   name: "SingleSpecieEditor",
   components: { SingleSpecieInfo },
@@ -58,12 +58,12 @@ export default defineComponent({
       single: "primary",
       multiple: "secondary",
       frequency: "warning",
-      "suggested species by range location": "success",
+      [suggestedSpeciesKey]: "success",
       noid: "",
     };
 
     const categoryPriority: Record<string, number> = {
-      "suggested species by range location": 0,
+      [suggestedSpeciesKey]: 0,
       single: 1,
       multiple: 2,
       frequency: 3,

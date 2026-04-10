@@ -255,7 +255,7 @@ export default defineComponent({
                     @update:model-value="toggleSpecies(item.species_code)"
                   />
                 </td>
-                <td class="d-flex align-center ga-1 flex-nowrap">
+                <td>
                   <span>{{ item.species_code }}</span>
                   <v-icon
                     v-if="item.in_range === true"
