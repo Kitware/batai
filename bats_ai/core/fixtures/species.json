@@ -613,7 +613,7 @@
   {
     "fields": {
       "category": "single",
-      "common_name": "Arizona bat",
+      "common_name": "Arizona myotis",
       "family": "Vespertilionidae",
       "genus": "Myotis",
       "species": "Myotis occultus",
@@ -1121,7 +1121,7 @@
     "fields": {
       "category": "single",
       "common_name": "Keen's myotis",
-      "family": "",
+      "family": "Vespertilionidae",
       "genus": "Myotis",
       "species": "Myotis keenii",
       "species_code": "MYKE",
@@ -1623,31 +1623,5 @@
     },
     "model": "core.Species",
     "pk": "133"
-  },
-  {
-    "fields": {
-      "category": "single",
-      "common_name": "Arizona myotis",
-      "family": "Vespertilionidae",
-      "genus": "Myotis",
-      "species": "Myotis occultus",
-      "species_code": "MYOC",
-      "species_code_6": "MYOOCC"
-    },
-    "model": "core.Species",
-    "pk": 134
-  },
-  {
-    "fields": {
-      "category": "single",
-      "common_name": "Keen's myotis",
-      "family": "Vespertilionidae",
-      "genus": "Myotis",
-      "species": "Myotis keenii",
-      "species_code": "MYKE",
-      "species_code_6": "MYOKEE"
-    },
-    "model": "core.Species",
-    "pk": 135
   }
 ]
