@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 
 # TimeStampedModel also provides "created" and "modified" fields
 class NABatSpectrogram(TimeStampedModel, models.Model):
-    nabat_recording = models.ForeignKey(NABatRecording, on_delete=models.CASCADE)
+    nabat_recording = models.ForeignKey(
+        NABatRecording, on_delete=models.CASCADE, related_name="spectrograms"
+    )
     images = GenericRelation(SpectrogramImage)
     width = models.IntegerField()  # pixels
     height = models.IntegerField()  # pixels

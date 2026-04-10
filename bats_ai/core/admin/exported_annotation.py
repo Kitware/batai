@@ -7,7 +7,7 @@ from bats_ai.core.models import ExportedAnnotationFile
 
 @admin.register(ExportedAnnotationFile)
 class ExportedAnnotationFileAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = [
         "id",
         "file",
         "download_url",
@@ -15,13 +15,13 @@ class ExportedAnnotationFileAdmin(admin.ModelAdmin):
         "expires_at",
         "created",
         "modified",
-    )
-    list_filter = ("status", "created", "modified", "expires_at")
-    search_fields = ("download_url", "file")
-    ordering = ("-created",)
-    readonly_fields = ("created", "modified")
+    ]
+    list_filter = ["status", "created", "modified", "expires_at"]
+    search_fields = ["download_url", "file"]
+    ordering = ["-created"]
+    readonly_fields = ["created", "modified"]
 
-    fieldsets = (
+    fieldsets = [
         (None, {"fields": ("file", "download_url", "status", "expires_at")}),
         (
             "Filters Applied",
@@ -36,4 +36,4 @@ class ExportedAnnotationFileAdmin(admin.ModelAdmin):
                 "fields": ("created", "modified"),
             },
         ),
-    )
+    ]

@@ -45,36 +45,6 @@ class NABatRecording(TimeStampedModel, models.Model):
 
     unusual_occurrences = models.TextField(blank=True, null=True)
 
-    @property
-    def has_spectrogram(self):
-        return len(self.spectrograms) > 0
-
-    @property
-    def spectrograms(self):
-        from bats_ai.core.models.nabat import NABatSpectrogram
-
-        query = NABatSpectrogram.objects.filter(nabat_recording=self).order_by("-created")
-        return query.all()
-
-    @property
-    def spectrogram(self):
-        return self.spectrograms.latest("created")
-
-    @property
-    def has_compressed_spectrogram(self):
-        return len(self.compressed_spectrograms) > 0
-
-    @property
-    def compressed_spectrograms(self):
-        from bats_ai.core.models.nabat import NABatCompressedSpectrogram
-
-        query = NABatCompressedSpectrogram.objects.filter(nabat_recording=self).order_by("-created")
-        return query.all()
-
-    @property
-    def compressed_spectrogram(self):
-        return self.compressed_spectrograms.latest("created")
-
     class Meta:
         verbose_name = "NABat Recording"
         verbose_name_plural = "NABat Recording"

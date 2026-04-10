@@ -51,36 +51,6 @@ class Recording(TimeStampedModel, models.Model):
     unusual_occurrences = models.TextField(blank=True, null=True)
     tags = models.ManyToManyField(RecordingTag)
 
-    @property
-    def has_spectrogram(self):
-        return len(self.spectrograms) > 0
-
-    @property
-    def spectrograms(self):
-        from bats_ai.core.models import Spectrogram
-
-        query = Spectrogram.objects.filter(recording=self).order_by("-created")
-        return query.all()
-
-    @property
-    def spectrogram(self):
-        return self.spectrograms.latest("created")
-
-    @property
-    def has_compressed_spectrogram(self):
-        return len(self.compressed_spectrograms) > 0
-
-    @property
-    def compressed_spectrograms(self):
-        from bats_ai.core.models import CompressedSpectrogram
-
-        query = CompressedSpectrogram.objects.filter(recording=self).order_by("-created")
-        return query.all()
-
-    @property
-    def compressed_spectrogram(self):
-        return self.compressed_spectrograms.latest("created")
-
 
 @receiver(models.signals.pre_delete, sender=Recording)
 def delete_content(sender, instance, **kwargs):

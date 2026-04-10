@@ -7,7 +7,7 @@ from bats_ai.core.models import PulseMetadata
 
 @admin.register(PulseMetadata)
 class PulseMetadataAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = [
         "recording",
         "index",
         "bounding_box",
@@ -16,5 +16,5 @@ class PulseMetadataAdmin(admin.ModelAdmin):
         "knee",
         "heel",
         "slopes",
-    )
+    ]
     list_select_related = True

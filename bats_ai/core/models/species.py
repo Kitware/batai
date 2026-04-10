@@ -24,5 +24,8 @@ class Species(models.Model):
         help_text="Category label: single species, multiple species, frequency, or NoID",
     )
 
+    class Meta:
+        verbose_name_plural = "species"
+
     def __str__(self) -> str:
         return self.species_code or str(self.pk)

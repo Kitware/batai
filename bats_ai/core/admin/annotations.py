@@ -20,5 +20,5 @@ class AnnotationsAdmin(admin.ModelAdmin):
     ]
     list_select_related = True
     # list_select_related = ['owner']
-    filter_horizontal = ("species",)  # or filter_vertical
+    filter_horizontal = ["species"]  # or filter_vertical
     autocomplete_fields = ["owner"]

@@ -14,16 +14,16 @@ from bats_ai.core.models.nabat import (
 # Register models for the NaBat category
 @admin.register(NABatRecordingAnnotation)
 class NABatRecordingAnnotationAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = [
         "nabat_recording",
         "comments",
         "model",
         "confidence",
         "additional_data",
         "species_codes",
-    )
-    search_fields = ("nabat_recording_name", "comments", "model")
-    list_filter = ("nabat_recording",)
+    ]
+    search_fields = ["nabat_recording_name", "comments", "model"]
+    list_filter = ["nabat_recording"]
 
     @admin.display(description="Species Codes")
     def species_codes(self, obj):
@@ -33,7 +33,7 @@ class NABatRecordingAnnotationAdmin(admin.ModelAdmin):
 
 @admin.register(NABatSpectrogram)
 class NABatSpectrogramAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = [
         "nabat_recording",
         "width",
         "height",
@@ -41,9 +41,9 @@ class NABatSpectrogramAdmin(admin.ModelAdmin):
         "frequency_min",
         "frequency_max",
         "image_url_list_display",
-    )
-    search_fields = ("nabat_recording__name", "duration")
-    list_filter = ("nabat_recording", "duration")
+    ]
+    search_fields = ["nabat_recording__name", "duration"]
+    list_filter = ["nabat_recording", "duration"]
 
     @admin.display(description="Image URLs")
     def image_url_list_display(self, obj):
@@ -58,15 +58,15 @@ class NABatSpectrogramAdmin(admin.ModelAdmin):
 
 @admin.register(NABatCompressedSpectrogram)
 class NABatCompressedSpectrogramAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = [
         "nabat_recording",
         "spectrogram",
         "length",
         "cache_invalidated",
         "image_url_list_display",
-    )
-    search_fields = ("nabat_recording__name", "spectrogram__id")
-    list_filter = ("nabat_recording", "cache_invalidated")
+    ]
+    search_fields = ["nabat_recording__name", "spectrogram__id"]
+    list_filter = ["nabat_recording", "cache_invalidated"]
 
     @admin.display(description="Image URLs")
     def image_url_list_display(self, obj):
@@ -81,7 +81,7 @@ class NABatCompressedSpectrogramAdmin(admin.ModelAdmin):
 
 @admin.register(NABatRecording)
 class NABatRecordingAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = [
         "name",
         "recording_id",
         "equipment",
@@ -89,6 +89,6 @@ class NABatRecordingAdmin(admin.ModelAdmin):
         "recording_location",
         "grts_cell_id",
         "grts_cell",
-    )
-    search_fields = ("name", "recording_id", "recording_location")
-    list_filter = ("name", "recording_id", "recording_location")
+    ]
+    search_fields = ["name", "recording_id", "recording_location"]
+    list_filter = ["name", "recording_id", "recording_location"]

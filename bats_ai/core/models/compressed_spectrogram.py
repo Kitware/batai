@@ -13,7 +13,9 @@ from .spectrogram_image import SpectrogramImage
 
 # TimeStampedModel also provides "created" and "modified" fields
 class CompressedSpectrogram(TimeStampedModel, models.Model):
-    recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
+    recording = models.ForeignKey(
+        Recording, on_delete=models.CASCADE, related_name="compressed_spectrograms"
+    )
     spectrogram = models.ForeignKey(Spectrogram, on_delete=models.CASCADE)
     length = models.FloatField()
     images = GenericRelation(SpectrogramImage)

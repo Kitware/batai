@@ -14,7 +14,9 @@ from .nabat_spectrogram import NABatSpectrogram
 
 # TimeStampedModel also provides "created" and "modified" fields
 class NABatCompressedSpectrogram(TimeStampedModel, models.Model):
-    nabat_recording = models.ForeignKey(NABatRecording, on_delete=models.CASCADE)
+    nabat_recording = models.ForeignKey(
+        NABatRecording, on_delete=models.CASCADE, related_name="compressed_spectrograms"
+    )
     spectrogram = models.ForeignKey(NABatSpectrogram, on_delete=models.CASCADE)
     images = GenericRelation(SpectrogramImage)
     length = models.FloatField()

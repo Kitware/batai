@@ -268,9 +268,9 @@ def generate_nabat_recording(
 def get_spectrogram(request: HttpRequest, pk: int):
     nabat_recording = get_object_or_404(NABatRecording, pk=pk)
 
-    spectrogram = nabat_recording.spectrogram
+    spectrogram = nabat_recording.spectrograms.latest("created")
 
-    compressed = nabat_recording.compressed_spectrogram
+    compressed = nabat_recording.compressed_spectrograms.latest("created")
 
     spectro_data = {
         "urls": spectrogram.image_url_list,
