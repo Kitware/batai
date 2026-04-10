@@ -12,4 +12,4 @@ class VettingDetailsAdmin(admin.ModelAdmin):
         "user",
         # 'reference_materials',
     ]
-    search_fields = ("user",)
+    search_fields = ["user"]
