@@ -148,9 +148,9 @@
       "common_name": "Western red bat",
       "family": "Vespertilionidae",
       "genus": "Lasiurus",
-      "species": "Lasiurus blossevillii",
-      "species_code": "LABL",
-      "species_code_6": "LASBLO"
+      "species": "Lasiurus frantzii",
+      "species_code": "LAFR",
+      "species_code_6": "LASFRA"
     },
     "model": "core.Species",
     "pk": "12"
@@ -613,7 +613,7 @@
   {
     "fields": {
       "category": "single",
-      "common_name": "Arizona bat",
+      "common_name": "Arizona myotis",
       "family": "Vespertilionidae",
       "genus": "Myotis",
       "species": "Myotis occultus",
@@ -681,8 +681,8 @@
       "common_name": "Western red bat/Canyon bat",
       "family": "",
       "genus": "",
-      "species": "Lasiurus blossevillii/Parastrellus hesperus",
-      "species_code": "LABLPAHE",
+      "species": "Lasiurus frantzii/Parastrellus hesperus",
+      "species_code": "LAFRPAHE",
       "species_code_6": ""
     },
     "model": "core.Species",
@@ -1121,7 +1121,7 @@
     "fields": {
       "category": "single",
       "common_name": "Keen's myotis",
-      "family": "",
+      "family": "Vespertilionidae",
       "genus": "Myotis",
       "species": "Myotis keenii",
       "species_code": "MYKE",

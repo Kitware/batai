@@ -11,7 +11,7 @@ import {
 } from "vue";
 import type { Species } from "@api/api";
 import SingleSpecieInfo from "./SingleSpecieInfo.vue";
-const suggestedSpeciesKey = "suggested species by range location";
+const suggestedSpeciesKey = "suggested species by location";
 export default defineComponent({
   name: "SingleSpecieEditor",
   components: { SingleSpecieInfo },
@@ -88,7 +88,7 @@ export default defineComponent({
         { type: "subheader"; title: string } | Species
       > = [];
       if (inRangeSpecies.length > 0) {
-        result.push({ type: "subheader", title: "Suggested Species by Range Location" });
+        result.push({ type: "subheader", title: "Suggested Species by Location" });
         const sortedInRange = [...inRangeSpecies].sort((a, b) => {
           const aCat = categoryPriority[a.category] ?? 999;
           const bCat = categoryPriority[b.category] ?? 999;
