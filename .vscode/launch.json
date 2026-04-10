@@ -1,0 +1,95 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Django: Server",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["runserver_plus", "--print-sql", "localhost:8000"],
+      "django": true,
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Django: Server (eager Celery)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["runserver_plus", "--print-sql", "localhost:8000"],
+      "env": {
+        "DJANGO_CELERY_TASK_ALWAYS_EAGER": "true"
+      },
+      "django": true,
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Django: Management Command",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["${input:managementCommand}"],
+      "django": true,
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Celery: Worker",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "celery",
+      "args": [
+        "--app",
+        "bats_ai.celery",
+        "worker",
+        "--loglevel",
+        "INFO",
+        "--pool",
+        "solo",
+        "--without-heartbeat"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Pytest: Debug",
+      "type": "debugpy",
+      "request": "launch",
+      "purpose": ["debug-test"],
+      "console": "integratedTerminal",
+      "django": true,
+      "justMyCode": false
+    },
+    {
+      "name": "Vite: Dev Server",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/client",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Django + Celery",
+      "configurations": ["Django: Server", "Celery: Worker"],
+      "stopAll": true
+    },
+    {
+      "name": "Django + Celery + Vite",
+      "configurations": ["Django: Server", "Celery: Worker", "Vite: Dev Server"],
+      "stopAll": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "managementCommand",
+      "type": "command",
+      "command": "shellCommand.execute",
+      "args": {
+        "command": "./manage.py help --commands",
+        "description": "Django management command",
+        "allowCustomValues": true
+      }
+    }
+  ]
+}
