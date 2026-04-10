@@ -686,7 +686,9 @@ def get_recording(request: HttpRequest, pk: int):
             user = User.objects.get(id=recording["owner_id"])
             recording["owner_username"] = user.username
             recording["audio_file_presigned_url"] = default_storage.url(recording["audio_file"])
-            recording["hasSpectrogram"] = Recording.objects.get(id=recording["id"]).has_spectrogram
+            recording["hasSpectrogram"] = Recording.objects.get(
+                id=recording["id"]
+            ).spectrograms.exists()
             if recording["recording_location"]:
                 recording["recording_location"] = json.loads(recording["recording_location"].json)
             annotation_owners = (
@@ -758,7 +760,7 @@ def get_spectrogram(request: HttpRequest, pk: int):
     except Recording.DoesNotExist:
         return {"error": "Recording not found"}
 
-    spectrogram = recording.spectrogram
+    spectrogram = recording.spectrograms.latest("created")
 
     compressed = recording.compressed_spectrogram
 

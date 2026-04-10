@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from django.contrib import admin, messages
+from django.db.models import Prefetch
 from django.urls import reverse
 from django.utils.html import format_html
 
-from bats_ai.core.models import Recording
+from bats_ai.core.models import Recording, Spectrogram
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 
 if TYPE_CHECKING:
@@ -48,19 +49,35 @@ class RecordingAdmin(admin.ModelAdmin):
     autocomplete_fields = ["owner"]
     readonly_fields = ["created", "modified"]
 
-    def get_official_species(self, instance):
-        return [species.species_code_6 for species in instance.official_species.all()]
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .prefetch_related(
+                Prefetch(
+                    "spectrograms",
+                    # Ordering must be applied here, or else the prefetch cache won't be used
+                    queryset=Spectrogram.objects.order_by("-created"),
+                )
+            )
+        )
 
-    def get_computed_species(self, instance):
-        return [species.species_code_6 for species in instance.computed_species.all()]
+    @admin.display(description="Official Species")
+    def get_official_species(self, recording: Recording):
+        return [species.species_code_6 for species in recording.official_species.all()]
+
+    @admin.display(description="Computed Species")
+    def get_computed_species(self, recording: Recording):
+        return [species.species_code_6 for species in recording.computed_species.all()]
 
     @admin.display(
         description="Spectrogram",
         empty_value="Not computed",
     )
     def spectrogram_status(self, recording: Recording):
-        if recording.has_spectrogram:
-            spectrogram = recording.spectrogram
+        if recording.spectrograms.exists():
+            # Only this syntax will use the prefetch cache
+            spectrogram = recording.spectrograms.all()[0]
             href = reverse("admin:core_spectrogram_change", args=(spectrogram.pk,))
             spectrogram_obj_id_str = str(spectrogram)
             return format_html('<a href="{}">{}</a>', href, spectrogram_obj_id_str)

@@ -10,7 +10,7 @@ from .spectrogram_image import SpectrogramImage
 
 
 class Spectrogram(TimeStampedModel, models.Model):
-    recording = models.ForeignKey(Recording, on_delete=models.CASCADE)
+    recording = models.ForeignKey(Recording, on_delete=models.CASCADE, related_name="spectrograms")
     images = GenericRelation(SpectrogramImage)
     width = models.IntegerField()  # pixels
     height = models.IntegerField()  # pixels
