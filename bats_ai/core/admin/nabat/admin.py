@@ -65,7 +65,7 @@ class NABatCompressedSpectrogramAdmin(admin.ModelAdmin):
         "cache_invalidated",
         "image_url_list_display",
     ]
-    search_fields = ["nabat_recording__name", "spectrogram__id"]
+    search_fields = ["nabat_recording__name", "spectrograms__id"]
     list_filter = ["nabat_recording", "cache_invalidated"]
 
     @admin.display(description="Image URLs")

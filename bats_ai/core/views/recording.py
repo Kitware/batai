@@ -451,7 +451,7 @@ def _base_recordings_queryset(request: HttpRequest, *, public: bool | None) -> Q
     if public is not None and public:
         return (
             Recording.objects.filter(public=True)
-            .exclude(Q(owner=request.user) | Q(spectrogram__isnull=True))
+            .exclude(Q(owner=request.user) | Q(spectrograms__isnull=True))
             .annotate(tags_text=ArrayAgg("tags__text", filter=Q(tags__text__isnull=False)))
         )
     return Recording.objects.filter(owner=request.user).annotate(
