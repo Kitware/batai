@@ -40,8 +40,7 @@ class RecordingAdmin(admin.ModelAdmin):
         "get_computed_species",
         "get_official_species",
     ]
-    list_select_related = True
-    # list_select_related = ['owner']
+    list_select_related = ["owner"]
 
     search_fields = ["name"]
     actions = ["compute_spectrograms"]
@@ -66,16 +65,10 @@ class RecordingAdmin(admin.ModelAdmin):
                         "starts", "stops", "widths"
                     ).order_by("-created"),
                 ),
+                "official_species",
+                "computed_species",
             )
         )
-
-    @admin.display(description="Official Species")
-    def get_official_species(self, recording: Recording):
-        return [species.species_code_6 for species in recording.official_species.all()]
-
-    @admin.display(description="Computed Species")
-    def get_computed_species(self, recording: Recording):
-        return [species.species_code_6 for species in recording.computed_species.all()]
 
     @admin.display(
         description="Spectrogram",
@@ -104,6 +97,14 @@ class RecordingAdmin(admin.ModelAdmin):
             compressed_spectrogram_obj_id_str = str(compressed_spectrogram)
             return format_html('<a href="{}">{}</a>', href, compressed_spectrogram_obj_id_str)
         return None
+
+    @admin.display(description="Official Species")
+    def get_official_species(self, recording: Recording) -> list[str]:
+        return [species.species_code_6 for species in recording.official_species.all()]
+
+    @admin.display(description="Computed Species")
+    def get_computed_species(self, recording: Recording) -> list[str]:
+        return [species.species_code_6 for species in recording.computed_species.all()]
 
     @admin.action(description="Compute Spectrograms")
     def compute_spectrograms(self, request: HttpRequest, queryset: QuerySet):
