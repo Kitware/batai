@@ -762,7 +762,7 @@ def get_spectrogram(request: HttpRequest, pk: int):
 
     spectrogram = recording.spectrograms.latest("created")
 
-    compressed = recording.compressed_spectrogram
+    compressed = recording.compressed_spectrograms.latest("created")
 
     spectro_data = {
         "urls": spectrogram.image_url_list,

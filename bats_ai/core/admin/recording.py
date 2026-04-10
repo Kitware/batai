@@ -7,7 +7,7 @@ from django.db.models import Prefetch
 from django.urls import reverse
 from django.utils.html import format_html
 
-from bats_ai.core.models import Recording, Spectrogram
+from bats_ai.core.models import CompressedSpectrogram, Recording, Spectrogram
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 
 if TYPE_CHECKING:
@@ -58,7 +58,14 @@ class RecordingAdmin(admin.ModelAdmin):
                     "spectrograms",
                     # Ordering must be applied here, or else the prefetch cache won't be used
                     queryset=Spectrogram.objects.order_by("-created"),
-                )
+                ),
+                Prefetch(
+                    "compressed_spectrograms",
+                    # Exclude large ArrayField
+                    queryset=CompressedSpectrogram.objects.defer(
+                        "starts", "stops", "widths"
+                    ).order_by("-created"),
+                ),
             )
         )
 
@@ -88,11 +95,14 @@ class RecordingAdmin(admin.ModelAdmin):
         empty_value="Not computed",
     )
     def compressed_spectrogram_status(self, recording: Recording):
-        if recording.has_compressed_spectrogram:
-            spectrogram = recording.compressed_spectrogram
-            href = reverse("admin:core_compressedspectrogram_change", args=(spectrogram.pk,))
-            spectrogram_obj_id_str = str(spectrogram)
-            return format_html('<a href="{}">{}</a>', href, spectrogram_obj_id_str)
+        if recording.compressed_spectrograms.exists():
+            # Only this syntax will use the prefetch cache
+            compressed_spectrogram = recording.compressed_spectrograms.all()[0]
+            href = reverse(
+                "admin:core_compressedspectrogram_change", args=(compressed_spectrogram.pk,)
+            )
+            compressed_spectrogram_obj_id_str = str(compressed_spectrogram)
+            return format_html('<a href="{}">{}</a>', href, compressed_spectrogram_obj_id_str)
         return None
 
     @admin.action(description="Compute Spectrograms")

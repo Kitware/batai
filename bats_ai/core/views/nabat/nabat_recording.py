@@ -270,7 +270,7 @@ def get_spectrogram(request: HttpRequest, pk: int):
 
     spectrogram = nabat_recording.spectrograms.latest("created")
 
-    compressed = nabat_recording.compressed_spectrogram
+    compressed = nabat_recording.compressed_spectrograms.latest("created")
 
     spectro_data = {
         "urls": spectrogram.image_url_list,
