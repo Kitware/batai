@@ -46,7 +46,7 @@ export interface Species {
   common_name: string;
   species_code_6?: string;
   species?: string;
-  id: number;
+  pk: number;
   category: "single" | "multiple" | "frequency" | "noid";
   in_range?: boolean;
 }
