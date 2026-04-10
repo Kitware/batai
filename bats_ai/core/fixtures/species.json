@@ -681,8 +681,8 @@
       "common_name": "Western red bat/Canyon bat",
       "family": "",
       "genus": "",
-      "species": "Lasiurus blossevillii/Parastrellus hesperus",
-      "species_code": "LABLPAHE",
+      "species": "Lasiurus frantzii/Parastrellus hesperus",
+      "species_code": "LAFRPAHE",
       "species_code_6": ""
     },
     "model": "core.Species",
