@@ -11,7 +11,7 @@ import {
   type AnnotationExportRequest,
 } from '@api/NABatApi';
 import Exporting from '../Exporting.vue';
-import { SortItem } from 'vuetify/lib/components/VDataTable/composables/sort';
+import type { DataTableSortItem } from 'vuetify';
 
 export default defineComponent({
   name: 'NABatAdminBrowser',
@@ -27,8 +27,8 @@ export default defineComponent({
     const totalAnnotations = ref<number>(0);
     const selectedRecordingId = ref<number | null>(null);
     const loading = ref(false);
-    const sortBy = ref<SortItem[]>([{ key: 'created', order: 'desc' }]);
-    const sortByAnnotations = ref<SortItem[]>([{ key: 'created', order: 'desc' }]);
+    const sortBy = ref<DataTableSortItem[]>([{ key: 'created', order: 'desc' }]);
+    const sortByAnnotations = ref<DataTableSortItem[]>([{ key: 'created', order: 'desc' }]);
 
     const filters = ref<{
       recording_id?: number;
@@ -152,7 +152,7 @@ export default defineComponent({
 
     onMounted(() => fetchRecordings({ page: 1, itemsPerPage: 50 }));
 
-    const sortByUpdate = (newSort?: SortItem[]) => {
+    const sortByUpdate = (newSort?: DataTableSortItem[]) => {
       if (newSort) {
         sortBy.value = newSort;
       } else {
@@ -160,7 +160,7 @@ export default defineComponent({
       }
     };
 
-    const sortByUpdateAnnotations = (newSort?: SortItem[]) => {
+    const sortByUpdateAnnotations = (newSort?: DataTableSortItem[]) => {
       if (newSort) {
         sortByAnnotations.value = newSort;
       } else {
