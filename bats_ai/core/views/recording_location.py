@@ -175,7 +175,7 @@ def get_recording_locations(
     # Build "full" set: my + shared recordings.
     my_qs = Recording.objects.filter(owner=request.user)
     shared_qs = Recording.objects.filter(public=True).exclude(
-        Q(owner=request.user) | Q(spectrogram__isnull=True)
+        Q(owner=request.user) | Q(spectrograms__isnull=True)
     )
 
     exclude_submitted = bool(q.exclude_submitted)
