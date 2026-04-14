@@ -7,3 +7,5 @@ project_slug: bats-ai
 python_package_name: bats_ai
 site_domain: api.bateval.com
 use_asgi: false
+
+#copier updated
