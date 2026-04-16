@@ -13,7 +13,9 @@
   "workspaceFolder": "/home/vscode/bats-ai",
   "features": {
     "ghcr.io/devcontainers/features/git-lfs:1": {},
-    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "pnpmVersion": "none"
+    },
     "ghcr.io/rails/devcontainer/features/postgres-client:1": {
       "version": 18
     },
