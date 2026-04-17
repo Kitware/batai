@@ -97,6 +97,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Django staticfiles auto-creates any intermediate directories, but do so here to prevent warnings.
 STATIC_ROOT.mkdir(exist_ok=True)
 
+BATAI_WEB_URL: str = env.url("DJANGO_BATAI_WEB_URL").geturl()
+
 BATAI_NABAT_API_URL: str = env.str(
     "DJANGO_BATAI_NABAT_API_URL", default="https://api.sciencebase.gov/nabat-graphql/graphql"
 )

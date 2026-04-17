@@ -32,7 +32,8 @@ module "django" {
     "https://[\\w-]+\\.bats-ai\\.pages\\.dev",
   ]
   additional_django_vars = {
-    DJANGO_SENTRY_DSN = "https://5bfdd2a77e7e8cbcea9ea873dbf9cbd6@o267860.ingest.us.sentry.io/4510800443015168"
+    DJANGO_BATAI_WEB_URL = "https://www.bateval.com/"
+    DJANGO_SENTRY_DSN    = "https://5bfdd2a77e7e8cbcea9ea873dbf9cbd6@o267860.ingest.us.sentry.io/4510800443015168"
   }
 }
 
