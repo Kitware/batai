@@ -6,8 +6,6 @@ import {
   ref,
   watch,
   type Ref,
-  onMounted,
-  onUnmounted,
 } from "vue";
 import type { Species } from "@api/api";
 import SingleSpecieInfo from "./SingleSpecieInfo.vue";
