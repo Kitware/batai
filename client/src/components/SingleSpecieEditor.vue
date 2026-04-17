@@ -6,8 +6,6 @@ import {
   ref,
   watch,
   type Ref,
-  onMounted,
-  onUnmounted,
 } from "vue";
 import type { Species } from "@api/api";
 import SingleSpecieInfo from "./SingleSpecieInfo.vue";
@@ -114,15 +112,6 @@ export default defineComponent({
         item.raw.common_name.toLocaleLowerCase().includes(searchLower)
       );
     };
-
-    const speciesShortcut = (e: KeyboardEvent) => {
-      if (e.key === "S" && e.shiftKey) {
-        e.preventDefault();
-        speciesAutocomplete.value?.focus();
-      }
-    };
-    onMounted(() => window.addEventListener("keydown", speciesShortcut));
-    onUnmounted(() => window.removeEventListener("keydown", speciesShortcut));
 
     const onClearOrDeleteClick = () => {
       if (selectedCode.value) {
