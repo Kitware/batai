@@ -115,15 +115,6 @@ export default defineComponent({
       );
     };
 
-    const speciesShortcut = (e: KeyboardEvent) => {
-      if (e.key === "S" && e.shiftKey) {
-        e.preventDefault();
-        speciesAutocomplete.value?.focus();
-      }
-    };
-    onMounted(() => window.addEventListener("keydown", speciesShortcut));
-    onUnmounted(() => window.removeEventListener("keydown", speciesShortcut));
-
     const onClearOrDeleteClick = () => {
       if (selectedCode.value) {
         selectedCode.value = null;
