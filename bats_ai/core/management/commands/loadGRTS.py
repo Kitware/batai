@@ -41,25 +41,25 @@ LOCATION_SOURCES = {
     ),
     # Optional regions (disabled by default). Include via --locations.
     "AKCAN": (
-        "https://www.sciencebase.gov/catalog/file/get/5b7753a8e4b0f5d578820452?facet=akcan_mastersample_10km_GRTS",  # noqa: E501
+        "https://www.sciencebase.gov/catalog/file/get/5b7753a8e4b0f5d578820452?facet=akcan_mastersample_10km_GRTS",
         20,
         "Alaska/Canada",
         None,
     ),
     "HAWAII": (
-        "https://www.sciencebase.gov/catalog/file/get/5b7753c2e4b0f5d578820457?facet=HI_mastersample_5km_GRTS",  # noqa: E501
+        "https://www.sciencebase.gov/catalog/file/get/5b7753c2e4b0f5d578820457?facet=HI_mastersample_5km_GRTS",
         15,
         "Hawaii",
         None,
     ),
     "MEXICO": (
-        "https://www.sciencebase.gov/catalog/file/get/5b7753d3e4b0f5d578820459?facet=mex_mastersample_10km_GRTS",  # noqa: E501
+        "https://www.sciencebase.gov/catalog/file/get/5b7753d3e4b0f5d578820459?facet=mex_mastersample_10km_GRTS",
         12,
         "Mexico",
         None,
     ),
     "PUERTO_RICO": (
-        "https://www.sciencebase.gov/catalog/file/get/5b7753d8e4b0f5d57882045b?facet=PR_mastersample_5km_GRTS",  # noqa: E501
+        "https://www.sciencebase.gov/catalog/file/get/5b7753d8e4b0f5d57882045b?facet=PR_mastersample_5km_GRTS",
         21,
         "Puerto Rico",
         None,
