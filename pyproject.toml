@@ -71,14 +71,14 @@ dev = [
   # The "dev" dependency group is installed by default,
   # so use this to install "development" and "tasks" extras by default too
   "bats-ai[development,tasks]",
-  "tox==4.52.1",
+  "tox==4.53.0",
   "tox-uv==1.35.1",
 ]
 lint = [
-  "ruff==0.15.10",
+  "ruff==0.15.11",
 ]
 type = [
-  "mypy==1.20.0",
+  "mypy==1.20.1",
   "celery-types==0.26.0",
   "django-stubs[compatible-mypy]==6.0.2",
   "types-requests==2.33.0.20260408",
