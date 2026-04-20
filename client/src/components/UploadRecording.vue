@@ -11,7 +11,7 @@ import useRequest from '@use/useRequest';
 import { type UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, type RecordingFileParameters } from '../api/api';
 import MapLocation from './MapLocation.vue';
 import { useDate } from 'vuetify';
-import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';
+import { DEFAULT_SAMPLE_FRAME_ID, getCurrentTime, extractDateTimeComponents, parseRecordingFilename } from '@use/useUtils';
 import useState from '@use/useState';
 
 export interface EditingRecording {
@@ -64,6 +64,7 @@ export default defineComponent({
     const latitude: Ref<number | undefined> = ref(props.editing?.location?.lat ? props.editing.location.lat : undefined);
     const longitude: Ref<number | undefined> = ref(props.editing?.location?.lon ? props.editing.location.lon : undefined);
     const gridCellId: Ref<number | undefined> = ref();
+    const sampleFrameId: Ref<number> = ref(DEFAULT_SAMPLE_FRAME_ID);
     const publicVal = ref(props.editing ? props.editing.public : false);
     // Guano Metadata
     const siteName = ref(props.editing?.siteName || '');
@@ -72,45 +73,26 @@ export default defineComponent({
     const speciesList = ref(props.editing?.speciesList || '');
     const unusualOccurrences = ref(props.editing?.unusualOccurrences || '');
     const autoFill = async (filename: string) => {
-
-      const regexPattern = /^(\d+)_(.+)_(\d{8})_(\d{6})(?:_(.*))?$/;
-
-      // Match the file name against the regular expression
-      const match = filename.match(regexPattern);
-
-      // If there's no match, return null
-      if (!match) {
-          return null;
+      const parsedFilename = parseRecordingFilename(filename);
+      sampleFrameId.value = parsedFilename?.sampleFrameId ?? DEFAULT_SAMPLE_FRAME_ID;
+      if (!parsedFilename) {
+        return null;
       }
 
-      // Extract the matched groups
-      const cellId = match[1];
-      const labelName = match[2];
-      const date = match[3];
-      const timestamp = match[4];
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const extraData = match[5] || null; // Additional data after the required parts
-
-      // Extracting individual components
-      if (cellId) {
-        gridCellId.value = parseInt(cellId, 10);
-        let updatedQuadrant;
-        if (['SW', 'NE', 'NW', 'SE'].includes(labelName)) {
-          updatedQuadrant = labelName as 'SW' | 'NE' | 'NW' | 'SE' | undefined;
-        }
-        const { latitude: lat , longitude: lon } = (await getCellLocation(gridCellId.value, updatedQuadrant)).data;
+      if (parsedFilename.cellId) {
+        gridCellId.value = parsedFilename.cellId;
+        const { latitude: lat , longitude: lon } = (await getCellLocation(gridCellId.value, parsedFilename.quadrant)).data;
         if (lat && lon) {
           latitude.value = lat;
           longitude.value = lon;
         }
         // Next we get the latitude longitude for this sell Id and quadarnt
       }
-      if (date && date.length === 8) {
-        // We convert it to the YYYY-MM-DD time;
-        recordedDate.value = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6,8)}`;
+      if (parsedFilename.date) {
+        recordedDate.value = parsedFilename.date;
       }
-      if (timestamp) {
-        recordedTime.value = timestamp;
+      if (parsedFilename.time) {
+        recordedTime.value = parsedFilename.time;
       }
     };
     const readFile = async (e: Event) => {
@@ -256,7 +238,7 @@ export default defineComponent({
   const setLocation = async ({lat, lon}: {lat: number, lon: number}) => {
     latitude.value = lat;
     longitude.value = lon;
-    const result  = await getCellfromLocation(lat, lon);
+    const result  = await getCellfromLocation(lat, lon, sampleFrameId.value);
     if (result.data.grid_cell_id) {
       gridCellId.value = result.data.grid_cell_id;
     } else if (result.data.error) {

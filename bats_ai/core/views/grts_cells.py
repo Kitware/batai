@@ -13,14 +13,19 @@ router = RouterPaginated()
 
 @router.get("/grid_cell_id")
 def get_grid_cell_id(
-    request: HttpRequest, latitude: float = Query(...), longitude: float = Query(...)
+    request: HttpRequest,
+    latitude: float = Query(...),
+    longitude: float = Query(...),
+    sample_frame: int = Query(14),
 ):
     try:
         # Create a point object from the provided latitude and longitude
         point = Point(longitude, latitude, srid=4326)
 
         # Query the grid cell that contains the provided point
-        cell = GRTSCells.objects.filter(geom_4326__contains=point).first()
+        cell = GRTSCells.objects.filter(
+            geom_4326__contains=point, sample_frame_id=sample_frame
+        ).first()
 
         if cell:
             # Return the grid cell ID

@@ -546,9 +546,13 @@ interface CellIDReponse {
   grid_cell_id?: number;
   error?: string;
 }
-async function getCellfromLocation(latitude: number, longitude: number) {
+async function getCellfromLocation(
+  latitude: number,
+  longitude: number,
+  sampleFrameId = 14
+) {
   return axiosInstance.get<CellIDReponse>(`/grts/grid_cell_id`, {
-    params: { latitude, longitude },
+    params: { latitude, longitude, sample_frame: sampleFrameId },
   });
 }
 

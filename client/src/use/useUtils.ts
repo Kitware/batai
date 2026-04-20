@@ -38,9 +38,57 @@ function getImageDimensions(images: HTMLImageElement[], fallback: { width: numbe
   return { width, height };
 }
 
+const DEFAULT_SAMPLE_FRAME_ID = 14;
+
+type RecordingQuadrant = "SW" | "NE" | "NW" | "SE";
+
+interface ParsedRecordingFilename {
+  cellId?: number;
+  date?: string;
+  time?: string;
+  sampleFrameId: number;
+  quadrant?: RecordingQuadrant;
+}
+
+function parseSampleFrameIdFromFilename(filename: string) {
+  const match = filename.match(/sampleframeid(?:[:=_-]?)(\d+)/i);
+  if (!match?.[1]) {
+    return DEFAULT_SAMPLE_FRAME_ID;
+  }
+  return parseInt(match[1], 10);
+}
+
+function parseRecordingFilename(filename: string): ParsedRecordingFilename | null {
+  const regexPattern = /^(\d+)_(.+)_(\d{8})_(\d{6})(?:_(.*))?$/;
+  const match = filename.match(regexPattern);
+  if (!match) {
+    return null;
+  }
+
+  const cellId = parseInt(match[1], 10);
+  const labelName = match[2];
+  const baseDate = match[3];
+  const timestamp = match[4];
+  const date = `${baseDate.slice(0, 4)}-${baseDate.slice(4, 6)}-${baseDate.slice(6, 8)}`;
+  const quadrant = (["SW", "NE", "NW", "SE"].includes(labelName)
+    ? labelName
+    : undefined) as RecordingQuadrant | undefined;
+
+  return {
+    cellId,
+    date,
+    time: timestamp,
+    sampleFrameId: parseSampleFrameIdFromFilename(filename),
+    quadrant,
+  };
+}
+
 
 export {
+  DEFAULT_SAMPLE_FRAME_ID,
   getCurrentTime,
   extractDateTimeComponents,
   getImageDimensions,
+  parseSampleFrameIdFromFilename,
+  parseRecordingFilename,
 };
