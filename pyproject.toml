@@ -164,7 +164,6 @@ ignore = [
   "PLW2901", # redefined-loop-name
   "PTH", # flake8-use-pathlib
   "S110", # try-except-pass
-  "SLF001", # private-member-access
   "TRY300", # try-consider-else
   "TRY301", # raise-within-try
 ]
