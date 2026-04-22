@@ -8,3 +8,5 @@ e96c4259a70b8152903ba461bb955f32e89bd229
 8ae10baa9f11b43cd1b3e4d39717b349cc69238b
 # Apply double quotes with Ruff
 b904a4ce1548b2667c4b22e46c73d47dbbeaae27
+# Apply Prettier formatting
+b62e98d09d2069179a664aa05218fdfa726df2f6

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, type Ref, watch } from 'vue';
-import type { ScaleOrdinal } from 'd3';
-import useState from '@use/useState';
+import { ref, type Ref, watch } from "vue";
+import type { ScaleOrdinal } from "d3";
+import useState from "@use/useState";
 
 const props = defineProps<{
-  colorScale: ScaleOrdinal<string, string, never>,
-  otherUsers: string[],
-  userEmails: string[],
+  colorScale: ScaleOrdinal<string, string, never>;
+  otherUsers: string[];
+  userEmails: string[];
 }>();
 const { createColorScale, setSelectedUsers } = useState();
 
@@ -15,7 +15,9 @@ const colorScale = props.colorScale ?? createColorScale(props.userEmails);
 const selectedUsers: Ref<string[]> = ref([]);
 
 const deleteChip = (item: string) => {
-  const newSelectedUsers = selectedUsers.value.filter((user: string) => user !== item);
+  const newSelectedUsers = selectedUsers.value.filter(
+    (user: string) => user !== item,
+  );
   selectedUsers.value = newSelectedUsers;
   setSelectedUsers(selectedUsers.value);
 };
@@ -43,9 +45,7 @@ watch(selectedUsers, () => {
     </template>
     <template #default="{ isActive }">
       <v-card>
-        <v-card-title>
-          Other Users
-        </v-card-title>
+        <v-card-title> Other Users </v-card-title>
         <v-card-text>
           <v-select
             v-model="selectedUsers"
@@ -73,10 +73,7 @@ watch(selectedUsers, () => {
           </v-select>
         </v-card-text>
         <v-card-actions>
-          <v-btn
-            text="Close"
-            @click="isActive.value = false"
-          />
+          <v-btn text="Close" @click="isActive.value = false" />
         </v-card-actions>
       </v-card>
     </template>

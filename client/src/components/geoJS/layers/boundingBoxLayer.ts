@@ -1,9 +1,12 @@
-import geo, { type GeoEvent } from 'geojs';
+import geo, { type GeoEvent } from "geojs";
 import BaseTextLayer from "./baseTextLayer";
-import { geojsonToSpectro, type SpectroInfo } from '../geoJSUtils';
-import type { LayerStyle, RectGeoJSData, TextData } from './types';
+import { geojsonToSpectro, type SpectroInfo } from "../geoJSUtils";
+import type { LayerStyle, RectGeoJSData, TextData } from "./types";
 
-type BoundingBoxTextData = TextData & { textAlign?: 'start' | 'end' | 'center', textBaseline?: 'top' | 'middle' | 'bottom' };
+type BoundingBoxTextData = TextData & {
+  textAlign?: "start" | "end" | "center";
+  textBaseline?: "top" | "middle" | "bottom";
+};
 
 export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,11 +24,11 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
   ) {
     super(geoViewerRef, event, spectroInfo);
 
-    const textLayer = this.geoViewerRef.createLayer('feature', {
-      features: ['text']
+    const textLayer = this.geoViewerRef.createLayer("feature", {
+      features: ["text"],
     });
     this.textLayer = textLayer
-      .createFeature('text')
+      .createFeature("text")
       .text((data: BoundingBoxTextData) => data.text)
       .style(this.createTextStyle())
       .position((data: BoundingBoxTextData) => ({
@@ -33,15 +36,15 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
         y: data.y,
       }));
 
-      this.drawing = drawing || false;
-      this.boxError = undefined;
+    this.drawing = drawing || false;
+    this.boxError = undefined;
 
-      this.initialize();
+    this.initialize();
   }
 
   initialize() {
     if (!this.boxLayer) {
-      this.boxLayer = this.geoViewerRef.createLayer('annotation', {
+      this.boxLayer = this.geoViewerRef.createLayer("annotation", {
         clickToEdit: true,
         showLabels: false,
         continuousPoiintProximity: false,
@@ -49,8 +52,12 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
         adjacentPointProximity: 1,
       });
     }
-    this.boxLayer.geoOn(geo.event.annotation.state, (e: GeoEvent) => this.handleAnnotationState(e));
-    this.boxLayer.geoOn(geo.event.annotation.edit_action, (e: GeoEvent) => this.handleAnnotationEditAction(e));
+    this.boxLayer.geoOn(geo.event.annotation.state, (e: GeoEvent) =>
+      this.handleAnnotationState(e),
+    );
+    this.boxLayer.geoOn(geo.event.annotation.edit_action, (e: GeoEvent) =>
+      this.handleAnnotationEditAction(e),
+    );
   }
 
   handleAnnotationState(e: GeoEvent) {
@@ -58,7 +65,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
       // not an annotation owned by this object
       return;
     }
-    if (e.annotation.state() === 'done') {
+    if (e.annotation.state() === "done") {
       this.event("update:cursor", { cursor: "default" });
       this.updateLabels(e.annotation);
       this.applyStyles();
@@ -70,14 +77,16 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
     if (this.boxLayer !== e.annotation.layer()) {
       return;
     }
-    if (e.annotation.state() === 'edit') {
+    if (e.annotation.state() === "edit") {
       this.updateLabels(e.annotation);
     }
   }
 
   updateErrorState(error: string | undefined) {
     this.boxError = error;
-    const message = error ? 'The current bounding box spans multiple pulses. The measurement labels are correct, but it is not to scale.' : null;
+    const message = error
+      ? "The current bounding box spans multiple pulses. The measurement labels are correct, but it is not to scale."
+      : null;
     this.event("bbox:error", { error: message });
   }
 
@@ -105,8 +114,8 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
         text: `${startTime}ₘₛ`,
         x: coordinates[0][0],
         y: coordinates[0][1] + 12,
-        textAlign: 'center',
-        textBaseline: 'top',
+        textAlign: "center",
+        textBaseline: "top",
         offsetX: 0,
         offsetY: 0,
       },
@@ -114,29 +123,29 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
         text: `${endTime}ₘₛ`,
         x: coordinates[3][0],
         y: coordinates[3][1] + 12,
-        textAlign: 'center',
-        textBaseline: 'top',
+        textAlign: "center",
+        textBaseline: "top",
       },
       {
         text: `${(lowFreq / 1000).toFixed(1)}kHz`,
         x: coordinates[3][0] + 5,
         y: coordinates[3][1],
-        textAlign: 'start',
-        textBaseline: 'middle',
+        textAlign: "start",
+        textBaseline: "middle",
       },
       {
         text: `${(highFreq / 1000).toFixed(1)}kHz`,
         x: coordinates[2][0] + 5,
         y: coordinates[2][1],
-        textAlign: 'start',
-        textBaseline: 'middle',
+        textAlign: "start",
+        textBaseline: "middle",
       },
       {
         text: `${endTime - startTime}ₘₛ`,
         x: (coordinates[0][0] + coordinates[2][0]) / 2,
         y: (coordinates[0][1] + coordinates[1][1]) / 2,
-        textAlign: 'center',
-        textBaseline: 'middle',
+        textAlign: "center",
+        textBaseline: "middle",
       },
     ];
     this.redraw();
@@ -146,7 +155,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
     this.drawing = true;
     this.event("update:cursor", { cursor: "mdi-vector-rectangle" });
     if (this.boxLayer) {
-      this.boxLayer.mode('rectangle');
+      this.boxLayer.mode("rectangle");
     }
   }
 
@@ -190,7 +199,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
   }
 
   _isDarkMode() {
-    return this.color === 'white';
+    return this.color === "white";
   }
 
   createRectStyle(): LayerStyle<RectGeoJSData> {
@@ -200,22 +209,21 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
       stroke: true,
       uniformPolygon: true,
       fill: false,
-      strokeColor: this._isDarkMode() ? 'yellow' : 'blue',
+      strokeColor: this._isDarkMode() ? "yellow" : "blue",
     };
   }
 
   createTextStyle(): LayerStyle<BoundingBoxTextData> {
     return {
-      fontSize: '16px',
-      textAlign: (data) => data.textAlign || 'start',
-      textBaseline: (data) => data.textBaseline || 'bottom',
+      fontSize: "16px",
+      textAlign: (data) => data.textAlign || "start",
+      textBaseline: (data) => data.textBaseline || "bottom",
       color: () => this.color,
       offset: (data) => ({
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
       textScaled: this.textScaled,
-
     };
   }
 
@@ -225,7 +233,7 @@ export default class BoundingBoxLayer extends BaseTextLayer<BoundingBoxTextData>
         rotate: false,
         resize: false,
       },
-      strokeColor: this._isDarkMode() ? 'yellow' : 'blue',
+      strokeColor: this._isDarkMode() ? "yellow" : "blue",
     };
   }
 }

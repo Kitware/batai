@@ -1,13 +1,19 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref, type Ref, watch, type PropType } from 'vue';
-import { getRecording, type Recording } from '../api/api';
-import useState from '@use/useState';
-import RecordingInfoDisplay from './RecordingInfoDisplay.vue';
-
+import {
+  defineComponent,
+  onMounted,
+  ref,
+  type Ref,
+  watch,
+  type PropType,
+} from "vue";
+import { getRecording, type Recording } from "../api/api";
+import useState from "@use/useState";
+import RecordingInfoDisplay from "./RecordingInfoDisplay.vue";
 
 export default defineComponent({
   components: {
-    RecordingInfoDisplay
+    RecordingInfoDisplay,
   },
   props: {
     id: {
@@ -15,11 +21,11 @@ export default defineComponent({
       required: true,
     },
     displayMode: {
-      type: String as PropType<'both' | 'metadata' | 'map'>,
-      default: 'both',
-    }
+      type: String as PropType<"both" | "metadata" | "map">,
+      default: "both",
+    },
   },
-  emits: ['close'],
+  emits: ["close"],
   setup(props) {
     const recordingInfo: Ref<Recording | null> = ref(null);
     const { configuration } = useState();
@@ -28,7 +34,10 @@ export default defineComponent({
       const recording = getRecording(props.id);
       recordingInfo.value = (await recording).data;
     };
-    watch(() => props.id, () => loadData());
+    watch(
+      () => props.id,
+      () => loadData(),
+    );
     onMounted(() => loadData());
     return {
       recordingInfo,

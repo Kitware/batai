@@ -27,7 +27,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ['dismiss', 'update:modelValue'],
+  emits: ["dismiss", "update:modelValue"],
   setup(props, { emit }) {
     const itemsPerPage = ref(-1);
     const displayDialog = ref(false);
@@ -66,10 +66,10 @@ export default defineComponent({
       noid: 3,
     };
     const categoryColors: Record<string, string> = {
-      individual: 'primary',
-      couplet: 'secondary',
-      frequency: 'warning',
-      noid: '',
+      individual: "primary",
+      couplet: "secondary",
+      frequency: "warning",
+      noid: "",
     };
 
     const orderedSpecies = ref<Species[]>([]);
@@ -116,7 +116,7 @@ export default defineComponent({
               (s.species_code ?? "").toLowerCase().includes(q) ||
               (s.species ?? "").toLowerCase().includes(q) ||
               (s.common_name ?? "").toLowerCase().includes(q) ||
-              (s.category ?? "").toLowerCase().includes(q)
+              (s.category ?? "").toLowerCase().includes(q),
           );
       return list.map((s) => ({
         ...s,
@@ -124,8 +124,8 @@ export default defineComponent({
       }));
     });
 
-    const hasChanges = computed(() =>
-      !arraysEqual(pendingSelection.value, props.modelValue)
+    const hasChanges = computed(
+      () => !arraysEqual(pendingSelection.value, props.modelValue),
     );
 
     const isSelected = (speciesCode: string) =>
@@ -175,36 +175,26 @@ export default defineComponent({
       class="ml-3"
       :disabled="disabled"
       @click="displayDialog = true"
-    > Species Codes </v-btn>
-    <v-dialog
-      v-model="displayDialog"
-      width="800"
-      persistent
     >
+      Species Codes
+    </v-btn>
+    <v-dialog v-model="displayDialog" width="800" persistent>
       <v-card class="d-flex flex-column">
         <v-card-title class="flex-shrink-0 d-flex flex-column">
           <v-row class="align-center">
             <h2 class="mr-4">Species Codes</h2>
             <v-spacer />
-            <v-icon
-              size="large"
-              @click="closeDialog"
-            >mdi-close</v-icon>
+            <v-icon size="large" @click="closeDialog">mdi-close</v-icon>
           </v-row>
           <v-row class="mt-2">
-            <v-chip
-              color="#0000FF"
-              class="ma-1"
-              label
-              small
-            >
+            <v-chip color="#0000FF" class="ma-1" label small>
               Highlighted = Selected Species
             </v-chip>
           </v-row>
         </v-card-title>
         <v-card-text
           class="flex-grow-1 overflow-y-auto pa-0"
-          style="max-height: 60vh;"
+          style="max-height: 60vh"
         >
           <div class="pa-3 pb-0">
             <v-text-field
@@ -255,11 +245,20 @@ export default defineComponent({
                   </span>
                 </td>
                 <td>
-                  <span :class="categoryColors[item.category] ? `text-${categoryColors[item.category]}` : ''">
-                    {{ item.category.charAt(0).toUpperCase() + item.category.slice(1) }}
+                  <span
+                    :class="
+                      categoryColors[item.category]
+                        ? `text-${categoryColors[item.category]}`
+                        : ''
+                    "
+                  >
+                    {{
+                      item.category.charAt(0).toUpperCase() +
+                      item.category.slice(1)
+                    }}
                   </span>
                 </td>
-                <td>{{ item.species ?? '' }}</td>
+                <td>{{ item.species ?? "" }}</td>
                 <td>{{ item.common_name }}</td>
               </tr>
             </template>
@@ -268,25 +267,10 @@ export default defineComponent({
         <v-card-actions class="flex-shrink-0">
           <v-spacer />
           <template v-if="hasChanges">
-            <v-btn
-              variant="outlined"
-              @click="closeDialog"
-            >
-              Cancel
-            </v-btn>
-            <v-btn
-              color="primary"
-              @click="saveAndClose"
-            >
-              Save
-            </v-btn>
+            <v-btn variant="outlined" @click="closeDialog"> Cancel </v-btn>
+            <v-btn color="primary" @click="saveAndClose"> Save </v-btn>
           </template>
-          <v-btn
-            v-else
-            color="primary"
-            variant="outlined"
-            @click="closeDialog"
-          >
+          <v-btn v-else color="primary" variant="outlined" @click="closeDialog">
             OK
           </v-btn>
         </v-card-actions>

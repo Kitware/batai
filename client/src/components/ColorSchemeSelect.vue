@@ -1,12 +1,16 @@
 <script setup lang="ts">
 defineProps({
   colorSchemes: {
-    type: Array as () => { value: string; title: string; scheme: (input: number) => string }[],
+    type: Array as () => {
+      value: string;
+      title: string;
+      scheme: (input: number) => string;
+    }[],
     required: true,
   },
   label: {
-      type: String,
-      default: 'Color Scheme',
+    type: String,
+    default: "Color Scheme",
   },
   width: {
     type: Number,
@@ -19,10 +23,14 @@ defineProps({
   returnObject: {
     type: Boolean,
     default: true,
-  }
+  },
 });
 
-const colorScheme = defineModel<{ value: string; title: string; scheme: (input: number) => string }>();
+const colorScheme = defineModel<{
+  value: string;
+  title: string;
+  scheme: (input: number) => string;
+}>();
 </script>
 
 <template>
@@ -39,16 +47,8 @@ const colorScheme = defineModel<{ value: string; title: string; scheme: (input: 
     :style="`max-width: ${maxWidth}px; min-width: ${maxWidth}px`"
   >
     <template #item="{ item, props }">
-      <div
-        v-bind="props"
-        class="custom-hover"
-      >
-        <v-row
-          dense
-          align="center"
-          justify="center"
-          no-gutters
-        >
+      <div v-bind="props" class="custom-hover">
+        <v-row dense align="center" justify="center" no-gutters>
           <span>{{ item.title }}</span>
         </v-row>
         <v-row
@@ -80,13 +80,13 @@ const colorScheme = defineModel<{ value: string; title: string; scheme: (input: 
 
 <style scoped>
 .color-swatch {
-  width:15px;
+  width: 15px;
   height: 10px;
 }
 .custom-hover {
   cursor: pointer;
 }
 .custom-hover:hover {
-  font-weight: bold;;
+  font-weight: bold;
 }
 </style>

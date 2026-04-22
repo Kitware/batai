@@ -1,10 +1,20 @@
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, type Ref, watch} from 'vue';
-import { getProcessingTaskDetails } from '@api/api';
-import { type NABatRecordingDataResponse, postNABatRecording } from '@api/NABatApi';
-import { useRouter } from 'vue-router';
-import { usePrompt } from '@use/prompt-service';
-import { useJWTToken } from '@use/useJWTToken';
+import {
+  defineComponent,
+  ref,
+  onMounted,
+  onUnmounted,
+  type Ref,
+  watch,
+} from "vue";
+import { getProcessingTaskDetails } from "@api/api";
+import {
+  type NABatRecordingDataResponse,
+  postNABatRecording,
+} from "@api/NABatApi";
+import { useRouter } from "vue-router";
+import { usePrompt } from "@use/prompt-service";
+import { useJWTToken } from "@use/useJWTToken";
 
 export default defineComponent({
   props: {
@@ -24,35 +34,35 @@ export default defineComponent({
   setup(props) {
     const { prompt } = usePrompt();
     const secondsWarning = 60;
-    const { shouldWarn, } = useJWTToken({
-      'token': props.apiToken,
-      'warningSeconds': secondsWarning,
+    const { shouldWarn } = useJWTToken({
+      token: props.apiToken,
+      warningSeconds: secondsWarning,
     });
     const errorMessage: Ref<string | null> = ref(null);
     const additionalErrors: Ref<string[]> = ref([]);
-      const loading = ref(true);
+    const loading = ref(true);
     const taskId: Ref<string | null> = ref(null);
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    const taskInfo = ref('');
+    const taskInfo = ref("");
     const router = useRouter();
 
     const fetchTaskDetails = async () => {
       if (taskId.value) {
         try {
           const response = await getProcessingTaskDetails(taskId.value);
-          if (response.celery_data.status === 'Complete') {
+          if (response.celery_data.status === "Complete") {
             loading.value = false;
             if (timeoutId !== null) {
               clearTimeout(timeoutId);
               timeoutId = null;
             }
-            taskInfo.value = '';
+            taskInfo.value = "";
             await checkNABatRecording();
             return;
-          } else if (response.celery_data.status === 'Error') {
+          } else if (response.celery_data.status === "Error") {
             loading.value = false;
             errorMessage.value = response.celery_data.error;
-            taskInfo.value = '';
+            taskInfo.value = "";
             return;
           } else if (response.celery_data.info?.description) {
             taskInfo.value = response.celery_data.info?.description;
@@ -69,11 +79,16 @@ export default defineComponent({
       errorMessage.value = null;
       additionalErrors.value = [];
       try {
-        const response = await postNABatRecording(props.recordingId, props.surveyEventId, props.apiToken);
-        if ('error' in response && response.error) {
+        const response = await postNABatRecording(
+          props.recordingId,
+          props.surveyEventId,
+          props.apiToken,
+        );
+        if ("error" in response && response.error) {
           loading.value = false;
           errorMessage.value = response.error;
-        } if ('taskId' in response && response?.taskId && !response?.error) {
+        }
+        if ("taskId" in response && response?.taskId && !response?.error) {
           taskId.value = response.taskId;
           timeoutId = setTimeout(fetchTaskDetails, 1000);
         } else {
@@ -82,16 +97,18 @@ export default defineComponent({
           const id = (response as NABatRecordingDataResponse).recordingId;
           router.push(`/nabat/${id}/spectrogram?apiToken=${props.apiToken}`);
         }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         errorMessage.value = `Failed to start processing: ${error.message}:`;
         if (error.response.data.errors?.length) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          additionalErrors.value = error.response.data.errors.map((item: any) => JSON.stringify(item));
+          additionalErrors.value = error.response.data.errors.map((item: any) =>
+            JSON.stringify(item),
+          );
         } else if (error.response.data.error) {
           additionalErrors.value.push(error.response.data.error);
         } else {
-          additionalErrors.value.push('An unknown error occurred');
+          additionalErrors.value.push("An unknown error occurred");
         }
         loading.value = false;
       }
@@ -108,17 +125,21 @@ export default defineComponent({
       }
     });
 
-    watch(shouldWarn, async() => {
-      if (shouldWarn.value) {
-        await prompt({
-          title: 'API Token Expiration',
-          text: [
-            `The Api Token will expire in less than ${secondsWarning} seconds`,
-            'The Refresh option will be added in the future',
-          ]
-        });
-      }
-    }, { immediate: true });
+    watch(
+      shouldWarn,
+      async () => {
+        if (shouldWarn.value) {
+          await prompt({
+            title: "API Token Expiration",
+            text: [
+              `The Api Token will expire in less than ${secondsWarning} seconds`,
+              "The Refresh option will be added in the future",
+            ],
+          });
+        }
+      },
+      { immediate: true },
+    );
 
     return {
       errorMessage,
@@ -134,10 +155,7 @@ export default defineComponent({
     <v-card-text>
       <v-row dense>
         <v-spacer />
-        <v-col
-          justify="center"
-          cols="auto"
-        >
+        <v-col justify="center" cols="auto">
           <v-progress-circular
             v-if="loading"
             indeterminate
@@ -147,26 +165,17 @@ export default defineComponent({
           >
             Loading...
           </v-progress-circular>
-          <v-alert
-            v-else-if="errorMessage"
-            type="error"
-          >
+          <v-alert v-else-if="errorMessage" type="error">
             {{ errorMessage }}
             <div v-if="additionalErrors.length">
               <ul>
-                <li
-                  v-for="(error, index) in additionalErrors"
-                  :key="index"
-                >
+                <li v-for="(error, index) in additionalErrors" :key="index">
                   {{ error }}
                 </li>
               </ul>
             </div>
           </v-alert>
-          <h3
-            v-if="loading && taskInfo"
-            style="text-align: center"
-          >
+          <h3 v-if="loading && taskInfo" style="text-align: center">
             {{ taskInfo }}
           </h3>
         </v-col>

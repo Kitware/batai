@@ -1,20 +1,18 @@
 <script lang="ts">
-import {
-  ref, type Ref, watch, defineComponent,
-} from 'vue';
+import { ref, type Ref, watch, defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'Prompt',
+  name: "Prompt",
   props: {},
   setup() {
     const show = ref(false);
-    const title = ref('');
-    const text: Ref<string | string[]> = ref('');
-    const positiveButton = ref('Confirm');
-    const negativeButton = ref('Cancel');
-    const selected = ref('positive');
+    const title = ref("");
+    const text: Ref<string | string[]> = ref("");
+    const positiveButton = ref("Confirm");
+    const negativeButton = ref("Cancel");
+    const selected = ref("positive");
     const confirm = ref(false);
-    const value: Ref<string | boolean | number| null> = ref(null);
+    const value: Ref<string | boolean | number | null> = ref(null);
 
     /**
      * Placeholder resolver function.  Wrapped in object so that
@@ -32,16 +30,16 @@ export default defineComponent({
 
     async function clickPositive() {
       show.value = false;
-        functions.resolve(value.value);
+      functions.resolve(value.value);
     }
 
     async function clickNegative() {
       show.value = false;
-        functions.resolve(null);
+      functions.resolve(null);
     }
 
     async function select() {
-      if (selected.value === 'positive') {
+      if (selected.value === "positive") {
         clickPositive();
       } else {
         clickNegative();
@@ -50,20 +48,19 @@ export default defineComponent({
 
     async function focusPositive() {
       if (positive.value) {
-        selected.value = 'positive';
+        selected.value = "positive";
       }
     }
 
     async function focusNegative() {
       if (negative.value) {
-        selected.value = 'negative';
+        selected.value = "negative";
       }
     }
 
-
     watch(show, async (val) => {
       if (!val) {
-          functions.resolve(null);
+        functions.resolve(null);
       }
     });
 
@@ -91,22 +88,13 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-dialog
-    v-model="show"
-    max-width="400"
-  >
+  <v-dialog v-model="show" max-width="400">
     <v-card>
-      <v-card-title
-        v-if="title"
-        class="title"
-      >
+      <v-card-title v-if="title" class="title">
         {{ title }}
       </v-card-title>
       <v-card-text v-if="Array.isArray(text)">
-        <div
-          v-for="(item, key) in text"
-          :key="key"
-        >
+        <div v-for="(item, key) in text" :key="key">
           {{ item }}
         </div>
       </v-card-text>
@@ -123,12 +111,7 @@ export default defineComponent({
         >
           {{ negativeButton }}
         </v-btn>
-        <v-btn
-          ref="positive"
-          color="primary"
-          text
-          @click="clickPositive"
-        >
+        <v-btn ref="positive" color="primary" text @click="clickPositive">
           {{ positiveButton }}
         </v-btn>
       </v-card-actions>

@@ -1,6 +1,13 @@
 <script lang="ts">
-import { computed, defineComponent, type PropType, ref, type Ref, watch } from "vue";
-import type { SpectroInfo } from './geoJS/geoJSUtils';
+import {
+  computed,
+  defineComponent,
+  type PropType,
+  ref,
+  type Ref,
+  watch,
+} from "vue";
+import type { SpectroInfo } from "./geoJS/geoJSUtils";
 import {
   deleteFileAnnotation,
   type FileAnnotation,
@@ -9,7 +16,10 @@ import {
   type UpdateFileAnnotation,
   submitFileAnnotation,
 } from "../api/api";
-import { deleteNABatFileAnnotation, patchNABatFileAnnotationLocal } from "../api/NABatApi";
+import {
+  deleteNABatFileAnnotation,
+  patchNABatFileAnnotationLocal,
+} from "../api/NABatApi";
 import useState from "@use/useState";
 import SpeciesEditor from "./SpeciesEditor.vue";
 import SpeciesNABatSave from "./SpeciesNABatSave.vue";
@@ -29,19 +39,19 @@ export default defineComponent({
       default: () => null,
     },
     species: {
-        type: Array as PropType<Species[]>,
-        required: true,
+      type: Array as PropType<Species[]>,
+      required: true,
     },
     recordingId: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     },
     apiToken: {
       type: String,
-      default: () => '',
+      default: () => "",
     },
     type: {
-      type: String as PropType<'nabat' | null>,
+      type: String as PropType<"nabat" | null>,
       default: () => null,
     },
     submittedAnnotationId: {
@@ -49,61 +59,81 @@ export default defineComponent({
       default: () => undefined,
     },
   },
-  emits: ['update:annotation', 'delete:annotation', 'submit:annotation'],
+  emits: ["update:annotation", "delete:annotation", "submit:annotation"],
   setup(props, { emit }) {
     const { configuration, currentUser } = useState();
     const updatingAnnotation = ref(false);
     const deletingAnnotation = ref(false);
     const submittingAnnotation = ref(false);
     const submitConfirmOpen = ref(false);
-    const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
-    const comments: Ref<string> = ref(props.annotation?.comments || '');
+    const speciesEdit: Ref<string[]> = ref(
+      props.annotation?.species?.map(
+        (item) => item.species_code || item.common_name,
+      ) || [],
+    );
+    const comments: Ref<string> = ref(props.annotation?.comments || "");
     const confidence: Ref<number> = ref(props.annotation?.confidence || 1.0);
-    const singleSpecies: Ref<string | null> = ref(props.annotation?.species.length ? props.annotation.species[0].species_code : null);
-    watch(() => props.annotation, () => {
+    const singleSpecies: Ref<string | null> = ref(
+      props.annotation?.species.length
+        ? props.annotation.species[0].species_code
+        : null,
+    );
+    watch(
+      () => props.annotation,
+      () => {
         if (props.annotation?.species) {
-            speciesEdit.value = props.annotation.species.map((item) => item.species_code || item.common_name);
+          speciesEdit.value = props.annotation.species.map(
+            (item) => item.species_code || item.common_name,
+          );
         }
         if (props.annotation) {
-            comments.value = props.annotation.comments || '';
+          comments.value = props.annotation.comments || "";
         }
         if (props.annotation) {
-            confidence.value = props.annotation.confidence;
+          confidence.value = props.annotation.confidence;
         }
-    });
+      },
+    );
     const updateAnnotation = async () => {
-        if (!props.annotation) return;
-        updatingAnnotation.value = true;
-        try {
-            const speciesIds: number[] = [];
-            speciesEdit.value.forEach((item) => {
-                const found = props.species.find((specie) => specie.species_code === item);
-                if (found) {
-                  speciesIds.push(found.pk);
-                }
-            });
-            const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
-              recordingId: props.recordingId,
-              comments: comments.value,
-              confidence: confidence.value,
-              model: 'User Defined',
-              species: speciesIds,
-              id: props.annotation.id,
-              apiToken: props.apiToken,
-            };
-            if (props.type === 'nabat') {
-              await patchNABatFileAnnotationLocal(props.annotation.id, updateAnnotation);
-            } else {
-              await patchFileAnnotation(props.annotation.id, updateAnnotation);
-            }
-            emit('update:annotation');
-        } finally {
-            updatingAnnotation.value = false;
+      if (!props.annotation) return;
+      updatingAnnotation.value = true;
+      try {
+        const speciesIds: number[] = [];
+        speciesEdit.value.forEach((item) => {
+          const found = props.species.find(
+            (specie) => specie.species_code === item,
+          );
+          if (found) {
+            speciesIds.push(found.pk);
+          }
+        });
+        const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
+          recordingId: props.recordingId,
+          comments: comments.value,
+          confidence: confidence.value,
+          model: "User Defined",
+          species: speciesIds,
+          id: props.annotation.id,
+          apiToken: props.apiToken,
+        };
+        if (props.type === "nabat") {
+          await patchNABatFileAnnotationLocal(
+            props.annotation.id,
+            updateAnnotation,
+          );
+        } else {
+          await patchFileAnnotation(props.annotation.id, updateAnnotation);
         }
+        emit("update:annotation");
+      } finally {
+        updatingAnnotation.value = false;
+      }
     };
 
     const serverSpeciesCodes = () =>
-      props.annotation?.species?.map((item) => item.species_code || item.common_name) ?? [];
+      props.annotation?.species?.map(
+        (item) => item.species_code || item.common_name,
+      ) ?? [];
     const speciesCodesEqual = (a: string[], b: string[]) =>
       a.length === b.length && a.every((v, i) => v === b[i]);
 
@@ -121,12 +151,16 @@ export default defineComponent({
       if (props.annotation && props.recordingId) {
         deletingAnnotation.value = true;
         try {
-          if (props.type === 'nabat') {
-            await deleteNABatFileAnnotation(props.annotation.id, props.apiToken, props.recordingId);
+          if (props.type === "nabat") {
+            await deleteNABatFileAnnotation(
+              props.annotation.id,
+              props.apiToken,
+              props.recordingId,
+            );
           } else {
-            await deleteFileAnnotation(props.annotation.id,);
+            await deleteFileAnnotation(props.annotation.id);
           }
-          emit('delete:annotation');
+          emit("delete:annotation");
         } finally {
           deletingAnnotation.value = false;
         }
@@ -147,34 +181,38 @@ export default defineComponent({
       try {
         const response = await submitFileAnnotation(props.annotation.id);
         submitConfirmOpen.value = false;
-        emit('submit:annotation', props.annotation, response.data.submitted);
+        emit("submit:annotation", props.annotation, response.data.submitted);
       } finally {
         submittingAnnotation.value = false;
       }
     };
 
-    const canSubmit = computed(() => (
-      props.annotation
-      && props.annotation.owner === currentUser.value
-      && props.annotation.model === 'User Defined'
-      && configuration.value.mark_annotations_completed_enabled
-    ));
+    const canSubmit = computed(
+      () =>
+        props.annotation &&
+        props.annotation.owner === currentUser.value &&
+        props.annotation.model === "User Defined" &&
+        configuration.value.mark_annotations_completed_enabled,
+    );
 
     const submissionTooltip = computed(() => {
-      if (props.submittedAnnotationId !== undefined && props.submittedAnnotationId !== props.annotation?.id) {
-        return 'You have already submitted a different annotation for this recording.';
+      if (
+        props.submittedAnnotationId !== undefined &&
+        props.submittedAnnotationId !== props.annotation?.id
+      ) {
+        return "You have already submitted a different annotation for this recording.";
       }
       if (props.annotation && props.annotation.submitted) {
-        return 'This annotation has been submitted. This cannot be undone.';
+        return "This annotation has been submitted. This cannot be undone.";
       }
       if (!speciesEdit.value.length) {
-        return 'Select at least one species before submitting.';
+        return "Select at least one species before submitting.";
       }
-      return 'Submit this annotation. This action cannot be undone.';
+      return "Submit this annotation. This action cannot be undone.";
     });
 
     const deleteEnabled = computed(() => {
-      if (props.type === 'nabat') return false;
+      if (props.type === "nabat") return false;
       if (configuration.value.is_admin) return true;
       if (!configuration.value.mark_annotations_completed_enabled) return true;
       // In vetting mode, non-admins may only delete blank annotations
@@ -182,25 +220,25 @@ export default defineComponent({
     });
 
     return {
-        updatingAnnotation,
-        deletingAnnotation,
-        submittingAnnotation,
-        speciesEdit,
-        confidence,
-        comments,
-        updateAnnotation,
-        onSpeciesModelValue,
-        onSaveComment,
-        deleteAnnotation,
-        submitAnnotation,
-        confirmSubmitAnnotation,
-        closeSubmitConfirm,
-        submitConfirmOpen,
-        singleSpecies,
-        configuration,
-        canSubmit,
-        submissionTooltip,
-        deleteEnabled,
+      updatingAnnotation,
+      deletingAnnotation,
+      submittingAnnotation,
+      speciesEdit,
+      confidence,
+      comments,
+      updateAnnotation,
+      onSpeciesModelValue,
+      onSaveComment,
+      deleteAnnotation,
+      submitAnnotation,
+      confirmSubmitAnnotation,
+      closeSubmitConfirm,
+      submitConfirmOpen,
+      singleSpecies,
+      configuration,
+      canSubmit,
+      submissionTooltip,
+      deleteEnabled,
     };
   },
 });
@@ -228,25 +266,14 @@ export default defineComponent({
         >
           Deleting…
         </span>
-        <span v-else>
-          Choose Label
-        </span>
-        <v-tooltip
-          v-if="type === 'nabat'"
-          width="250"
-          right
-        >
+        <span v-else> Choose Label </span>
+        <v-tooltip v-if="type === 'nabat'" width="250" right>
           <template #activator="{ props }">
-            <v-icon
-              v-bind="props"
-              size="x-small"
-            >
-              mdi-information
-            </v-icon>
+            <v-icon v-bind="props" size="x-small"> mdi-information </v-icon>
           </template>
           <span>
-            Each user may only add one label per file. Once you have saved
-            your selection it may not be deleted.
+            Each user may only add one label per file. Once you have saved your
+            selection it may not be deleted.
           </span>
         </v-tooltip>
         <v-spacer />
@@ -268,7 +295,9 @@ export default defineComponent({
           :key="`species_${annotation?.id}`"
           v-model="speciesEdit"
           :species-list="species"
-          :disabled="annotation?.submitted || updatingAnnotation || deletingAnnotation"
+          :disabled="
+            annotation?.submitted || updatingAnnotation || deletingAnnotation
+          "
           :vetting-mode="configuration.mark_annotations_completed_enabled"
           :annotation-comment="comments"
           @update:model-value="onSpeciesModelValue"
@@ -286,7 +315,9 @@ export default defineComponent({
         />
       </v-row>
       <v-row
-        v-if="type !== 'nabat' && !configuration.mark_annotations_completed_enabled"
+        v-if="
+          type !== 'nabat' && !configuration.mark_annotations_completed_enabled
+        "
       >
         <v-slider
           v-model="confidence"
@@ -298,7 +329,9 @@ export default defineComponent({
         />
       </v-row>
       <v-row
-        v-if="type !== 'nabat' && !configuration.mark_annotations_completed_enabled"
+        v-if="
+          type !== 'nabat' && !configuration.mark_annotations_completed_enabled
+        "
       >
         <v-textarea
           v-model="comments"
@@ -309,13 +342,18 @@ export default defineComponent({
       <v-row v-if="canSubmit">
         <v-tooltip>
           <template #activator="{ props }">
-            <div
-              v-bind="props"
-            >
+            <div v-bind="props">
               <v-btn
                 flat
                 color="primary"
-                :disabled="speciesEdit.length === 0 || updatingAnnotation || deletingAnnotation || annotation?.submitted || (submittedAnnotationId !== undefined && annotation?.id !== submittedAnnotationId)"
+                :disabled="
+                  speciesEdit.length === 0 ||
+                  updatingAnnotation ||
+                  deletingAnnotation ||
+                  annotation?.submitted ||
+                  (submittedAnnotationId !== undefined &&
+                    annotation?.id !== submittedAnnotationId)
+                "
                 @click="submitAnnotation"
               >
                 Submit
@@ -329,15 +367,12 @@ export default defineComponent({
         </v-tooltip>
       </v-row>
     </v-card-text>
-    <v-dialog
-      v-model="submitConfirmOpen"
-      max-width="400"
-      persistent
-    >
+    <v-dialog v-model="submitConfirmOpen" max-width="400" persistent>
       <v-card>
         <v-card-title>Submit annotation?</v-card-title>
         <v-card-text>
-          Are you sure you want to submit this annotation? Once submitted, the annotation cannot be edited.
+          Are you sure you want to submit this annotation? Once submitted, the
+          annotation cannot be edited.
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -361,6 +396,4 @@ export default defineComponent({
   </v-card>
 </template>
 
-<style lang="scss" scoped>
-
-</style>
+<style lang="scss" scoped></style>

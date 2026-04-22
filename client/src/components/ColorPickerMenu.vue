@@ -1,21 +1,24 @@
 <script setup lang="ts">
-import * as d3 from 'd3';
-import { ref } from 'vue';
+import * as d3 from "d3";
+import { ref } from "vue";
 defineProps({
   tooltipText: {
     type: String,
-    default: ''
+    default: "",
   },
 });
 const colorpickerMenu = ref(false);
-const color = defineModel<string>({ default: 'rgb(0, 0, 0)'});
+const color = defineModel<string>({ default: "rgb(0, 0, 0)" });
 function updateColor(colorVal: string) {
-  if (colorVal.includes('/')) {
-    colorVal = colorVal.replace(' / undefined)', ')');
+  if (colorVal.includes("/")) {
+    colorVal = colorVal.replace(" / undefined)", ")");
   }
-  if (!colorVal.includes(',')) {
+  if (!colorVal.includes(",")) {
     // convert rgb(0 0 0) to rgb(0, 0, 0)
-    colorVal = colorVal.replace(/rgb\((\d+)\s+(\d+)\s+(\d+)\)/, 'rgb($1, $2, $3)');
+    colorVal = colorVal.replace(
+      /rgb\((\d+)\s+(\d+)\s+(\d+)\)/,
+      "rgb($1, $2, $3)",
+    );
   }
   const d3Color = d3.color(colorVal);
   if (d3Color) {
@@ -25,11 +28,7 @@ function updateColor(colorVal: string) {
 </script>
 
 <template>
-  <v-menu
-    v-model="colorpickerMenu"
-    :close-on-content-click="false"
-    offset-y
-  >
+  <v-menu v-model="colorpickerMenu" :close-on-content-click="false" offset-y>
     <template #activator="{ props: subProps }">
       <v-tooltip :text="tooltipText">
         <template #activator="{ props: tooltipProps }">

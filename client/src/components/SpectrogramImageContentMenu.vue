@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import useState from '@use/useState';
+import { ref } from "vue";
+import useState from "@use/useState";
 
 defineProps<{
   compressed: boolean;
   hasMaskUrls?: boolean;
 }>();
 
-const {
-  viewMaskOverlay,
-  maskOverlayOpacity,
-} = useState();
+const { viewMaskOverlay, maskOverlayOpacity } = useState();
 
 const hover = ref(false);
 
@@ -34,18 +31,11 @@ function onMaskOverlayChange(checked: boolean) {
       :close-delay="250"
     >
       <template #activator="{ props }">
-        <v-icon
-          v-bind="props"
-          size="25"
-          :color="viewMaskOverlay ? 'blue' : ''"
-        >
+        <v-icon v-bind="props" size="25" :color="viewMaskOverlay ? 'blue' : ''">
           mdi-vector-curve
         </v-icon>
       </template>
-      <v-card
-        min-width="300"
-        class="pa-3"
-      >
+      <v-card min-width="300" class="pa-3">
         <v-card-title class="text-subtitle-1">
           Mask Overlay Options
         </v-card-title>

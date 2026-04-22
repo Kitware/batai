@@ -1,5 +1,5 @@
 import { computed, ref, type Ref, watch } from "vue";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import {
@@ -26,8 +26,14 @@ import {
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<"pulse" | "sequence"> = ref("pulse");
 type LayersVis = "time" | "freq" | "species" | "grid" | "sequence" | "duration";
-const layerVisibility: Ref<LayersVis[]> = ref(["sequence", "species", "duration", "freq"]);
-const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
+const layerVisibility: Ref<LayersVis[]> = ref([
+  "sequence",
+  "species",
+  "duration",
+  "freq",
+]);
+const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> =
+  ref();
 const colorSchemes = [
   { value: "inferno", title: "Inferno", scheme: interpolateInferno },
   { value: "cividis", title: "Cividis", scheme: interpolateCividis },
@@ -36,9 +42,11 @@ const colorSchemes = [
   { value: "plasma", title: "Plasma", scheme: interpolatePlasma },
   { value: "turbo", title: "Turbo", scheme: interpolateTurbo },
 ];
-const colorScheme: Ref<{ value: string; title: string; scheme: (input: number) => string }> = ref(
-  colorSchemes[0]
-);
+const colorScheme: Ref<{
+  value: string;
+  title: string;
+  scheme: (input: number) => string;
+}> = ref(colorSchemes[0]);
 const backgroundColor = ref("rgb(0, 0, 0)");
 const selectedUsers: Ref<string[]> = ref([]);
 const currentUser: Ref<string> = ref("");
@@ -76,7 +84,7 @@ const toggleMeasureMode = () => {
   measuring.value = !measuring.value;
 };
 const drawingBoundingBox = ref(false);
-const boundingBoxError = ref('');
+const boundingBoxError = ref("");
 const toggleDrawingBoundingBox = () => {
   drawingBoundingBox.value = !drawingBoundingBox.value;
 };
@@ -94,7 +102,7 @@ const contourOpacity = ref(1.0);
 const contoursLoading = ref(false);
 // Default mask overlay to visible at 50% opacity.
 const viewMaskOverlay = ref(true);
-const maskOverlayOpacity = ref(0.50);
+const maskOverlayOpacity = ref(0.5);
 // Waveplot below compressed spectrogram; on by default when available.
 const viewWaveplot = ref(true);
 const setContoursEnabled = (value: boolean) => {
@@ -109,13 +117,13 @@ function clearContours() {
   computedPulseContours.value = [];
 }
 
-const reviewerMaterials = ref('');
+const reviewerMaterials = ref("");
 
 const transparencyThreshold = ref(0); // 0-100 percentage
 
-const FILTER_TAG_STORAGE_KEY = 'bataiFilterTags';
-const SHARED_FILTER_TAG_STORAGE_KEY = 'bataiSharedFilterTags';
-const MAP_FILTER_BOUNDS_STORAGE_KEY = 'bataiMapFilterBounds';
+const FILTER_TAG_STORAGE_KEY = "bataiFilterTags";
+const SHARED_FILTER_TAG_STORAGE_KEY = "bataiSharedFilterTags";
+const MAP_FILTER_BOUNDS_STORAGE_KEY = "bataiMapFilterBounds";
 
 const filterTags: Ref<string[]> = ref([]);
 const sharedFilterTags: Ref<string[]> = ref([]);
@@ -159,19 +167,24 @@ export default function useState() {
       .domain(userEmails)
       .range(
         d3.schemeCategory10.filter(
-          (color) => color !== "red" && color !== "cyan" && color !== "yellow"
-        )
+          (color) => color !== "red" && color !== "cyan" && color !== "yellow",
+        ),
       );
   }
 
-  function setSelectedId(id: number | null, annotationType?: "pulse" | "sequence") {
+  function setSelectedId(
+    id: number | null,
+    annotationType?: "pulse" | "sequence",
+  ) {
     selectedId.value = id;
     if (annotationType) {
       selectedType.value = annotationType;
     }
   }
   watch(sharedList, () => {
-    const filtered = sharedList.value.filter((item) => !item.userMadeAnnotations);
+    const filtered = sharedList.value.filter(
+      (item) => !item.userMadeAnnotations,
+    );
     if (filtered.length > 0) {
       nextShared.value = filtered[0];
     } else {
@@ -197,7 +210,7 @@ export default function useState() {
    */
   function isNaBat(): boolean {
     const router = useRouter();
-    return router.currentRoute.value.fullPath.includes('nabat');
+    return router.currentRoute.value.fullPath.includes("nabat");
   }
 
   // Server filters by exclude_submitted when "Show submitted" is unchecked; we refetch on toggle.
@@ -216,21 +229,30 @@ export default function useState() {
   }
 
   function saveFilterTags() {
-    localStorage.setItem(FILTER_TAG_STORAGE_KEY, JSON.stringify(filterTags.value));
-    localStorage.setItem(SHARED_FILTER_TAG_STORAGE_KEY, JSON.stringify(sharedFilterTags.value));
+    localStorage.setItem(
+      FILTER_TAG_STORAGE_KEY,
+      JSON.stringify(filterTags.value),
+    );
+    localStorage.setItem(
+      SHARED_FILTER_TAG_STORAGE_KEY,
+      JSON.stringify(sharedFilterTags.value),
+    );
   }
 
   function loadFilterTags() {
-    filterTags.value = JSON.parse(localStorage.getItem(FILTER_TAG_STORAGE_KEY) || '[]');
-    sharedFilterTags.value = JSON.parse(localStorage.getItem(SHARED_FILTER_TAG_STORAGE_KEY) || '[]');
-
+    filterTags.value = JSON.parse(
+      localStorage.getItem(FILTER_TAG_STORAGE_KEY) || "[]",
+    );
+    sharedFilterTags.value = JSON.parse(
+      localStorage.getItem(SHARED_FILTER_TAG_STORAGE_KEY) || "[]",
+    );
   }
 
   function saveMapFilterBounds(bounds: [number, number, number, number]) {
     if (
-      !bounds
-      || bounds.length !== 4
-      || bounds.some((n) => !Number.isFinite(n))
+      !bounds ||
+      bounds.length !== 4 ||
+      bounds.some((n) => !Number.isFinite(n))
     ) {
       return;
     }
@@ -249,7 +271,7 @@ export default function useState() {
       const parsed: unknown = JSON.parse(raw);
       if (!Array.isArray(parsed) || parsed.length !== 4) return null;
 
-      const nums = parsed.map((v) => (typeof v === 'number' ? v : Number(v)));
+      const nums = parsed.map((v) => (typeof v === "number" ? v : Number(v)));
       if (nums.some((n) => !Number.isFinite(n))) return null;
 
       return nums as [number, number, number, number];

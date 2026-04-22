@@ -10,9 +10,9 @@ interface LineData {
 }
 
 interface LegendTextData extends TextData {
-  type: 'time' | 'freq',
-  textAlign?: 'start' | 'center' | 'end';
-  textBaseline?: 'top' | 'middle' | 'bottom';
+  type: "time" | "freq";
+  textAlign?: "start" | "center" | "end";
+  textBaseline?: "top" | "middle" | "bottom";
   textScaled?: number | undefined;
   compressedLabel?: boolean;
 }
@@ -30,7 +30,6 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
   textDataX: LegendTextData[];
   textDataY: LegendTextData[];
 
-
   gridLines: LineData[];
 
   spectroInfo: SpectroInfo;
@@ -44,15 +43,13 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
 
   disabled: boolean;
 
-
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
-    spectroInfo: SpectroInfo
+    spectroInfo: SpectroInfo,
   ) {
-
     super(geoViewerRef, event, spectroInfo);
     this.lineDataX = [];
     this.lineDataY = [];
@@ -61,7 +58,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
     this.textDataY = [];
     this.axisBuffer = 5;
     this.scaledHeight = -1;
-    this.scaledWidth  = -1;
+    this.scaledWidth = -1;
     this.gridEnabled = false;
     this.disabled = false;
     this.gridLines = [];
@@ -87,7 +84,9 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
       this.lineStyle = this.createLineStyle();
       this.gridLines = [];
       this.geoViewerRef.geoOn(geo.event.pan, () => this.onPan());
-      this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
+      this.geoViewerRef.geoOn(geo.event.zoom, (event: { zoomLevel: number }) =>
+        this.onZoom(event),
+      );
       this.createLabels();
       this.calcGridLines();
     }
@@ -108,7 +107,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
     this.redraw();
   }
 
-  setScaledDimensions( width: number, height: number) {
+  setScaledDimensions(width: number, height: number) {
     super.setScaledDimensions(width, height);
     this.createLabels();
     this.redraw();
@@ -116,8 +115,14 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   drawXAxisLabels(yOffset = 0, _xOffset = 0, leftOffset = 0) {
-    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
-    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+    const adjustedWidth =
+      this.scaledWidth > this.spectroInfo.width
+        ? this.scaledWidth
+        : this.spectroInfo.width;
+    const adjustedHeight =
+      this.scaledHeight > this.spectroInfo.height
+        ? this.scaledHeight
+        : this.spectroInfo.height;
 
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
     const baseYPos = yOffset === 0 ? adjustedHeight : yOffset;
@@ -129,7 +134,8 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
     // every 100 ms a small tick and every 1000 a big tick
     for (let i = 0; i < time; i += 10) {
       const length = i % 1000 === 0 ? yBuffer * 8 : yBuffer * 4;
-      const withinYAxis = (i * timeToPixels) < (leftOffset +  50)  && leftOffset  !== 0 && yOffset !== 0;
+      const withinYAxis =
+        i * timeToPixels < leftOffset + 50 && leftOffset !== 0 && yOffset !== 0;
       if (withinYAxis) {
         continue;
       }
@@ -146,7 +152,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
         });
         this.textDataX.push({
           text: `${i}ₘₛ`,
-          type: 'time',
+          type: "time",
           x: i * timeToPixels,
           y: baseYPos + length,
           offsetX: 3,
@@ -168,19 +174,23 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
     }
   }
 
-
-  drawXAxisLabelsCompressed(yOffset = 0, topOffset = 0, leftOffset = 0,) {
+  drawXAxisLabelsCompressed(yOffset = 0, topOffset = 0, leftOffset = 0) {
     // const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
-    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+    const adjustedHeight =
+      this.scaledHeight > this.spectroInfo.height
+        ? this.scaledHeight
+        : this.spectroInfo.height;
 
     const yBuffer = yOffset === 0 ? this.axisBuffer : this.axisBuffer * -0.5;
     const baseYPos = yOffset === 0 ? adjustedHeight : yOffset;
     const baseTopPos = topOffset === 0 ? 0 : -topOffset;
-    const topBuffer = topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -3;
+    const topBuffer =
+      topOffset === 0 ? this.axisBuffer * 3 : this.axisBuffer * -3;
 
-    const { start_times, end_times, widths, compressedWidth } = this.spectroInfo;
+    const { start_times, end_times, widths, compressedWidth } =
+      this.spectroInfo;
     if (!compressedWidth) {
-      throw Error('No compressed width');
+      throw Error("No compressed width");
     }
     if (start_times && end_times && widths) {
       // We need a pixel time to map to the 0 position
@@ -189,60 +199,57 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
       for (let i = 0; i < start_times.length; i += 1) {
         const start_time = start_times[i];
         const end_time = end_times[i];
-        const width = this.scaledWidth > compressedWidth ? (this.scaledWidth / compressedWidth) * widths[i] : widths[i];
-        const bottomWithinYAxisStart = (pixelOffset) < (leftOffset +  150)  && leftOffset !== 0 && yOffset !== 0;
-        const topWithinYAxisEnd = (pixelOffset+width) < (leftOffset +  150)  && leftOffset !== 0 && topOffset !== 0;
+        const width =
+          this.scaledWidth > compressedWidth
+            ? (this.scaledWidth / compressedWidth) * widths[i]
+            : widths[i];
+        const bottomWithinYAxisStart =
+          pixelOffset < leftOffset + 150 && leftOffset !== 0 && yOffset !== 0;
+        const topWithinYAxisEnd =
+          pixelOffset + width < leftOffset + 150 &&
+          leftOffset !== 0 &&
+          topOffset !== 0;
 
+        if (!bottomWithinYAxisStart) {
+          this.lineDataX.push({
+            line: {
+              type: "LineString",
+              coordinates: [
+                [pixelOffset, baseYPos + yBuffer],
+                [pixelOffset, baseYPos + length],
+              ],
+            },
+            thicker: true,
+          });
+        }
+        if (!topWithinYAxisEnd) {
+          this.lineDataX.push({
+            line: {
+              type: "LineString",
+              coordinates: [
+                [width + pixelOffset, baseYPos + yBuffer],
+                [width + pixelOffset, baseYPos + topBuffer],
+              ],
+            },
+            thicker: true,
+          });
 
-      if (!bottomWithinYAxisStart) {
-        this.lineDataX.push({
-          line: {
-            type: "LineString",
-            coordinates: [
-              [pixelOffset, baseYPos + yBuffer],
-              [ pixelOffset, baseYPos + length],
-            ],
-          },
-          thicker: true,
-        });
-      }
-      if (!topWithinYAxisEnd) {
-        this.lineDataX.push({
-          line: {
-            type: "LineString",
-            coordinates: [
-              [
-                width + pixelOffset,
-                baseYPos + yBuffer,
+          this.lineDataX.push({
+            line: {
+              type: "LineString",
+              coordinates: [
+                [width + pixelOffset, baseTopPos],
+                [width + pixelOffset, baseTopPos - topBuffer],
               ],
-              [
-                width + pixelOffset,
-                baseYPos + topBuffer,
-              ],
-            ],
-          },
-          thicker: true,
-        });
-
+            },
+            thicker: true,
+          });
+        }
         this.lineDataX.push({
           line: {
             type: "LineString",
             coordinates: [
-              [width + pixelOffset, baseTopPos],
-              [width + pixelOffset, baseTopPos - topBuffer],
-            ],
-          },
-          thicker: true,
-        });
-      }
-        this.lineDataX.push({
-          line: {
-            type: "LineString",
-            coordinates: [
-              [
-                width + pixelOffset,
-                baseYPos + yBuffer,
-              ],
+              [width + pixelOffset, baseYPos + yBuffer],
               [width + pixelOffset, baseTopPos],
             ],
           },
@@ -251,29 +258,28 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
 
         //Need to decide what text to add to the label
         if (!bottomWithinYAxisStart) {
-        this.textDataX.push({
-          text: `▶${start_time}ₘₛ`,
-          type: 'time',
-          x: 0 + pixelOffset,
-          y: baseYPos + length + (yOffset === 0 ? 18 : -12),
-          textScaled: this.textScaled,
-          textAlign: 'start',
-          compressedLabel: true,
-        });
-      }
-      if (!topWithinYAxisEnd) {
-
-        this.textDataX.push({
-          text: `${end_time}ₘₛ◀`,
-          type: 'time',
-          x: width + pixelOffset,
-          y: baseTopPos + (baseTopPos === 0 ? -16 : 16),
-          textBaseline: baseTopPos === 0 ? 'bottom' : 'top',
-          textAlign: 'end',
-          textScaled: this.textScaled,
-          compressedLabel: true,
-        });
-      }
+          this.textDataX.push({
+            text: `▶${start_time}ₘₛ`,
+            type: "time",
+            x: 0 + pixelOffset,
+            y: baseYPos + length + (yOffset === 0 ? 18 : -12),
+            textScaled: this.textScaled,
+            textAlign: "start",
+            compressedLabel: true,
+          });
+        }
+        if (!topWithinYAxisEnd) {
+          this.textDataX.push({
+            text: `${end_time}ₘₛ◀`,
+            type: "time",
+            x: width + pixelOffset,
+            y: baseTopPos + (baseTopPos === 0 ? -16 : 16),
+            textBaseline: baseTopPos === 0 ? "bottom" : "top",
+            textAlign: "end",
+            textScaled: this.textScaled,
+            compressedLabel: true,
+          });
+        }
         pixelOffset += width;
         // Need to add the current
       }
@@ -282,13 +288,22 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
 
   calcGridLines() {
     // Y-Axis grid lines:
-    let adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
-    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+    let adjustedWidth =
+      this.scaledWidth > this.spectroInfo.width
+        ? this.scaledWidth
+        : this.spectroInfo.width;
+    const adjustedHeight =
+      this.scaledHeight > this.spectroInfo.height
+        ? this.scaledHeight
+        : this.spectroInfo.height;
     const xBuffer = this.axisBuffer;
     const hz = this.spectroInfo.high_freq - this.spectroInfo.low_freq;
     const hzToPixels = adjustedHeight / hz;
     this.gridLines = [];
-    if (this.spectroInfo.compressedWidth && this.scaledWidth > this.spectroInfo.compressedWidth) {
+    if (
+      this.spectroInfo.compressedWidth &&
+      this.scaledWidth > this.spectroInfo.compressedWidth
+    ) {
       adjustedWidth = this.scaledWidth;
     }
     for (let i = 0; i < hz; i += 10000) {
@@ -309,8 +324,9 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
     const time = this.spectroInfo.end_time - this.spectroInfo.start_time;
     const timeToPixels = adjustedWidth / time;
 
-    const { start_times, end_times, widths, compressedWidth } = this.spectroInfo;
-    const compressed = (start_times && end_times && widths && compressedWidth);
+    const { start_times, end_times, widths, compressedWidth } =
+      this.spectroInfo;
+    const compressed = start_times && end_times && widths && compressedWidth;
 
     // every 100 ms a small tick and every 1000 a big tick
     if (!compressed) {
@@ -331,8 +347,14 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
 
   drawYAxis(offset = 0) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
-    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+    const adjustedWidth =
+      this.scaledWidth > this.spectroInfo.width
+        ? this.scaledWidth
+        : this.spectroInfo.width;
+    const adjustedHeight =
+      this.scaledHeight > this.spectroInfo.height
+        ? this.scaledHeight
+        : this.spectroInfo.height;
     const xBuffer = offset === 0 ? this.axisBuffer : this.axisBuffer * -0.25;
     const yAxis: GeoJSON.LineString = {
       type: "LineString",
@@ -363,19 +385,28 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
         text: `${(i + this.spectroInfo.low_freq) / 1000}KHz`,
         x: offset - xBuffer + (offset === 0 ? -45 : 10),
         y: adjustedHeight - i * hzToPixels,
-        textAlign:  offset === 0 ? 'end' : 'start',
+        textAlign: offset === 0 ? "end" : "start",
         offsetY: 0,
-        type: 'freq',
+        type: "freq",
         textScaled: this.textScaled,
       });
     }
   }
 
   drawXAxis(bottomOffset = 0, topOffset = 0, lefOffset = 0) {
-    let adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
-    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+    let adjustedWidth =
+      this.scaledWidth > this.spectroInfo.width
+        ? this.scaledWidth
+        : this.spectroInfo.width;
+    const adjustedHeight =
+      this.scaledHeight > this.spectroInfo.height
+        ? this.scaledHeight
+        : this.spectroInfo.height;
 
-    if (this.spectroInfo.compressedWidth && this.scaledWidth > this.spectroInfo.compressedWidth) {
+    if (
+      this.spectroInfo.compressedWidth &&
+      this.scaledWidth > this.spectroInfo.compressedWidth
+    ) {
       adjustedWidth = this.scaledWidth;
     }
     const xAxis: GeoJSON.LineString = {
@@ -389,15 +420,25 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
     this.lineDataX.push({ line: xAxis });
     this.drawYAxis(0);
 
-    if (this.spectroInfo.compressedWidth && this.spectroInfo.start_times && this.spectroInfo.end_times) {
+    if (
+      this.spectroInfo.compressedWidth &&
+      this.spectroInfo.start_times &&
+      this.spectroInfo.end_times
+    ) {
       this.drawXAxisLabelsCompressed(bottomOffset, topOffset, lefOffset);
     } else {
       this.drawXAxisLabels(bottomOffset, topOffset, lefOffset);
     }
   }
   createLabels() {
-    const adjustedWidth = this.scaledWidth > this.spectroInfo.width ? this.scaledWidth : this.spectroInfo.width;
-    const adjustedHeight = this.scaledHeight > this.spectroInfo.height ? this.scaledHeight : this.spectroInfo.height;
+    const adjustedWidth =
+      this.scaledWidth > this.spectroInfo.width
+        ? this.scaledWidth
+        : this.spectroInfo.width;
+    const adjustedHeight =
+      this.scaledHeight > this.spectroInfo.height
+        ? this.scaledHeight
+        : this.spectroInfo.height;
 
     // Take spectro Info and create lines for X/Y axis
     this.textDataX = [];
@@ -415,7 +456,11 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
     this.lineDataX.push({ line: xAxis });
     this.drawYAxis();
 
-    if (this.spectroInfo.compressedWidth && this.spectroInfo.start_times && this.spectroInfo.end_times) {
+    if (
+      this.spectroInfo.compressedWidth &&
+      this.spectroInfo.start_times &&
+      this.spectroInfo.end_times
+    ) {
       this.drawXAxisLabelsCompressed();
     } else {
       this.drawXAxisLabels();
@@ -441,7 +486,10 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
       .style(this.createLineStyle())
       .draw();
     const combinedLegendTextData = this.textDataX.concat(this.textDataY);
-    this.textLayer.data(combinedLegendTextData).style(this.createTextStyle()).draw();
+    this.textLayer
+      .data(combinedLegendTextData)
+      .style(this.createTextStyle())
+      .draw();
   }
 
   disable() {
@@ -515,7 +563,7 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
         stroke: true,
         uniformPolygon: true,
         fill: false,
-        fontSize: `${this.getFontSize(20, 12, this.xScale)}px`
+        fontSize: `${this.getFontSize(20, 12, this.xScale)}px`,
       },
       color: () => {
         return this.color;
@@ -524,11 +572,15 @@ export default class LegendLayer extends BaseTextLayer<LegendTextData> {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
-      textBaseline: (data) => data.textBaseline || 'middle',
-      textAlign: (data) => (data.textAlign || "center"),
-      textScaled: (data) => (data.textScaled),
-      fontSize: (data) => data.type === 'time' && this.compressedView ? `${this.getFontSize(16, 10, this.xScale)}px` : `20px`,
-      visible: (data) => (data.compressedLabel && this.xScale < 1.5) ? false : true,
+      textBaseline: (data) => data.textBaseline || "middle",
+      textAlign: (data) => data.textAlign || "center",
+      textScaled: (data) => data.textScaled,
+      fontSize: (data) =>
+        data.type === "time" && this.compressedView
+          ? `${this.getFontSize(16, 10, this.xScale)}px`
+          : `20px`,
+      visible: (data) =>
+        data.compressedLabel && this.xScale < 1.5 ? false : true,
     };
   }
 }

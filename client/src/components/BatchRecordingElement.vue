@@ -1,11 +1,22 @@
 <script lang="ts">
-import { computed, defineComponent, type PropType, ref, type Ref, watch } from "vue";
+import {
+  computed,
+  defineComponent,
+  type PropType,
+  ref,
+  type Ref,
+  watch,
+} from "vue";
 import { RecordingMimeTypes } from "../constants";
-import { getCellLocation, getCellfromLocation, getGuanoMetadata } from "../api/api";
+import {
+  getCellLocation,
+  getCellfromLocation,
+  getGuanoMetadata,
+} from "../api/api";
 import MapLocation from "./MapLocation.vue";
 import { useDate } from "vuetify";
-import { getCurrentTime, extractDateTimeComponents } from '@use/useUtils';
-import useState from '@use/useState';
+import { getCurrentTime, extractDateTimeComponents } from "@use/useUtils";
+import useState from "@use/useState";
 export interface BatchRecording {
   name: string;
   file: File;
@@ -48,10 +59,12 @@ export default defineComponent({
     const recordedDate = ref(
       props.editing
         ? props.editing.date
-        : new Date().toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
     ); // YYYY-MM-DD Time
     const recordedTime = ref(
-      props.editing && props.editing.time ? props.editing.time.replace(/:/g, "") : getCurrentTime()
+      props.editing && props.editing.time
+        ? props.editing.time.replace(/:/g, "")
+        : getCurrentTime(),
     ); // HHMMSS
     const uploadProgress = ref(0);
     const name = ref(props.editing ? props.editing.name : "");
@@ -59,19 +72,19 @@ export default defineComponent({
     const comments = ref(props.editing ? props.editing.comments : "");
     const validForm = ref(false);
     const latitude: Ref<number | undefined> = ref(
-      props.editing?.location?.lat ? props.editing.location.lat : undefined
+      props.editing?.location?.lat ? props.editing.location.lat : undefined,
     );
     const longitude: Ref<number | undefined> = ref(
-      props.editing?.location?.lon ? props.editing.location.lon : undefined
+      props.editing?.location?.lon ? props.editing.location.lon : undefined,
     );
     const gridCellId: Ref<number | undefined> = ref();
     const publicVal = ref(props.editing ? props.editing.public : false);
     // Guano Metadata
-    const siteName = ref(props.editing?.siteName || '');
-    const software = ref(props.editing?.software || '');
-    const detector = ref(props.editing?.detector || '');
-    const speciesList = ref(props.editing?.speciesList || '');
-    const unusualOccurrences = ref(props.editing?.unusualOccurrences || '');
+    const siteName = ref(props.editing?.siteName || "");
+    const software = ref(props.editing?.software || "");
+    const detector = ref(props.editing?.detector || "");
+    const speciesList = ref(props.editing?.speciesList || "");
+    const unusualOccurrences = ref(props.editing?.unusualOccurrences || "");
 
     const autoFill = async (filename: string) => {
       const regexPattern = /^(\d+)_(.+)_(\d{8})_(\d{6})(?:_(.*))?$/;
@@ -112,7 +125,7 @@ export default defineComponent({
         // We convert it to the YYYY-MM-DD time;
         recordedDate.value = `${date.slice(0, 4)}-${date.slice(
           4,
-          6
+          6,
         )}-${date.slice(6, 8)}`;
       }
       if (timestamp) {
@@ -130,7 +143,7 @@ export default defineComponent({
         await autoFill(name.value);
         if (!RecordingMimeTypes.includes(file.type)) {
           errorText.value = `Selected file is not one of the following types: ${RecordingMimeTypes.join(
-            " "
+            " ",
           )}`;
           return;
         }
@@ -183,7 +196,7 @@ export default defineComponent({
           detector.value = results.nabat_detector_type;
         }
         if (results.nabat_species_list) {
-          speciesList.value = results.nabat_species_list.join(',');
+          speciesList.value = results.nabat_species_list.join(",");
         }
         if (results.nabat_unusual_occurrences) {
           unusualOccurrences.value = results.nabat_unusual_occurrences;
@@ -194,7 +207,7 @@ export default defineComponent({
         const NABatlatitude = results.nabat_latitude;
         const NABatlongitude = results.nabat_longitude;
         if (startTime) {
-          const {date, time} = extractDateTimeComponents(startTime);
+          const { date, time } = extractDateTimeComponents(startTime);
           recordedDate.value = date;
           recordedTime.value = time;
         }
@@ -247,22 +260,25 @@ export default defineComponent({
               lon: longitude.value,
             };
           }
-          emit('update', newRecording);
+          emit("update", newRecording);
         }
-      }
+      },
     );
 
-    watch([
-      () => props.editing.comments,
-      () => props.editing.equipment,
-      () => props.editing.public,
-      () => props.editing.tags,
-    ], () => {
+    watch(
+      [
+        () => props.editing.comments,
+        () => props.editing.equipment,
+        () => props.editing.public,
+        () => props.editing.tags,
+      ],
+      () => {
         publicVal.value = props.editing.public;
         equipment.value = props.editing.equipment;
         comments.value = props.editing.comments;
         currentTags.value = props.editing.tags;
-    });
+      },
+    );
 
     return {
       errorText,
@@ -305,45 +321,27 @@ export default defineComponent({
 </script>
 
 <template>
-  <div
-    style="height: 100%"
-    class="d-flex pa-1"
-  >
+  <div style="height: 100%" class="d-flex pa-1">
     <input
       ref="fileInputEl"
       class="d-none"
       type="file"
       accept="audio/*"
       @change="readFile"
-    >
+    />
     <v-container>
       <div>
         <v-form v-model="validForm">
-          <v-row
-            v-if="fileModel !== undefined"
-            class="mx-2"
-          >
+          <v-row v-if="fileModel !== undefined" class="mx-2">
             Upload {{ fileModel.name }} ?
           </v-row>
-          <v-row
-            v-else-if="fileModel === undefined"
-            class="mx-2 my-2"
-          >
-            <v-btn
-              block
-              color="primary"
-              @click="selectFile"
-            >
-              <v-icon class="pr-2">
-                mdi-audio
-              </v-icon>
+          <v-row v-else-if="fileModel === undefined" class="mx-2 my-2">
+            <v-btn block color="primary" @click="selectFile">
+              <v-icon class="pr-2"> mdi-audio </v-icon>
               Choose Audio
             </v-btn>
           </v-row>
-          <v-row
-            v-else
-            class="mx-2"
-          >
+          <v-row v-else class="mx-2">
             <v-alert type="error">
               {{ errorText }}
             </v-alert>
@@ -376,16 +374,9 @@ export default defineComponent({
             />
           </v-row>
           <v-row class="pb-4">
-            <v-menu
-              open-delay="20"
-              :close-on-content-click="false"
-            >
+            <v-menu open-delay="20" :close-on-content-click="false">
               <template #activator="{ props: subProps }">
-                <v-btn
-                  color="primary"
-                  v-bind="subProps"
-                  class="mr-2"
-                >
+                <v-btn color="primary" v-bind="subProps" class="mr-2">
                   <b>Recorded:</b>
                   <span> {{ recordedDate }}</span>
                 </v-btn>
@@ -449,21 +440,17 @@ export default defineComponent({
                 <v-expansion-panel-title>Details</v-expansion-panel-title>
                 <v-expansion-panel-text>
                   <v-row>
-                    <v-text-field
-                      v-model="equipment"
-                      label="equipment"
-                    />
+                    <v-text-field v-model="equipment" label="equipment" />
                   </v-row>
                   <v-row>
-                    <v-text-field
-                      v-model="comments"
-                      label="comments"
-                    />
+                    <v-text-field v-model="comments" label="comments" />
                   </v-row>
                 </v-expansion-panel-text>
               </v-expansion-panel>
               <v-expansion-panel>
-                <v-expansion-panel-title>Guano Metadata</v-expansion-panel-title>
+                <v-expansion-panel-title
+                  >Guano Metadata</v-expansion-panel-title
+                >
                 <v-expansion-panel-text>
                   <v-row v-if="fileModel">
                     <v-btn
@@ -475,28 +462,16 @@ export default defineComponent({
                     </v-btn>
                   </v-row>
                   <v-row>
-                    <v-text-field
-                      v-model="siteName"
-                      label="Site Name"
-                    />
+                    <v-text-field v-model="siteName" label="Site Name" />
                   </v-row>
                   <v-row>
-                    <v-text-field
-                      v-model="software"
-                      label="Software"
-                    />
+                    <v-text-field v-model="software" label="Software" />
                   </v-row>
                   <v-row>
-                    <v-text-field
-                      v-model="detector"
-                      label="Detector"
-                    />
+                    <v-text-field v-model="detector" label="Detector" />
                   </v-row>
                   <v-row>
-                    <v-text-field
-                      v-model="speciesList"
-                      label="Species List"
-                    />
+                    <v-text-field v-model="speciesList" label="Species List" />
                   </v-row>
                   <v-row>
                     <v-text-field
@@ -511,10 +486,7 @@ export default defineComponent({
         </v-form>
 
         <v-row class="mt-6">
-          <v-btn
-            color="error"
-            @click="$emit('delete')"
-          >
+          <v-btn color="error" @click="$emit('delete')">
             Delete <v-icon>mdi-delete</v-icon>
           </v-btn>
         </v-row>

@@ -3,10 +3,8 @@ import { type SpectroInfo, spectroToGeoJSon } from "../geoJSUtils";
 import type { SpectrogramAnnotation } from "../../../api/api";
 import type { LayerStyle, RectGeoJSData } from "./types";
 
-
 export default class RectangleLayer {
   formattedData: RectGeoJSData[];
-
 
   hoverOn: boolean; //to turn over annnotations on
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,7 +30,7 @@ export default class RectangleLayer {
     geoViewerRef: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
-    spectroInfo: SpectroInfo
+    spectroInfo: SpectroInfo,
   ) {
     this.geoViewerRef = geoViewerRef;
     this.spectroInfo = spectroInfo;
@@ -62,14 +60,17 @@ export default class RectangleLayer {
         } else if (e.mouse.buttonsDown.right) {
           if (!e.data.editing || (e.data.editing && !e.data.selected)) {
             if (e.data.owned) {
-              this.event("annotation-right-clicked", { id: e.data.id, edit: true });
+              this.event("annotation-right-clicked", {
+                id: e.data.id,
+                edit: true,
+              });
             }
           }
         }
       });
     this.featureLayer.geoOn(
       geo.event.feature.mouseclick_order,
-      this.featureLayer.mouseOverOrderClosestBorder
+      this.featureLayer.mouseOverOrderClosestBorder,
     );
     this.featureLayer.geoOn(geo.event.mouseclick, (e: GeoEvent) => {
       // If we aren't clicking on an annotation we can deselect the current track
@@ -88,10 +89,10 @@ export default class RectangleLayer {
   setHoverAnnotations(val: boolean) {
     if (!this.hoverOn && val) {
       this.featureLayer.geoOn(geo.event.feature.mouseover, (e: GeoEvent) =>
-        this.hoverAnnotations(e)
+        this.hoverAnnotations(e),
       );
       this.featureLayer.geoOn(geo.event.feature.mouseoff, (e: GeoEvent) =>
-        this.hoverAnnotations(e)
+        this.hoverAnnotations(e),
       );
       this.hoverOn = true;
     } else if (this.hoverOn && !val) {
@@ -120,11 +121,21 @@ export default class RectangleLayer {
   ) {
     const arr: RectGeoJSData[] = [];
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
-      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, this.scaledWidth, this.scaledHeight);
+      const polygon = spectroToGeoJSon(
+        annotation,
+        this.spectroInfo,
+        this.scaledWidth,
+        this.scaledHeight,
+      );
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
-      if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+      if (
+        Number.isNaN(xmax) ||
+        Number.isNaN(xmin) ||
+        Number.isNaN(ymax) ||
+        Number.isNaN(ymin)
+      ) {
         return;
       }
       if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
@@ -137,7 +148,11 @@ export default class RectangleLayer {
         polygon,
         owned: annotation.owner_email === currentUser,
       };
-      if (colorScale && annotation.owner_email !== currentUser && annotation.owner_email) {
+      if (
+        colorScale &&
+        annotation.owner_email !== currentUser &&
+        annotation.owner_email
+      ) {
         newAnnotation.color = colorScale(annotation.owner_email);
       }
       arr.push(newAnnotation);

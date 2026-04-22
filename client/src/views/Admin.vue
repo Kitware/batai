@@ -1,13 +1,13 @@
 <script lang="ts">
-import { reactive, defineComponent, watch, ref, type Ref, } from 'vue';
-import useState from '@use/useState';
-import { patchConfiguration } from '../api/api';
-import NABatAdmin from './NABat/NABatAdmin.vue';
-import ColorPickerMenu from '@components/ColorPickerMenu.vue';
-import ColorSchemeSelect from '@components/ColorSchemeSelect.vue';
+import { reactive, defineComponent, watch, ref, type Ref } from "vue";
+import useState from "@use/useState";
+import { patchConfiguration } from "../api/api";
+import NABatAdmin from "./NABat/NABatAdmin.vue";
+import ColorPickerMenu from "@components/ColorPickerMenu.vue";
+import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
 
 export default defineComponent({
-  name: 'Admin',
+  name: "Admin",
   components: {
     NABatAdmin,
     ColorPickerMenu,
@@ -15,34 +15,50 @@ export default defineComponent({
   },
   setup() {
     // Reactive state for the settings
-    const tab: Ref<'admin' | 'nabat' | 'vetting'> = ref('admin');
+    const tab: Ref<"admin" | "nabat" | "vetting"> = ref("admin");
     const { colorSchemes, configuration, loadConfiguration } = useState();
     const settings = reactive({
       displayPulseAnnotations: configuration.value.display_pulse_annotations,
-      displaySequenceAnnotations: configuration.value.display_sequence_annotations,
+      displaySequenceAnnotations:
+        configuration.value.display_sequence_annotations,
       runInferenceOnUpload: configuration.value.run_inference_on_upload,
       spectrogramXStretch: configuration.value.spectrogram_x_stretch,
       spectrogramView: configuration.value.spectrogram_view,
       defaultColorScheme: configuration.value.default_color_scheme,
-      defaultBackgroundColor: configuration.value.default_spectrogram_background_color,
+      defaultBackgroundColor:
+        configuration.value.default_spectrogram_background_color,
       nonAdminUploadEnabled: configuration.value.non_admin_upload_enabled,
-      markAnnotationsCompletedEnabled: configuration.value.mark_annotations_completed_enabled,
+      markAnnotationsCompletedEnabled:
+        configuration.value.mark_annotations_completed_enabled,
     });
-    const defaultColorScheme = ref(colorSchemes.find((scheme) => scheme.value === settings.defaultColorScheme) || colorSchemes[0]);
+    const defaultColorScheme = ref(
+      colorSchemes.find(
+        (scheme) => scheme.value === settings.defaultColorScheme,
+      ) || colorSchemes[0],
+    );
     const spectrogramViewOptions = [
-      { title: 'Compressed', value: 'compressed' },
-      { title: 'Uncompressed', value: 'uncompressed' },
+      { title: "Compressed", value: "compressed" },
+      { title: "Uncompressed", value: "uncompressed" },
     ];
     watch(configuration, () => {
-      settings.displayPulseAnnotations = configuration.value.display_pulse_annotations;
-      settings.displaySequenceAnnotations = configuration.value.display_sequence_annotations;
-      settings.runInferenceOnUpload = configuration.value.run_inference_on_upload;
+      settings.displayPulseAnnotations =
+        configuration.value.display_pulse_annotations;
+      settings.displaySequenceAnnotations =
+        configuration.value.display_sequence_annotations;
+      settings.runInferenceOnUpload =
+        configuration.value.run_inference_on_upload;
       settings.spectrogramXStretch = configuration.value.spectrogram_x_stretch;
       settings.defaultColorScheme = configuration.value.default_color_scheme;
-      settings.defaultBackgroundColor = configuration.value.default_spectrogram_background_color;
-      settings.nonAdminUploadEnabled = configuration.value.non_admin_upload_enabled;
-      settings.markAnnotationsCompletedEnabled = configuration.value.mark_annotations_completed_enabled;
-      defaultColorScheme.value = colorSchemes.find((scheme) => scheme.value === settings.defaultColorScheme) || colorSchemes[0];
+      settings.defaultBackgroundColor =
+        configuration.value.default_spectrogram_background_color;
+      settings.nonAdminUploadEnabled =
+        configuration.value.non_admin_upload_enabled;
+      settings.markAnnotationsCompletedEnabled =
+        configuration.value.mark_annotations_completed_enabled;
+      defaultColorScheme.value =
+        colorSchemes.find(
+          (scheme) => scheme.value === settings.defaultColorScheme,
+        ) || colorSchemes[0];
     });
     // Function to save the settings
     const saveSettings = async () => {
@@ -56,12 +72,11 @@ export default defineComponent({
         default_spectrogram_background_color: settings.defaultBackgroundColor,
         spectrogram_view: settings.spectrogramView,
         non_admin_upload_enabled: settings.nonAdminUploadEnabled,
-        mark_annotations_completed_enabled: settings.markAnnotationsCompletedEnabled,
+        mark_annotations_completed_enabled:
+          settings.markAnnotationsCompletedEnabled,
       });
       loadConfiguration();
     };
-
-
 
     return {
       settings,
@@ -77,28 +92,10 @@ export default defineComponent({
 
 <template>
   <v-card>
-    <v-tabs
-      v-model="tab"
-      class="ma-auto"
-    >
-      <v-tab
-        value="admin"
-        size="small"
-      >
-        General Admin
-      </v-tab>
-      <v-tab
-        value="nabat"
-        size="small"
-      >
-        NABat Admin
-      </v-tab>
-      <v-tab
-        value="vetting"
-        size="small"
-      >
-        Vetting
-      </v-tab>
+    <v-tabs v-model="tab" class="ma-auto">
+      <v-tab value="admin" size="small"> General Admin </v-tab>
+      <v-tab value="nabat" size="small"> NABat Admin </v-tab>
+      <v-tab value="vetting" size="small"> Vetting </v-tab>
     </v-tabs>
 
     <v-window v-model="tab">
@@ -128,9 +125,7 @@ export default defineComponent({
           </v-row>
           <v-row>
             <v-col cols="3">
-              <div class="text-caption">
-                Stretch compressed spectrogram
-              </div>
+              <div class="text-caption">Stretch compressed spectrogram</div>
               <v-slider
                 v-model="settings.spectrogramXStretch"
                 density="compact"
@@ -202,7 +197,7 @@ export default defineComponent({
           <v-row>
             <v-switch
               v-model="settings.nonAdminUploadEnabled"
-              :color="settings.nonAdminUploadEnabled ? 'primary': ''"
+              :color="settings.nonAdminUploadEnabled ? 'primary' : ''"
               label="Allow uploads by non-admin users"
             />
           </v-row>

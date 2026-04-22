@@ -1,10 +1,6 @@
-
-
 import type { SpectroInfo } from "../geoJSUtils";
 import type { LayerStyle } from "./types";
 import geo from "geojs";
-
-
 
 export default abstract class BaseTextLayer<D> {
   textData: D[];
@@ -26,8 +22,6 @@ export default abstract class BaseTextLayer<D> {
 
   color = "white";
 
-
-
   textScaled: number | undefined;
 
   zoomLevel: number;
@@ -41,7 +35,7 @@ export default abstract class BaseTextLayer<D> {
     geoViewerRef: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
-    spectroInfo: SpectroInfo
+    spectroInfo: SpectroInfo,
   ) {
     this.geoViewerRef = geoViewerRef;
     this.spectroInfo = spectroInfo;
@@ -53,9 +47,10 @@ export default abstract class BaseTextLayer<D> {
     this.compressedView = false;
     //Only initialize once, prevents recreating Layer each edit
     this.textStyle = this.createTextStyle();
-    this.geoViewerRef.geoOn(geo.event.zoom, (event: {zoomLevel: number}) => this.onZoom(event));
+    this.geoViewerRef.geoOn(geo.event.zoom, (event: { zoomLevel: number }) =>
+      this.onZoom(event),
+    );
     this.zoomLevel = this.geoViewerRef.camera().zoomLevel;
-
   }
 
   setScaledDimensions(newWidth: number, newHeight: number) {
@@ -70,10 +65,10 @@ export default abstract class BaseTextLayer<D> {
     }
   }
 
-  onZoom(event: {zoomLevel: number}) {
+  onZoom(event: { zoomLevel: number }) {
     this.zoomLevel = event.zoomLevel;
     this.textScaled = undefined;
-    if ((this.zoomLevel || 0) < -1.5 ) {
+    if ((this.zoomLevel || 0) < -1.5) {
       this.textScaled = -1.5;
     } else if ((this.zoomLevel || 0) > 0) {
       this.textScaled = Math.sqrt(this.zoomLevel || 1);
@@ -89,14 +84,11 @@ export default abstract class BaseTextLayer<D> {
     this.redraw();
   }
 
-
   destroy() {
     if (this.textLayer) {
       this.geoViewerRef.deleteLayer(this.textLayer);
     }
   }
-
-
 
   redraw() {
     // add some styles
@@ -108,16 +100,15 @@ export default abstract class BaseTextLayer<D> {
   }
 
   getFontSize(fontA: number, fontB: number, xScale: number) {
-  if (xScale >= 2.5) {
-    return fontA; // clamp high
-  } else if (xScale <= 1.0) {
-    return fontB; // clamp low
-  } else {
-    const t = (xScale - 1.0) / (2.5 - 1.0); // normalized progress
-    return fontB + t * (fontA - fontB);     // linear interpolation
+    if (xScale >= 2.5) {
+      return fontA; // clamp high
+    } else if (xScale <= 1.0) {
+      return fontB; // clamp low
+    } else {
+      const t = (xScale - 1.0) / (2.5 - 1.0); // normalized progress
+      return fontB + t * (fontA - fontB); // linear interpolation
+    }
   }
-}
-
 
   createTextStyle(): LayerStyle<D> {
     return {
@@ -128,14 +119,13 @@ export default abstract class BaseTextLayer<D> {
         stroke: true,
         uniformPolygon: true,
         fill: false,
-        fontSize: () => this.xScale < 2.5 ? '12px' : '16px'
+        fontSize: () => (this.xScale < 2.5 ? "12px" : "16px"),
       },
       color: () => {
         return this.color;
       },
       textScaled: this.textScaled,
-      textBaseline: 'middle',
+      textBaseline: "middle",
     };
   }
-
 }
