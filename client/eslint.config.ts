@@ -4,6 +4,7 @@ import {
   defineConfigWithVueTs,
   vueTsConfigs,
 } from "@vue/eslint-config-typescript";
+import skipFormatting from "eslint-config-prettier/flat";
 
 export default defineConfigWithVueTs(
   {
@@ -23,4 +24,6 @@ export default defineConfigWithVueTs(
       "vue/multi-word-component-names": "off",
     },
   },
+
+  skipFormatting,
 );
