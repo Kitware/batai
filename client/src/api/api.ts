@@ -37,7 +37,10 @@ export type RecordingLocationsFeatureProperties = {
   filename: string;
 };
 
-export type RecordingLocationsGeoJson = FeatureCollection<Point, RecordingLocationsFeatureProperties>;
+export type RecordingLocationsGeoJson = FeatureCollection<
+  Point,
+  RecordingLocationsFeatureProperties
+>;
 
 export interface Species {
   species_code: string;
@@ -150,10 +153,17 @@ export interface Spectrogram {
 
 export type OtherUserAnnotations = Record<
   string,
-  { annotations: SpectrogramAnnotation[]; sequence: SpectrogramSequenceAnnotation[] }
+  {
+    annotations: SpectrogramAnnotation[];
+    sequence: SpectrogramSequenceAnnotation[];
+  }
 >;
 
-export type UploadLocation = null | { latitude?: number; longitude?: number; gridCellId?: number };
+export type UploadLocation = null | {
+  latitude?: number;
+  longitude?: number;
+  gridCellId?: number;
+};
 
 export const axiosInstance = axios.create({
   baseURL: `${import.meta.env.VITE_API_ROOT}/api/v1`,
@@ -175,7 +185,10 @@ export interface RecordingFileParameters {
   tags?: string[];
 }
 
-async function uploadRecordingFile(file: File, params: RecordingFileParameters) {
+async function uploadRecordingFile(
+  file: File,
+  params: RecordingFileParameters,
+) {
   const formData = new FormData();
   formData.append("audio_file", file);
   formData.append("name", params.name);
@@ -222,7 +235,9 @@ async function uploadRecordingFile(file: File, params: RecordingFileParameters) 
     unusual_occurrences: params.unusual_occurrences,
     tags: params.tags,
   };
-  const payloadBlob = new Blob([JSON.stringify(recordingParams)], { type: "application/json" });
+  const payloadBlob = new Blob([JSON.stringify(recordingParams)], {
+    type: "application/json",
+  });
   formData.append("payload", payloadBlob);
   await axiosInstance.post("/recording/", formData, {
     params: { publicVal: !!params.publicVal },
@@ -232,7 +247,10 @@ async function uploadRecordingFile(file: File, params: RecordingFileParameters) 
   });
 }
 
-async function patchRecording(recordingId: number, params: RecordingFileParameters) {
+async function patchRecording(
+  recordingId: number,
+  params: RecordingFileParameters,
+) {
   const latitude = params.location ? params.location.latitude : undefined;
   const longitude = params.location ? params.location.longitude : undefined;
   const gridCellId = params.location ? params.location.gridCellId : undefined;
@@ -260,7 +278,7 @@ async function patchRecording(recordingId: number, params: RecordingFileParamete
       headers: {
         "Content-Type": "application/json",
       },
-    }
+    },
   );
 }
 
@@ -286,7 +304,6 @@ interface GRTSCellBbox {
   };
 }
 
-
 /** Params for paginated recording list (v-data-table-server compatible). */
 export interface RecordingListParams {
   public?: boolean;
@@ -295,8 +312,14 @@ export interface RecordingListParams {
   search?: string;
   /** Filter by tags: recording must have all listed tags. Comma-separated or array. */
   tags?: string | string[];
-  sort_by?: 'id' | 'name' | 'created' | 'modified' | 'recorded_date' | 'owner_username';
-  sort_direction?: 'asc' | 'desc';
+  sort_by?:
+    | "id"
+    | "name"
+    | "created"
+    | "modified"
+    | "recorded_date"
+    | "owner_username";
+  sort_direction?: "asc" | "desc";
   page?: number;
   limit?: number;
   /** WGS84 [minLon, minLat, maxLon, maxLat]; recordings must intersect this box. */
@@ -312,42 +335,53 @@ export interface RecordingPaginatedResponse {
 async function getRecordings(getPublic = false, params?: RecordingListParams) {
   const query = new URLSearchParams();
   if (getPublic) {
-    query.set('public', 'true');
+    query.set("public", "true");
   }
   if (params) {
-    if (params.public !== undefined) query.set('public', String(params.public));
+    if (params.public !== undefined) query.set("public", String(params.public));
     if (params.exclude_submitted !== undefined)
-      query.set('exclude_submitted', String(params.exclude_submitted));
+      query.set("exclude_submitted", String(params.exclude_submitted));
     if (params.annotation_completed !== undefined)
-      query.set('annotation_completed', String(params.annotation_completed));
-    if (params.search) query.set('search', params.search);
+      query.set("annotation_completed", String(params.annotation_completed));
+    if (params.search) query.set("search", params.search);
     if (params.tags !== undefined) {
-      const tagStr = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
-      if (tagStr) query.set('tags', tagStr);
+      const tagStr = Array.isArray(params.tags)
+        ? params.tags.join(",")
+        : params.tags;
+      if (tagStr) query.set("tags", tagStr);
     }
-    if (params.sort_by) query.set('sort_by', params.sort_by);
-    if (params.sort_direction) query.set('sort_direction', params.sort_direction);
-    if (params.page !== undefined) query.set('page', String(params.page));
-    if (params.limit !== undefined) query.set('limit', String(params.limit));
+    if (params.sort_by) query.set("sort_by", params.sort_by);
+    if (params.sort_direction)
+      query.set("sort_direction", params.sort_direction);
+    if (params.page !== undefined) query.set("page", String(params.page));
+    if (params.limit !== undefined) query.set("limit", String(params.limit));
     if (
       params.bbox !== undefined &&
       params.bbox.length === 4 &&
       params.bbox.every((n) => Number.isFinite(n))
     ) {
-      query.set('bbox', params.bbox.join(','));
+      query.set("bbox", params.bbox.join(","));
     }
   }
-  if (!params?.page) query.set('page', '1');
-  if (!params?.limit) query.set('limit', '20');
-  return axiosInstance.get<RecordingPaginatedResponse>(`/recording/?${query.toString()}`);
+  if (!params?.page) query.set("page", "1");
+  if (!params?.limit) query.set("limit", "20");
+  return axiosInstance.get<RecordingPaginatedResponse>(
+    `/recording/?${query.toString()}`,
+  );
 }
 async function getRecording(id: string) {
   return axiosInstance.get<Recording>(`/recording/${id}/`);
 }
 
 export interface UnsubmittedNeighborsParams {
-  sort_by?: 'id' | 'name' | 'created' | 'modified' | 'recorded_date' | 'owner_username';
-  sort_direction?: 'asc' | 'desc';
+  sort_by?:
+    | "id"
+    | "name"
+    | "created"
+    | "modified"
+    | "recorded_date"
+    | "owner_username";
+  sort_direction?: "asc" | "desc";
   /** Comma-separated or array of tag texts; recording must have all listed tags. */
   tags?: string | string[];
   /** Bounding box filter (lon/lat) as `[min_lon, min_lat, max_lon, max_lat]`. */
@@ -361,24 +395,27 @@ export interface UnsubmittedNeighborsResponse {
 
 async function getUnsubmittedNeighbors(
   currentId: number,
-  params?: UnsubmittedNeighborsParams
+  params?: UnsubmittedNeighborsParams,
 ) {
   const query = new URLSearchParams({ current: String(currentId) });
-  if (params?.sort_by) query.set('sort_by', params.sort_by);
-  if (params?.sort_direction) query.set('sort_direction', params.sort_direction);
+  if (params?.sort_by) query.set("sort_by", params.sort_by);
+  if (params?.sort_direction)
+    query.set("sort_direction", params.sort_direction);
   if (params?.tags !== undefined) {
-    const tagStr = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
-    if (tagStr) query.set('tags', tagStr);
+    const tagStr = Array.isArray(params.tags)
+      ? params.tags.join(",")
+      : params.tags;
+    if (tagStr) query.set("tags", tagStr);
   }
   if (
     params?.bbox !== undefined &&
     params.bbox.length === 4 &&
     params.bbox.every((n) => Number.isFinite(n))
   ) {
-    query.set('bbox', params.bbox.join(','));
+    query.set("bbox", params.bbox.join(","));
   }
   const response = await axiosInstance.get<UnsubmittedNeighborsResponse>(
-    `/recording/unsubmitted-neighbors/?${query.toString()}`
+    `/recording/unsubmitted-neighbors/?${query.toString()}`,
   );
   return response;
 }
@@ -396,89 +433,121 @@ async function getSpectrogram(id: string) {
 }
 
 async function getSpectrogramCompressed(id: string) {
-  return axiosInstance.get<Spectrogram>(`/recording/${id}/spectrogram/compressed`);
+  return axiosInstance.get<Spectrogram>(
+    `/recording/${id}/spectrogram/compressed`,
+  );
 }
 
 async function getAnnotations(recordingId: string) {
-  return axiosInstance.get<SpectrogramAnnotation[]>(`/recording/${recordingId}/annotations`);
+  return axiosInstance.get<SpectrogramAnnotation[]>(
+    `/recording/${recordingId}/annotations`,
+  );
 }
 
 async function getSequenceAnnotations(recordingId: string) {
   return axiosInstance.get<SpectrogramSequenceAnnotation[]>(
-    `/recording/${recordingId}/sequence-annotations`
+    `/recording/${recordingId}/sequence-annotations`,
   );
 }
 
-async function getSpecies({recordingId, grtsCellId, sampleFrameId}: {recordingId?: number, grtsCellId?: number, sampleFrameId?: number}) {
-  return axiosInstance.get<Species[]>("/species/", { params: { recording_id: recordingId, grts_cell_id: grtsCellId, sample_frame_id: sampleFrameId } });
+async function getSpecies({
+  recordingId,
+  grtsCellId,
+  sampleFrameId,
+}: {
+  recordingId?: number;
+  grtsCellId?: number;
+  sampleFrameId?: number;
+}) {
+  return axiosInstance.get<Species[]>("/species/", {
+    params: {
+      recording_id: recordingId,
+      grts_cell_id: grtsCellId,
+      sample_frame_id: sampleFrameId,
+    },
+  });
 }
 
 async function patchAnnotation(
   recordingId: string,
   annotationId: number,
   annotation: UpdateSpectrogramAnnotation,
-  speciesList: number[] | null = null
+  speciesList: number[] | null = null,
 ) {
-  return axiosInstance.patch(`/recording/${recordingId}/annotations/${annotationId}`, {
-    annotation,
-    species_ids: speciesList,
-  });
+  return axiosInstance.patch(
+    `/recording/${recordingId}/annotations/${annotationId}`,
+    {
+      annotation,
+      species_ids: speciesList,
+    },
+  );
 }
 
 async function patchSequenceAnnotation(
   recordingId: string,
   annotationId: number,
   annotation: UpdateSpectrogramSequenceAnnotation,
-  speciesList: number[] | null = null
+  speciesList: number[] | null = null,
 ) {
-  return axiosInstance.patch(`/recording/${recordingId}/sequence-annotations/${annotationId}`, {
-    annotation,
-    species_ids: speciesList,
-  });
+  return axiosInstance.patch(
+    `/recording/${recordingId}/sequence-annotations/${annotationId}`,
+    {
+      annotation,
+      species_ids: speciesList,
+    },
+  );
 }
 
 async function putAnnotation(
   recordingId: string,
   annotation: UpdateSpectrogramAnnotation,
-  speciesList: number[] = []
+  speciesList: number[] = [],
 ) {
   return axiosInstance.put<{ message: string; id: number }>(
     `/recording/${recordingId}/annotations`,
-    { annotation, species_ids: speciesList }
+    { annotation, species_ids: speciesList },
   );
 }
 
 async function putSequenceAnnotation(
   recordingId: string,
   annotation: UpdateSpectrogramSequenceAnnotation,
-  speciesList: number[] | null = null
+  speciesList: number[] | null = null,
 ) {
   return axiosInstance.put<{ message: string; id: number }>(
     `/recording/${recordingId}/sequence-annotations`,
-    { annotation, species_ids: speciesList }
+    { annotation, species_ids: speciesList },
   );
 }
 
 async function deleteAnnotation(recordingId: string, annotationId: number) {
   return axiosInstance.delete<DeletionResponse>(
-    `/recording/${recordingId}/annotations/${annotationId}`
+    `/recording/${recordingId}/annotations/${annotationId}`,
   );
 }
 
-async function deleteSequenceAnnotation(recordingId: string, annotationId: number) {
+async function deleteSequenceAnnotation(
+  recordingId: string,
+  annotationId: number,
+) {
   return axiosInstance.delete<DeletionResponse>(
-    `/recording/${recordingId}/sequence-annotations/${annotationId}`
+    `/recording/${recordingId}/sequence-annotations/${annotationId}`,
   );
 }
 
 async function getOtherUserAnnotations(recordingId: string) {
   return axiosInstance.get<OtherUserAnnotations>(
-    `/recording/${recordingId}/annotations/other_users`
+    `/recording/${recordingId}/annotations/other_users`,
   );
 }
 
-async function getCellLocation(cellId: number, quadrant?: "SW" | "NE" | "NW" | "SE") {
-  return axiosInstance.get<GRTSCellCenter>(`/grts/${cellId}`, { params: { quadrant } });
+async function getCellLocation(
+  cellId: number,
+  quadrant?: "SW" | "NE" | "NW" | "SE",
+) {
+  return axiosInstance.get<GRTSCellCenter>(`/grts/${cellId}`, {
+    params: { quadrant },
+  });
 }
 
 async function getCellBbox(cellId: number) {
@@ -495,50 +564,67 @@ export interface RecordingLocationsParams {
 
 async function getRecordingLocations(params?: RecordingLocationsParams) {
   const query = new URLSearchParams();
-  if (params?.exclude_submitted !== undefined) query.set("exclude_submitted", String(params.exclude_submitted));
+  if (params?.exclude_submitted !== undefined)
+    query.set("exclude_submitted", String(params.exclude_submitted));
   if (params?.tags !== undefined) {
-    const tagStr = Array.isArray(params.tags) ? params.tags.join(",") : params.tags;
+    const tagStr = Array.isArray(params.tags)
+      ? params.tags.join(",")
+      : params.tags;
     if (tagStr) query.set("tags", tagStr);
   }
-  if (params?.bbox !== undefined && params.bbox.length === 4 && params.bbox.every((n) => Number.isFinite(n))) {
-    query.set("bbox", params.bbox.join(','));
+  if (
+    params?.bbox !== undefined &&
+    params.bbox.length === 4 &&
+    params.bbox.every((n) => Number.isFinite(n))
+  ) {
+    query.set("bbox", params.bbox.join(","));
   }
   const qs = query.toString();
-  return axiosInstance.get<RecordingLocationsGeoJson>(`/recording-locations/${qs ? `?${qs}` : ""}`);
+  return axiosInstance.get<RecordingLocationsGeoJson>(
+    `/recording-locations/${qs ? `?${qs}` : ""}`,
+  );
 }
 
 async function getFileAnnotations(recordingId: number) {
-  return axiosInstance.get<FileAnnotation[]>(`recording/${recordingId}/recording-annotations`);
+  return axiosInstance.get<FileAnnotation[]>(
+    `recording/${recordingId}/recording-annotations`,
+  );
 }
 
 async function getFileAnnotationDetails(recordingId: number) {
   return axiosInstance.get<FileAnnotation & { details: FileAnnotationDetails }>(
-    `recording-annotation/${recordingId}/details`
+    `recording-annotation/${recordingId}/details`,
   );
 }
 
 async function putFileAnnotation(fileAnnotation: UpdateFileAnnotation) {
-  return axiosInstance.put<{ message: string; id: number }>(`/recording-annotation/`, {
-    ...fileAnnotation,
-  });
+  return axiosInstance.put<{ message: string; id: number }>(
+    `/recording-annotation/`,
+    {
+      ...fileAnnotation,
+    },
+  );
 }
 
-async function patchFileAnnotation(fileAnnotationId: number, fileAnnotation: UpdateFileAnnotation) {
+async function patchFileAnnotation(
+  fileAnnotationId: number,
+  fileAnnotation: UpdateFileAnnotation,
+) {
   return axiosInstance.patch<{ message: string; id: number }>(
     `/recording-annotation/${fileAnnotationId}`,
-    { ...fileAnnotation }
+    { ...fileAnnotation },
   );
 }
 
 async function deleteFileAnnotation(fileAnnotationId: number) {
   return axiosInstance.delete<{ message: string; id: number }>(
-    `/recording-annotation/${fileAnnotationId}`
+    `/recording-annotation/${fileAnnotationId}`,
   );
 }
 
 async function submitFileAnnotation(fileAnnotationId: number) {
-  return axiosInstance.patch<{ id: number, submitted: boolean }>(
-    `recording-annotation/${fileAnnotationId}/submit`
+  return axiosInstance.patch<{ id: number; submitted: boolean }>(
+    `recording-annotation/${fileAnnotationId}/submit`,
   );
 }
 
@@ -575,7 +661,9 @@ async function patchConfiguration(config: ConfigurationSettings) {
 }
 
 async function getCurrentUser() {
-  return axiosInstance.get<{name: string, email: string, id: number}>("/configuration/me");
+  return axiosInstance.get<{ name: string; email: string; id: number }>(
+    "/configuration/me",
+  );
 }
 
 export interface ProcessingTask {
@@ -595,7 +683,14 @@ export interface ProcessingTask {
 export interface ProcessingTaskDetails {
   name: string;
   celery_data: {
-    state: "PENDING" | "RECEIVED" | "STARTED" | "SUCCESS" | "FAILURE" | "RETRY" | "REVOKED";
+    state:
+      | "PENDING"
+      | "RECEIVED"
+      | "STARTED"
+      | "SUCCESS"
+      | "FAILURE"
+      | "RETRY"
+      | "REVOKED";
     status: ProcessingTask["status"];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     info: Record<string, any>;
@@ -607,17 +702,25 @@ async function getProcessingTasks(): Promise<ProcessingTask[]> {
   return (await axiosInstance.get("/processing-task")).data;
 }
 
-async function getProcessingTaskDetails(taskId: string): Promise<ProcessingTaskDetails> {
+async function getProcessingTaskDetails(
+  taskId: string,
+): Promise<ProcessingTaskDetails> {
   return (await axiosInstance.get(`/processing-task/${taskId}/details`)).data;
 }
 
 async function getFilteredProcessingTasks(
-  status: ProcessingTask["status"]
+  status: ProcessingTask["status"],
 ): Promise<ProcessingTask[]> {
-  return (await axiosInstance.get("/processing-task/filtered/", { params: { status } })).data;
+  return (
+    await axiosInstance.get("/processing-task/filtered/", {
+      params: { status },
+    })
+  ).data;
 }
 
-async function cancelProcessingTask(taskId: number): Promise<{ detail: string }> {
+async function cancelProcessingTask(
+  taskId: number,
+): Promise<{ detail: string }> {
   return (await axiosInstance.post(`/processing-task/${taskId}/cancel/`)).data;
 }
 
@@ -655,7 +758,9 @@ export interface ExportStatus {
 }
 
 async function getExportStatus(exportId: number) {
-  const result = await axiosInstance.get<ExportStatus>(`/export-annotation/${exportId}`);
+  const result = await axiosInstance.get<ExportStatus>(
+    `/export-annotation/${exportId}`,
+  );
   return result.data;
 }
 
@@ -671,7 +776,9 @@ export interface UpdateVettingDetails {
 
 async function getVettingDetailsForUser(userId: number) {
   try {
-    const result = await axiosInstance.get<VettingDetails>(`/vetting/user/${userId}`);
+    const result = await axiosInstance.get<VettingDetails>(
+      `/vetting/user/${userId}`,
+    );
     return result.data;
   } catch (err) {
     const error = err as AxiosError;
@@ -682,11 +789,15 @@ async function getVettingDetailsForUser(userId: number) {
   }
 }
 
-async function createOrUpdateVettingDetailsForUser(userId: number, referenceMaterials: string) {
-  return (await axiosInstance.post<VettingDetails>(
-    `/vetting/user/${userId}`,
-    { 'reference_materials': referenceMaterials }
-  )).data;
+async function createOrUpdateVettingDetailsForUser(
+  userId: number,
+  referenceMaterials: string,
+) {
+  return (
+    await axiosInstance.post<VettingDetails>(`/vetting/user/${userId}`, {
+      reference_materials: referenceMaterials,
+    })
+  ).data;
 }
 
 export interface Contour {
@@ -702,7 +813,9 @@ export interface ComputedPulseContour {
 }
 
 async function getComputedPulseContour(recordingId: number) {
-  const result = await axiosInstance.get<ComputedPulseContour[]>(`/recording/${recordingId}/pulse_contours`);
+  const result = await axiosInstance.get<ComputedPulseContour[]>(
+    `/recording/${recordingId}/pulse_contours`,
+  );
   return result.data;
 }
 
@@ -732,10 +845,11 @@ export interface PulseMetadata {
 }
 
 async function getPulseMetadata(recordingId: number) {
-  const result = await axiosInstance.get<PulseMetadata[]>(`/recording/${recordingId}/pulse_data`);
+  const result = await axiosInstance.get<PulseMetadata[]>(
+    `/recording/${recordingId}/pulse_data`,
+  );
   return result.data;
 }
-
 
 export {
   uploadRecordingFile,

@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NABatDataRetrieval")
 
 
-def generate_spectrograms(
+def generate_spectrograms(  # noqa: C901, PLR0915
     self, nabat_recording: NABatRecording, presigned_url: str, processing_task: ProcessingTask
 ):
     from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets

@@ -1,10 +1,10 @@
 <script lang="ts">
-import { defineComponent, type PropType, ref, computed } from 'vue';
-import type { FileAnnotation, Species, UpdateFileAnnotation } from '@api/api';
-import { pushNABatFileAnnotationToNABat } from '../api/NABatApi';
+import { defineComponent, type PropType, ref, computed } from "vue";
+import type { FileAnnotation, Species, UpdateFileAnnotation } from "@api/api";
+import { pushNABatFileAnnotationToNABat } from "../api/NABatApi";
 
 export default defineComponent({
-  name: 'SpeciesNABatSave',
+  name: "SpeciesNABatSave",
   props: {
     selectedSpecies: {
       type: Array as PropType<string[]>,
@@ -24,10 +24,10 @@ export default defineComponent({
     },
     apiToken: {
       type: String,
-      default: () => '',
+      default: () => "",
     },
   },
-  emits: ['close'],
+  emits: ["close"],
 
   setup(props, { emit }) {
     const dialog = ref(false);
@@ -36,14 +36,16 @@ export default defineComponent({
     const error = ref<string | null>(null);
 
     const filteredSpecies = computed(() =>
-      props.speciesList.filter(s => props.selectedSpecies.includes(s.species_code))
+      props.speciesList.filter((s) =>
+        props.selectedSpecies.includes(s.species_code),
+      ),
     );
 
     const categoryColors: Record<string, string> = {
-      'single': 'primary',
-      'multiple': 'secondary',
-      'frequency': 'warning',
-      'noid': '',
+      single: "primary",
+      multiple: "secondary",
+      frequency: "warning",
+      noid: "",
     };
 
     const saveSelection = async () => {
@@ -52,27 +54,31 @@ export default defineComponent({
         error.value = null;
 
         try {
-          const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
-            recordingId: props.recordingId,
-            confidence: 1.0,
-            comments: '',
-            model: 'User Defined',
-            species: [selected.value],
-            id: props.annotation.id,
-            apiToken: props.apiToken,
-          };
+          const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } =
+            {
+              recordingId: props.recordingId,
+              confidence: 1.0,
+              comments: "",
+              model: "User Defined",
+              species: [selected.value],
+              id: props.annotation.id,
+              apiToken: props.apiToken,
+            };
 
-          await pushNABatFileAnnotationToNABat(props.annotation.id, updateAnnotation);
+          await pushNABatFileAnnotationToNABat(
+            props.annotation.id,
+            updateAnnotation,
+          );
           dialog.value = false;
-          emit('close');
+          emit("close");
         } catch (e) {
-          error.value = 'Failed to update selection.';
+          error.value = "Failed to update selection.";
           console.error(e);
         } finally {
           submitting.value = false;
         }
       } else {
-        error.value = 'Please select a species.';
+        error.value = "Please select a species.";
       }
     };
 
@@ -99,41 +105,29 @@ export default defineComponent({
       Save NABat Label
     </v-btn>
 
-    <v-dialog
-      v-model="dialog"
-      max-width="600"
-    >
+    <v-dialog v-model="dialog" max-width="600">
       <v-card>
         <v-card-title>
           <v-row class="my-2 align-center">
             <h3 class="mr-2">Save NABat Label</h3>
             <v-spacer />
-            <v-icon
-              size="large"
-              class="cursor-pointer"
-              @click="dialog = false"
-            >mdi-close</v-icon>
+            <v-icon size="large" class="cursor-pointer" @click="dialog = false"
+              >mdi-close</v-icon
+            >
           </v-row>
         </v-card-title>
 
         <v-card-text>
-          <p>Please select one of your species to push to the NABat database. The NABat database currently only supports
-            a single label.</p>
+          <p>
+            Please select one of your species to push to the NABat database. The
+            NABat database currently only supports a single label.
+          </p>
 
-          <v-alert
-            v-if="error"
-            type="error"
-            dense
-            class="mb-2"
-          >
+          <v-alert v-if="error" type="error" dense class="mb-2">
             {{ error }}
           </v-alert>
 
-          <v-radio-group
-            v-model="selected"
-            :disabled="submitting"
-            hide-details
-          >
+          <v-radio-group v-model="selected" :disabled="submitting" hide-details>
             <v-radio
               v-for="species in filteredSpecies"
               :key="species.species_code"
@@ -142,13 +136,17 @@ export default defineComponent({
             >
               <template #label>
                 <div
-                  :class="['species-label', categoryColors[species.category] && `text-${categoryColors[species.category]}`]"
+                  :class="[
+                    'species-label',
+                    categoryColors[species.category] &&
+                      `text-${categoryColors[species.category]}`,
+                  ]"
                 >
-                  <strong>{{ species.common_name }}</strong><br>
+                  <strong>{{ species.common_name }}</strong
+                  ><br />
                   <small>
-                    Code: {{ species.species_code }} |
-                    Scientific: {{ species.family }} |
-                    Category: {{ species.category }}
+                    Code: {{ species.species_code }} | Scientific:
+                    {{ species.family }} | Category: {{ species.category }}
                   </small>
                 </div>
               </template>

@@ -74,7 +74,10 @@ export default defineComponent({
     watch(displayDialog, (open) => {
       if (open) {
         pendingSelection.value = props.modelValue ?? null;
-        orderedSpecies.value = sortSpecies(props.speciesList, props.modelValue ?? null);
+        orderedSpecies.value = sortSpecies(
+          props.speciesList,
+          props.modelValue ?? null,
+        );
       }
     });
 
@@ -87,7 +90,7 @@ export default defineComponent({
               (s.species_code ?? "").toLowerCase().includes(q) ||
               (s.species ?? "").toLowerCase().includes(q) ||
               (s.common_name ?? "").toLowerCase().includes(q) ||
-              (s.category ?? "").toLowerCase().includes(q)
+              (s.category ?? "").toLowerCase().includes(q),
           );
       return list.map((s) => ({
         ...s,
@@ -96,7 +99,7 @@ export default defineComponent({
     });
 
     const hasChanges = computed(
-      () => (pendingSelection.value ?? null) !== (props.modelValue ?? null)
+      () => (pendingSelection.value ?? null) !== (props.modelValue ?? null),
     );
 
     const toggleSpecies = (speciesCode: string) => {
@@ -115,13 +118,14 @@ export default defineComponent({
     };
 
     const buttonLabel = computed(() =>
-      props.modelValue ? props.modelValue : "Species Code"
+      props.modelValue ? props.modelValue : "Species Code",
     );
 
     const selectedSpecies = computed(() =>
       props.modelValue
-        ? props.speciesList.find((s) => s.species_code === props.modelValue) ?? null
-        : null
+        ? (props.speciesList.find((s) => s.species_code === props.modelValue) ??
+          null)
+        : null,
     );
 
     return {
@@ -164,54 +168,47 @@ export default defineComponent({
           {{ buttonLabel }}
         </v-btn>
       </template>
-      <v-card
-        max-width="320"
-        class="pa-3"
-      >
+      <v-card max-width="320" class="pa-3">
         <template v-if="selectedSpecies">
           <div class="text-subtitle-2 mb-2">Selected species</div>
           <div class="text-body-2">
             <div><strong>Code:</strong> {{ selectedSpecies.species_code }}</div>
-            <div><strong>Common name:</strong> {{ selectedSpecies.common_name }}</div>
+            <div>
+              <strong>Common name:</strong> {{ selectedSpecies.common_name }}
+            </div>
             <div v-if="selectedSpecies.species">
               <strong>Species:</strong> {{ selectedSpecies.species }}
             </div>
             <div>
               <strong>Category:</strong>
-              {{ selectedSpecies.category.charAt(0).toUpperCase() + selectedSpecies.category.slice(1) }}
+              {{
+                selectedSpecies.category.charAt(0).toUpperCase() +
+                selectedSpecies.category.slice(1)
+              }}
             </div>
           </div>
         </template>
         <div
           class="text-caption text-medium-emphasis mt-2 pt-2"
-          style="border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));"
+          style="
+            border-top: 1px solid
+              rgba(var(--v-border-color), var(--v-border-opacity));
+          "
         >
           Click the button to open the editor for all species.
         </div>
       </v-card>
     </v-menu>
-    <v-dialog
-      v-model="displayDialog"
-      width="800"
-      persistent
-    >
+    <v-dialog v-model="displayDialog" width="800" persistent>
       <v-card class="d-flex flex-column">
         <v-card-title class="flex-shrink-0 d-flex flex-column">
           <v-row class="align-center">
             <h2 class="mr-4">Select Species</h2>
             <v-spacer />
-            <v-icon
-              size="large"
-              @click="closeDialog"
-            >mdi-close</v-icon>
+            <v-icon size="large" @click="closeDialog">mdi-close</v-icon>
           </v-row>
           <v-row class="mt-2">
-            <v-chip
-              color="#0000FF"
-              class="ma-1"
-              label
-              small
-            >
+            <v-chip color="#0000FF" class="ma-1" label small>
               Highlighted = Selected Species
             </v-chip>
           </v-row>
@@ -276,7 +273,7 @@ export default defineComponent({
                   >
                     {{
                       item.category.charAt(0).toUpperCase() +
-                        item.category.slice(1)
+                      item.category.slice(1)
                     }}
                   </span>
                 </td>
@@ -289,36 +286,17 @@ export default defineComponent({
         <v-card-actions class="flex-shrink-0">
           <v-spacer />
           <template v-if="hasChanges">
-            <v-btn 
-              v-tooltip="'Cancel'"
-              variant="outlined"
-              @click="closeDialog"
-            >
-              <v-icon>
-                mdi-close
-              </v-icon>
+            <v-btn v-tooltip="'Cancel'" variant="outlined" @click="closeDialog">
+              <v-icon> mdi-close </v-icon>
               Cancel
             </v-btn>
-            <v-btn 
-              v-tooltip="'Save'"
-              color="primary"
-              @click="saveAndClose"
-            >
-              <v-icon>
-                mdi-content-save
-              </v-icon>
+            <v-btn v-tooltip="'Save'" color="primary" @click="saveAndClose">
+              <v-icon> mdi-content-save </v-icon>
               Save
             </v-btn>
           </template>
-          <v-btn
-            v-else
-            color="primary"
-            variant="outlined"
-            @click="closeDialog"
-          >
-            <v-icon>
-              mdi-check
-            </v-icon>
+          <v-btn v-else color="primary" variant="outlined" @click="closeDialog">
+            <v-icon> mdi-check </v-icon>
             OK
           </v-btn>
         </v-card-actions>

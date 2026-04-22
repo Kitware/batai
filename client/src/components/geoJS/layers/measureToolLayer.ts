@@ -1,13 +1,13 @@
-import geo, { type GeoEvent } from 'geojs';
-import type { SpectroInfo } from '../geoJSUtils';
-import type { LayerStyle, LineData, TextData } from './types';
-import BaseTextLayer from './baseTextLayer';
+import geo, { type GeoEvent } from "geojs";
+import type { SpectroInfo } from "../geoJSUtils";
+import type { LayerStyle, LineData, TextData } from "./types";
+import BaseTextLayer from "./baseTextLayer";
 
 function _determineRulerColor(isDragging: boolean, isDarkMode: boolean) {
   if (isDarkMode) {
-    return isDragging ? 'orange' : 'yellow';
+    return isDragging ? "orange" : "yellow";
   }
-  return isDragging ? 'cyan' : 'blue';
+  return isDragging ? "cyan" : "blue";
 }
 
 export default class MeasureToolLayer extends BaseTextLayer<TextData> {
@@ -35,12 +35,12 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     event: (name: string, data: any) => void,
     spectroInfo: SpectroInfo,
     measuring?: boolean,
-    yValue?: number
+    yValue?: number,
   ) {
     super(geoViewerRef, event, spectroInfo);
 
-    const textLayer = this.geoViewerRef.createLayer('feature', {
-      features: ['text']
+    const textLayer = this.geoViewerRef.createLayer("feature", {
+      features: ["text"],
     });
     this.textLayer = textLayer
       .createFeature("text")
@@ -52,15 +52,15 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
       }));
 
     const frequencyRulerLayer = this.geoViewerRef.createLayer("feature", {
-      features: ['point', 'line'],
+      features: ["point", "line"],
     });
     this.frequencyRulerLayer = frequencyRulerLayer;
     this.rulerOn = false;
-    this.pointAnnotation= null;
+    this.pointAnnotation = null;
     this.lineAnnotation = null;
     this.dragging = false;
     this.yValue = yValue || 0;
-    this.color = 'white';
+    this.color = "white";
     this.hovering = false;
 
     this.textStyle = this.createTextStyle();
@@ -73,16 +73,16 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     };
     this.hoverHandler = (e: GeoEvent) => {
       if (e) {
-       const gcs = this.geoViewerRef.displayToGcs(e.map);
+        const gcs = this.geoViewerRef.displayToGcs(e.map);
         const p = this.pointAnnotation.data()[0];
         const dx = Math.abs(gcs.x - p.x);
         const dy = Math.abs(gcs.y - p.y);
-        if (Math.sqrt(dx*dx + dy*dy) < 20 || dy < 10) {
-          this.event('update:cursor', { cursor: 'grab' });
+        if (Math.sqrt(dx * dx + dy * dy) < 20 || dy < 10) {
+          this.event("update:cursor", { cursor: "grab" });
           this.hovering = true;
           return;
         } else {
-          this.event('update:cursor', { cursor: 'default' });
+          this.event("update:cursor", { cursor: "default" });
         }
       }
       this.hovering = false;
@@ -90,20 +90,22 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.mousedownHandler = (e: GeoEvent) => {
       if (this.hovering && e.buttons.left) {
         this.geoViewerRef.interactor().addAction({
-          action: 'dragpoint',
-          name: 'drag point with mouse',
-          owner: 'MeasureToolLayer',
-          input: 'left',
+          action: "dragpoint",
+          name: "drag point with mouse",
+          owner: "MeasureToolLayer",
+          input: "left",
         });
         this.dragging = true;
-        this.event('update:cursor', { cursor: 'grabbing' });
+        this.event("update:cursor", { cursor: "grabbing" });
       }
     };
     this.mouseupHandler = () => {
       this.dragging = false;
-      this.geoViewerRef.interactor().removeAction(undefined, undefined, 'MeasureToolLayer');
+      this.geoViewerRef
+        .interactor()
+        .removeAction(undefined, undefined, "MeasureToolLayer");
       this.updateRuler(this.yValue);
-      this.event('update:cursor', { cursor: 'grab' });
+      this.event("update:cursor", { cursor: "grab" });
     };
 
     if (this.rulerOn) {
@@ -114,14 +116,18 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
   enableDrawing() {
     this.rulerOn = true;
     // Frequency ruler
-    this.lineAnnotation = this.frequencyRulerLayer.createFeature('line')
-      .data([[
-        {x: 0, y: this.yValue},
-        {x: this.spectroInfo.width, y: this.yValue},
-      ]])
+    this.lineAnnotation = this.frequencyRulerLayer
+      .createFeature("line")
+      .data([
+        [
+          { x: 0, y: this.yValue },
+          { x: this.spectroInfo.width, y: this.yValue },
+        ],
+      ])
       .style(this.createLineStyle());
-    this.pointAnnotation = this.frequencyRulerLayer.createFeature('point')
-      .data([{x: 0, y: this.yValue}])
+    this.pointAnnotation = this.frequencyRulerLayer
+      .createFeature("point")
+      .data([{ x: 0, y: this.yValue }])
       .style(this.createPointStyle());
     this.geoViewerRef.geoOn(geo.event.mousedown, this.mousedownHandler);
     this.geoViewerRef.geoOn(geo.event.actionmove, this.moveHandler);
@@ -131,13 +137,12 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     this.updateRuler(this.yValue);
   }
 
-  _getTextCoordinates(): { x: number, y: number } {
+  _getTextCoordinates(): { x: number; y: number } {
     const bounds = this.geoViewerRef.bounds();
     const startX = 0;
-    const endX = ((this.compressedView
-      ? this.scaledWidth
-      : this.spectroInfo.width
-    ) || this.spectroInfo.width);
+    const endX =
+      (this.compressedView ? this.scaledWidth : this.spectroInfo.width) ||
+      this.spectroInfo.width;
     const left = Math.max(startX, bounds.left);
     const right = Math.min(endX, bounds.right);
     return { x: (left + right) / 2, y: this.yValue };
@@ -149,21 +154,30 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
     }
     this.event("measure:dragged", { yValue: newY });
     this.yValue = newY;
-    const spectroWidth = this.compressedView ? this.scaledWidth : this.spectroInfo.width;
+    const spectroWidth = this.compressedView
+      ? this.scaledWidth
+      : this.spectroInfo.width;
     this.lineAnnotation
-      .data([[
-        {x: 0, y: this.yValue},
-        {x: (spectroWidth || this.spectroInfo.width), y: this.yValue},
-      ]])
+      .data([
+        [
+          { x: 0, y: this.yValue },
+          { x: spectroWidth || this.spectroInfo.width, y: this.yValue },
+        ],
+      ])
       .style(this.createLineStyle());
     this.pointAnnotation
-      .data([{x: 0, y: this.yValue}])
+      .data([{ x: 0, y: this.yValue }])
       .style(this.createPointStyle());
     this.frequencyRulerLayer.draw();
     const height = Math.max(this.scaledHeight, this.spectroInfo.height);
-    const frequency = height - this.yValue >= 0
-      ? ((height - newY) * (this.spectroInfo.high_freq - this.spectroInfo.low_freq)) / height / 1000 + this.spectroInfo.low_freq / 1000
-      : -1;
+    const frequency =
+      height - this.yValue >= 0
+        ? ((height - newY) *
+            (this.spectroInfo.high_freq - this.spectroInfo.low_freq)) /
+            height /
+            1000 +
+          this.spectroInfo.low_freq / 1000
+        : -1;
     const textValue = `${frequency.toFixed(1)}kHz`;
     const { x: textX, y: textY } = this._getTextCoordinates();
     this.textData = [
@@ -206,11 +220,19 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
   setScaledDimensions(scaledWidth: number, scaledHeight: number) {
     // Get the frequency represented by the current ruler
     const height = Math.max(this.scaledHeight, this.spectroInfo.height);
-    const frequency = height - this.yValue >= 0
-      ? ((height - this.yValue) * (this.spectroInfo.high_freq - this.spectroInfo.low_freq)) / height / 1000 + this.spectroInfo.low_freq / 1000
-      : -1;
+    const frequency =
+      height - this.yValue >= 0
+        ? ((height - this.yValue) *
+            (this.spectroInfo.high_freq - this.spectroInfo.low_freq)) /
+            height /
+            1000 +
+          this.spectroInfo.low_freq / 1000
+        : -1;
     // Get the new yValue needed based on the updated scaled height
-    const newY = scaledHeight - ((frequency - (this.spectroInfo.low_freq / 1000)) * scaledHeight * 1000) / (this.spectroInfo.high_freq - this.spectroInfo.low_freq);
+    const newY =
+      scaledHeight -
+      ((frequency - this.spectroInfo.low_freq / 1000) * scaledHeight * 1000) /
+        (this.spectroInfo.high_freq - this.spectroInfo.low_freq);
     this.yValue = newY;
     super.setScaledDimensions(scaledWidth, scaledHeight);
     this.clearRulerLayer();
@@ -229,22 +251,24 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
 
   createTextStyle(): LayerStyle<TextData> {
     return {
-      color: () => _determineRulerColor(this.dragging, this.color === 'white'),
+      color: () => _determineRulerColor(this.dragging, this.color === "white"),
       offset: (data: TextData) => ({
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
-      textAlign: 'center',
+      textAlign: "center",
       textScaled: this.textScaled,
-      textBaseline: 'bottom',
+      textBaseline: "bottom",
     };
   }
 
   createPointStyle(): LayerStyle<LineData> {
     return {
       radius: 10,
-      fillColor: () => _determineRulerColor(this.dragging, this.color === 'white'),
-      strokeColor: () => _determineRulerColor(this.dragging, this.color === 'white'),
+      fillColor: () =>
+        _determineRulerColor(this.dragging, this.color === "white"),
+      strokeColor: () =>
+        _determineRulerColor(this.dragging, this.color === "white"),
       stroke: true,
       strokeWidth: 5,
     };
@@ -252,9 +276,9 @@ export default class MeasureToolLayer extends BaseTextLayer<TextData> {
 
   createLineStyle(): LayerStyle<LineData> {
     return {
-      strokeColor: () => _determineRulerColor(this.dragging, this.color === 'white'),
+      strokeColor: () =>
+        _determineRulerColor(this.dragging, this.color === "white"),
       strokeWidth: 2,
     };
   }
-
 }

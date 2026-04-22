@@ -1,21 +1,21 @@
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
-import { getProcessingTaskDetails } from '../../api/api';
-import { adminNaBatUpdateSpecies } from '../../api/NABatApi';
+import { defineComponent, ref } from "vue";
+import { getProcessingTaskDetails } from "../../api/api";
+import { adminNaBatUpdateSpecies } from "../../api/NABatApi";
 export default defineComponent({
-  name: 'NaBatAdminUpdateSpecies',
+  name: "NaBatAdminUpdateSpecies",
   setup() {
-    const apiToken = ref('');
+    const apiToken = ref("");
     const taskId = ref<string | null>(null);
     const loading = ref(false);
-    const taskInfo = ref('');
-    const errorMessage = ref('');
+    const taskInfo = ref("");
+    const errorMessage = ref("");
     let timeoutId: number | null = null;
 
     const updateSpeciesList = async () => {
       loading.value = true;
-      errorMessage.value = '';
-      taskInfo.value = '';
+      errorMessage.value = "";
+      taskInfo.value = "";
       try {
         const response = await adminNaBatUpdateSpecies(apiToken.value);
         taskId.value = response.data.taskId;
@@ -30,14 +30,15 @@ export default defineComponent({
       if (taskId.value) {
         try {
           const response = await getProcessingTaskDetails(taskId.value);
-          if (response.celery_data.status === 'Complete') {
+          if (response.celery_data.status === "Complete") {
             loading.value = false;
             clearPolling();
-            taskInfo.value = 'Species list update complete.';
+            taskInfo.value = "Species list update complete.";
             return;
-          } else if (response.celery_data.status === 'Error') {
+          } else if (response.celery_data.status === "Error") {
             loading.value = false;
-            errorMessage.value = response.celery_data.error || 'An error occurred.';
+            errorMessage.value =
+              response.celery_data.error || "An error occurred.";
             clearPolling();
             return;
           } else if (response.celery_data.info?.description) {
@@ -71,10 +72,8 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-card-title class="text-h6">
-    Update Species List
-  </v-card-title>
-  
+  <v-card-title class="text-h6"> Update Species List </v-card-title>
+
   <v-card-text>
     <v-text-field
       v-model="apiToken"
@@ -85,7 +84,7 @@ export default defineComponent({
       hide-details
       placeholder="Enter your API token"
     />
-  
+
     <v-btn
       :loading="loading"
       :disabled="loading || !apiToken"
@@ -96,23 +95,17 @@ export default defineComponent({
     >
       Update Species List
     </v-btn>
-  
-    <div
-      v-if="taskInfo"
-      class="mt-2 text-body-2 text-grey"
-    >
+
+    <div v-if="taskInfo" class="mt-2 text-body-2 text-grey">
       {{ taskInfo }}
     </div>
-  
-    <div
-      v-if="errorMessage"
-      class="mt-2 text-body-2 text-error"
-    >
+
+    <div v-if="errorMessage" class="mt-2 text-body-2 text-error">
       {{ errorMessage }}
     </div>
   </v-card-text>
 </template>
-  
+
 <style scoped>
 /* You can customize more styles here */
 </style>

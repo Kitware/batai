@@ -32,7 +32,7 @@ class Command(BaseCommand):
             help="Delete all SpeciesRange rows before loading.",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa: C901
         path = Path(options["geojson_path"] or DEFAULT_GEOJSON).resolve()
         if not path.is_file():
             raise CommandError(f"GeoJSON file not found: {path}")

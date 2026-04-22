@@ -1,7 +1,10 @@
 <script lang="ts">
-import { defineComponent, ref, onMounted, type PropType } from 'vue';
-import { type FileAnnotationDetails, getFileAnnotationDetails } from '../api/api';
-import { getNABatFileAnnotationDetails } from '../api/NABatApi';
+import { defineComponent, ref, onMounted, type PropType } from "vue";
+import {
+  type FileAnnotationDetails,
+  getFileAnnotationDetails,
+} from "../api/api";
+import { getNABatFileAnnotationDetails } from "../api/NABatApi";
 
 export default defineComponent({
   props: {
@@ -11,20 +14,25 @@ export default defineComponent({
     },
     apiToken: {
       type: String as PropType<string | undefined>,
-      default: () => '',
+      default: () => "",
     },
   },
-  emits: ['close'],
+  emits: ["close"],
   setup(props, { emit }) {
     const annotationData = ref<FileAnnotationDetails | null>(null);
     const loading = ref(true);
 
     onMounted(async () => {
       try {
-        const response = props.apiToken ? await getNABatFileAnnotationDetails(props.recordingId, props.apiToken) : await getFileAnnotationDetails(props.recordingId);
+        const response = props.apiToken
+          ? await getNABatFileAnnotationDetails(
+              props.recordingId,
+              props.apiToken,
+            )
+          : await getFileAnnotationDetails(props.recordingId);
         annotationData.value = response.data.details;
       } catch (error) {
-        console.error('Error fetching annotation details:', error);
+        console.error("Error fetching annotation details:", error);
       } finally {
         loading.value = false;
       }
@@ -41,18 +49,19 @@ export default defineComponent({
       <v-row dense>
         Annotation Details
         <v-spacer />
-        <v-icon @click="$emit('close')">
-          mdi-close
-        </v-icon>
+        <v-icon @click="$emit('close')"> mdi-close </v-icon>
       </v-row>
     </v-card-title>
     <v-card-text>
       <div>
-        <h3>{{ annotationData.label }} (Score: {{ annotationData.score.toFixed(2) }})</h3>
+        <h3>
+          {{ annotationData.label }} (Score:
+          {{ annotationData.score.toFixed(2) }})
+        </h3>
         <v-data-table
           :headers="[
             { title: 'Label', value: 'label', sortable: true },
-            { title: 'Confidence', value: 'value', sortable: true }
+            { title: 'Confidence', value: 'value', sortable: true },
           ]"
           :items="annotationData.confidences"
           :items-per-page="-1"

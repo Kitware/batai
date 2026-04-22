@@ -62,7 +62,7 @@ def _split_tags(tags: str | None) -> list[str]:
     return [t.strip() for t in tags.split(",") if t.strip()]
 
 
-def _apply_recording_filters_and_sort(
+def _apply_recording_filters_and_sort(  # noqa: PLR0913
     *,
     qs: QuerySet[Recording],
     exclude_submitted: bool,

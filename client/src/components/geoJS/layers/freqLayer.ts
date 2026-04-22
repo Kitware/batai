@@ -16,7 +16,7 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
     geoViewerRef: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
-    spectroInfo: SpectroInfo
+    spectroInfo: SpectroInfo,
   ) {
     super(geoViewerRef, event, spectroInfo);
     this.lineData = [];
@@ -49,12 +49,22 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
     this.lineData = [];
     const lineDist = 16;
     annotationData.forEach((annotation: SpectrogramAnnotation) => {
-      const polygon = spectroToGeoJSon(annotation, this.spectroInfo, this.scaledWidth, this.scaledHeight);
-      const {low_freq, high_freq } = annotation;
+      const polygon = spectroToGeoJSon(
+        annotation,
+        this.spectroInfo,
+        this.scaledWidth,
+        this.scaledHeight,
+      );
+      const { low_freq, high_freq } = annotation;
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
-      if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+      if (
+        Number.isNaN(xmax) ||
+        Number.isNaN(xmin) ||
+        Number.isNaN(ymax) ||
+        Number.isNaN(ymin)
+      ) {
         return;
       }
       if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
@@ -83,14 +93,14 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
       });
       // Now we need to create the text Labels
       this.textData.push({
-        text: `${(low_freq/1000).toFixed(1)}KHz`,
+        text: `${(low_freq / 1000).toFixed(1)}KHz`,
         x: xmax + lineDist,
-        y: ymin ,
+        y: ymin,
         offsetX: 0,
         offsetY: 0,
       });
       this.textData.push({
-        text: `${(high_freq/1000).toFixed(1)}KHz`,
+        text: `${(high_freq / 1000).toFixed(1)}KHz`,
         x: xmax + lineDist,
         y: ymax,
         offsetX: 0,
@@ -113,7 +123,6 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
     this.lineLayer.data([]).draw();
     this.textLayer.data([]).draw();
   }
-
 
   createLineStyle(): LayerStyle<LineData> {
     return {
@@ -156,7 +165,7 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
         stroke: true,
         uniformPolygon: true,
         fill: false,
-        fontSize: '16px',
+        fontSize: "16px",
       },
       color: () => {
         return this.color;
@@ -165,9 +174,9 @@ export default class FreqLayer extends BaseTextLayer<TextData> {
         x: data.offsetX || 0,
         y: data.offsetY || 0,
       }),
-      textAlign: 'start',
+      textAlign: "start",
       textScaled: this.textScaled,
-      textBaseline: 'bottom',
+      textBaseline: "bottom",
     };
   }
 }

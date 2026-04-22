@@ -86,7 +86,7 @@ def auto_histogram_levels(
     return groups
 
 
-def compute_auto_levels(
+def compute_auto_levels(  # noqa: PLR0913
     data: npt.NDArray,
     mode: str,
     percentile_values,
@@ -227,7 +227,7 @@ def apply_transparency_mask(mat, threshold_percent):
 # -----------------------------------------------------------------------------
 
 
-def extract_contours(
+def extract_contours(  # noqa: PLR0913
     image_path: Path,
     *,
     levels_mode: str,
@@ -277,7 +277,7 @@ def extract_contours(
     return sorted(contours, key=lambda x: x[1]), img.shape
 
 
-def process_spectrogram_assets_for_contours(
+def process_spectrogram_assets_for_contours(  # noqa: C901, PLR0913
     assets: dict[str, Any],
     *,
     levels_mode: str = "percentile",

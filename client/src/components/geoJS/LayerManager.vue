@@ -1,7 +1,19 @@
 <script lang="ts">
-import { defineComponent, nextTick, onMounted, onUnmounted, type PropType, type Ref, ref, watch } from "vue";
+import {
+  defineComponent,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  type PropType,
+  type Ref,
+  ref,
+  watch,
+} from "vue";
 import * as d3 from "d3";
-import type { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
+import type {
+  SpectrogramAnnotation,
+  SpectrogramSequenceAnnotation,
+} from "../../api/api";
 import {
   annotationSpreadAcrossPulsesWarning,
   geojsonToSpectro,
@@ -55,7 +67,13 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ["selected", "update:annotation", "create:annotation", "set-cursor", "pulse-metadata-tooltip"],
+  emits: [
+    "selected",
+    "update:annotation",
+    "create:annotation",
+    "set-cursor",
+    "pulse-metadata-tooltip",
+  ],
   setup(props, { emit }) {
     const {
       creationType,
@@ -104,10 +122,16 @@ export default defineComponent({
     } = usePulseMetadata();
     const selectedAnnotationId: Ref<null | number> = ref(null);
     const hoveredAnnotationId: Ref<null | number> = ref(null);
-    const localAnnotations: Ref<SpectrogramAnnotation[]> = ref(cloneDeep(annotations.value));
-    const localSequenceAnnotations: Ref<SpectrogramSequenceAnnotation[]> = ref(cloneDeep(sequenceAnnotations.value));
+    const localAnnotations: Ref<SpectrogramAnnotation[]> = ref(
+      cloneDeep(annotations.value),
+    );
+    const localSequenceAnnotations: Ref<SpectrogramSequenceAnnotation[]> = ref(
+      cloneDeep(sequenceAnnotations.value),
+    );
     const editing = ref(false);
-    const editingAnnotation: Ref<null | SpectrogramAnnotation | SpectrogramSequenceAnnotation> = ref(null);
+    const editingAnnotation: Ref<
+      null | SpectrogramAnnotation | SpectrogramSequenceAnnotation
+    > = ref(null);
     let rectAnnotationLayer: RectangleLayer;
     let compressedOverlayLayer: CompressedOverlayLayer;
     let sequenceAnnotationLayer: SequenceLayer;
@@ -131,11 +155,13 @@ export default defineComponent({
         // click sequence annotation
         if (selectedAnnotationId.value !== null) {
           const foundIndex = sequenceAnnotations.value.findIndex(
-            (item) => item.id === selectedAnnotationId.value
+            (item) => item.id === selectedAnnotationId.value,
           );
           if (foundIndex !== -1) {
             editingAnnotation.value = sequenceAnnotations.value[foundIndex];
-            const copy: SpectrogramSequenceAnnotation[] = cloneDeep(localSequenceAnnotations.value);
+            const copy: SpectrogramSequenceAnnotation[] = cloneDeep(
+              localSequenceAnnotations.value,
+            );
             copy[foundIndex].editing = true;
             localSequenceAnnotations.value = copy;
           }
@@ -145,7 +171,7 @@ export default defineComponent({
         editingAnnotation.value = null;
         selectedId.value = selectedAnnotationId.value;
         if (data.id !== null) {
-          setSelectedId(selectedAnnotationId.value, 'sequence');
+          setSelectedId(selectedAnnotationId.value, "sequence");
         }
         setSelectedId(selectedAnnotationId.value);
         triggerUpdate();
@@ -154,11 +180,13 @@ export default defineComponent({
         selectedAnnotationId.value = data.id;
         editing.value = data.edit;
         const foundIndex = localSequenceAnnotations.value.findIndex(
-          (item) => item.id === selectedAnnotationId.value
+          (item) => item.id === selectedAnnotationId.value,
         );
         if (editing.value && foundIndex !== -1) {
           editingAnnotation.value = localSequenceAnnotations.value[foundIndex];
-          const copy: SpectrogramSequenceAnnotation[] = cloneDeep(localSequenceAnnotations.value);
+          const copy: SpectrogramSequenceAnnotation[] = cloneDeep(
+            localSequenceAnnotations.value,
+          );
           copy[foundIndex].editing = true;
           localSequenceAnnotations.value = copy;
         } else if (!editing.value && foundIndex !== -1) {
@@ -166,12 +194,11 @@ export default defineComponent({
           localSequenceAnnotations.value[foundIndex].editing = undefined;
         }
         if (data.id !== null) {
-          setSelectedId(selectedAnnotationId.value, 'sequence');
+          setSelectedId(selectedAnnotationId.value, "sequence");
         }
         setSelectedId(selectedAnnotationId.value);
         triggerUpdate();
       }
-
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -196,18 +223,20 @@ export default defineComponent({
         copy.forEach((item) => (item.editing = undefined));
         localAnnotations.value = copy;
         if (data.id !== null) {
-          setSelectedId(selectedAnnotationId.value, 'pulse');
+          setSelectedId(selectedAnnotationId.value, "pulse");
         }
         setSelectedId(selectedAnnotationId.value);
       }
       if (type === "annotation-clicked") {
         if (selectedAnnotationId.value !== null) {
           const foundIndex = localAnnotations.value.findIndex(
-            (item) => item.id === selectedAnnotationId.value
+            (item) => item.id === selectedAnnotationId.value,
           );
           if (foundIndex !== -1) {
             editingAnnotation.value = localAnnotations.value[foundIndex];
-            const copy: SpectrogramAnnotation[] = cloneDeep(localAnnotations.value);
+            const copy: SpectrogramAnnotation[] = cloneDeep(
+              localAnnotations.value,
+            );
             copy[foundIndex].editing = true;
             localAnnotations.value = copy;
           }
@@ -218,7 +247,7 @@ export default defineComponent({
         selectedId.value = selectedAnnotationId.value;
         //emit("selected", selectedAnnotationId.value);
         if (data.id !== null) {
-          setSelectedId(selectedAnnotationId.value, 'pulse');
+          setSelectedId(selectedAnnotationId.value, "pulse");
         }
         setSelectedId(selectedAnnotationId.value);
         triggerUpdate();
@@ -230,38 +259,60 @@ export default defineComponent({
         selectedAnnotationId.value = data.id;
         editing.value = data.edit;
         const foundIndex = localAnnotations.value.findIndex(
-          (item) => item.id === selectedAnnotationId.value
+          (item) => item.id === selectedAnnotationId.value,
         );
         if (editing.value && foundIndex !== -1) {
           editingAnnotation.value = localAnnotations.value[foundIndex];
-          const copy: SpectrogramAnnotation[] = cloneDeep(localAnnotations.value);
+          const copy: SpectrogramAnnotation[] = cloneDeep(
+            localAnnotations.value,
+          );
           copy[foundIndex].editing = true;
           localAnnotations.value = copy;
         } else if (!editing.value && foundIndex !== -1) {
           editingAnnotation.value = null;
           localAnnotations.value[foundIndex].editing = undefined;
         }
-        setSelectedId(selectedAnnotationId.value, 'pulse');
+        setSelectedId(selectedAnnotationId.value, "pulse");
         triggerUpdate();
       }
       if (type === "update:geojson") {
         const status = data["status"];
         const creating = data["creating"];
         const geoJSON = data["geoJSON"];
-        if (geoJSON && selectedAnnotationId.value !== null && status === "editing" && !creating) {
+        if (
+          geoJSON &&
+          selectedAnnotationId.value !== null &&
+          status === "editing" &&
+          !creating
+        ) {
           if (annotationState.value !== "creating") {
-            const index = selectedType.value === 'pulse' ? localAnnotations.value.findIndex(
-              (item) => item.id === selectedAnnotationId.value
-            ) : localSequenceAnnotations.value.findIndex((item) => item.id === selectedAnnotationId.value);
-            if (index !== -1 && props.spectroInfo && selectedType.value === 'pulse') {
+            const index =
+              selectedType.value === "pulse"
+                ? localAnnotations.value.findIndex(
+                    (item) => item.id === selectedAnnotationId.value,
+                  )
+                : localSequenceAnnotations.value.findIndex(
+                    (item) => item.id === selectedAnnotationId.value,
+                  );
+            if (
+              index !== -1 &&
+              props.spectroInfo &&
+              selectedType.value === "pulse"
+            ) {
               // update bounds for the localAnnotation
-              const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
+              const conversionResult = geojsonToSpectro(
+                geoJSON,
+                props.spectroInfo,
+                props.scaledWidth,
+                props.scaledHeight,
+              );
               if (conversionResult.warning) {
                 displayError.value = true;
                 errorMsg.value = conversionResult.warning;
                 return;
               }
-              const { low_freq, high_freq, start_time, end_time } = conversionResult;
+              const { low_freq, high_freq, start_time, end_time } =
+                conversionResult;
               localAnnotations.value[index] = {
                 ...localAnnotations.value[index],
                 low_freq,
@@ -271,10 +322,22 @@ export default defineComponent({
               };
               editingAnnotation.value = localAnnotations.value[index];
             }
-            if (index !== -1 && props.spectroInfo && selectedType.value === 'sequence') {
+            if (
+              index !== -1 &&
+              props.spectroInfo &&
+              selectedType.value === "sequence"
+            ) {
               // update bounds for the localAnnotation
-              const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
-              if (conversionResult.warning && conversionResult.warning !== annotationSpreadAcrossPulsesWarning) {
+              const conversionResult = geojsonToSpectro(
+                geoJSON,
+                props.spectroInfo,
+                props.scaledWidth,
+                props.scaledHeight,
+              );
+              if (
+                conversionResult.warning &&
+                conversionResult.warning !== annotationSpreadAcrossPulsesWarning
+              ) {
                 displayError.value = true;
                 errorMsg.value = conversionResult.warning;
                 return;
@@ -293,17 +356,27 @@ export default defineComponent({
           }
         } else if (creating) {
           if (geoJSON && props.spectroInfo) {
-            const conversionResult = geojsonToSpectro(geoJSON, props.spectroInfo, props.scaledWidth, props.scaledHeight);
+            const conversionResult = geojsonToSpectro(
+              geoJSON,
+              props.spectroInfo,
+              props.scaledWidth,
+              props.scaledHeight,
+            );
 
-            if (conversionResult.warning
-              && !(creationType.value === 'sequence' && conversionResult.warning === annotationSpreadAcrossPulsesWarning)
+            if (
+              conversionResult.warning &&
+              !(
+                creationType.value === "sequence" &&
+                conversionResult.warning === annotationSpreadAcrossPulsesWarning
+              )
             ) {
               displayError.value = true;
               errorMsg.value = conversionResult.warning;
               return;
             }
-            const { low_freq, high_freq, start_time, end_time } = conversionResult;
-            if (creationType.value === 'pulse') {
+            const { low_freq, high_freq, start_time, end_time } =
+              conversionResult;
+            if (creationType.value === "pulse") {
               const newAnnotation: SpectrogramAnnotation = {
                 low_freq,
                 high_freq,
@@ -314,17 +387,16 @@ export default defineComponent({
                 id: 0,
               };
               emit("create:annotation", newAnnotation);
-            } else if (creationType.value === 'sequence') {
+            } else if (creationType.value === "sequence") {
               const newAnnotation: SpectrogramSequenceAnnotation = {
                 start_time,
                 end_time,
                 species: [],
-                type: '',
-                comments: '',
+                type: "",
+                comments: "",
                 id: 0,
               };
               emit("create:annotation", newAnnotation);
-
             }
             editAnnotationLayer.disable();
             annotationState.value = "";
@@ -338,7 +410,7 @@ export default defineComponent({
       }
       if (type === "bbox:error") {
         const { error } = data;
-        boundingBoxError.value = error || '';
+        boundingBoxError.value = error || "";
       }
     };
 
@@ -348,17 +420,31 @@ export default defineComponent({
         let additionalAnnotations: SpectrogramAnnotation[] = [];
         let additionalSequenceAnnotations: SpectrogramSequenceAnnotation[] = [];
         for (let i = 0; i < selectedUsers.value.length; i += 1) {
-          const newAnnotations = otherUserAnnotations.value[selectedUsers.value[i]]['annotations'];
+          const newAnnotations =
+            otherUserAnnotations.value[selectedUsers.value[i]]["annotations"];
           additionalAnnotations = additionalAnnotations.concat(newAnnotations);
-          const newSequenceAnnotations = otherUserAnnotations.value[selectedUsers.value[i]]['sequence'];
-          additionalSequenceAnnotations = additionalSequenceAnnotations.concat(newSequenceAnnotations);
-
+          const newSequenceAnnotations =
+            otherUserAnnotations.value[selectedUsers.value[i]]["sequence"];
+          additionalSequenceAnnotations = additionalSequenceAnnotations.concat(
+            newSequenceAnnotations,
+          );
         }
-        additionalAnnotations = additionalAnnotations.concat(localAnnotations.value);
-        additionalSequenceAnnotations = additionalSequenceAnnotations.concat(localSequenceAnnotations.value);
-        return { annotations: additionalAnnotations, sequenceAnnotations: additionalSequenceAnnotations, colorScale };
+        additionalAnnotations = additionalAnnotations.concat(
+          localAnnotations.value,
+        );
+        additionalSequenceAnnotations = additionalSequenceAnnotations.concat(
+          localSequenceAnnotations.value,
+        );
+        return {
+          annotations: additionalAnnotations,
+          sequenceAnnotations: additionalSequenceAnnotations,
+          colorScale,
+        };
       } else {
-        return { annotations: localAnnotations.value, sequenceAnnotations: localSequenceAnnotations.value };
+        return {
+          annotations: localAnnotations.value,
+          sequenceAnnotations: localSequenceAnnotations.value,
+        };
       }
     };
     const triggerUpdate = () => {
@@ -367,22 +453,34 @@ export default defineComponent({
       if (rectAnnotationLayer) {
         rectAnnotationLayer.formatData(
           annotations,
-          selectedType.value === 'pulse' ? selectedAnnotationId.value : null,
+          selectedType.value === "pulse" ? selectedAnnotationId.value : null,
           currentUser.value,
           colorScale.value,
         );
         rectAnnotationLayer.redraw();
       }
-      if (viewCompressedOverlay.value && compressedOverlayLayer && !props.spectroInfo?.compressedWidth && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
-        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times);
+      if (
+        viewCompressedOverlay.value &&
+        compressedOverlayLayer &&
+        !props.spectroInfo?.compressedWidth &&
+        props.spectroInfo?.start_times &&
+        props.spectroInfo.end_times
+      ) {
+        compressedOverlayLayer.formatData(
+          props.spectroInfo.start_times,
+          props.spectroInfo.end_times,
+        );
         compressedOverlayLayer.redraw();
       } else {
         compressedOverlayLayer?.disable();
       }
-      if (sequenceAnnotationLayer && layerVisibility.value.includes('sequence')) {
+      if (
+        sequenceAnnotationLayer &&
+        layerVisibility.value.includes("sequence")
+      ) {
         sequenceAnnotationLayer.formatData(
           sequenceAnnotations,
-          selectedType.value === 'sequence' ? selectedAnnotationId.value : null,
+          selectedType.value === "sequence" ? selectedAnnotationId.value : null,
           currentUser.value,
           colorScale.value,
         );
@@ -399,7 +497,10 @@ export default defineComponent({
           }
           legendLayer.redraw();
         }
-        if (layerVisibility.value.includes("time") || layerVisibility.value.includes('duration')) {
+        if (
+          layerVisibility.value.includes("time") ||
+          layerVisibility.value.includes("duration")
+        ) {
           if (layerVisibility.value.includes("time")) {
             timeLayer.displayDuration = false;
           } else {
@@ -428,7 +529,10 @@ export default defineComponent({
       }
       if (editing.value && editingAnnotation.value) {
         setTimeout(() => {
-          editAnnotationLayer.changeData(editingAnnotation.value, selectedType.value);
+          editAnnotationLayer.changeData(
+            editingAnnotation.value,
+            selectedType.value,
+          );
         }, 0);
       }
       // We need to disable annotations that aren't required for different views
@@ -442,53 +546,52 @@ export default defineComponent({
         speciesSequenceLayer?.disable();
       }
     };
-    watch(
-      annotations,
-      () => {
-        localAnnotations.value = annotations.value;
-        triggerUpdate();
-      }
-    );
+    watch(annotations, () => {
+      localAnnotations.value = annotations.value;
+      triggerUpdate();
+    });
     watch(sequenceAnnotations, () => {
       localSequenceAnnotations.value = sequenceAnnotations.value;
       triggerUpdate();
     });
     watch(selectedUsers, () => triggerUpdate());
-    watch(
-      selectedId,
-      () => {
-        selectedAnnotationId.value = selectedId.value;
-        if (
-          editAnnotationLayer &&
-          editAnnotationLayer.getMode() === "editing" &&
-          selectedId.value === null
-        ) {
-          nextTick(() => {
-            if (
-              editAnnotationLayer &&
-              editAnnotationLayer.getMode() === "disabled" &&
-              selectedId.value === null
-            ) {
-              annotationState.value = 'disabled';
-              editAnnotationLayer.featureLayer.clear();
-            }
-          });
-          editAnnotationLayer.disable();
-          return;
-        }
-        triggerUpdate();
+    watch(selectedId, () => {
+      selectedAnnotationId.value = selectedId.value;
+      if (
+        editAnnotationLayer &&
+        editAnnotationLayer.getMode() === "editing" &&
+        selectedId.value === null
+      ) {
+        nextTick(() => {
+          if (
+            editAnnotationLayer &&
+            editAnnotationLayer.getMode() === "disabled" &&
+            selectedId.value === null
+          ) {
+            annotationState.value = "disabled";
+            editAnnotationLayer.featureLayer.clear();
+          }
+        });
+        editAnnotationLayer.disable();
+        return;
       }
-    );
-    watch(() => props.recordingId, () => {
-      computedPulseContours.value = [];
-      clearPulseMetadata();
+      triggerUpdate();
     });
+    watch(
+      () => props.recordingId,
+      () => {
+        computedPulseContours.value = [];
+        clearPulseMetadata();
+      },
+    );
     watch(contoursEnabled, async () => {
       if (props.thumbnail) {
         return;
       }
       if (!props.recordingId || !props.spectroInfo) {
-        console.error('Could not load contours. Could not determine recording ID');
+        console.error(
+          "Could not load contours. Could not determine recording ID",
+        );
         return;
       }
       if (computedPulseContours.value.length === 0) {
@@ -557,7 +660,10 @@ export default defineComponent({
             pulseMetadataLabels: pulseMetadataLabels.value,
           });
           pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
-          pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          pulseMetadataLayer.setScaledDimensions(
+            props.scaledWidth,
+            props.scaledHeight,
+          );
           pulseMetadataLayer.redraw();
         } else if (pulseMetadataLayer) {
           pulseMetadataLayer.disable();
@@ -566,9 +672,16 @@ export default defineComponent({
       { immediate: true },
     );
     watch(pulseMetadataList, () => {
-      if (pulseMetadataLayer && viewPulseMetadataLayer.value && props.spectroInfo) {
+      if (
+        pulseMetadataLayer &&
+        viewPulseMetadataLayer.value &&
+        props.spectroInfo
+      ) {
         pulseMetadataLayer.setPulseMetadataList(pulseMetadataList.value);
-        pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        pulseMetadataLayer.setScaledDimensions(
+          props.scaledWidth,
+          props.scaledHeight,
+        );
         pulseMetadataLayer.redraw();
       }
     });
@@ -601,7 +714,7 @@ export default defineComponent({
           });
           pulseMetadataLayer.updateMetadataStyle();
         }
-      }
+      },
     );
     onUnmounted(() => {
       if (editAnnotationLayer) {
@@ -649,73 +762,152 @@ export default defineComponent({
     const initLayers = () => {
       if (props.spectroInfo) {
         if (!compressedOverlayLayer) {
-          compressedOverlayLayer = new CompressedOverlayLayer(props.geoViewerRef, props.spectroInfo);
+          compressedOverlayLayer = new CompressedOverlayLayer(
+            props.geoViewerRef,
+            props.spectroInfo,
+          );
         }
         compressedOverlayLayer.spectroInfo = props.spectroInfo;
-        compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        compressedOverlayLayer.setScaledDimensions(
+          props.scaledWidth,
+          props.scaledHeight,
+        );
         if (!editAnnotationLayer) {
-          editAnnotationLayer = new EditAnnotationLayer(props.geoViewerRef, event, props.spectroInfo);
+          editAnnotationLayer = new EditAnnotationLayer(
+            props.geoViewerRef,
+            event,
+            props.spectroInfo,
+          );
         }
         editAnnotationLayer.spectroInfo = props.spectroInfo;
-        editAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        editAnnotationLayer.setScaledDimensions(
+          props.scaledWidth,
+          props.scaledHeight,
+        );
         if (!rectAnnotationLayer) {
-          rectAnnotationLayer = new RectangleLayer(props.geoViewerRef, event, props.spectroInfo);
+          rectAnnotationLayer = new RectangleLayer(
+            props.geoViewerRef,
+            event,
+            props.spectroInfo,
+          );
         }
         rectAnnotationLayer.spectroInfo = props.spectroInfo;
-        rectAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        rectAnnotationLayer.setScaledDimensions(
+          props.scaledWidth,
+          props.scaledHeight,
+        );
 
         if (!sequenceAnnotationLayer) {
-          sequenceAnnotationLayer = new SequenceLayer(props.geoViewerRef, sequenceEvent, props.spectroInfo);
-        } {
-          sequenceAnnotationLayer.spectroInfo = props.spectroInfo;
-          sequenceAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          sequenceAnnotationLayer = new SequenceLayer(
+            props.geoViewerRef,
+            sequenceEvent,
+            props.spectroInfo,
+          );
         }
-        rectAnnotationLayer.formatData(localAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
+        {
+          sequenceAnnotationLayer.spectroInfo = props.spectroInfo;
+          sequenceAnnotationLayer.setScaledDimensions(
+            props.scaledWidth,
+            props.scaledHeight,
+          );
+        }
+        rectAnnotationLayer.formatData(
+          localAnnotations.value,
+          selectedAnnotationId.value,
+          currentUser.value,
+          colorScale.value,
+        );
         rectAnnotationLayer.redraw();
-        if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo.start_times && props.spectroInfo.end_times) {
-          compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times);
+        if (
+          viewCompressedOverlay.value &&
+          compressedOverlayLayer &&
+          props.spectroInfo.start_times &&
+          props.spectroInfo.end_times
+        ) {
+          compressedOverlayLayer.formatData(
+            props.spectroInfo.start_times,
+            props.spectroInfo.end_times,
+          );
           compressedOverlayLayer.redraw();
         }
-        sequenceAnnotationLayer.formatData(localSequenceAnnotations.value, selectedAnnotationId.value, currentUser.value, colorScale.value);
+        sequenceAnnotationLayer.formatData(
+          localSequenceAnnotations.value,
+          selectedAnnotationId.value,
+          currentUser.value,
+          colorScale.value,
+        );
         sequenceAnnotationLayer.redraw();
         if (!props.thumbnail) {
           if (!legendLayer) {
-            legendLayer = new LegendLayer(props.geoViewerRef, event, props.spectroInfo);
+            legendLayer = new LegendLayer(
+              props.geoViewerRef,
+              event,
+              props.spectroInfo,
+            );
           }
           legendLayer.spectroInfo = props.spectroInfo;
           legendLayer.createLabels();
           legendLayer.calcGridLines();
-          legendLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          legendLayer.setScaledDimensions(
+            props.scaledWidth,
+            props.scaledHeight,
+          );
           legendLayer.onPan();
           if (!axesLayer) {
-            axesLayer = new AxesLayer(props.geoViewerRef, event, props.spectroInfo);
+            axesLayer = new AxesLayer(
+              props.geoViewerRef,
+              event,
+              props.spectroInfo,
+            );
           }
           axesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-          if (layerVisibility.value.includes('grid')) {
+          if (layerVisibility.value.includes("grid")) {
             legendLayer.setGridEnabled(true);
             axesLayer.setGridEnabled(true);
           }
           if (!timeLayer) {
-            timeLayer = new TimeLayer(props.geoViewerRef, event, props.spectroInfo);
+            timeLayer = new TimeLayer(
+              props.geoViewerRef,
+              event,
+              props.spectroInfo,
+            );
           }
           timeLayer.spectroInfo = props.spectroInfo;
           timeLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
           if (!freqLayer) {
-            freqLayer = new FreqLayer(props.geoViewerRef, event, props.spectroInfo);
+            freqLayer = new FreqLayer(
+              props.geoViewerRef,
+              event,
+              props.spectroInfo,
+            );
           }
           freqLayer.spectroInfo = props.spectroInfo;
           freqLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
 
           if (!speciesSequenceLayer) {
-            speciesSequenceLayer = new SpeciesSequenceLayer(props.geoViewerRef, event, props.spectroInfo);
+            speciesSequenceLayer = new SpeciesSequenceLayer(
+              props.geoViewerRef,
+              event,
+              props.spectroInfo,
+            );
           }
           speciesSequenceLayer.spectroInfo = props.spectroInfo;
-          speciesSequenceLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          speciesSequenceLayer.setScaledDimensions(
+            props.scaledWidth,
+            props.scaledHeight,
+          );
           if (!speciesLayer) {
-            speciesLayer = new SpeciesLayer(props.geoViewerRef, event, props.spectroInfo);
+            speciesLayer = new SpeciesLayer(
+              props.geoViewerRef,
+              event,
+              props.spectroInfo,
+            );
           }
           speciesLayer.spectroInfo = props.spectroInfo;
-          speciesLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+          speciesLayer.setScaledDimensions(
+            props.scaledWidth,
+            props.scaledHeight,
+          );
 
           if (!measureToolLayer) {
             measureToolLayer = new MeasureToolLayer(
@@ -723,9 +915,12 @@ export default defineComponent({
               event,
               props.spectroInfo,
               measuring.value,
-              frequencyRulerY.value
+              frequencyRulerY.value,
             );
-            measureToolLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+            measureToolLayer.setScaledDimensions(
+              props.scaledWidth,
+              props.scaledHeight,
+            );
           }
           measureToolLayer.redraw();
           watch(measuring, () => {
@@ -737,8 +932,16 @@ export default defineComponent({
           });
 
           if (!boundingBoxLayer) {
-            boundingBoxLayer = new BoundingBoxLayer(props.geoViewerRef, event, props.spectroInfo, drawingBoundingBox.value);
-            boundingBoxLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+            boundingBoxLayer = new BoundingBoxLayer(
+              props.geoViewerRef,
+              event,
+              props.spectroInfo,
+              drawingBoundingBox.value,
+            );
+            boundingBoxLayer.setScaledDimensions(
+              props.scaledWidth,
+              props.scaledHeight,
+            );
           }
           watch(drawingBoundingBox, () => {
             if (drawingBoundingBox.value) {
@@ -748,8 +951,14 @@ export default defineComponent({
             }
           });
 
-          timeLayer.setDisplaying({ pulse: configuration.value.display_pulse_annotations, sequence: configuration.value.display_sequence_annotations });
-          timeLayer.formatData(localAnnotations.value, sequenceAnnotations.value);
+          timeLayer.setDisplaying({
+            pulse: configuration.value.display_pulse_annotations,
+            sequence: configuration.value.display_sequence_annotations,
+          });
+          timeLayer.formatData(
+            localAnnotations.value,
+            sequenceAnnotations.value,
+          );
           freqLayer.formatData(localAnnotations.value);
           speciesLayer.formatData(localAnnotations.value);
           speciesSequenceLayer.formatData(localSequenceAnnotations.value);
@@ -757,7 +966,7 @@ export default defineComponent({
           if (legendLayer) {
             legendLayer.redraw();
           }
-          if (layerVisibility.value.includes('species')) {
+          if (layerVisibility.value.includes("species")) {
             speciesLayer.redraw();
             speciesSequenceLayer.redraw();
           } else {
@@ -778,7 +987,10 @@ export default defineComponent({
       updateColorFilter();
     });
 
-    watch(() => props.spectroInfo, () => initLayers());
+    watch(
+      () => props.spectroInfo,
+      () => initLayers(),
+    );
     watch(layerVisibility, () => {
       if (!props.thumbnail && legendLayer) {
         triggerUpdate();
@@ -790,19 +1002,33 @@ export default defineComponent({
         legendLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       }
       if (rectAnnotationLayer) {
-        rectAnnotationLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        rectAnnotationLayer.setScaledDimensions(
+          props.scaledWidth,
+          props.scaledHeight,
+        );
         rectAnnotationLayer.formatData(
           annotations,
-          selectedType.value === 'pulse' ? selectedAnnotationId.value : null,
+          selectedType.value === "pulse" ? selectedAnnotationId.value : null,
           currentUser.value,
           colorScale.value,
         );
         rectAnnotationLayer.redraw();
       }
-      if (compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times && viewCompressedOverlay.value) {
+      if (
+        compressedOverlayLayer &&
+        props.spectroInfo?.start_times &&
+        props.spectroInfo.end_times &&
+        viewCompressedOverlay.value
+      ) {
         if (!props.thumbnail) {
-          compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-          compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times);
+          compressedOverlayLayer.setScaledDimensions(
+            props.scaledWidth,
+            props.scaledHeight,
+          );
+          compressedOverlayLayer.formatData(
+            props.spectroInfo.start_times,
+            props.spectroInfo.end_times,
+          );
           compressedOverlayLayer.redraw();
         } else {
           compressedOverlayLayer?.disable();
@@ -815,21 +1041,40 @@ export default defineComponent({
         }
       }
       if (pulseMetadataLayer && viewPulseMetadataLayer.value) {
-        pulseMetadataLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        pulseMetadataLayer.setScaledDimensions(
+          props.scaledWidth,
+          props.scaledHeight,
+        );
       }
-      editAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+      editAnnotationLayer?.setScaledDimensions(
+        props.scaledWidth,
+        props.scaledHeight,
+      );
       if (editing.value && editingAnnotation.value) {
         setTimeout(() => {
-          editAnnotationLayer.changeData(editingAnnotation.value, selectedType.value);
+          editAnnotationLayer.changeData(
+            editingAnnotation.value,
+            selectedType.value,
+          );
         }, 0);
       }
 
       timeLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       freqLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
       speciesLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      speciesSequenceLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      sequenceAnnotationLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-      if (timeLayer && (layerVisibility.value.includes("time") || layerVisibility.value.includes('duration'))) {
+      speciesSequenceLayer?.setScaledDimensions(
+        props.scaledWidth,
+        props.scaledHeight,
+      );
+      sequenceAnnotationLayer?.setScaledDimensions(
+        props.scaledWidth,
+        props.scaledHeight,
+      );
+      if (
+        timeLayer &&
+        (layerVisibility.value.includes("time") ||
+          layerVisibility.value.includes("duration"))
+      ) {
         if (layerVisibility.value.includes("time")) {
           timeLayer.displayDuration = false;
         } else {
@@ -844,7 +1089,11 @@ export default defineComponent({
       } else {
         freqLayer?.disable();
       }
-      if (speciesLayer && speciesSequenceLayer && layerVisibility.value.includes("species")) {
+      if (
+        speciesLayer &&
+        speciesSequenceLayer &&
+        layerVisibility.value.includes("species")
+      ) {
         speciesLayer.formatData(annotations);
         speciesLayer.redraw();
         speciesSequenceLayer.formatData(sequenceAnnotations);
@@ -853,7 +1102,10 @@ export default defineComponent({
         speciesLayer?.disable();
         speciesSequenceLayer?.disable();
       }
-      if (sequenceAnnotationLayer && layerVisibility.value.includes('sequence')) {
+      if (
+        sequenceAnnotationLayer &&
+        layerVisibility.value.includes("sequence")
+      ) {
         sequenceAnnotationLayer.formatData(
           sequenceAnnotations,
           selectedAnnotationId.value,
@@ -863,7 +1115,10 @@ export default defineComponent({
         sequenceAnnotationLayer.redraw();
       }
       if (measureToolLayer) {
-        measureToolLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
+        measureToolLayer.setScaledDimensions(
+          props.scaledWidth,
+          props.scaledHeight,
+        );
         measureToolLayer.redraw();
       }
       // Triggers the Axis redraw when zoomed in and the axis is at the bottom/top
@@ -871,9 +1126,20 @@ export default defineComponent({
       axesLayer?.setScaledDimensions(props.scaledWidth, props.scaledHeight);
     });
     watch(viewCompressedOverlay, () => {
-      if (viewCompressedOverlay.value && compressedOverlayLayer && props.spectroInfo?.start_times && props.spectroInfo.end_times) {
-        compressedOverlayLayer.setScaledDimensions(props.scaledWidth, props.scaledHeight);
-        compressedOverlayLayer.formatData(props.spectroInfo.start_times, props.spectroInfo.end_times);
+      if (
+        viewCompressedOverlay.value &&
+        compressedOverlayLayer &&
+        props.spectroInfo?.start_times &&
+        props.spectroInfo.end_times
+      ) {
+        compressedOverlayLayer.setScaledDimensions(
+          props.scaledWidth,
+          props.scaledHeight,
+        );
+        compressedOverlayLayer.formatData(
+          props.spectroInfo.start_times,
+          props.spectroInfo.end_times,
+        );
         compressedOverlayLayer.redraw();
       } else {
         compressedOverlayLayer.disable();
@@ -889,12 +1155,12 @@ export default defineComponent({
           editAnnotationLayer.changeData(null, selectedType.value);
           triggerUpdate();
         }
-      }
+      },
     );
     // Color scheme
-    const rValues = ref('');
-    const gValues = ref('');
-    const bValues = ref('');
+    const rValues = ref("");
+    const gValues = ref("");
+    const bValues = ref("");
 
     function getTransparencyTableValues() {
       // transparencyThreshold is expected to be 0-100 (percentage)
@@ -924,9 +1190,12 @@ export default defineComponent({
     }
 
     function updateColorFilter() {
-      if (!backgroundColor.value.includes(',')) {
+      if (!backgroundColor.value.includes(",")) {
         // convert rgb(0 0 0) to rgb(0, 0, 0)
-        backgroundColor.value = backgroundColor.value.replace(/rgb\((\d+)\s+(\d+)\s+(\d+)\)/, 'rgb($1, $2, $3)');
+        backgroundColor.value = backgroundColor.value.replace(
+          /rgb\((\d+)\s+(\d+)\s+(\d+)\)/,
+          "rgb($1, $2, $3)",
+        );
       }
 
       const backgroundRgbColor = d3.color(backgroundColor.value) as d3.RGBColor;
@@ -940,9 +1209,9 @@ export default defineComponent({
         greenStops.push(color.g / 255);
         blueStops.push(color.b / 255);
       }
-      rValues.value = redStops.join(' ');
-      gValues.value = greenStops.join(' ');
-      bValues.value = blueStops.join(' ');
+      rValues.value = redStops.join(" ");
+      gValues.value = greenStops.join(" ");
+      bValues.value = blueStops.join(" ");
       const textColor = textColorFromBackground(backgroundColor.value);
       if (freqLayer) {
         freqLayer.setTextColor(textColor);
@@ -975,7 +1244,6 @@ export default defineComponent({
 
     watch([backgroundColor, colorScheme], updateColorFilter);
 
-
     watch(fixedAxes, setAxes);
 
     return {
@@ -994,20 +1262,14 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-dialog
-    v-model="displayError"
-    width="500"
-  >
+  <v-dialog v-model="displayError" width="500">
     <v-card>
       <v-card-title>Error</v-card-title>
       <v-card-text>{{ errorMsg }}</v-card-text>
       <v-card-actions>
         <v-row>
           <v-spacer />
-          <v-btn
-            variant="outlined"
-            @click="displayError = false"
-          >
+          <v-btn variant="outlined" @click="displayError = false">
             Dismiss
           </v-btn>
           <v-spacer />
@@ -1015,18 +1277,10 @@ export default defineComponent({
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <svg
-    width="0"
-    height="0"
-    style="position: absolute; top: -1px; left: -1px;"
-  >
+  <svg width="0" height="0" style="position: absolute; top: -1px; left: -1px">
     <filter id="svg-filters">
       <!-- convert to grayscale -->
-      <feColorMatrix
-        type="saturate"
-        values="0"
-        result="grayscale"
-      />
+      <feColorMatrix type="saturate" values="0" result="grayscale" />
 
       <feColorMatrix
         in="grayscale"
@@ -1037,20 +1291,14 @@ export default defineComponent({
                 0 0 0 1 0"
         result="sourceGraphic"
       />
-      
+
       <feColorMatrix
         in="sourceGraphic"
         type="luminanceToAlpha"
         result="luminance"
       />
-      <feComponentTransfer
-        in="luminance"
-        result="transparency-mask"
-      >
-        <feFuncA
-          type="table"
-          :tableValues="getTransparencyTableValues()"
-        />
+      <feComponentTransfer in="luminance" result="transparency-mask">
+        <feFuncA type="table" :tableValues="getTransparencyTableValues()" />
       </feComponentTransfer>
 
       <feComposite
@@ -1060,18 +1308,9 @@ export default defineComponent({
         result="grayscale-with-transparency"
       />
       <feComponentTransfer in="grayscale-with-transparency">
-        <feFuncR
-          type="table"
-          :tableValues="rValues"
-        />
-        <feFuncG
-          type="table"
-          :tableValues="gValues"
-        />
-        <feFuncB
-          type="table"
-          :tableValues="bValues"
-        />
+        <feFuncR type="table" :tableValues="rValues" />
+        <feFuncG type="table" :tableValues="gValues" />
+        <feFuncB type="table" :tableValues="bValues" />
       </feComponentTransfer>
     </filter>
   </svg>

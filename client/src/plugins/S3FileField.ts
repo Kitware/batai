@@ -1,5 +1,5 @@
-import { Axios } from 'axios';
-import S3FileFieldClient from 'django-s3-file-field';
+import { Axios } from "axios";
+import S3FileFieldClient from "django-s3-file-field";
 
 let s3ffClient: S3FileFieldClient;
 
@@ -15,7 +15,7 @@ export function createS3ffClient(axiosInstance: Axios) {
 
 export function getS3ffClient() {
   if (s3ffClient === undefined) {
-    throw new Error('s3ffClient has not been initialized');
+    throw new Error("s3ffClient has not been initialized");
   } else {
     return s3ffClient;
   }

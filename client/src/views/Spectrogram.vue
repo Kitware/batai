@@ -113,16 +113,18 @@ export default defineComponent({
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
     const recordingMap = ref(false);
-    const compressed = ref(configuration.value.spectrogram_view === 'compressed');
+    const compressed = ref(
+      configuration.value.spectrogram_view === "compressed",
+    );
     const colorpickerMenu = ref(false);
     const getAnnotationsList = async (annotationId?: number) => {
       const response = await getAnnotations(props.id);
       annotations.value = response.data.sort(
-        (a, b) => a.start_time - b.start_time
+        (a, b) => a.start_time - b.start_time,
       );
       const tempResp = await getSequenceAnnotations(props.id);
       sequenceAnnotations.value = tempResp.data.sort(
-        (a, b) => a.start_time - b.start_time
+        (a, b) => a.start_time - b.start_time,
       );
       if (annotationId !== undefined) {
         selectedId.value = annotationId;
@@ -131,7 +133,7 @@ export default defineComponent({
     const selectedIndex = computed(() => {
       if (annotations.value && selectedId.value !== null) {
         return annotations.value.findIndex(
-          (item) => item.id === selectedId.value
+          (item) => item.id === selectedId.value,
         );
       }
       return -1;
@@ -149,8 +151,12 @@ export default defineComponent({
       }
     };
 
-    const combinedTags = computed(() => Array.from (new Set([...filterTags.value, ...sharedFilterTags.value])));
-    const mapFilterBounds = ref<[number, number, number, number] | null>(loadMapFilterBounds());
+    const combinedTags = computed(() =>
+      Array.from(new Set([...filterTags.value, ...sharedFilterTags.value])),
+    );
+    const mapFilterBounds = ref<[number, number, number, number] | null>(
+      loadMapFilterBounds(),
+    );
 
     const loading = ref(false);
     const spectrogramData: Ref<Spectrogram | null> = ref(null);
@@ -185,7 +191,7 @@ export default defineComponent({
         images.value.forEach((image, index) => {
           image.onload = () => {
             allImagesLoaded.value[index] = true;
-            if (allImagesLoaded.value.every((item) => (item))) {
+            if (allImagesLoaded.value.every((item) => item)) {
               loadedImage.value = true;
             }
           };
@@ -213,25 +219,31 @@ export default defineComponent({
         });
       }
       spectroInfo.value = response.data["spectroInfo"];
-      if (spectrogramData.value['compressed'] && spectroInfo.value) {
-        spectroInfo.value.start_times = spectrogramData.value.compressed.start_times;
-        spectroInfo.value.end_times = spectrogramData.value.compressed.end_times;
+      if (spectrogramData.value["compressed"] && spectroInfo.value) {
+        spectroInfo.value.start_times =
+          spectrogramData.value.compressed.start_times;
+        spectroInfo.value.end_times =
+          spectrogramData.value.compressed.end_times;
       }
       annotations.value =
         spectrogramData.value["annotations"]?.sort(
-          (a, b) => a.start_time - b.start_time
+          (a, b) => a.start_time - b.start_time,
         ) || [];
       sequenceAnnotations.value =
         spectrogramData.value["sequence"]?.sort(
-          (a, b) => a.start_time - b.start_time
+          (a, b) => a.start_time - b.start_time,
         ) || [];
       if (spectrogramData.value.currentUser) {
         currentUser.value = spectrogramData.value.currentUser;
       }
-      const speciesResponse = await getSpecies({ recordingId: parseInt(props.id) });
+      const speciesResponse = await getSpecies({
+        recordingId: parseInt(props.id),
+      });
       // Removing NOISE species from list and any duplicates
       speciesList.value = speciesResponse.data.filter(
-        (value, index, self) => index === self.findIndex((t) => t.species_code === value.species_code)
+        (value, index, self) =>
+          index ===
+          self.findIndex((t) => t.species_code === value.species_code),
       );
       if (spectrogramData.value.otherUsers && spectroInfo.value) {
         // We have other users so we should grab the other user annotations
@@ -242,13 +254,18 @@ export default defineComponent({
 
       if (configuration.value.mark_annotations_completed_enabled) {
         try {
-          const tags = Array.from(new Set([...filterTags.value, ...sharedFilterTags.value]));
-          const neighborsRes = await getUnsubmittedNeighbors(parseInt(props.id, 10), {
-            sort_by: 'created',
-            sort_direction: 'desc',
-            tags: tags,
-            bbox: mapFilterBounds.value ?? undefined,
-          });
+          const tags = Array.from(
+            new Set([...filterTags.value, ...sharedFilterTags.value]),
+          );
+          const neighborsRes = await getUnsubmittedNeighbors(
+            parseInt(props.id, 10),
+            {
+              sort_by: "created",
+              sort_direction: "desc",
+              tags: tags,
+              bbox: mapFilterBounds.value ?? undefined,
+            },
+          );
           nextUnsubmittedId.value = neighborsRes.data.next_id;
           previousUnsubmittedId.value = neighborsRes.data.previous_id;
         } catch {
@@ -279,7 +296,7 @@ export default defineComponent({
         annotations.value
       ) {
         const found = annotations.value.findIndex(
-          (item) => item.id === selectedId.value
+          (item) => item.id === selectedId.value,
         );
         if (found !== -1) {
           return annotations.value[found];
@@ -291,7 +308,7 @@ export default defineComponent({
         sequenceAnnotations.value
       ) {
         const found = sequenceAnnotations.value.findIndex(
-          (item) => item.id === selectedId.value
+          (item) => item.id === selectedId.value,
         );
         if (found !== -1) {
           return sequenceAnnotations.value[found];
@@ -306,7 +323,7 @@ export default defineComponent({
       () => props.id,
       () => {
         loadData();
-      }
+      },
     );
     onMounted(loadData);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -366,13 +383,19 @@ export default defineComponent({
 
     function goToNextUnreviewed() {
       if (nextUnsubmittedId.value != null) {
-        router.push({ path: `/recording/${nextUnsubmittedId.value}/spectrogram`, replace: true });
+        router.push({
+          path: `/recording/${nextUnsubmittedId.value}/spectrogram`,
+          replace: true,
+        });
       }
     }
 
     function goToPreviousUnreviewed() {
       if (previousUnsubmittedId.value != null) {
-        router.push({ path: `/recording/${previousUnsubmittedId.value}/spectrogram`, replace: true });
+        router.push({
+          path: `/recording/${previousUnsubmittedId.value}/spectrogram`,
+          replace: true,
+        });
       }
     }
 
@@ -440,20 +463,14 @@ export default defineComponent({
 
 <template>
   <v-row dense>
-    <v-dialog
-      v-model="recordingInfo"
-      width="600"
-    >
+    <v-dialog v-model="recordingInfo" width="600">
       <recording-info-dialog
         :id="id"
         display-mode="both"
         @close="recordingInfo = false"
       />
     </v-dialog>
-    <v-dialog
-      v-model="recordingMap"
-      width="600"
-    >
+    <v-dialog v-model="recordingMap" width="600">
       <recording-info-dialog
         :id="id"
         display-mode="map"
@@ -500,10 +517,7 @@ export default defineComponent({
                 <span v-if="freqRef >= 0">{{ freqRef.toFixed(2) }}KHz</span>
               </div>
             </v-col>
-            <v-col
-              v-if="scaledVals.x > 1 || scaledVals.y > 1"
-              cols="2"
-            >
+            <v-col v-if="scaledVals.x > 1 || scaledVals.y > 1" cols="2">
               <div>
                 <b>xScale:</b>
                 <span>{{ scaledVals.x.toFixed(2) }}x</span>
@@ -573,10 +587,12 @@ export default defineComponent({
                   mdi-border-radius
                 </v-icon>
               </template>
-              <span>{{ boundingBoxError || 'Draw a bound box to measure pulses' }}</span>
+              <span>{{
+                boundingBoxError || "Draw a bound box to measure pulses"
+              }}</span>
             </v-tooltip>
             <v-tooltip>
-              <template #activator="{props: subProps }">
+              <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
                   size="25"
@@ -590,7 +606,10 @@ export default defineComponent({
               <span>Use a draggable straight edge to measure frequency</span>
             </v-tooltip>
             <v-tooltip
-              v-if="configuration.display_pulse_annotations || configuration.display_sequence_annotations"
+              v-if="
+                configuration.display_pulse_annotations ||
+                configuration.display_sequence_annotations
+              "
               bottom
             >
               <template #activator="{ props: subProps }">
@@ -607,7 +626,10 @@ export default defineComponent({
               <span> Turn Species Label On/Off</span>
             </v-tooltip>
             <v-tooltip
-              v-if="configuration.display_pulse_annotations || configuration.display_sequence_annotations"
+              v-if="
+                configuration.display_pulse_annotations ||
+                configuration.display_sequence_annotations
+              "
               bottom
             >
               <template #activator="{ props: subProps }">
@@ -625,7 +647,10 @@ export default defineComponent({
               <span> Turn Time Endpoint Labels On/Off</span>
             </v-tooltip>
             <v-tooltip
-              v-if="configuration.display_pulse_annotations || configuration.display_sequence_annotations"
+              v-if="
+                configuration.display_pulse_annotations ||
+                configuration.display_sequence_annotations
+              "
               bottom
             >
               <template #activator="{ props: subProps }">
@@ -643,7 +668,10 @@ export default defineComponent({
               <span> Turn Time Duration Labels On/Off</span>
             </v-tooltip>
             <v-tooltip
-              v-if="configuration.display_pulse_annotations || configuration.display_sequence_annotations"
+              v-if="
+                configuration.display_pulse_annotations ||
+                configuration.display_sequence_annotations
+              "
               bottom
             >
               <template #activator="{ props: subProps }">
@@ -659,10 +687,7 @@ export default defineComponent({
               </template>
               <span> Turn Time Label On/Off</span>
             </v-tooltip>
-            <v-tooltip
-              v-if="!compressed"
-              bottom
-            >
+            <v-tooltip v-if="!compressed" bottom>
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
@@ -682,10 +707,7 @@ export default defineComponent({
                 :compressed="compressed"
               />
             </div>
-            <v-tooltip
-              v-if="compressed && waveplotImages.length"
-              bottom
-            >
+            <v-tooltip v-if="compressed && waveplotImages.length" bottom>
               <template #activator="{ props: subProps }">
                 <v-icon
                   v-bind="subProps"
@@ -716,36 +738,26 @@ export default defineComponent({
                   size="25"
                   class="mr-5 mt-5"
                   variant="text"
-                >                  
-                  <v-icon>
-                    mdi-cog
-                  </v-icon>
+                >
+                  <v-icon> mdi-cog </v-icon>
                 </v-btn>
               </template>
               <v-list>
                 <v-list-subheader>Settings</v-list-subheader>
                 <v-list-item @click="toggleFixedAxes">
                   <v-list-item-title>
-                    <v-icon
-                      :color="fixedAxes ? 'blue' : ''"
-                    >
-                      {{ fixedAxes ? 'mdi-axis-lock' : 'mdi-axis' }}
+                    <v-icon :color="fixedAxes ? 'blue' : ''">
+                      {{ fixedAxes ? "mdi-axis-lock" : "mdi-axis" }}
                     </v-icon>
-                    <span>
-                      Toggle Axes Type
-                    </span>
+                    <span> Toggle Axes Type </span>
                   </v-list-item-title>
                 </v-list-item>
                 <v-list-item @click="gridEnabled = !gridEnabled">
                   <v-list-item-title>
-                    <v-icon
-                      :color="gridEnabled ? 'blue' : ''"
-                    >
-                      {{ gridEnabled ? 'mdi-grid' : 'mdi-grid-off' }}
+                    <v-icon :color="gridEnabled ? 'blue' : ''">
+                      {{ gridEnabled ? "mdi-grid" : "mdi-grid-off" }}
                     </v-icon>
-                    <span>
-                      Toggle Grid
-                    </span>
+                    <span> Toggle Grid </span>
                   </v-list-item-title>
                 </v-list-item>
                 <v-list-item @click="colorpickerMenu = !colorpickerMenu">
@@ -791,15 +803,10 @@ export default defineComponent({
             <v-col cols="2">
               <v-tooltip v-if="combinedTags.length || mapFilterBounds">
                 <template #activator="{ props: subProps }">
-                  <v-icon v-bind="subProps">
-                    mdi-filter
-                  </v-icon>
+                  <v-icon v-bind="subProps"> mdi-filter </v-icon>
                 </template>
                 Filtering by:
-                <v-chip
-                  v-for="tag in combinedTags"
-                  :key="tag"
-                >
+                <v-chip v-for="tag in combinedTags" :key="tag">
                   {{ tag }}
                 </v-chip>
                 <div
@@ -807,9 +814,7 @@ export default defineComponent({
                   class="mt-2"
                   style="min-width: 280px"
                 >
-                  <div class="text-caption mb-1">
-                    Map bounds filter
-                  </div>
+                  <div class="text-caption mb-1">Map bounds filter</div>
                   <map-location
                     :editor="false"
                     :bbox="mapFilterBounds"
@@ -833,9 +838,7 @@ export default defineComponent({
                     Recordings
                   </v-btn>
                 </template>
-                <span>
-                  View Recordings in sideTab
-                </span>
+                <span> View Recordings in sideTab </span>
               </v-tooltip>
             </v-col>
             <v-col cols="4">
@@ -852,9 +855,7 @@ export default defineComponent({
                     Annotations
                   </v-btn>
                 </template>
-                <span>
-                  View Annotations in sideTab
-                </span>
+                <span> View Annotations in sideTab </span>
               </v-tooltip>
             </v-col>
             <v-col>
@@ -863,22 +864,14 @@ export default defineComponent({
           </v-row>
         </v-card-title>
         <v-card-text class="pa-0">
-          <div
-            v-if="configuration.mark_annotations_completed_enabled"
-          >
+          <div v-if="configuration.mark_annotations_completed_enabled">
             <v-col>
               <v-row dense>
                 <v-col dense>
-                  <span class="text-h6">
-                    Vetting Controls
-                  </span>
+                  <span class="text-h6"> Vetting Controls </span>
                   <v-tooltip>
                     <template #activator="{ props }">
-                      <v-icon
-                        v-bind="props"
-                        class="pb-2"
-                        size="medium"
-                      >
+                      <v-icon v-bind="props" class="pb-2" size="medium">
                         mdi-help-circle
                       </v-icon>
                     </template>
@@ -892,7 +885,9 @@ export default defineComponent({
                 </v-col>
               </v-row>
               <v-row
-                v-if="nextUnsubmittedId != null || previousUnsubmittedId != null"
+                v-if="
+                  nextUnsubmittedId != null || previousUnsubmittedId != null
+                "
                 dense
               >
                 <v-col>
@@ -933,14 +928,9 @@ export default defineComponent({
                 </v-col>
               </v-row>
               <v-row v-else>
-                <v-col>
-                  There are no more files to review
-                </v-col>
+                <v-col> There are no more files to review </v-col>
               </v-row>
-              <v-divider
-
-                class="my-2"
-              />
+              <v-divider class="my-2" />
             </v-col>
           </div>
           <annotation-list

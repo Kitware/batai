@@ -1,12 +1,25 @@
 <script lang="ts">
-import { defineComponent, ref, type Ref, onMounted, computed, watch, type CSSProperties } from 'vue';
-import { type FileAnnotation, getRecordings, type Recording, type Species, type RecordingListParams } from '../api/api';
-import useState from '@use/useState';
-import  { type EditingRecording } from './UploadRecording.vue';
+import {
+  defineComponent,
+  ref,
+  type Ref,
+  onMounted,
+  computed,
+  watch,
+  type CSSProperties,
+} from "vue";
+import {
+  type FileAnnotation,
+  getRecordings,
+  type Recording,
+  type Species,
+  type RecordingListParams,
+} from "../api/api";
+import useState from "@use/useState";
+import { type EditingRecording } from "./UploadRecording.vue";
 
 export default defineComponent({
   setup() {
-
     const {
       sharedList,
       recordingList,
@@ -23,22 +36,30 @@ export default defineComponent({
 
     // Only grab 20 recordings at a time to avoid loading all recordings at once.
     const buildListParams = (): RecordingListParams => {
-      const excludeSubmitted = configuration.value.mark_annotations_completed_enabled
-        && !showSubmittedRecordings.value;
+      const excludeSubmitted =
+        configuration.value.mark_annotations_completed_enabled &&
+        !showSubmittedRecordings.value;
       return {
         page: 1,
         limit: 20,
-        sort_by: 'created',
-        sort_direction: 'desc',
+        sort_by: "created",
+        sort_direction: "desc",
         exclude_submitted: excludeSubmitted,
       };
     };
 
     const fetchRecordings = async () => {
       const params = buildListParams();
-      const recordings = await getRecordings(false, { ...params, tags: filterTags.value });
+      const recordings = await getRecordings(false, {
+        ...params,
+        tags: filterTags.value,
+      });
       recordingList.value = recordings.data.items;
-      const shared = await getRecordings(true, { ...params, public: true, tags: sharedFilterTags.value });
+      const shared = await getRecordings(true, {
+        ...params,
+        public: true,
+        tags: sharedFilterTags.value,
+      });
       sharedList.value = shared.data.items;
     };
     onMounted(() => fetchRecordings());
@@ -51,19 +72,25 @@ export default defineComponent({
         return sharedRecordingsDisplay.value;
       }
       if (filtered.value) {
-          return sharedList.value.filter((item) => !item.userMadeAnnotations);
+        return sharedList.value.filter((item) => !item.userMadeAnnotations);
       }
       return sharedList.value;
     });
 
     const userSubmittedAnnotation = (recording: Recording) => {
-      const userSubmittedAnnotations = recording.fileAnnotations.filter((annotation: FileAnnotation) => (
-        annotation.owner === currentUser.value && annotation.submitted
-      ));
-      if (userSubmittedAnnotations.length === 0 || userSubmittedAnnotations[0].species.length === 0) {
+      const userSubmittedAnnotations = recording.fileAnnotations.filter(
+        (annotation: FileAnnotation) =>
+          annotation.owner === currentUser.value && annotation.submitted,
+      );
+      if (
+        userSubmittedAnnotations.length === 0 ||
+        userSubmittedAnnotations[0].species.length === 0
+      ) {
         return undefined;
       }
-      return userSubmittedAnnotations[0].species.map((specie: Species) => specie.species_code).join(', ');
+      return userSubmittedAnnotations[0].species
+        .map((specie: Species) => specie.species_code)
+        .join(", ");
     };
 
     const styles = computed<CSSProperties>(() => {
@@ -73,11 +100,11 @@ export default defineComponent({
       const showSubmittedHeight = 80;
       let offset = appBarHeight + sidebarOptionsHeight;
       if (configuration.value.mark_annotations_completed_enabled) {
-        offset += (vettingOptionsHeight + showSubmittedHeight);
+        offset += vettingOptionsHeight + showSubmittedHeight;
       }
       return {
-        'max-height': `calc(100vh - ${offset}px)`,
-        'overflow-y': 'auto'
+        "max-height": `calc(100vh - ${offset}px)`,
+        "overflow-y": "auto",
       };
     });
 
@@ -97,7 +124,7 @@ export default defineComponent({
       showSubmittedRecordings,
       styles,
       isCurrentRecording,
-     };
+    };
   },
 });
 </script>
@@ -113,24 +140,21 @@ export default defineComponent({
         />
       </v-col>
     </v-row>
-    <v-expansion-panels
-      v-model="openPanel"
-      :style="styles"
-    >
-      <v-expansion-panel v-if="configuration.is_admin || configuration.non_admin_upload_enabled">
+    <v-expansion-panels v-model="openPanel" :style="styles">
+      <v-expansion-panel
+        v-if="configuration.is_admin || configuration.non_admin_upload_enabled"
+      >
         <v-expansion-panel-title>My Recordings</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <div
-            v-for="item in myRecordingsDisplay"
-            :key="`public_${item.id}`"
-          >
+          <div v-for="item in myRecordingsDisplay" :key="`public_${item.id}`">
             <v-card
               class="pa-2 my-2"
               :class="{ 'recording-list-current': isCurrentRecording(item.id) }"
             >
               <v-row dense>
                 <v-col class="text-left">
-                  <b>Name:</b><router-link
+                  <b>Name:</b
+                  ><router-link
                     :to="`/recording/${item.id.toString()}/spectrogram`"
                   >
                     {{ item.name }}
@@ -140,18 +164,10 @@ export default defineComponent({
               <v-row dense>
                 <v-col>
                   <b>Public:</b>
-                  <v-icon
-                    v-if="item.public"
-                    color="success"
-                  >
+                  <v-icon v-if="item.public" color="success">
                     mdi-check
                   </v-icon>
-                  <v-icon
-                    v-else
-                    color="error"
-                  >
-                    mdi-close
-                  </v-icon>
+                  <v-icon v-else color="error"> mdi-close </v-icon>
                 </v-col>
                 <v-col>
                   <div>
@@ -160,7 +176,10 @@ export default defineComponent({
                 </v-col>
               </v-row>
               <v-row
-                v-if="configuration.mark_annotations_completed_enabled && userSubmittedAnnotation(item)"
+                v-if="
+                  configuration.mark_annotations_completed_enabled &&
+                  userSubmittedAnnotation(item)
+                "
                 dense
               >
                 <v-col>
@@ -172,12 +191,7 @@ export default defineComponent({
                     >
                       mdi-check
                     </v-icon>
-                    <v-icon
-                      v-else
-                      color="error"
-                    >
-                      mdi-close
-                    </v-icon>
+                    <v-icon v-else color="error"> mdi-close </v-icon>
                   </div>
                 </v-col>
                 <v-col v-if="userSubmittedAnnotation(item)">
@@ -198,10 +212,7 @@ export default defineComponent({
             label="Filter Annotated"
             dense
           />
-          <div
-            v-for="item in modifiedList"
-            :key="`public_${item.id}`"
-          >
+          <div v-for="item in modifiedList" :key="`public_${item.id}`">
             <v-card
               class="pa-2 my-2"
               :class="{ 'recording-list-current': isCurrentRecording(item.id) }"
@@ -218,7 +229,7 @@ export default defineComponent({
               </v-row>
               <v-row dense>
                 <v-col>
-                  <div style="font-size:0.75em">
+                  <div style="font-size: 0.75em">
                     <b>Owner:</b> {{ item.owner_username }}
                   </div>
                 </v-col>
@@ -227,18 +238,10 @@ export default defineComponent({
                 <v-col v-if="!configuration.mark_annotations_completed_enabled">
                   <div>
                     <b>Annotated:</b>
-                    <v-icon
-                      v-if="item.userMadeAnnotations"
-                      color="success"
-                    >
+                    <v-icon v-if="item.userMadeAnnotations" color="success">
                       mdi-check
                     </v-icon>
-                    <v-icon
-                      v-else
-                      color="error"
-                    >
-                      mdi-close
-                    </v-icon>
+                    <v-icon v-else color="error"> mdi-close </v-icon>
                   </div>
                 </v-col>
                 <v-col v-else>
@@ -250,16 +253,14 @@ export default defineComponent({
                     >
                       mdi-check
                     </v-icon>
-                    <v-icon
-                      v-else
-                      color="error"
-                    >
-                      mdi-close
-                    </v-icon>
+                    <v-icon v-else color="error"> mdi-close </v-icon>
                   </div>
                 </v-col>
                 <v-col
-                  v-if="configuration.mark_annotations_completed_enabled && userSubmittedAnnotation(item)"
+                  v-if="
+                    configuration.mark_annotations_completed_enabled &&
+                    userSubmittedAnnotation(item)
+                  "
                 >
                   <b>My label: </b>
                   <span>{{ userSubmittedAnnotation(item) }}</span>
@@ -274,12 +275,12 @@ export default defineComponent({
 </template>
 
 <style scoped>
-.v-expansion-panel-text>>> .v-expansion-panel-text__wrap {
+.v-expansion-panel-text >>> .v-expansion-panel-text__wrap {
   padding: 0 !important;
 }
 
 .v-expansion-panel-text__wrapper {
-    padding: 0 !important;
+  padding: 0 !important;
 }
 
 .overflow-recordings {

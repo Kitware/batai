@@ -151,7 +151,7 @@ class Command(BaseCommand):
             ),
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa: C901, PLR0912, PLR0915
         count = options["count"]
         tags_raw = options["tags"] or ",".join(DEFAULT_TAGS)
         tag_texts = [t.strip() for t in tags_raw.split(",") if t.strip()]

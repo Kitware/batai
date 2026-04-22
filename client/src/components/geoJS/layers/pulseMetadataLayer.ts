@@ -1,9 +1,9 @@
-import geo, { type GeoEvent } from 'geojs';
-import type { SpectroInfo } from '../geoJSUtils';
-import type { PulseMetadata } from '@api/api';
-import type { LayerStyle, LineData, TextData } from './types';
-import BaseTextLayer from './baseTextLayer';
-import type { PulseMetadataLabelsMode } from '@use/usePulseMetadata';
+import geo, { type GeoEvent } from "geojs";
+import type { SpectroInfo } from "../geoJSUtils";
+import type { PulseMetadata } from "@api/api";
+import type { LayerStyle, LineData, TextData } from "./types";
+import BaseTextLayer from "./baseTextLayer";
+import type { PulseMetadataLabelsMode } from "@use/usePulseMetadata";
 
 /** Point data for char_freq, knee, heel with pixel coords and label. */
 interface PulsePointData {
@@ -16,7 +16,7 @@ interface HoverHitData {
   polygon: GeoJSON.Polygon;
 }
 
-type FreqDurationLineData  = LineData & { index: number };
+type FreqDurationLineData = LineData & { index: number };
 export interface PulseMetadataStyle {
   lineColor: string;
   lineWidth: number;
@@ -48,16 +48,16 @@ export interface PulseMetadataTooltipData {
 }
 
 const defaultPulseMetadataStyle: PulseMetadataStyle = {
-  lineColor: '#00FFFF',
+  lineColor: "#00FFFF",
   lineWidth: 2,
-  durationFreqLineColor: '#FFFF00',
-  heelColor: '#FF0088',
-  charFreqColor: '#00FF00',
-  kneeColor: '#FF8800',
-  labelColor: '#FFFFFF',
+  durationFreqLineColor: "#FFFF00",
+  heelColor: "#FF0088",
+  charFreqColor: "#00FF00",
+  kneeColor: "#FF8800",
+  labelColor: "#FFFFFF",
   labelFontSize: 12,
   pointRadius: 5,
-  pulseMetadataLabels: 'None',
+  pulseMetadataLabels: "None",
 };
 
 const DISABLE_HEEL = true;
@@ -103,28 +103,33 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   ) {
     super(geoViewerRef, event, spectroInfo);
     this.pulseMetadataList = pulseMetadataList;
-    this.featureLayer = this.geoViewerRef.createLayer('feature', {
-      features: ['line', 'point'],
+    this.featureLayer = this.geoViewerRef.createLayer("feature", {
+      features: ["line", "point"],
     });
-    this.featureTextLayer = this.geoViewerRef.createLayer('feature', {
-      features: ['text'],
+    this.featureTextLayer = this.geoViewerRef.createLayer("feature", {
+      features: ["text"],
     });
-    this.lineLayer = this.featureLayer.createFeature('line');
-    this.freqDurationLineLayer = this.featureLayer.createFeature('line');
-    this.pointLayer = this.featureLayer.createFeature('point');
+    this.lineLayer = this.featureLayer.createFeature("line");
+    this.freqDurationLineLayer = this.featureLayer.createFeature("line");
+    this.pointLayer = this.featureLayer.createFeature("point");
     this.textLayer = this.featureTextLayer
-      .createFeature('text')
+      .createFeature("text")
       .text((d: TextData) => d.text)
       .position((d: TextData) => ({ x: d.x, y: d.y }));
     // Below is used for hover hit-testing when showLabelsOnHover is true.
-    this.hoverHitLayer = this.geoViewerRef.createLayer('feature', {
-      features: ['polygon'],
+    this.hoverHitLayer = this.geoViewerRef.createLayer("feature", {
+      features: ["polygon"],
     });
     this.hoverPolygonFeature = this.hoverHitLayer
-      .createFeature('polygon', { selectionAPI: true })
+      .createFeature("polygon", { selectionAPI: true })
       .polygon((d: HoverHitData) => d.polygon.coordinates[0]);
-    this.hoverPolygonFeature.geoOn(geo.event.feature.mouseover, (e: GeoEvent & { index?: number }) => this.onHoverHitOver(e));
-    this.hoverPolygonFeature.geoOn(geo.event.feature.mouseoff, () => this.onHoverHitOff());
+    this.hoverPolygonFeature.geoOn(
+      geo.event.feature.mouseover,
+      (e: GeoEvent & { index?: number }) => this.onHoverHitOver(e),
+    );
+    this.hoverPolygonFeature.geoOn(geo.event.feature.mouseoff, () =>
+      this.onHoverHitOff(),
+    );
     this.setScaledDimensions(spectroInfo.width, spectroInfo.height);
     this.style = { ...defaultPulseMetadataStyle };
   }
@@ -171,7 +176,9 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     if (!this.enabled) return;
     this.lineLayer.style(this.createLineStyle()).draw();
     this.pointLayer.style(this.createPointStyle()).draw();
-    const hoverActive = this.style.pulseMetadataLabels === 'Hover' || this.style.pulseMetadataLabels === 'Tooltip';
+    const hoverActive =
+      this.style.pulseMetadataLabels === "Hover" ||
+      this.style.pulseMetadataLabels === "Tooltip";
     if (hoverActive) {
       this.hoverPolygonFeature
         .data(this.hoverHitData)
@@ -188,12 +195,16 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       .draw();
   }
 
-  getCompressedPosition(time: number, freq: number, index: number): { x: number; y: number } {
+  getCompressedPosition(
+    time: number,
+    freq: number,
+    index: number,
+  ): { x: number; y: number } {
     if (
-      !this.spectroInfo.start_times
-      || !this.spectroInfo.end_times
-      || !this.spectroInfo.widths
-      || !this.spectroInfo.compressedWidth
+      !this.spectroInfo.start_times ||
+      !this.spectroInfo.end_times ||
+      !this.spectroInfo.widths ||
+      !this.spectroInfo.compressedWidth
     ) {
       return { x: 0, y: 0 };
     }
@@ -207,7 +218,8 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       segmentOffset += this.spectroInfo.widths[i] * scaleFactor;
     }
     const pixelsPerMs = width / (endTime - startTime);
-    const x = segmentOffset + (targetTime - startTime) * pixelsPerMs * scaleFactor;
+    const x =
+      segmentOffset + (targetTime - startTime) * pixelsPerMs * scaleFactor;
     const y = this._getYValueFromFrequency(freq);
     return { x, y };
   }
@@ -221,22 +233,27 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
 
   /** Text to show in the single text layer: all pulses or hovered pulse only. */
   private getTextDataToShow(): TextData[] {
-    if (this.style.pulseMetadataLabels === 'Hover') {
-      if (this.hoveredPulseIndex >= 0 && this.hoveredPulseIndex < this.pulseTextData.length) {
+    if (this.style.pulseMetadataLabels === "Hover") {
+      if (
+        this.hoveredPulseIndex >= 0 &&
+        this.hoveredPulseIndex < this.pulseTextData.length
+      ) {
         return this.pulseTextData[this.hoveredPulseIndex];
       }
       return [];
     }
-    if (this.style.pulseMetadataLabels === 'Always') {
+    if (this.style.pulseMetadataLabels === "Always") {
       return this.pulseTextData.flat();
     }
     return [];
   }
 
   private getFreqDurationLineDataToShow(): LineData[] {
-    if (this.style.pulseMetadataLabels === 'Hover') {
+    if (this.style.pulseMetadataLabels === "Hover") {
       if (this.hoveredPulseIndex >= 0) {
-        return this.durationFreqLineData.filter((d) => d.index === this.hoveredPulseIndex);
+        return this.durationFreqLineData.filter(
+          (d) => d.index === this.hoveredPulseIndex,
+        );
       }
       return [];
     }
@@ -244,20 +261,35 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
   }
 
   private getMap() {
-    const ref = this.geoViewerRef as { value?: { gcsToDisplay: (c: { x: number; y: number }, gcs: null) => { x: number; y: number } } };
+    const ref = this.geoViewerRef as {
+      value?: {
+        gcsToDisplay: (
+          c: { x: number; y: number },
+          gcs: null,
+        ) => { x: number; y: number };
+      };
+    };
     return ref?.value ?? this.geoViewerRef;
   }
 
-  private buildTooltipData(pulseIndex: number): PulseMetadataTooltipData | null {
+  private buildTooltipData(
+    pulseIndex: number,
+  ): PulseMetadataTooltipData | null {
     const pulse = this.pulseMetadataList[pulseIndex];
     if (!pulse || pulseIndex >= this.hoverHitData.length) return null;
     const hit = this.hoverHitData[pulseIndex];
     const coords = hit.polygon.coordinates[0];
     if (!coords || coords.length < 4) return null;
     const map = this.getMap();
-    if (!map || typeof map.gcsToDisplay !== 'function') return null;
-    const topLeft = map.gcsToDisplay({ x: coords[0][0], y: coords[0][1] }, null);
-    const bottomRight = map.gcsToDisplay({ x: coords[2][0], y: coords[2][1] }, null);
+    if (!map || typeof map.gcsToDisplay !== "function") return null;
+    const topLeft = map.gcsToDisplay(
+      { x: coords[0][0], y: coords[0][1] },
+      null,
+    );
+    const bottomRight = map.gcsToDisplay(
+      { x: coords[2][0], y: coords[2][1] },
+      null,
+    );
     const left = Math.min(topLeft.x, bottomRight.x);
     const width = Math.abs(bottomRight.x - topLeft.x);
     const height = Math.abs(bottomRight.y - topLeft.y);
@@ -320,7 +352,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           return [pos.x, pos.y];
         });
         this.lineData.push({
-          line: { type: 'LineString', coordinates: coords },
+          line: { type: "LineString", coordinates: coords },
         });
 
         const times = pulse.curve.map((pt) => pt[0]);
@@ -331,32 +363,36 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         const maxFreq = Math.max(...freqs);
         const durationMs = endTime - startTime;
 
-        const bottomLeft = this.getCompressedPosition(startTime, minFreq, index);
+        const bottomLeft = this.getCompressedPosition(
+          startTime,
+          minFreq,
+          index,
+        );
         const bottomRight = this.getCompressedPosition(endTime, minFreq, index);
         const topLeft = this.getCompressedPosition(startTime, maxFreq, index);
         bboxPoints.push(bottomLeft, bottomRight, topLeft);
 
         this.durationFreqLineData.push({
           line: {
-            type: 'LineString',
+            type: "LineString",
             coordinates: [
               [bottomLeft.x, bottomLeft.y],
               [bottomRight.x, bottomRight.y],
             ],
           },
-          lineKind: 'durationFreq',
+          lineKind: "durationFreq",
           index: index,
         });
 
         this.durationFreqLineData.push({
           line: {
-            type: 'LineString',
+            type: "LineString",
             coordinates: [
               [topLeft.x - freqLineOffsetX, topLeft.y],
               [bottomLeft.x - freqLineOffsetX, bottomLeft.y],
             ],
           },
-          lineKind: 'durationFreq',
+          lineKind: "durationFreq",
           index: index,
         });
 
@@ -367,7 +403,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           y: bottomLeft.y + labelOffset,
           offsetX: 0,
           offsetY: 0,
-          textAlign: 'center',
+          textAlign: "center",
         });
         pulseText.push({
           text: `Fₘₐₓ ${(maxFreq / 1000).toFixed(1)}kHz`,
@@ -375,7 +411,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           y: topLeft.y,
           offsetX: 0,
           offsetY: 0,
-          textAlign: 'end',
+          textAlign: "end",
         });
         pulseText.push({
           text: `Fₘᵢₙ ${(minFreq / 1000).toFixed(1)}kHz`,
@@ -383,12 +419,16 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           y: bottomLeft.y,
           offsetX: 0,
           offsetY: 0,
-          textAlign: 'end',
+          textAlign: "end",
         });
       }
       if (pulse.knee && pulse.knee.length >= 2) {
-        const pos = this.getCompressedPosition(pulse.knee[0], pulse.knee[1], index);
-        this.pointData.push({ x: pos.x, y: pos.y, label: 'knee' });
+        const pos = this.getCompressedPosition(
+          pulse.knee[0],
+          pulse.knee[1],
+          index,
+        );
+        this.pointData.push({ x: pos.x, y: pos.y, label: "knee" });
         bboxPoints.push(pos);
         const kneeFreqKhz = (pulse.knee[1] / 1000).toFixed(1);
         pulseText.push({
@@ -397,12 +437,16 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           y: pos.y,
           offsetX: 0,
           offsetY: 0,
-          textAlign: 'end',
+          textAlign: "end",
         });
       }
       if (!DISABLE_HEEL && pulse.heel && pulse.heel.length >= 2) {
-        const pos = this.getCompressedPosition(pulse.heel[0], pulse.heel[1], index);
-        this.pointData.push({ x: pos.x, y: pos.y, label: 'heel' });
+        const pos = this.getCompressedPosition(
+          pulse.heel[0],
+          pulse.heel[1],
+          index,
+        );
+        this.pointData.push({ x: pos.x, y: pos.y, label: "heel" });
         bboxPoints.push(pos);
         const heelFreqKhz = (pulse.heel[1] / 1000).toFixed(1);
         pulseText.push({
@@ -411,12 +455,16 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           y: pos.y,
           offsetX: 0,
           offsetY: 0,
-          textAlign: 'start',
+          textAlign: "start",
         });
       }
       if (pulse.char_freq && pulse.char_freq.length >= 2) {
-        const pos = this.getCompressedPosition(pulse.char_freq[0], pulse.char_freq[1], index);
-        this.pointData.push({ x: pos.x, y: pos.y, label: 'char_freq' });
+        const pos = this.getCompressedPosition(
+          pulse.char_freq[0],
+          pulse.char_freq[1],
+          index,
+        );
+        this.pointData.push({ x: pos.x, y: pos.y, label: "char_freq" });
         bboxPoints.push(pos);
         const charFreqKhz = (pulse.char_freq[1] / 1000).toFixed(1);
         pulseText.push({
@@ -425,7 +473,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
           y: pos.y - 2,
           offsetX: 0,
           offsetY: 0,
-          textAlign: 'center',
+          textAlign: "center",
         });
       }
 
@@ -439,7 +487,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
         const ymax = Math.max(...ys);
         this.hoverHitData.push({
           polygon: {
-            type: 'Polygon',
+            type: "Polygon",
             coordinates: [
               [
                 [xmin, ymin],
@@ -454,8 +502,16 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       } else {
         this.hoverHitData.push({
           polygon: {
-            type: 'Polygon',
-            coordinates: [[[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]],
+            type: "Polygon",
+            coordinates: [
+              [
+                [0, 0],
+                [0, 0],
+                [0, 0],
+                [0, 0],
+                [0, 0],
+              ],
+            ],
           },
         });
       }
@@ -464,22 +520,24 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
 
   private onHoverHitOver(e: GeoEvent & { index?: number }) {
     if (!this.enabled) return;
-    const hoverActive = this.style.pulseMetadataLabels === 'Hover' || this.style.pulseMetadataLabels === 'Tooltip';
+    const hoverActive =
+      this.style.pulseMetadataLabels === "Hover" ||
+      this.style.pulseMetadataLabels === "Tooltip";
     if (!hoverActive) return;
     const index = (e as GeoEvent & { index: number }).index;
     if (index < 0) return;
     this.hoveredPulseIndex = index;
-    if (this.style.pulseMetadataLabels === 'Tooltip') {
+    if (this.style.pulseMetadataLabels === "Tooltip") {
       const data = this.buildTooltipData(index);
-      if (data) this.event('pulse-metadata-tooltip', data);
+      if (data) this.event("pulse-metadata-tooltip", data);
     }
     this.updateMetadataStyle();
   }
 
   private onHoverHitOff() {
     if (this.hoveredPulseIndex === -1) return;
-    if (this.style.pulseMetadataLabels === 'Tooltip') {
-      this.event('pulse-metadata-tooltip', null);
+    if (this.style.pulseMetadataLabels === "Tooltip") {
+      this.event("pulse-metadata-tooltip", null);
     }
     this.hoveredPulseIndex = -1;
     this.updateMetadataStyle();
@@ -491,20 +549,23 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       fillOpacity: 0,
       // Below is used for hover hit-testing debug by making stroke true
       stroke: false, // don't show stroke on hover
-      strokeColor: '#FFFFFF',
+      strokeColor: "#FFFFFF",
       strokeWidth: 1,
     };
   }
 
   createLineStyle(): LayerStyle<LineData> {
-    const { lineColor, lineWidth, durationFreqLineColor } = this.style || defaultPulseMetadataStyle;
+    const { lineColor, lineWidth, durationFreqLineColor } =
+      this.style || defaultPulseMetadataStyle;
     return {
       strokeColor: (_point, _index, d: LineData) =>
-        d.lineKind === 'durationFreq' ? durationFreqLineColor : lineColor,
+        d.lineKind === "durationFreq" ? durationFreqLineColor : lineColor,
       strokeWidth: lineWidth,
       strokeOpacity: (_point, _index, d: LineData) => {
-        const showLabels = this.style.pulseMetadataLabels === 'Always' || this.style.pulseMetadataLabels === 'Hover';
-        if (!showLabels && d.lineKind === 'durationFreq') {
+        const showLabels =
+          this.style.pulseMetadataLabels === "Always" ||
+          this.style.pulseMetadataLabels === "Hover";
+        if (!showLabels && d.lineKind === "durationFreq") {
           return 0;
         }
         return 1.0;
@@ -519,14 +580,14 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     const { heelColor, charFreqColor, kneeColor, pointRadius } = this.style;
     return {
       fillColor: (d: PulsePointData) => {
-        if (d.label === 'char_freq') return charFreqColor;
-        if (d.label === 'knee') return kneeColor;
-        if (d.label === 'heel') return heelColor;
-        return '#FFFFFF';
+        if (d.label === "char_freq") return charFreqColor;
+        if (d.label === "knee") return kneeColor;
+        if (d.label === "heel") return heelColor;
+        return "#FFFFFF";
       },
       fill: true,
       stroke: true,
-      strokeColor: '#FFFFFF',
+      strokeColor: "#FFFFFF",
       strokeWidth: 1,
       radius: pointRadius,
     };
@@ -538,12 +599,12 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
     return {
       fontSize: `${labelFontSize}px`,
       color: () => labelColor,
-      strokeColor: '#000000',
+      strokeColor: "#000000",
       strokeWidth: 1,
       stroke: true,
       fill: false,
-      textAlign: (d: TextData) => d.textAlign ?? 'start',
-      textBaseline: 'middle',
+      textAlign: (d: TextData) => d.textAlign ?? "start",
+      textBaseline: "middle",
       offset: (d: TextData) => ({ x: d.offsetX ?? 0, y: d.offsetY ?? 0 }),
       textScaled: this.textScaled,
     };
@@ -574,7 +635,9 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
       .position((d: PulsePointData) => ({ x: d.x, y: d.y }))
       .style(this.createPointStyle())
       .draw();
-    const hoverActive = this.style.pulseMetadataLabels === 'Hover' || this.style.pulseMetadataLabels === 'Tooltip';
+    const hoverActive =
+      this.style.pulseMetadataLabels === "Hover" ||
+      this.style.pulseMetadataLabels === "Tooltip";
     if (hoverActive) {
       this.hoverPolygonFeature
         .data(this.hoverHitData)

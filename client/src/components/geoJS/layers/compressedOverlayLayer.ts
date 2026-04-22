@@ -5,18 +5,25 @@ interface RectCompressedGeoJSData {
   polygon: GeoJSON.Polygon;
 }
 
+function scaleCompressedTime(
+  start_time: number,
+  end_time: number,
+  spectroInfo: SpectroInfo,
+  scaledWidth: number,
+  scaledHeight: number,
+) {
+  const adjustedWidth =
+    scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
+  const adjustedHeight =
+    scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
 
-function scaleCompressedTime(start_time: number, end_time: number, spectroInfo: SpectroInfo, scaledWidth: number, scaledHeight: number) {
-  const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
-  const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
-
-  const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
-  const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
+  const widthScale =
+    adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
+  const heightScale =
+    adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
   // Now we remap our annotation to pixel coordinates
-  const low_freq =
-    adjustedHeight - (spectroInfo.low_freq) * heightScale;
-  const high_freq =
-    adjustedHeight - (spectroInfo.high_freq) * heightScale;
+  const low_freq = adjustedHeight - spectroInfo.low_freq * heightScale;
+  const high_freq = adjustedHeight - spectroInfo.high_freq * heightScale;
   const start_time_scaled = start_time * widthScale;
   const end_time_scaled = end_time * widthScale;
   return {
@@ -31,16 +38,13 @@ function scaleCompressedTime(start_time: number, end_time: number, spectroInfo: 
       ],
     ],
   } as GeoJSON.Polygon;
-
 }
 
 export default class CompressedOverlayLayer {
   formattedData: RectCompressedGeoJSData[];
 
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   featureLayer: any;
-
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   geoViewerRef: any;
@@ -55,7 +59,7 @@ export default class CompressedOverlayLayer {
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
-    spectroInfo: SpectroInfo
+    spectroInfo: SpectroInfo,
   ) {
     this.geoViewerRef = geoViewerRef;
     this.spectroInfo = spectroInfo;
@@ -66,14 +70,13 @@ export default class CompressedOverlayLayer {
     const layer = this.geoViewerRef.createLayer("feature", {
       features: ["polygon"],
     });
-    this.featureLayer = layer
-      .createFeature("polygon", { selectionAPI: true });
+    this.featureLayer = layer.createFeature("polygon", { selectionAPI: true });
     this.style = this.createStyle();
   }
 
   setScaledDimensions(newWidth: number, newHeight: number) {
     this.scaledWidth = newWidth;
-    this.scaledHeight = newHeight;    
+    this.scaledHeight = newHeight;
   }
 
   destroy() {
@@ -82,20 +85,23 @@ export default class CompressedOverlayLayer {
     }
   }
 
-  formatData(
-    baseStartTimes: number[],
-    baseEndTimes: number[],
-  ) {
+  formatData(baseStartTimes: number[], baseEndTimes: number[]) {
     const arr: RectCompressedGeoJSData[] = [];
     const startTimes = [...baseStartTimes];
     const endTimes = [...baseEndTimes];
     startTimes.push(this.spectroInfo.end_time);
     endTimes.unshift(this.spectroInfo.start_time);
-    for (let i = 0; i< startTimes.length; i += 1) {
+    for (let i = 0; i < startTimes.length; i += 1) {
       // These are swapped because we want to mask out the area inbetween
       const startTime = endTimes[i];
       const endTime = startTimes[i];
-      const polygon = scaleCompressedTime(startTime, endTime, this.spectroInfo, this.scaledWidth, this.scaledHeight);
+      const polygon = scaleCompressedTime(
+        startTime,
+        endTime,
+        this.spectroInfo,
+        this.scaledWidth,
+        this.scaledHeight,
+      );
       const newAnnotation: RectCompressedGeoJSData = {
         polygon,
       };

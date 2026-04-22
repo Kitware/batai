@@ -13,13 +13,12 @@ interface TextData {
 }
 
 export default class SpeciesSequenceLayer extends BaseTextLayer<TextData> {
-
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoViewerRef: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
-    spectroInfo: SpectroInfo
+    spectroInfo: SpectroInfo,
   ) {
     super(geoViewerRef, event, spectroInfo);
     const layer = this.geoViewerRef.createLayer("feature", {
@@ -29,12 +28,11 @@ export default class SpeciesSequenceLayer extends BaseTextLayer<TextData> {
       .createFeature("text")
       .text((data: TextData) => data.text)
       .position((data: TextData) => ({ x: data.x, y: data.y }));
-
   }
 
   formatData(annotationData: SpectrogramSequenceAnnotation[]) {
     this.textData = [];
-    const compressedView = !!(this.spectroInfo.compressedWidth);
+    const compressedView = !!this.spectroInfo.compressedWidth;
     const offsetY = compressedView ? -100 : -20;
     annotationData.forEach((annotation: SpectrogramSequenceAnnotation) => {
       const polygon = spectroSequenceToGeoJSon(
@@ -43,12 +41,17 @@ export default class SpeciesSequenceLayer extends BaseTextLayer<TextData> {
         -10,
         -120,
         this.scaledWidth,
-        this.scaledHeight
+        this.scaledHeight,
       );
       const [xmin, ymin] = polygon.coordinates[0][0];
       const [xmax, ymax] = polygon.coordinates[0][2];
       // For the compressed view we need to filter out default or NaN numbers
-      if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+      if (
+        Number.isNaN(xmax) ||
+        Number.isNaN(xmin) ||
+        Number.isNaN(ymax) ||
+        Number.isNaN(ymin)
+      ) {
         return;
       }
       if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
@@ -90,7 +93,7 @@ export default class SpeciesSequenceLayer extends BaseTextLayer<TextData> {
         stroke: true,
         uniformPolygon: true,
         fill: false,
-        fontSize: '18px',
+        fontSize: "18px",
       },
       color: (d) => {
         if (d.textType === "type") {

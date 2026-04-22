@@ -30,7 +30,7 @@ export default defineConfig({
       release: {
         // Defined by: https://developers.cloudflare.com/pages/configuration/build-configuration/#environment-variables
         name: process.env.CF_PAGES_COMMIT_SHA,
-      }
+      },
     }),
   ],
   resolve: {
