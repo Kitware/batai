@@ -98,7 +98,7 @@ def auto_histogram_levels(
     return groups
 
 
-def compute_auto_levels(
+def compute_auto_levels(  # noqa: PLR0913
     data: np.ndarray,
     mode: str,
     percentile_values,
@@ -315,7 +315,7 @@ def apply_transparency_mask(mat, threshold_percent):
 # -----------------------------------------------------------------------------
 
 
-def extract_contours(
+def extract_contours(  # noqa: PLR0913
     image_path: Path,
     *,
     output_path: Path | None = None,
@@ -410,7 +410,7 @@ def extract_contours(
     is_flag=True,
     help="Save debug images (filtered and unfiltered) to the output directory",
 )
-def main(input_path: str, out_dir, verbose, debug_images, **kwargs):
+def main(input_path: str, out_dir, verbose, debug_images, **kwargs):  # noqa: C901, PLR0912, PLR0915
     logging.basicConfig(level=logging.INFO if verbose else logging.WARNING)
 
     out_dir = Path(out_dir)

@@ -27,7 +27,7 @@ logger = logging.getLogger("NABatDataRetrieval")
 
 
 @app.task(bind=True)
-def recording_compute_spectrogram(self, recording_id: int):
+def recording_compute_spectrogram(self, recording_id: int):  # noqa: C901, PLR0912, PLR0915
     from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
 
     celery_id = getattr(self.request, "id", None)

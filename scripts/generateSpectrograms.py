@@ -21,7 +21,7 @@ FREQ_PAD = 2e3
 COLORMAP_ALLOWED = [None, "gist_yarg", "turbo"]
 
 
-def generate_spectrogram(wav_path, output_folder, colormap=None):
+def generate_spectrogram(wav_path, output_folder, colormap=None):  # noqa: C901, PLR0915
     try:
         sig, sr = librosa.load(wav_path, sr=None)
         duration = len(sig) / sr

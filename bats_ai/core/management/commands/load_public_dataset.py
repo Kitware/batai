@@ -108,7 +108,7 @@ def _try_start_spectrogram_generation(recording_id: int):
         recording_compute_spectrogram.delay(recording_id)
 
 
-def _ingest_files_from_manifest(
+def _ingest_files_from_manifest(  # noqa: C901, PLR0912, PLR0913, PLR0915
     *,
     s3_client,
     bucket: str,
