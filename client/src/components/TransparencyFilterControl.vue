@@ -15,11 +15,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-menu
-    location="bottom"
-    :close-on-content-click="false"
-    open-on-hover
-  >
+  <v-menu location="bottom" :close-on-content-click="false" open-on-hover>
     <template #activator="{ props: menuProps }">
       <v-badge
         :content="`${transparencyThreshold}%`"
@@ -38,10 +34,7 @@ export default defineComponent({
         </v-icon>
       </v-badge>
     </template>
-    <v-card
-      min-width="200"
-      max-width="350"
-    >
+    <v-card min-width="200" max-width="350">
       <v-card-title class="text-subtitle-1">
         Noise Filter {{ transparencyThreshold }}%
       </v-card-title>
@@ -56,9 +49,7 @@ export default defineComponent({
           color="primary"
           hide-details
         >
-          <template #thumb-label="{ modelValue }">
-            {{ modelValue }}%
-          </template>
+          <template #thumb-label="{ modelValue }"> {{ modelValue }}% </template>
         </v-slider>
       </v-card-text>
     </v-card>

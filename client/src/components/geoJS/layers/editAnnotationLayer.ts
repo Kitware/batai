@@ -8,9 +8,16 @@ import {
   rectVertex,
   rectEdge,
 } from "../geoJSUtils";
-import type { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
-import { type LayerStyle, type EditAnnotationTypes, type RectGeoJSData } from "./types";
-import type { GeoJSON } from 'geojson';
+import type {
+  SpectrogramAnnotation,
+  SpectrogramSequenceAnnotation,
+} from "../../../api/api";
+import {
+  type LayerStyle,
+  type EditAnnotationTypes,
+  type RectGeoJSData,
+} from "./types";
+import type { GeoJSON } from "geojson";
 
 const typeMapper = new Map([
   ["LineString", "line"],
@@ -73,7 +80,7 @@ export default class EditAnnotationLayer {
     geoViewerRef: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
-    spectroInfo: SpectroInfo
+    spectroInfo: SpectroInfo,
   ) {
     this.geoViewerRef = geoViewerRef;
     this.event = event;
@@ -122,14 +129,15 @@ export default class EditAnnotationLayer {
       });
       // For these we need to use an anonymous function to prevent geoJS from erroring
       this.featureLayer.geoOn(geo.event.annotation.edit_action, (e: GeoEvent) =>
-        this.handleEditAction(e)
+        this.handleEditAction(e),
       );
       this.featureLayer.geoOn(geo.event.annotation.state, (e: GeoEvent) =>
-        this.handleEditStateChange(e)
+        this.handleEditStateChange(e),
       );
       //Event name is misleading, this means hovering over an edit handle
-      this.featureLayer.geoOn(geo.event.annotation.select_edit_handle, (e: GeoEvent) =>
-        this.hoverEditHandle(e)
+      this.featureLayer.geoOn(
+        geo.event.annotation.select_edit_handle,
+        (e: GeoEvent) => this.hoverEditHandle(e),
       );
       this.featureLayer.geoOn(geo.event.mouseclick, (e: GeoEvent) => {
         //Used to sync clicks that kick out of editing mode with application
@@ -153,7 +161,9 @@ export default class EditAnnotationLayer {
         }
         this.disableModeSync = false;
       });
-      this.featureLayer.geoOn(geo.event.actiondown, (e: GeoEvent) => this.setShapeInProgress(e));
+      this.featureLayer.geoOn(geo.event.actiondown, (e: GeoEvent) =>
+        this.setShapeInProgress(e),
+      );
     }
   }
 
@@ -177,7 +187,10 @@ export default class EditAnnotationLayer {
     if (e.mouse.buttons.middle && !e.propogated) {
       return;
     }
-    if (this.getMode() === "creation" && ["LineString", "Polygon"].includes(this.type)) {
+    if (
+      this.getMode() === "creation" &&
+      ["LineString", "Polygon"].includes(this.type)
+    ) {
       if (this.shapeInProgress === null) {
         // Initialize a new in-progress shape
         this.shapeInProgress = {
@@ -186,7 +199,10 @@ export default class EditAnnotationLayer {
         };
       }
       // Update the coordinates of the existing shape
-      const newPoint: GeoJSON.Position = [Math.round(e.mouse.geo.x), Math.round(e.mouse.geo.y)];
+      const newPoint: GeoJSON.Position = [
+        Math.round(e.mouse.geo.x),
+        Math.round(e.mouse.geo.y),
+      ];
       const coords = this.shapeInProgress?.coordinates as GeoJSON.Position[][];
       // Magic 0: there can only be a single polygon in progress at a time
       coords[0].push(newPoint);
@@ -203,7 +219,7 @@ export default class EditAnnotationLayer {
             map: { x: e.mouse.geo.x, y: e.mouse.geo.y },
             button: "left",
           }),
-        0
+        0,
       );
     } else if (this.shapeInProgress) {
       this.shapeInProgress = null;
@@ -213,7 +229,10 @@ export default class EditAnnotationLayer {
   hoverEditHandle(e: GeoEvent) {
     const divisor = 2; //For Polygons we skip over edge handles (midpoints)
     if (e.enable && e.handle.handle.type === "vertex") {
-      if (e.handle.handle.selected && e.handle.handle.index * divisor !== this.hoverHandleIndex) {
+      if (
+        e.handle.handle.selected &&
+        e.handle.handle.index * divisor !== this.hoverHandleIndex
+      ) {
         this.hoverHandleIndex = e.handle.handle.index * divisor;
       }
       if (!e.handle.handle.selected) {
@@ -224,9 +243,13 @@ export default class EditAnnotationLayer {
     }
     if (e.enable) {
       if (e.handle.handle.type === "vertex") {
-        this.event("update:cursor", { cursor: rectVertex[e.handle.handle.index] });
+        this.event("update:cursor", {
+          cursor: rectVertex[e.handle.handle.index],
+        });
       } else if (e.handle.handle.type === "edge") {
-        this.event("update:cursor", { cursor: rectEdge[e.handle.handle.index] });
+        this.event("update:cursor", {
+          cursor: rectEdge[e.handle.handle.index],
+        });
       }
       if (e.handle.handle.type === "center") {
         this.event("update:cursor", { cursor: "move" });
@@ -323,7 +346,7 @@ export default class EditAnnotationLayer {
   /** overrides default function to disable and clear anotations before drawing again */
   async changeData(
     frameData: SpectrogramAnnotation | null | SpectrogramSequenceAnnotation,
-    type: "pulse" | "sequence"
+    type: "pulse" | "sequence",
   ) {
     this.mode = type;
     if (this.skipNextExternalUpdate === false) {
@@ -332,7 +355,10 @@ export default class EditAnnotationLayer {
       //TODO: Find a better way to track mouse up after placing a point or completing geometry
       //For line drawings and the actions of any recipes we want
       if (this.geoViewerRef.interactor().mouse().buttons.left) {
-        this.leftButtonCheckTimeout = window.setTimeout(() => this.changeData(frameData, type), 20);
+        this.leftButtonCheckTimeout = window.setTimeout(
+          () => this.changeData(frameData, type),
+          20,
+        );
       } else {
         clearTimeout(this.leftButtonCheckTimeout);
         this.formatData(frameData, type);
@@ -351,8 +377,11 @@ export default class EditAnnotationLayer {
    * @param frameData a single FrameDataTrack Array that is the editing item
    */
   formatData(
-    annotationData: SpectrogramAnnotation | null | SpectrogramSequenceAnnotation,
-    type: "pulse" | "sequence"
+    annotationData:
+      | SpectrogramAnnotation
+      | null
+      | SpectrogramSequenceAnnotation,
+    type: "pulse" | "sequence",
   ) {
     this.selectedHandleIndex = -1;
     this.hoverHandleIndex = -1;
@@ -373,7 +402,7 @@ export default class EditAnnotationLayer {
               annotationData as SpectrogramAnnotation,
               this.spectroInfo,
               this.scaledWidth,
-              this.scaledHeight
+              this.scaledHeight,
             )
           : spectroSequenceToGeoJSon(
               annotationData as SpectrogramSequenceAnnotation,
@@ -382,7 +411,7 @@ export default class EditAnnotationLayer {
               -50,
               this.scaledWidth,
               this.scaledHeight,
-              offsetY
+              offsetY,
             );
       const geojsonFeature: GeoJSON.Feature = {
         type: "Feature",
@@ -403,7 +432,7 @@ export default class EditAnnotationLayer {
       throw new Error(
         `editing props needs to be a string of value
         ${geo.listAnnotations().join(", ")}
-          when geojson prop is not set`
+          when geojson prop is not set`,
       );
     } else {
       // point or rectangle mode for the editor
@@ -422,7 +451,7 @@ export default class EditAnnotationLayer {
         const geoJSONData = [e.annotation.geojson()];
         if (this.type === "rectangle") {
           geoJSONData[0].geometry.coordinates[0] = reOrdergeoJSON(
-            geoJSONData[0].geometry.coordinates[0] as GeoJSON.Position[]
+            geoJSONData[0].geometry.coordinates[0] as GeoJSON.Position[],
           );
         }
         this.formattedData = geoJSONData;
@@ -451,28 +480,34 @@ export default class EditAnnotationLayer {
       if (e.action === geo.event.actionup) {
         // This will commit the change to the current annotation on mouse up while editing
         if (e.annotation.state() === "edit") {
-          const newGeojson: GeoJSON.Feature<GeoJSON.Point | GeoJSON.Polygon | GeoJSON.LineString> =
-            e.annotation.geojson();
+          const newGeojson: GeoJSON.Feature<
+            GeoJSON.Point | GeoJSON.Polygon | GeoJSON.LineString
+          > = e.annotation.geojson();
           if (this.formattedData.length > 0) {
             if (this.type === "rectangle") {
               /* Updating the corners for the proper cursor icons
               Also allows for regrabbing of the handle */
               newGeojson.geometry.coordinates[0] = reOrdergeoJSON(
-                newGeojson.geometry.coordinates[0] as GeoJSON.Position[]
+                newGeojson.geometry.coordinates[0] as GeoJSON.Position[],
               );
               // The corners need to update for the indexes to update
               // coordinates are in a different system than display
-              const coords = (newGeojson.geometry.coordinates[0] as GeoJSON.Position[]).map(
-                (coord) => ({
-                  x: coord[0],
-                  y: coord[1],
-                })
-              );
+              const coords = (
+                newGeojson.geometry.coordinates[0] as GeoJSON.Position[]
+              ).map((coord) => ({
+                x: coord[0],
+                y: coord[1],
+              }));
               // only use the 4 coords instead of 5
-              const remapped = this.geoViewerRef.worldToGcs(coords.splice(0, 4));
+              const remapped = this.geoViewerRef.worldToGcs(
+                coords.splice(0, 4),
+              );
               e.annotation.options("corners", remapped);
               //This will retrigger highlighting of the current handle after releasing the mouse
-              setTimeout(() => this.geoViewerRef.interactor().retriggerMouseMove(), 0);
+              setTimeout(
+                () => this.geoViewerRef.interactor().retriggerMouseMove(),
+                0,
+              );
             }
             // update existing feature
             this.formattedData[0].geometry = newGeojson.geometry;

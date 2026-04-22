@@ -1,7 +1,8 @@
 import { ref, type Ref } from "vue";
 import geo from "geojs";
 
-const annotationSpreadAcrossPulsesWarning = 'Start or End Time spread across pulses.  This is not allowed in compressed annotations';
+const annotationSpreadAcrossPulsesWarning =
+  "Start or End Time spread across pulses.  This is not allowed in compressed annotations";
 
 const useGeoJS = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,10 +88,15 @@ const useGeoJS = () => {
     images: HTMLImageElement[],
     width: number,
     height: number,
-    opacity: number
+    opacity: number,
   ) => {
     if (images.length === 0) return;
-    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    if (
+      !Number.isFinite(width) ||
+      !Number.isFinite(height) ||
+      width <= 0 ||
+      height <= 0
+    ) {
       return;
     }
     layer.node().css("opacity", String(opacity));
@@ -99,7 +105,10 @@ const useGeoJS = () => {
       if (feature) layer.removeFeature(feature);
     }
     let previousWidth = 0;
-    const totalBaseWidth = images.reduce((sum, img) => sum + img.naturalWidth, 0);
+    const totalBaseWidth = images.reduce(
+      (sum, img) => sum + img.naturalWidth,
+      0,
+    );
     if (!Number.isFinite(totalBaseWidth) || totalBaseWidth <= 0) {
       return;
     }
@@ -133,10 +142,15 @@ const useGeoJS = () => {
     totalWidth: number,
     stripHeight: number,
     yOffset: number,
-    opacity: number
+    opacity: number,
   ) => {
     if (images.length === 0) return;
-    if (!Number.isFinite(totalWidth) || !Number.isFinite(stripHeight) || totalWidth <= 0 || stripHeight <= 0) {
+    if (
+      !Number.isFinite(totalWidth) ||
+      !Number.isFinite(stripHeight) ||
+      totalWidth <= 0 ||
+      stripHeight <= 0
+    ) {
       return;
     }
     layer.node().css("opacity", String(opacity));
@@ -145,7 +159,10 @@ const useGeoJS = () => {
       if (feature) layer.removeFeature(feature);
     }
     let previousWidth = 0;
-    const totalBaseWidth = images.reduce((sum, img) => sum + img.naturalWidth, 0);
+    const totalBaseWidth = images.reduce(
+      (sum, img) => sum + img.naturalWidth,
+      0,
+    );
     if (!Number.isFinite(totalBaseWidth) || totalBaseWidth <= 0) {
       return;
     }
@@ -174,12 +191,16 @@ const useGeoJS = () => {
     width: number,
     height: number,
     thumbnailVal = false,
-    imageCount = 1
+    imageCount = 1,
   ) => {
     thumbnail.value = thumbnailVal;
     container.value = sourceContainer;
     originalDimensions = { width, height };
-    const params = geo.util.pixelCoordinateParams(container.value, width, height);
+    const params = geo.util.pixelCoordinateParams(
+      container.value,
+      width,
+      height,
+    );
     if (!container.value) {
       return;
     }
@@ -276,7 +297,7 @@ const useGeoJS = () => {
     totalWidth: number,
     stripHeight: number,
     yOffset: number,
-    opacity = 1
+    opacity = 1,
   ) => {
     if (!waveplotQuadFeatureLayer) return;
     if (images.length === 0) {
@@ -290,17 +311,34 @@ const useGeoJS = () => {
       totalWidth,
       stripHeight,
       yOffset,
-      opacity
+      opacity,
     );
   };
 
-  const drawImages = (images: HTMLImageElement[], width = 0, height = 0, resetCam = true, imageOpacity = 1) => {
-    drawQuadsToLayer(quadFeatureLayer, quadFeatures, images, width, height, imageOpacity);
+  const drawImages = (
+    images: HTMLImageElement[],
+    width = 0,
+    height = 0,
+    resetCam = true,
+    imageOpacity = 1,
+  ) => {
+    drawQuadsToLayer(
+      quadFeatureLayer,
+      quadFeatures,
+      images,
+      width,
+      height,
+      imageOpacity,
+    );
     const margin = 0.3;
     if (resetCam) {
       resetMapDimensions(width, height, margin, resetCam);
     } else {
-      const params = geo.util.pixelCoordinateParams(container.value, width, height);
+      const params = geo.util.pixelCoordinateParams(
+        container.value,
+        width,
+        height,
+      );
       const { right, bottom } = params.map.maxBounds;
       originalBounds = params.map.maxBounds;
       geoViewer.value.maxBounds({
@@ -312,7 +350,12 @@ const useGeoJS = () => {
     }
   };
 
-  const drawMaskImages = (images: HTMLImageElement[], width = 0, height = 0, opacity = 0.6) => {
+  const drawMaskImages = (
+    images: HTMLImageElement[],
+    width = 0,
+    height = 0,
+    opacity = 0.6,
+  ) => {
     if (!geoViewer.value || images.length === 0 || opacity <= 0) {
       clearMaskQuadFeatures(true);
       return;
@@ -325,7 +368,14 @@ const useGeoJS = () => {
       });
       maskQuadFeatureLayer.node().css("filter", "url(#svg-filters)");
     }
-    drawQuadsToLayer(maskQuadFeatureLayer, maskQuadFeatures, images, width, height, opacity);
+    drawQuadsToLayer(
+      maskQuadFeatureLayer,
+      maskQuadFeatures,
+      images,
+      width,
+      height,
+      opacity,
+    );
   };
 
   const resetZoom = () => {
@@ -350,7 +400,12 @@ const useGeoJS = () => {
     geoViewer.value.center(zoomAndCenter.center);
   };
 
-  const resetMapDimensions = (width: number, height: number, margin = 0.3, resetCam = false) => {
+  const resetMapDimensions = (
+    width: number,
+    height: number,
+    margin = 0.3,
+    resetCam = false,
+  ) => {
     // Want the height to be the main view and whe width to be  relative to the width of the geo.amp
     geoViewer.value.bounds({
       left: 0,
@@ -358,7 +413,13 @@ const useGeoJS = () => {
       bottom: height,
       right: width,
     });
-    const params = geo.util.pixelCoordinateParams(container.value, width, height, width, height);
+    const params = geo.util.pixelCoordinateParams(
+      container.value,
+      width,
+      height,
+      width,
+      height,
+    );
     const { right, bottom } = params.map.maxBounds;
     // For thumbnails, keep horizontal bounds tight to reduce side gutters
     const horizontalMargin = thumbnail.value ? 0.02 : margin;
@@ -399,7 +460,10 @@ const useGeoJS = () => {
   };
 };
 
-import type { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../api/api";
+import type {
+  SpectrogramAnnotation,
+  SpectrogramSequenceAnnotation,
+} from "../../api/api";
 
 export interface SpectroInfo {
   spectroId: number;
@@ -423,13 +487,15 @@ function spectroSequenceToGeoJSon(
   scaledWidth = 0,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _scaledHeight = 0, // may be useful in the future
-  offsetY = 0 // used to push sequence annotations higher when viewing in compressed view
+  offsetY = 0, // used to push sequence annotations higher when viewing in compressed view
 ): GeoJSON.Polygon {
-  const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
+  const adjustedWidth =
+    scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
   // const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
   //scale pixels to time and frequency ranges
   if (spectroInfo.compressedWidth === undefined) {
-    const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
+    const widthScale =
+      adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     // Now we remap our annotation to pixel coordinates
     const start_time = annotation.start_time * widthScale;
     const end_time = annotation.end_time * widthScale;
@@ -440,18 +506,23 @@ function spectroSequenceToGeoJSon(
           [start_time, ymin],
           [start_time, ymax],
           [end_time, ymax],
-          [end_time, ymin ],
+          [end_time, ymin],
           [start_time, ymin],
         ],
       ],
     };
-  } else if (spectroInfo.compressedWidth && spectroInfo.start_times && spectroInfo.end_times) {
+  } else if (
+    spectroInfo.compressedWidth &&
+    spectroInfo.start_times &&
+    spectroInfo.end_times
+  ) {
     // Compressed Spectro has different conversion
     // Find what section the annotation is in
     const start = annotation.start_time;
     const end = annotation.end_time;
     const { start_times, end_times, widths } = spectroInfo;
-    const lengths = start_times.length === end_times.length ? start_times.length : 0;
+    const lengths =
+      start_times.length === end_times.length ? start_times.length : 0;
     let foundStartIndex = -1;
     let foundEndIndex = -1;
     if (start < start_times[0]) {
@@ -510,11 +581,15 @@ function spectroSequenceToGeoJSon(
     const xScaling = compressedWidth / spectroInfo.compressedWidth;
     const start_time =
       timeAddStart * xScaling +
-      (!startOutside ? (annotation.start_time - start_times[foundStartIndex]) * pixelPerMS : 0);
+      (!startOutside
+        ? (annotation.start_time - start_times[foundStartIndex]) * pixelPerMS
+        : 0);
 
     const end_time =
       timeAddEnd * xScaling +
-      (!endOutside ? (annotation.end_time - start_times[foundEndIndex]) * pixelPerMS : 0);
+      (!endOutside
+        ? (annotation.end_time - start_times[foundEndIndex]) * pixelPerMS
+        : 0);
     return {
       type: "Polygon",
       coordinates: [
@@ -546,18 +621,26 @@ function spectroToGeoJSon(
   annotation: SpectrogramAnnotation,
   spectroInfo: SpectroInfo,
   scaledWidth = 0,
-  scaledHeight = 0
+  scaledHeight = 0,
 ): GeoJSON.Polygon {
   //scale pixels to time and frequency ranges
-  const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
-  const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
+  const adjustedWidth =
+    scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
+  const adjustedHeight =
+    scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
 
   if (spectroInfo.compressedWidth === undefined) {
-    const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
-    const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
+    const widthScale =
+      adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
+    const heightScale =
+      adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
-    const low_freq = adjustedHeight - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
-    const high_freq = adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
+    const low_freq =
+      adjustedHeight -
+      (annotation.low_freq - spectroInfo.low_freq) * heightScale;
+    const high_freq =
+      adjustedHeight -
+      (annotation.high_freq - spectroInfo.low_freq) * heightScale;
     const start_time = annotation.start_time * widthScale;
     const end_time = annotation.end_time * widthScale;
     return {
@@ -572,17 +655,26 @@ function spectroToGeoJSon(
         ],
       ],
     };
-  } else if (spectroInfo.compressedWidth && spectroInfo.start_times && spectroInfo.end_times) {
+  } else if (
+    spectroInfo.compressedWidth &&
+    spectroInfo.start_times &&
+    spectroInfo.end_times
+  ) {
     // Compressed Spectro has different conversion
     // Find what section the annotation is in
     const start = annotation.start_time;
     const end = annotation.end_time;
     const { start_times, end_times, widths } = spectroInfo;
-    const lengths = start_times.length === end_times.length ? start_times.length : 0;
+    const lengths =
+      start_times.length === end_times.length ? start_times.length : 0;
     let foundStartIndex = -1;
     let foundEndIndex = -1;
     for (let i = 0; i < lengths; i += 1) {
-      if (foundStartIndex === -1 && start_times[i] < start && start < end_times[i]) {
+      if (
+        foundStartIndex === -1 &&
+        start_times[i] < start &&
+        start < end_times[i]
+      ) {
         foundStartIndex = i;
       }
       if (foundEndIndex === -1 && start_times[i] < end && end < end_times[i]) {
@@ -595,7 +687,8 @@ function spectroToGeoJSon(
         ? scaledWidth / (spectroInfo.compressedWidth || spectroInfo.width)
         : 1;
     const widthScale =
-      (adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) * compressedScale;
+      (adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time)) *
+      compressedScale;
     let pixelAddStart = 0;
     let pixelAddEnd = 0;
     for (let i = 0; i < Math.max(foundStartIndex, foundEndIndex); i += 1) {
@@ -607,10 +700,15 @@ function spectroToGeoJSon(
         pixelAddEnd += addWidth;
       }
     }
-    const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
+    const heightScale =
+      adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     // Now we remap our annotation to pixel coordinates
-    const low_freq = adjustedHeight - (annotation.low_freq - spectroInfo.low_freq) * heightScale;
-    const high_freq = adjustedHeight - (annotation.high_freq - spectroInfo.low_freq) * heightScale;
+    const low_freq =
+      adjustedHeight -
+      (annotation.low_freq - spectroInfo.low_freq) * heightScale;
+    const high_freq =
+      adjustedHeight -
+      (annotation.high_freq - spectroInfo.low_freq) * heightScale;
     const start_time =
       pixelAddStart * compressedScale +
       (annotation.start_time - start_times[foundStartIndex]) * widthScale;
@@ -649,8 +747,10 @@ function findPolygonCenter(polygon: GeoJSON.Polygon): number[] {
   const coordinates = polygon.coordinates[0]; // Extract the exterior ring coordinates
 
   // Calculate the average of longitude and latitude separately
-  const avgLng = coordinates.reduce((sum, point) => sum + point[0], 0) / coordinates.length;
-  const avgLat = coordinates.reduce((sum, point) => sum + point[1], 0) / coordinates.length;
+  const avgLng =
+    coordinates.reduce((sum, point) => sum + point[0], 0) / coordinates.length;
+  const avgLat =
+    coordinates.reduce((sum, point) => sum + point[1], 0) / coordinates.length;
 
   return [avgLng, avgLat];
 }
@@ -658,16 +758,19 @@ function findPolygonCenter(polygon: GeoJSON.Polygon): number[] {
 function spectroToCenter(
   annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation,
   spectroInfo: SpectroInfo,
-  type: "sequence" | "pulse"
+  type: "sequence" | "pulse",
 ) {
   if (type === "pulse") {
-    const geoJSON = spectroToGeoJSon(annotation as SpectrogramAnnotation, spectroInfo);
+    const geoJSON = spectroToGeoJSon(
+      annotation as SpectrogramAnnotation,
+      spectroInfo,
+    );
     return findPolygonCenter(geoJSON);
   }
   if (type === "sequence") {
     const geoJSON = spectroSequenceToGeoJSon(
       annotation as SpectrogramSequenceAnnotation,
-      spectroInfo
+      spectroInfo,
     );
     return findPolygonCenter(geoJSON);
   }
@@ -680,18 +783,33 @@ function geojsonToSpectro(
   spectroInfo: SpectroInfo,
   scaledWidth = 0,
   scaledHeight = 0,
-): { warning?: string; start_time: number; end_time: number; low_freq: number; high_freq: number; error?: string } {
-  const adjustedWidth = scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
-  const adjustedHeight = scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
+): {
+  warning?: string;
+  start_time: number;
+  end_time: number;
+  low_freq: number;
+  high_freq: number;
+  error?: string;
+} {
+  const adjustedWidth =
+    scaledWidth > spectroInfo.width ? scaledWidth : spectroInfo.width;
+  const adjustedHeight =
+    scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
 
   const coords = geojson.geometry.coordinates[0];
   if (spectroInfo.compressedWidth === undefined) {
-    const widthScale = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
-    const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
+    const widthScale =
+      adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
+    const heightScale =
+      adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
     const start_time = Math.round(coords[1][0] / widthScale);
     const end_time = Math.round(coords[3][0] / widthScale);
-    const high_freq = Math.round(spectroInfo.high_freq - coords[1][1] / heightScale);
-    const low_freq = Math.round(spectroInfo.high_freq - coords[3][1] / heightScale);
+    const high_freq = Math.round(
+      spectroInfo.high_freq - coords[1][1] / heightScale,
+    );
+    const low_freq = Math.round(
+      spectroInfo.high_freq - coords[3][1] / heightScale,
+    );
     return {
       start_time,
       end_time,
@@ -713,7 +831,8 @@ function geojsonToSpectro(
       end = spectroInfo.compressedWidth;
     }
     const { start_times, widths } = spectroInfo;
-    const timeToPixels = adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
+    const timeToPixels =
+      adjustedWidth / (spectroInfo.end_time - spectroInfo.start_time);
     let additivePixels = 0;
     let start_time = -1;
     let end_time = -1;
@@ -723,7 +842,11 @@ function geojsonToSpectro(
     for (let i = 0; i < start_times.length; i += 1) {
       // convert the start/end time to a pixel
       const nextPixels = (widths && widths[i]) || 0;
-      if (start_time === -1 && start >= additivePixels && start < additivePixels + nextPixels) {
+      if (
+        start_time === -1 &&
+        start >= additivePixels &&
+        start < additivePixels + nextPixels
+      ) {
         // Found the location for time markers
         // We need to remap pixels back to milliseconds
         const lowPixels = start - additivePixels;
@@ -747,9 +870,14 @@ function geojsonToSpectro(
     if (startIndex !== endIndex) {
       warn = true;
     }
-    const heightScale = adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
-    const high_freq = Math.round(spectroInfo.high_freq - coords[1][1] / heightScale);
-    const low_freq = Math.round(spectroInfo.high_freq - coords[3][1] / heightScale);
+    const heightScale =
+      adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
+    const high_freq = Math.round(
+      spectroInfo.high_freq - coords[1][1] / heightScale,
+    );
+    const low_freq = Math.round(
+      spectroInfo.high_freq - coords[3][1] / heightScale,
+    );
     if (warn) {
       // the time spreads across multiple pulses and isn't allowed;
       return {
@@ -814,8 +942,11 @@ function luminance(r: number, g: number, b: number): number {
   return 0.2126 * R + 0.7152 * G + 0.0722 * B;
 }
 
-
-function getContrastingColor(r: number, g: number, b: number): "black" | "white" {
+function getContrastingColor(
+  r: number,
+  g: number,
+  b: number,
+): "black" | "white" {
   const L = luminance(r, g, b);
   return L > 0.179 ? "black" : "white";
 }

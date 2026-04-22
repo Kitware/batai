@@ -11,16 +11,16 @@ function extractDateTimeComponents(dateTimeString: string) {
 
   // Extracting date components
   const year = dateTime.getFullYear();
-  const month = String(dateTime.getMonth() + 1).padStart(2, '0');
-  const day = String(dateTime.getDate()).padStart(2, '0');
+  const month = String(dateTime.getMonth() + 1).padStart(2, "0");
+  const day = String(dateTime.getDate()).padStart(2, "0");
 
   // Forming date string in the format YYYY-MM-DD
   const dateString = `${year}-${month}-${day}`;
 
   // Extracting time components
-  const hours = String(dateTime.getHours()).padStart(2, '0');
-  const minutes = String(dateTime.getMinutes()).padStart(2, '0');
-  const seconds = String(dateTime.getSeconds()).padStart(2, '0');
+  const hours = String(dateTime.getHours()).padStart(2, "0");
+  const minutes = String(dateTime.getMinutes()).padStart(2, "0");
+  const seconds = String(dateTime.getSeconds()).padStart(2, "0");
 
   // Forming time string in the format HHMMSS
   const timeString = `${hours}${minutes}${seconds}`;
@@ -28,19 +28,18 @@ function extractDateTimeComponents(dateTimeString: string) {
   return { date: dateString, time: timeString };
 }
 
-function getImageDimensions(images: HTMLImageElement[], fallback: { width: number, height: number } = { width: 0, height: 0 }) {
+function getImageDimensions(
+  images: HTMLImageElement[],
+  fallback: { width: number; height: number } = { width: 0, height: 0 },
+) {
   if (!images.length) return { width: fallback.width, height: fallback.height };
-  let width = 0, height = 0;
-  images.forEach(img => {
+  let width = 0,
+    height = 0;
+  images.forEach((img) => {
     width += img.naturalWidth;
     height = img.naturalHeight;
   });
   return { width, height };
 }
 
-
-export {
-  getCurrentTime,
-  extractDateTimeComponents,
-  getImageDimensions,
-};
+export { getCurrentTime, extractDateTimeComponents, getImageDimensions };

@@ -1,17 +1,17 @@
 <script lang="ts">
-import { defineComponent, ref, type Ref, } from 'vue';
-import NABatAdminUpdateSpecies from '@components/NABat/NABatAdminUpdateSpecies.vue';
-import NABatAdminBrowser from '@components/NABat/NABatAdminBrowser.vue';
+import { defineComponent, ref, type Ref } from "vue";
+import NABatAdminUpdateSpecies from "@components/NABat/NABatAdminUpdateSpecies.vue";
+import NABatAdminBrowser from "@components/NABat/NABatAdminBrowser.vue";
 
 export default defineComponent({
-  name: 'NABatAdmin',
+  name: "NABatAdmin",
   components: {
     NABatAdminUpdateSpecies,
     NABatAdminBrowser,
   },
   setup() {
     // Reactive state for the settings
-    const tab: Ref<'browser' | 'species'> = ref('browser');
+    const tab: Ref<"browser" | "species"> = ref("browser");
 
     return {
       tab,
@@ -22,28 +22,12 @@ export default defineComponent({
 
 <template>
   <v-card>
-    <v-tabs
-      v-model="tab"
-      class="ma-auto"
-    >
-      <v-tab
-        value="browser"
-        size="small"
-      >
-        Recording Browser
-      </v-tab>
-      <v-tab
-        value="species"
-        size="small"
-      >
-        Update Species
-      </v-tab>
+    <v-tabs v-model="tab" class="ma-auto">
+      <v-tab value="browser" size="small"> Recording Browser </v-tab>
+      <v-tab value="species" size="small"> Update Species </v-tab>
     </v-tabs>
 
-    <v-window
-      id="admin-window"
-      v-model="tab"
-    >
+    <v-window id="admin-window" v-model="tab">
       <v-window-item value="browser">
         <v-card-title>Admin Recording Browser</v-card-title>
         <v-card-text>

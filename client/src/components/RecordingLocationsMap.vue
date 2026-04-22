@@ -1,10 +1,20 @@
 <script lang="ts">
-import maplibregl, { type GeoJSONSource, type Map } from 'maplibre-gl';
-import { defineComponent, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue';
-import { getRecordingLocations, type RecordingLocationsGeoJson } from '@api/api';
+import maplibregl, { type GeoJSONSource, type Map } from "maplibre-gl";
+import {
+  defineComponent,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+  type PropType,
+} from "vue";
+import {
+  getRecordingLocations,
+  type RecordingLocationsGeoJson,
+} from "@api/api";
 
 export default defineComponent({
-  name: 'RecordingLocationsMap',
+  name: "RecordingLocationsMap",
   props: {
     height: {
       type: [Number, String] as PropType<number | string>,
@@ -33,11 +43,13 @@ export default defineComponent({
     },
     /** Optional bounds to restore the map viewport (west,south,east,north). */
     initialBounds: {
-      type: Array as unknown as PropType<[number, number, number, number] | null>,
+      type: Array as unknown as PropType<
+        [number, number, number, number] | null
+      >,
       default: null,
     },
   },
-  emits: ['boundsChange'],
+  emits: ["boundsChange"],
   setup(props, { emit }) {
     const mapContainer = ref<HTMLDivElement | null>(null);
     const mapRef = ref<Map | null>(null);
@@ -55,12 +67,12 @@ export default defineComponent({
     function emitCurrentBounds() {
       if (!props.reportBounds || !mapRef.value) return;
       const b = mapRef.value.getBounds();
-      emit('boundsChange', [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()] as [
-        number,
-        number,
-        number,
-        number,
-      ]);
+      emit("boundsChange", [
+        b.getWest(),
+        b.getSouth(),
+        b.getEast(),
+        b.getNorth(),
+      ] as [number, number, number, number]);
     }
 
     function scheduleDebouncedBounds() {
@@ -82,7 +94,9 @@ export default defineComponent({
 
     async function refreshSource() {
       if (!mapRef.value) return;
-      const src = mapRef.value.getSource('recording-locations') as GeoJSONSource | undefined;
+      const src = mapRef.value.getSource("recording-locations") as
+        | GeoJSONSource
+        | undefined;
       if (!src) return;
       loading.value = true;
       error.value = null;
@@ -106,17 +120,17 @@ export default defineComponent({
           version: 8,
           sources: {
             osm: {
-              type: 'raster',
-              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              type: "raster",
+              tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
               tileSize: 256,
-              attribution: '&copy; OpenStreetMap contributors',
+              attribution: "&copy; OpenStreetMap contributors",
             },
           },
           layers: [
             {
-              id: 'osm',
-              type: 'raster',
-              source: 'osm',
+              id: "osm",
+              type: "raster",
+              source: "osm",
             },
           ],
         },
@@ -126,16 +140,16 @@ export default defineComponent({
       });
       mapRef.value = map;
 
-      map.addControl(new maplibregl.NavigationControl(), 'top-right');
+      map.addControl(new maplibregl.NavigationControl(), "top-right");
 
-      map.on('load', async () => {
+      map.on("load", async () => {
         loading.value = true;
         error.value = null;
         try {
           const data = await loadGeoJson();
 
-          map.addSource('recording-locations', {
-            type: 'geojson',
+          map.addSource("recording-locations", {
+            type: "geojson",
             data: data as unknown as GeoJSON.GeoJSON,
             cluster: true,
             clusterMaxZoom: 14,
@@ -143,80 +157,90 @@ export default defineComponent({
           });
 
           map.addLayer({
-            id: 'clusters',
-            type: 'circle',
-            source: 'recording-locations',
-            filter: ['has', 'point_count'],
+            id: "clusters",
+            type: "circle",
+            source: "recording-locations",
+            filter: ["has", "point_count"],
             paint: {
-              'circle-color': [
-                'step',
-                ['get', 'point_count'],
-                '#51bbd6',
+              "circle-color": [
+                "step",
+                ["get", "point_count"],
+                "#51bbd6",
                 100,
-                '#f1f075',
+                "#f1f075",
                 750,
-                '#f28cb1',
+                "#f28cb1",
               ],
-              'circle-radius': [
-                'step',
-                ['get', 'point_count'],
+              "circle-radius": [
+                "step",
+                ["get", "point_count"],
                 20,
                 100,
                 30,
                 750,
                 40,
               ],
-              'circle-stroke-width': 1,
-              'circle-stroke-color': '#ffffff',
+              "circle-stroke-width": 1,
+              "circle-stroke-color": "#ffffff",
             },
           });
 
           map.addLayer({
-            id: 'cluster-count',
-            type: 'symbol',
-            source: 'recording-locations',
-            filter: ['has', 'point_count'],
+            id: "cluster-count",
+            type: "symbol",
+            source: "recording-locations",
+            filter: ["has", "point_count"],
             layout: {
-              'text-field': '{point_count_abbreviated}',
-              'text-size': 12,
+              "text-field": "{point_count_abbreviated}",
+              "text-size": 12,
             },
             paint: {
-              'text-color': '#0b1f2a',
+              "text-color": "#0b1f2a",
             },
           });
 
           map.addLayer({
-            id: 'unclustered-point',
-            type: 'circle',
-            source: 'recording-locations',
-            filter: ['!', ['has', 'point_count']],
+            id: "unclustered-point",
+            type: "circle",
+            source: "recording-locations",
+            filter: ["!", ["has", "point_count"]],
             paint: {
-              'circle-color': '#11b4da',
-              'circle-radius': 10,
-              'circle-stroke-width': 1,
-              'circle-stroke-color': '#fff',
+              "circle-color": "#11b4da",
+              "circle-radius": 10,
+              "circle-stroke-width": 1,
+              "circle-stroke-color": "#fff",
             },
           });
 
-          map.on('click', 'clusters', async (e) => {
-            const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+          map.on("click", "clusters", async (e) => {
+            const features = map.queryRenderedFeatures(e.point, {
+              layers: ["clusters"],
+            });
             const f = features?.[0];
             if (!f) return;
-            const clusterId = (f.properties as Record<string, unknown>)?.cluster_id as number | undefined;
+            const clusterId = (f.properties as Record<string, unknown>)
+              ?.cluster_id as number | undefined;
             if (clusterId === undefined) return;
-            const source = map.getSource('recording-locations') as GeoJSONSource;
+            const source = map.getSource(
+              "recording-locations",
+            ) as GeoJSONSource;
             const zoom = await source.getClusterExpansionZoom(clusterId);
-            const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+            const coords = (f.geometry as GeoJSON.Point).coordinates as [
+              number,
+              number,
+            ];
             map.easeTo({ center: coords, zoom });
           });
 
-          map.on('click', 'unclustered-point', (e) => {
+          map.on("click", "unclustered-point", (e) => {
             const f = e.features?.[0];
             if (!f) return;
-            const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+            const coords = (
+              f.geometry as GeoJSON.Point
+            ).coordinates.slice() as [number, number];
             const props = (f.properties ?? {}) as Record<string, unknown>;
-            const recordingId = props.recording_id ?? '';
-            const filename = props.filename ?? '';
+            const recordingId = props.recording_id ?? "";
+            const filename = props.filename ?? "";
 
             new maplibregl.Popup()
               .setLngLat(coords)
@@ -224,15 +248,31 @@ export default defineComponent({
                 `<div style="font-size: 12px;">
                   <div><b>Recording ID:</b> ${recordingId}</div>
                   <div style="word-break: break-word;"><b>File:</b> ${filename}</div>
-                </div>`
+                </div>`,
               )
               .addTo(map);
           });
 
-          map.on('mouseenter', 'clusters', () => (map.getCanvas().style.cursor = 'pointer'));
-          map.on('mouseleave', 'clusters', () => (map.getCanvas().style.cursor = ''));
-          map.on('mouseenter', 'unclustered-point', () => (map.getCanvas().style.cursor = 'pointer'));
-          map.on('mouseleave', 'unclustered-point', () => (map.getCanvas().style.cursor = ''));
+          map.on(
+            "mouseenter",
+            "clusters",
+            () => (map.getCanvas().style.cursor = "pointer"),
+          );
+          map.on(
+            "mouseleave",
+            "clusters",
+            () => (map.getCanvas().style.cursor = ""),
+          );
+          map.on(
+            "mouseenter",
+            "unclustered-point",
+            () => (map.getCanvas().style.cursor = "pointer"),
+          );
+          map.on(
+            "mouseleave",
+            "unclustered-point",
+            () => (map.getCanvas().style.cursor = ""),
+          );
 
           // If we have saved bounds, align the viewport before emitting the current bounds.
           if (props.initialBounds) {
@@ -248,7 +288,7 @@ export default defineComponent({
             }
           }
 
-          map.on('moveend', () => {
+          map.on("moveend", () => {
             scheduleDebouncedBounds();
           });
           if (props.reportBounds) {
@@ -263,17 +303,17 @@ export default defineComponent({
     });
 
     watch(
-      () => [props.tags.join(','), props.excludeSubmitted] as const,
+      () => [props.tags.join(","), props.excludeSubmitted] as const,
       async () => {
         await refreshSource();
-      }
+      },
     );
 
     watch(
       () => props.resizeTick,
       () => {
         mapRef.value?.resize();
-      }
+      },
     );
 
     watch(
@@ -284,7 +324,7 @@ export default defineComponent({
         } else {
           clearBoundsDebounce();
         }
-      }
+      },
     );
 
     onBeforeUnmount(() => {
@@ -305,16 +345,8 @@ export default defineComponent({
       class="recording-locations-map"
       :style="{ height: typeof height === 'number' ? `${height}px` : height }"
     />
-    <div
-      v-if="loading"
-      class="status-overlay"
-    >
-      Loading locations…
-    </div>
-    <div
-      v-else-if="error"
-      class="status-overlay error"
-    >
+    <div v-if="loading" class="status-overlay">Loading locations…</div>
+    <div v-else-if="error" class="status-overlay error">
       {{ error }}
     </div>
   </div>
@@ -344,4 +376,3 @@ export default defineComponent({
   background: rgba(120, 0, 0, 0.75);
 }
 </style>
-

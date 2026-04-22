@@ -22,7 +22,9 @@ export default defineComponent({
       default: () => undefined,
     },
     bbox: {
-      type: Array as unknown as PropType<[number, number, number, number] | null>,
+      type: Array as unknown as PropType<
+        [number, number, number, number] | null
+      >,
       default: null,
     },
     grtsCellId: {
@@ -34,7 +36,7 @@ export default defineComponent({
       default: 0,
     },
   },
-  emits: ['location'],
+  emits: ["location"],
   setup(props, { emit }) {
     const usCenter = { x: -90.5855, y: 39.8333 };
     const mapRef: Ref<HTMLDivElement | null> = ref(null);
@@ -53,18 +55,30 @@ export default defineComponent({
     });
     watch(mapRef, async () => {
       if (mapRef.value) {
-        const centerPoint = props.location && props.location.x && props.location.y ? props.location : usCenter;
-        const zoomLevel = props.location && props.location.x && props.location.y ? 6 : 3;
-        map.value = geo.map({ node: mapRef.value, center: centerPoint, zoom: zoomLevel });
+        const centerPoint =
+          props.location && props.location.x && props.location.y
+            ? props.location
+            : usCenter;
+        const zoomLevel =
+          props.location && props.location.x && props.location.y ? 6 : 3;
+        map.value = geo.map({
+          node: mapRef.value,
+          center: centerPoint,
+          zoom: zoomLevel,
+        });
         mapLayer.value = map.value.createLayer("osm");
-        markerLayer.value = map.value.createLayer("feature", { features: ["marker"] });
-        bboxLayer.value = map.value.createLayer("feature", { features: ["polygon"] });
+        markerLayer.value = map.value.createLayer("feature", {
+          features: ["marker"],
+        });
+        bboxLayer.value = map.value.createLayer("feature", {
+          features: ["polygon"],
+        });
         uiLayer.value = map.value.createLayer("ui");
         markerFeature.value = markerLayer.value.createFeature("marker");
         bboxFeature.value = bboxLayer.value.createFeature("polygon");
-        uiLayer.value.createWidget('slider');
-        uiLayer.value.createWidget('scale', {
-          position: { bottom: 10, left: 10},
+        uiLayer.value.createWidget("slider");
+        uiLayer.value.createWidget("scale", {
+          position: { bottom: 10, left: 10 },
         });
 
         const drawBbox = (bounds: [number, number, number, number]) => {
@@ -76,58 +90,67 @@ export default defineComponent({
             { x: west, y: north },
             { x: west, y: south },
           ];
-          bboxFeature.value.data([data]).style({
-            stroke: true,
-            strokeWidth: 2,
-            strokeColor: "black",
-            fill: true,
-            fillColor: "orange",
-            fillOpacity: 0.15,
-          }).draw();
+          bboxFeature.value
+            .data([data])
+            .style({
+              stroke: true,
+              strokeWidth: 2,
+              strokeColor: "black",
+              fill: true,
+              fillColor: "orange",
+              fillOpacity: 0.15,
+            })
+            .draw();
           bboxLayer.value.draw();
           map.value.center({ x: (west + east) / 2, y: (south + north) / 2 });
           map.value.zoom(6);
         };
 
         if (
-          props.bbox
-          && props.bbox.length === 4
-          && props.bbox.every((n) => Number.isFinite(n))
+          props.bbox &&
+          props.bbox.length === 4 &&
+          props.bbox.every((n) => Number.isFinite(n))
         ) {
           drawBbox(props.bbox);
         } else if (props.grtsCellId !== undefined) {
           const annotation = await getCellBbox(props.grtsCellId);
           const coordinates = annotation.data.geometry.coordinates;
-          const data = coordinates.map((point: number[]) => ({ x: point[0], y: point[1] }));
+          const data = coordinates.map((point: number[]) => ({
+            x: point[0],
+            y: point[1],
+          }));
           data.push({ x: coordinates[0][0], y: coordinates[0][1] });
-          bboxFeature.value.data([data]).style({
-            stroke: true,
-            strokeWidth: 1,
-            strokeColor: 'black',
-            fill: false,
-          }).draw();
+          bboxFeature.value
+            .data([data])
+            .style({
+              stroke: true,
+              strokeWidth: 1,
+              strokeColor: "black",
+              fill: false,
+            })
+            .draw();
           bboxLayer.value.draw();
           const center = {
             x: (data[0].x + data[2].x) / 2,
-            y: (data[0].y + data[1].y) / 2
+            y: (data[0].y + data[1].y) / 2,
           };
           map.value.center(center);
           map.value.zoom(9);
         } else if (props.location?.x && props.location?.y) {
-            markerLocation.value = { x: props.location?.x, y: props.location.y };
-            markerFeature.value
-              .data([markerLocation.value])
-              .style({
-                symbol: geo.markerFeature.symbols.drop,
-                symbolValue: 1 / 3,
-                rotation: -Math.PI / 2,
-                radius: 30,
-                strokeWidth: 5,
-                strokeColor: "blue",
-                fillColor: "yellow",
-                rotateWithMap: false,
-              })
-              .draw();
+          markerLocation.value = { x: props.location?.x, y: props.location.y };
+          markerFeature.value
+            .data([markerLocation.value])
+            .style({
+              symbol: geo.markerFeature.symbols.drop,
+              symbolValue: 1 / 3,
+              rotation: -Math.PI / 2,
+              radius: 30,
+              strokeWidth: 5,
+              strokeColor: "blue",
+              fillColor: "yellow",
+              rotateWithMap: false,
+            })
+            .draw();
         }
         if (props.editor) {
           mapLayer.value.geoOn(geo.event.mouseclick, (e: GeoEvent) => {
@@ -147,66 +170,71 @@ export default defineComponent({
                 rotateWithMap: false,
               })
               .draw();
-              emit('location', { lon: x, lat:y });
-
+            emit("location", { lon: x, lat: y });
           });
         }
       }
     });
-    watch(() =>  props.updateMap, () => {
-      if (
-        props.bbox
-        && props.bbox.length === 4
-        && props.bbox.every((n) => Number.isFinite(n))
-        && bboxFeature.value
-        && map.value
-      ) {
-        const [west, south, east, north] = props.bbox;
-        const data = [
-          { x: west, y: south },
-          { x: east, y: south },
-          { x: east, y: north },
-          { x: west, y: north },
-          { x: west, y: south },
-        ];
-        bboxFeature.value
-          .data([data])
-          .style({
-            stroke: true,
-            strokeWidth: 2,
-            strokeColor: "black",
-            fill: true,
-            fillColor: "orange",
-            fillOpacity: 0.15,
-          })
-          .draw();
-        bboxLayer.value?.draw();
-        map.value.center({ x: (west + east) / 2, y: (south + north) / 2 });
-        map.value.zoom(6);
-      } else if (props.location?.x && props.location?.y) {
-            markerLocation.value = { x: props.location?.x, y: props.location.y };
-            markerFeature.value
-              .data([markerLocation.value])
-              .style({
-                symbol: geo.markerFeature.symbols.drop,
-                symbolValue: 1 / 3,
-                rotation: -Math.PI / 2,
-                radius: 30,
-                strokeWidth: 5,
-                strokeColor: "blue",
-                fillColor: "yellow",
-                rotateWithMap: false,
-              })
-              .draw();
-              const zoomLevel = props.location && props.location.x && props.location.y ? 6 : 3;
-              const centerPoint = props.location && props.location.x && props.location.y ? props.location : usCenter;
-              if (map.value) {
-                map.value.zoom(zoomLevel);
-                map.value.center(centerPoint);
-              }
-
+    watch(
+      () => props.updateMap,
+      () => {
+        if (
+          props.bbox &&
+          props.bbox.length === 4 &&
+          props.bbox.every((n) => Number.isFinite(n)) &&
+          bboxFeature.value &&
+          map.value
+        ) {
+          const [west, south, east, north] = props.bbox;
+          const data = [
+            { x: west, y: south },
+            { x: east, y: south },
+            { x: east, y: north },
+            { x: west, y: north },
+            { x: west, y: south },
+          ];
+          bboxFeature.value
+            .data([data])
+            .style({
+              stroke: true,
+              strokeWidth: 2,
+              strokeColor: "black",
+              fill: true,
+              fillColor: "orange",
+              fillOpacity: 0.15,
+            })
+            .draw();
+          bboxLayer.value?.draw();
+          map.value.center({ x: (west + east) / 2, y: (south + north) / 2 });
+          map.value.zoom(6);
+        } else if (props.location?.x && props.location?.y) {
+          markerLocation.value = { x: props.location?.x, y: props.location.y };
+          markerFeature.value
+            .data([markerLocation.value])
+            .style({
+              symbol: geo.markerFeature.symbols.drop,
+              symbolValue: 1 / 3,
+              rotation: -Math.PI / 2,
+              radius: 30,
+              strokeWidth: 5,
+              strokeColor: "blue",
+              fillColor: "yellow",
+              rotateWithMap: false,
+            })
+            .draw();
+          const zoomLevel =
+            props.location && props.location.x && props.location.y ? 6 : 3;
+          const centerPoint =
+            props.location && props.location.x && props.location.y
+              ? props.location
+              : usCenter;
+          if (map.value) {
+            map.value.zoom(zoomLevel);
+            map.value.center(centerPoint);
+          }
         }
-    });
+      },
+    );
     return {
       mapRef,
     };

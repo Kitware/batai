@@ -1,5 +1,12 @@
-import type { SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../../../api/api";
-import { type SpectroInfo, spectroSequenceToGeoJSon, spectroToGeoJSon } from "../geoJSUtils";
+import type {
+  SpectrogramAnnotation,
+  SpectrogramSequenceAnnotation,
+} from "../../../api/api";
+import {
+  type SpectroInfo,
+  spectroSequenceToGeoJSon,
+  spectroToGeoJSon,
+} from "../geoJSUtils";
 import BaseTextLayer from "./baseTextLayer";
 import type { LayerStyle } from "./types";
 
@@ -17,7 +24,7 @@ interface TextData {
   offsetY?: number;
   offsetX?: number;
   textScaled?: undefined | number;
-  textBaseline?: 'middle' | 'top' | 'bottom';
+  textBaseline?: "middle" | "top" | "bottom";
 }
 
 export default class TimeLayer extends BaseTextLayer<TextData> {
@@ -37,7 +44,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
     geoViewerRef: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: (name: string, data: any) => void,
-    spectroInfo: SpectroInfo
+    spectroInfo: SpectroInfo,
   ) {
     super(geoViewerRef, event, spectroInfo);
     this.lineData = [];
@@ -69,7 +76,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
 
   createRange(
     annotationData: SpectrogramAnnotation[],
-    sequenceData: SpectrogramSequenceAnnotation[] = []
+    sequenceData: SpectrogramSequenceAnnotation[] = [],
   ) {
     this.textData = [];
     this.lineData = [];
@@ -80,13 +87,18 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
           annotation,
           this.spectroInfo,
           this.scaledWidth,
-          this.scaledHeight
+          this.scaledHeight,
         );
         const { start_time, end_time } = annotation;
         const [xmin, ymin] = polygon.coordinates[0][0];
         const [xmax, ymax] = polygon.coordinates[0][2];
         // For the compressed view we need to filter out default or NaN numbers
-        if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+        if (
+          Number.isNaN(xmax) ||
+          Number.isNaN(xmin) ||
+          Number.isNaN(ymax) ||
+          Number.isNaN(ymin)
+        ) {
           return;
         }
         if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
@@ -120,17 +132,17 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
           text: `${start_time}ₘₛ`,
           x: xmin,
           y: ymin + lineDist + 5,
-          textBaseline: 'top',
+          textBaseline: "top",
         });
         this.textData.push({
           text: `${end_time}ₘₛ`,
           x: xmax,
           y: ymin + lineDist + 5,
-          textBaseline: 'top',
+          textBaseline: "top",
         });
       });
     }
-    const compressedView = !!(this.spectroInfo.compressedWidth);
+    const compressedView = !!this.spectroInfo.compressedWidth;
     const offsetY = compressedView ? -80 : 0;
     if (this.displaying.sequence) {
       sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
@@ -141,13 +153,18 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
           -50,
           this.scaledWidth,
           this.scaledHeight,
-          offsetY
+          offsetY,
         );
         const { start_time, end_time } = annotation;
         const [xmin, ymin] = polygon.coordinates[0][0];
         const [xmax, ymax] = polygon.coordinates[0][2];
         // For the compressed view we need to filter out default or NaN numbers
-        if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+        if (
+          Number.isNaN(xmax) ||
+          Number.isNaN(xmin) ||
+          Number.isNaN(ymax) ||
+          Number.isNaN(ymin)
+        ) {
           return;
         }
         if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
@@ -193,7 +210,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
 
   createDuration(
     annotationData: SpectrogramAnnotation[],
-    sequenceData: SpectrogramSequenceAnnotation[] = []
+    sequenceData: SpectrogramSequenceAnnotation[] = [],
   ) {
     this.textData = [];
     this.lineData = [];
@@ -204,13 +221,18 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
           annotation,
           this.spectroInfo,
           this.scaledWidth,
-          this.scaledHeight
+          this.scaledHeight,
         );
         const { start_time, end_time } = annotation;
         const [xmin, ymin] = polygon.coordinates[0][0];
         const [xmax, ymax] = polygon.coordinates[0][2];
         // For the compressed view we need to filter out default or NaN numbers
-        if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+        if (
+          Number.isNaN(xmax) ||
+          Number.isNaN(xmin) ||
+          Number.isNaN(ymax) ||
+          Number.isNaN(ymin)
+        ) {
           return;
         }
         if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
@@ -226,7 +248,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         });
       });
     }
-    const compressedView = !!(this.spectroInfo.compressedWidth);
+    const compressedView = !!this.spectroInfo.compressedWidth;
     const offsetY = compressedView ? -50 : 30;
     if (this.displaying.sequence) {
       sequenceData.forEach((annotation: SpectrogramSequenceAnnotation) => {
@@ -236,13 +258,18 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
           -10,
           -50,
           this.scaledWidth,
-          this.scaledHeight
+          this.scaledHeight,
         );
         const { start_time, end_time } = annotation;
         const [xmin, ymin] = polygon.coordinates[0][0];
         const [xmax, ymax] = polygon.coordinates[0][2];
         // For the compressed view we need to filter out default or NaN numbers
-        if (Number.isNaN(xmax) || Number.isNaN(xmin) || Number.isNaN(ymax) || Number.isNaN(ymin)) {
+        if (
+          Number.isNaN(xmax) ||
+          Number.isNaN(xmin) ||
+          Number.isNaN(ymax) ||
+          Number.isNaN(ymin)
+        ) {
           return;
         }
         if (xmax === -1 && ymin === -1 && ymax === -1 && xmin === -1) {
@@ -253,7 +280,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         this.textData.push({
           text: `${end_time - start_time}ₘₛ`,
           x: xpos,
-          y: ((ymax - ymin) / 2.0) + -35 + offsetY,
+          y: (ymax - ymin) / 2.0 + -35 + offsetY,
         });
       });
     }
@@ -261,7 +288,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
 
   formatData(
     annotationData: SpectrogramAnnotation[],
-    sequenceData: SpectrogramSequenceAnnotation[] = []
+    sequenceData: SpectrogramSequenceAnnotation[] = [],
   ) {
     if (!this.displayDuration) {
       this.createRange(annotationData, sequenceData);
@@ -339,7 +366,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         y: data.offsetY || 0,
       }),
       textScaled: this.textScaled,
-      textBaseline: 'middle',
+      textBaseline: "middle",
     };
   }
 

@@ -1,43 +1,48 @@
 <script setup lang="ts">
-import { onMounted, watch, type PropType } from 'vue';
-import useState from '@use/useState';
-import ColorSchemeSelect from './ColorSchemeSelect.vue';
-import ColorPickerMenu from './ColorPickerMenu.vue';
+import { onMounted, watch, type PropType } from "vue";
+import useState from "@use/useState";
+import ColorSchemeSelect from "./ColorSchemeSelect.vue";
+import ColorPickerMenu from "./ColorPickerMenu.vue";
 
-const {
-  configuration,
-  colorSchemes,
-  colorScheme,
-  backgroundColor,
-} = useState();
+const { configuration, colorSchemes, colorScheme, backgroundColor } =
+  useState();
 
 defineProps({
   displayMode: {
-    type: String as PropType<'dialog' | 'menu'>,
-    default: 'dialog',
+    type: String as PropType<"dialog" | "menu">,
+    default: "dialog",
   },
 });
 
 onMounted(() => {
-  const localBackgroundColor = localStorage.getItem('spectrogramBackgroundColor');
+  const localBackgroundColor = localStorage.getItem(
+    "spectrogramBackgroundColor",
+  );
   if (localBackgroundColor) {
     backgroundColor.value = localBackgroundColor;
   } else {
-    backgroundColor.value = configuration.value.default_spectrogram_background_color || 'rgb(0, 0, 0)';
+    backgroundColor.value =
+      configuration.value.default_spectrogram_background_color ||
+      "rgb(0, 0, 0)";
   }
-  const localColorScheme = localStorage.getItem('spectrogramColorScheme');
+  const localColorScheme = localStorage.getItem("spectrogramColorScheme");
   if (localColorScheme) {
-    colorScheme.value = colorSchemes.find((scheme) => scheme.value === localColorScheme) || colorSchemes[0];
+    colorScheme.value =
+      colorSchemes.find((scheme) => scheme.value === localColorScheme) ||
+      colorSchemes[0];
   } else if (configuration.value.default_color_scheme) {
-    colorScheme.value = colorSchemes.find((scheme) => scheme.value === configuration.value.default_color_scheme) || colorSchemes[0];
+    colorScheme.value =
+      colorSchemes.find(
+        (scheme) => scheme.value === configuration.value.default_color_scheme,
+      ) || colorSchemes[0];
   }
 });
 
 watch(backgroundColor, () => {
-  localStorage.setItem('spectrogramBackgroundColor', backgroundColor.value);
+  localStorage.setItem("spectrogramBackgroundColor", backgroundColor.value);
 });
 watch(colorScheme, () => {
-  localStorage.setItem('spectrogramColorScheme', colorScheme.value.value);
+  localStorage.setItem("spectrogramColorScheme", colorScheme.value.value);
 });
 </script>
 
@@ -53,10 +58,7 @@ watch(colorScheme, () => {
           >
             mdi-palette
           </v-icon>
-          <span
-            v-else
-            v-bind="{ ...modalProps, ...tooltipProps }"
-          >
+          <span v-else v-bind="{ ...modalProps, ...tooltipProps }">
             <v-icon size="30">mdi-palette</v-icon>
             <span>Change Color Scheme</span>
           </span>
@@ -66,9 +68,7 @@ watch(colorScheme, () => {
     </template>
     <template #default="{ isActive }">
       <v-card>
-        <v-card-title>
-          Spectrogram Color Options
-        </v-card-title>
+        <v-card-title> Spectrogram Color Options </v-card-title>
         <v-card-text>
           <v-row>
             <v-col cols="8">
@@ -88,10 +88,7 @@ watch(colorScheme, () => {
           </v-row>
         </v-card-text>
         <v-card-actions>
-          <v-btn
-            text="Close"
-            @click="isActive.value = false"
-          />
+          <v-btn text="Close" @click="isActive.value = false" />
         </v-card-actions>
       </v-card>
     </template>
