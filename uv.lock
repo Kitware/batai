@@ -305,7 +305,7 @@ requires-dist = [
     { name = "django-minio-storage", marker = "extra == 'development'", specifier = "==0.5.9" },
     { name = "django-ninja", specifier = "==1.6.2" },
     { name = "django-oauth-toolkit", specifier = "==3.2.0" },
-    { name = "django-resonant-settings", extras = ["allauth", "celery"], specifier = "==0.50.3" },
+    { name = "django-resonant-settings", extras = ["allauth", "celery"], specifier = "==0.50.4" },
     { name = "django-resonant-utils", extras = ["allauth", "s3-storage"], specifier = "==0.19.0" },
     { name = "django-resonant-utils", extras = ["minio-storage"], marker = "extra == 'development'", specifier = "==0.19.0" },
     { name = "django-s3-file-field", extras = ["minio"], marker = "extra == 'development'", specifier = "==1.1.0" },
@@ -965,15 +965,15 @@ wheels = [
 
 [[package]]
 name = "django-resonant-settings"
-version = "0.50.3"
+version = "0.50.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "django-environ" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/93/09/90d8a1bf0adc369da51f94ad001ff0ac0a66021ab1ea33b3732d80cb2e78/django_resonant_settings-0.50.3.tar.gz", hash = "sha256:a961cba3fe850845d636caccf3b927068cc25884a14f28d7e751bb16f0a8d9be", size = 19236, upload-time = "2026-04-10T14:04:25.793Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/95/19/8cf8d5be1482612f6d9c1722bf9324b5227ab0502d9ca3a886a70416309b/django_resonant_settings-0.50.4.tar.gz", hash = "sha256:48206380d6e9216d05c8676e9b3207622d8c496835c45569b01c611b741f153f", size = 19182, upload-time = "2026-04-22T02:01:19.964Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/a5/b311d7038abf599098a6dcc7652fb26969cf744fef7eca28e82b8b94b5c0/django_resonant_settings-0.50.3-py3-none-any.whl", hash = "sha256:ada78d0cd0995596510eeb43e18fc278250f9d7962688b34515caceb39e72fb7", size = 26047, upload-time = "2026-04-10T14:04:26.541Z" },
+    { url = "https://files.pythonhosted.org/packages/54/b0/84b9fe72a0055c1b83a57fefe0ea3b081951256e35584e15f0e424bf39fc/django_resonant_settings-0.50.4-py3-none-any.whl", hash = "sha256:f1e8be79499b51088652063917b11b393ecd9e69816b3b407b5d00fdc4e6190e", size = 25988, upload-time = "2026-04-22T02:01:20.687Z" },
 ]
 
 [package.optional-dependencies]
@@ -1987,7 +1987,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess" },
+    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [

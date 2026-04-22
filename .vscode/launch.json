@@ -8,7 +8,12 @@
       "program": "${workspaceFolder}/manage.py",
       "args": ["runserver_plus", "--print-sql", "localhost:8000"],
       "django": true,
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "presentation": {
+        "group": "2-services",
+        "order": 1
+      }
     },
     {
       "name": "Django: Server (eager Celery)",
@@ -20,7 +25,12 @@
         "DJANGO_CELERY_TASK_ALWAYS_EAGER": "true"
       },
       "django": true,
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "presentation": {
+        "group": "3-utilities",
+        "order": 1
+      }
     },
     {
       "name": "Django: Management Command",
@@ -29,7 +39,12 @@
       "program": "${workspaceFolder}/manage.py",
       "args": ["${input:managementCommand}"],
       "django": true,
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "presentation": {
+        "group": "3-utilities",
+        "order": 2
+      }
     },
     {
       "name": "Celery: Worker",
@@ -47,16 +62,24 @@
         "--without-heartbeat"
       ],
       "console": "integratedTerminal",
-      "justMyCode": false
+      "justMyCode": false,
+      "presentation": {
+        "group": "2-services",
+        "order": 2
+      }
     },
     {
       "name": "Pytest: Debug",
       "type": "debugpy",
       "request": "launch",
+      "module": "pytest",
       "purpose": ["debug-test"],
       "console": "integratedTerminal",
       "django": true,
-      "justMyCode": false
+      "justMyCode": false,
+      "presentation": {
+        "hidden": true
+      }
     },
     {
       "name": "Vite: Dev Server",
@@ -65,19 +88,22 @@
       "cwd": "${workspaceFolder}/client",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "presentation": {
+        "group": "2-services",
+        "order": 3
+      }
     }
   ],
   "compounds": [
     {
-      "name": "Django + Celery",
-      "configurations": ["Django: Server", "Celery: Worker"],
-      "stopAll": true
-    },
-    {
       "name": "Django + Celery + Vite",
       "configurations": ["Django: Server", "Celery: Worker", "Vite: Dev Server"],
-      "stopAll": true
+      "stopAll": true,
+      "presentation": {
+        "group": "1-compound",
+        "order": 1
+      }
     }
   ],
   "inputs": [
