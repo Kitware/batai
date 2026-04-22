@@ -1168,10 +1168,7 @@ def patch_sequence_annotation(
                 annotation_instance.end_time = annotation.end_time
             if annotation.comments:
                 annotation_instance.comments = annotation.comments
-            if annotation.type:
-                annotation_instance.type = annotation.type
-            else:
-                annotation_instance.type = None
+            annotation_instance.type = annotation.type or None
             annotation_instance.save()
 
             # Clear existing species associations
