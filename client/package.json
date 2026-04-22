@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "build": "vite build",
     "format": "eslint --fix src",
-    "test:lint": "eslint --no-fix src",
+    "test:lint": "eslint --no-fix .",
     "test:type": "vue-tsc --build",
     "test": "npm-run-all test:lint test:type"
   },
@@ -40,6 +40,7 @@
     "@vue/tsconfig": "0.9.1",
     "eslint": "10.2.1",
     "eslint-plugin-vue": "10.8.0",
+    "jiti": "2.6.1",
     "npm-run-all2": "8.0.4",
     "sass-embedded": "1.99.0",
     "typescript": "5.9.3",
