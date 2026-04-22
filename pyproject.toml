@@ -157,15 +157,10 @@ ignore = [
 
   # Project-specific
   "BLE001", # blind-except
-  "C901", # complex-structure
   "DJ001", # django-nullable-model-string-field
   "N815", # mixed-case-variable-in-class-scope
   "N999", # invalid-module-name
   "PLC0415", # import-outside-top-level
-  "PLR0911", # too-many-return-statements
-  "PLR0912", # too-many-branches
-  "PLR0913", # too-many-arguments
-  "PLR0915", # too-many-statements
   "PLW2901", # redefined-loop-name
   "PTH", # flake8-use-pathlib
   "S110", # try-except-pass

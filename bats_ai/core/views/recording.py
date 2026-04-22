@@ -351,7 +351,7 @@ def create_recording(
 
 
 @router.patch("/{pk}")
-def update_recording(request: HttpRequest, pk: int, recording_data: RecordingUploadSchema):
+def update_recording(request: HttpRequest, pk: int, recording_data: RecordingUploadSchema):  # noqa: C901, PLR0912
     try:
         recording = Recording.objects.get(pk=pk, owner=request.user)
     except Recording.DoesNotExist:
@@ -484,7 +484,7 @@ def delete_recording(
 
 
 @router.get("/", response=RecordingPaginatedResponse)
-def get_recordings(
+def get_recordings(  # noqa: C901
     request: HttpRequest,
     q: Query[RecordingListQuerySchema],
 ):
@@ -1085,7 +1085,7 @@ def put_annotation(
 
 
 @router.patch("/{recording_pk}/annotations/{annotation_pk}")
-def patch_annotation(
+def patch_annotation(  # noqa: C901, PLR0912
     request,
     recording_pk: int,
     annotation_pk: int,

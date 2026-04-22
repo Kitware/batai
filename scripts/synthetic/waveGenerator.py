@@ -155,7 +155,7 @@ def generate_spectrogram(wav_path, output_path, colormap="turbo"):
         return None, None
 
 
-def generate_compressed(img_path, duration, annotation_path, output_path):
+def generate_compressed(img_path, duration, annotation_path, output_path):  # noqa: C901
     try:
         img = np.array(Image.open(img_path))
         canvas = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY).astype(np.float32)

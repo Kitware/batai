@@ -65,7 +65,7 @@ class Command(BaseCommand):
         with zip_path.open("wb") as f:
             f.write(response.content)
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa: C901, PLR0912, PLR0915
         batch_size = options["batch_size"]
 
         # Track existing IDs to avoid duplicates

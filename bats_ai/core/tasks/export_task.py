@@ -75,7 +75,7 @@ def annotation_to_dict(
     return data
 
 
-def write_csv_and_json(
+def write_csv_and_json(  # noqa: PLR0913
     zipf,
     name_prefix,
     queryset,
