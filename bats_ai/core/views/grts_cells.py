@@ -7,6 +7,7 @@ from ninja import Query
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import GRTSCells
+from bats_ai.core.utils.grts_utils import normalize_sample_frame_id
 
 router = RouterPaginated()
 
@@ -19,6 +20,8 @@ def get_grid_cell_id(
     sample_frame: int = Query(14),
 ):
     try:
+        sample_frame = normalize_sample_frame_id(sample_frame)
+
         # Create a point object from the provided latitude and longitude
         point = Point(longitude, latitude, srid=4326)
 

@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class GuanoMetadataSchema(Schema):
     nabat_grid_cell_grts_id: str | None = None
+    nabat_sample_frame_id: int | None = None
     nabat_latitude: float | None = None
     nabat_longitude: float | None = None
     nabat_site_name: str | None = None
@@ -59,7 +60,11 @@ def default_data(
         # Uploaded files may be in-memory or have a non-filesystem name. Write to a
         # temporary file so guano reads the same way as local script usage.
         temp_path = _write_uploaded_audio_to_temp_file(audio_file)
-        metadata = extract_guano_metadata(temp_path, check_filename=True)
+        metadata = extract_guano_metadata(
+            temp_path,
+            check_filename=True,
+            filename=audio_file.name,
+        )
         return JsonResponse(metadata, safe=False)
 
     except Exception as e:

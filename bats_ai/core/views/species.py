@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Query, Router, Schema
 
 from bats_ai.core.models import GRTSCells, Recording, Species, SpeciesRange
+from bats_ai.core.utils.grts_utils import normalize_sample_frame_id
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
@@ -47,13 +48,15 @@ def get_species(
     sample_frame_id: int = Query(CONUS_SAMPLE_FRAME_ID),
     recording_id: int | None = Query(None),
 ):
+    sample_frame_id = normalize_sample_frame_id(sample_frame_id)
+
     if recording_id is not None:
         recording = get_object_or_404(
             Recording.objects.only("grts_cell_id", "sample_frame_id"),
             pk=recording_id,
         )
         grts_cell_id = recording.grts_cell_id
-        sample_frame_id = (
+        sample_frame_id = normalize_sample_frame_id(
             recording.sample_frame_id
             if recording.sample_frame_id is not None
             else CONUS_SAMPLE_FRAME_ID

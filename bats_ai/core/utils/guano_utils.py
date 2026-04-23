@@ -47,17 +47,24 @@ def extract_metadata_from_filename(filename: str) -> dict:
 
     # Extract matched groups
     sample_id = match.group(0)
-    cell_id = match.group(1)
+    first_token = match.group(1)
     label_name = match.group(2)
     date_str = match.group(3)
     timestamp_str = match.group(4)
 
     metadata = {}
+    second_token_is_numeric = label_name.isdigit()
 
-    # Extract grid cell ID
-    if cell_id:
+    # For filenames shaped like "<sample_frame_id>_<grts_id>_<date>_<time>",
+    # treat first token as sample frame and second token as grid cell.
+    if second_token_is_numeric:
         with contextlib.suppress(ValueError):
-            metadata["nabat_grid_cell_grts_id"] = str(int(cell_id))
+            metadata["nabat_sample_frame_id"] = int(first_token)
+            metadata["nabat_grid_cell_grts_id"] = str(int(label_name))
+            metadata["nabat_sample_id"] = sample_id
+    elif first_token:
+        with contextlib.suppress(ValueError):
+            metadata["nabat_grid_cell_grts_id"] = str(int(first_token))
             metadata["nabat_sample_id"] = sample_id
 
     # Extract date and time
@@ -86,7 +93,12 @@ def extract_metadata_from_filename(filename: str) -> dict:
     return metadata
 
 
-def extract_guano_metadata(file_path: str | Path, *, check_filename: bool = False) -> dict:
+def extract_guano_metadata(
+    file_path: str | Path,
+    *,
+    check_filename: bool = False,
+    filename: str | None = None,
+) -> dict:
     """Extract GUANO metadata from a WAV file.
 
     Args:
@@ -123,7 +135,8 @@ def extract_guano_metadata(file_path: str | Path, *, check_filename: bool = Fals
     }
 
     # Fix longitude if positive (individuals don't put the - in the longitude)
-    # GUANO metadata is supposed to be WGS84, but some individuals don't put the - in the longitude.
+    # GUANO metadata is supposed to be WGS84, but some individuals do not
+    # include the negative sign in longitude.
     if nabat_fields["nabat_longitude"]:
         try:
             longitude = float(nabat_fields["nabat_longitude"])
@@ -161,7 +174,7 @@ def extract_guano_metadata(file_path: str | Path, *, check_filename: bool = Fals
         ),
         "nabat_comments": gfile.get("NABat|Comments", None),
         "nabat_detector_type": gfile.get("NABat|Detector type", None),
-        "nabat_unusual_occurrences": gfile.get("NABat|Unusual occurrences", "") or None,
+        "nabat_unusual_occurrences": (gfile.get("NABat|Unusual occurrences", "") or None),
     }
 
     # Combine all extracted fields
@@ -169,7 +182,7 @@ def extract_guano_metadata(file_path: str | Path, *, check_filename: bool = Fals
 
     # If GUANO metadata is missing key fields, try to extract from filename
     # as fallback
-    file_path_obj = Path(file_path)
+    file_path_obj = Path(filename) if filename else Path(file_path)
     if check_filename:
         filename_metadata = extract_metadata_from_filename(file_path_obj.name)
         # Only fill in missing values from filename, don't overwrite existing
@@ -179,6 +192,10 @@ def extract_guano_metadata(file_path: str | Path, *, check_filename: bool = Fals
             grid_cell_id = filename_metadata.get("nabat_grid_cell_grts_id")
             if not metadata.get("nabat_grid_cell_grts_id") and grid_cell_id:
                 metadata["nabat_grid_cell_grts_id"] = grid_cell_id
+
+            sample_frame_id = filename_metadata.get("nabat_sample_frame_id")
+            if not metadata.get("nabat_sample_frame_id") and sample_frame_id is not None:
+                metadata["nabat_sample_frame_id"] = sample_frame_id
 
             # Fill in activation start time if missing
             activation_time = filename_metadata.get("nabat_activation_start_time")
