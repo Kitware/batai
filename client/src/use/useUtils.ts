@@ -65,20 +65,25 @@ function parseRecordingFilename(filename: string): ParsedRecordingFilename | nul
     return null;
   }
 
-  const cellId = parseInt(match[1], 10);
+  const firstToken = match[1];
   const labelName = match[2];
   const baseDate = match[3];
   const timestamp = match[4];
   const date = `${baseDate.slice(0, 4)}-${baseDate.slice(4, 6)}-${baseDate.slice(6, 8)}`;
+  const secondTokenIsNumeric = /^\d+$/.test(labelName);
+  const cellId = parseInt(secondTokenIsNumeric ? labelName : firstToken, 10);
   const quadrant = (["SW", "NE", "NW", "SE"].includes(labelName)
     ? labelName
     : undefined) as RecordingQuadrant | undefined;
+  const sampleFrameId = secondTokenIsNumeric
+    ? parseInt(firstToken, 10)
+    : parseSampleFrameIdFromFilename(filename);
 
   return {
     cellId,
     date,
     time: timestamp,
-    sampleFrameId: parseSampleFrameIdFromFilename(filename),
+    sampleFrameId,
     quadrant,
   };
 }

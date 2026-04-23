@@ -477,8 +477,14 @@ async function getOtherUserAnnotations(recordingId: string) {
   );
 }
 
-async function getCellLocation(cellId: number, quadrant?: "SW" | "NE" | "NW" | "SE") {
-  return axiosInstance.get<GRTSCellCenter>(`/grts/${cellId}`, { params: { quadrant } });
+async function getCellLocation(
+  cellId: number,
+  quadrant?: "SW" | "NE" | "NW" | "SE",
+  sampleFrameId?: number
+) {
+  return axiosInstance.get<GRTSCellCenter>(`/grts/${cellId}`, {
+    params: { quadrant, sample_frame: sampleFrameId },
+  });
 }
 
 async function getCellBbox(cellId: number) {
@@ -627,6 +633,7 @@ async function cancelProcessingTask(taskId: number): Promise<{ detail: string }>
 
 interface GuanoMetadata {
   nabat_grid_cell_grts_id?: string;
+  nabat_sample_frame_id?: number;
   nabat_latitude?: number;
   nabat_longitude?: number;
   nabat_site_name?: string;

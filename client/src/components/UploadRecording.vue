@@ -81,7 +81,13 @@ export default defineComponent({
 
       if (parsedFilename.cellId) {
         gridCellId.value = parsedFilename.cellId;
-        const { latitude: lat , longitude: lon } = (await getCellLocation(gridCellId.value, parsedFilename.quadrant)).data;
+        const { latitude: lat , longitude: lon } = (
+          await getCellLocation(
+            gridCellId.value,
+            parsedFilename.quadrant,
+            sampleFrameId.value
+          )
+        ).data;
         if (lat && lon) {
           latitude.value = lat;
           longitude.value = lon;
@@ -176,6 +182,7 @@ export default defineComponent({
         // Finally we get the latitude/longitude or gridCell Id if it's available.
         const startTime = results.nabat_activation_start_time;
         const NaBatgridCellId = results.nabat_grid_cell_grts_id;
+        const NaBatSampleFrameId = results.nabat_sample_frame_id;
         const NABatlatitude = results.nabat_latitude;
         const NABatlongitude = results.nabat_longitude;
         if (startTime) {
@@ -185,6 +192,9 @@ export default defineComponent({
         }
         if (NaBatgridCellId) {
           gridCellId.value = parseInt(NaBatgridCellId);
+        }
+        if (NaBatSampleFrameId !== undefined && NaBatSampleFrameId !== null) {
+          sampleFrameId.value = Number(NaBatSampleFrameId);
         }
         if (NABatlatitude && NABatlongitude) {
           latitude.value = NABatlatitude;
@@ -248,7 +258,7 @@ export default defineComponent({
 
   const gridCellChanged = async () => {
     if (gridCellId.value) {
-      const result = await getCellLocation(gridCellId.value);
+      const result = await getCellLocation(gridCellId.value, undefined, sampleFrameId.value);
       if (result.data.latitude && result.data.longitude) {
         latitude.value = result.data.latitude;
         longitude.value = result.data.longitude;
@@ -280,6 +290,7 @@ export default defineComponent({
       latitude,
       longitude,
       gridCellId,
+      sampleFrameId,
       publicVal,
       updateMap,
       recordedTime,
@@ -436,6 +447,16 @@ export default defineComponent({
                 <v-expansion-panel>
                   <v-expansion-panel-title>Location</v-expansion-panel-title>
                   <v-expansion-panel-text>
+                    <v-row>
+                      <v-text-field
+                        v-model="sampleFrameId"
+                        type="number"
+                        label="Sample Frame ID"
+                        hint="Defaults to 14 when not found"
+                        persistent-hint
+                        readonly
+                      />
+                    </v-row>
                     <v-row class="mt-2">
                       <v-text-field
                         v-model="latitude"

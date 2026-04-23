@@ -53,7 +53,13 @@ export default defineComponent({
       };
       if (parsedFilename.cellId) {
         results.gridCellId = parsedFilename.cellId;
-        const { latitude: lat , longitude: lon } = (await getCellLocation(results.gridCellId, parsedFilename.quadrant)).data;
+        const { latitude: lat , longitude: lon } = (
+          await getCellLocation(
+            results.gridCellId,
+            parsedFilename.quadrant,
+            parsedFilename.sampleFrameId
+          )
+        ).data;
         if (lat && lon) {
           results.location = { lat, lon };
         }
@@ -195,6 +201,7 @@ export default defineComponent({
         // Finally we get the latitude/longitude or gridCell Id if it's available.
         const startTime = results.nabat_activation_start_time;
         const NaBatgridCellId = results.nabat_grid_cell_grts_id;
+        const NaBatSampleFrameId = results.nabat_sample_frame_id;
         const NABatlatitude = results.nabat_latitude;
         const NABatlongitude = results.nabat_longitude;
         if (startTime) {
@@ -204,6 +211,9 @@ export default defineComponent({
         }
         if (NaBatgridCellId) {
           recording.gridCellId= parseInt(NaBatgridCellId);
+        }
+        if (NaBatSampleFrameId !== undefined && NaBatSampleFrameId !== null) {
+          recording.sampleFrameId = Number(NaBatSampleFrameId);
         }
         if (NABatlatitude && NABatlongitude) {
           recording.location = {
