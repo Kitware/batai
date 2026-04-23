@@ -65,10 +65,7 @@ export default defineComponent({
     >
       <v-card-text class="pa-2 text-body-2">
         <div class="d-flex flex-column gap-1">
-          <div
-            v-if="data.kneeKhz != null"
-            class="d-flex align-center"
-          >
+          <div v-if="data.kneeKhz != null" class="d-flex align-center">
             <span
               v-if="data.kneeColor"
               class="color-swatch"
@@ -77,10 +74,7 @@ export default defineComponent({
             <span class="text-caption text-medium-emphasis mr-2">Knee</span>
             <span>{{ data.kneeKhz.toFixed(1) }} kHz</span>
           </div>
-          <div
-            v-if="data.fcKhz != null"
-            class="d-flex align-center"
-          >
+          <div v-if="data.fcKhz != null" class="d-flex align-center">
             <span
               v-if="data.charFreqColor"
               class="color-swatch"
@@ -89,24 +83,18 @@ export default defineComponent({
             <span class="text-caption text-medium-emphasis mr-2">Fc</span>
             <span>{{ data.fcKhz.toFixed(1) }} kHz</span>
           </div>
-          <div v-if="data.slopeHi != null"> 
-            <span
-              class="text-caption text-medium-emphasis"
-            >
+          <div v-if="data.slopeHi != null">
+            <span class="text-caption text-medium-emphasis">
               <b>Slope Hi:</b> {{ data.slopeHi.toFixed(2) }} kHz/ms
             </span>
           </div>
-          <div v-if="data.slopeTotal != null"> 
-            <span
-              class="text-caption text-medium-emphasis"
-            >
+          <div v-if="data.slopeTotal != null">
+            <span class="text-caption text-medium-emphasis">
               <b>Slope Total:</b>{{ data.slopeTotal.toFixed(2) }} kHz/ms
             </span>
           </div>
-          <div v-if="data.slopeLow != null"> 
-            <span
-              class="text-caption text-medium-emphasis"
-            >
+          <div v-if="data.slopeLow != null">
+            <span class="text-caption text-medium-emphasis">
               <b>Slope Low:</b> {{ data.slopeLow.toFixed(2) }} kHz/ms
             </span>
           </div>

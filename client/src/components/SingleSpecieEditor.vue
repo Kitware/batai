@@ -42,7 +42,7 @@ export default defineComponent({
       (newVal) => {
         selectedCode.value = newVal ?? null;
       },
-      { immediate: true }
+      { immediate: true },
     );
 
     watch(selectedCode, (newVal) => {
@@ -72,21 +72,23 @@ export default defineComponent({
       "This species is in the same range as the recording.";
 
     const groupedItems = computed(() => {
-      const inRangeSpecies = props.speciesList.filter((s) => s.in_range === true);
+      const inRangeSpecies = props.speciesList.filter(
+        (s) => s.in_range === true,
+      );
       const rest = props.speciesList.filter((s) => s.in_range !== true);
 
       const groups: Record<string, Species[]> = {};
       for (const s of rest) {
-        const cat =
-          s.category.charAt(0).toUpperCase() + s.category.slice(1);
+        const cat = s.category.charAt(0).toUpperCase() + s.category.slice(1);
         if (!groups[cat]) groups[cat] = [];
         groups[cat].push(s);
       }
-      const result: Array<
-        { type: "subheader"; title: string } | Species
-      > = [];
+      const result: Array<{ type: "subheader"; title: string } | Species> = [];
       if (inRangeSpecies.length > 0) {
-        result.push({ type: "subheader", title: "Suggested Species by Location" });
+        result.push({
+          type: "subheader",
+          title: "Suggested Species by Location",
+        });
         const sortedInRange = [...inRangeSpecies].sort((a, b) => {
           const aCat = categoryPriority[a.category] ?? 999;
           const bCat = categoryPriority[b.category] ?? 999;
@@ -95,7 +97,13 @@ export default defineComponent({
         });
         result.push(...sortedInRange);
       }
-      const groupsOrder = ["In range", "Single", "Multiple", "Frequency", "Noid"];
+      const groupsOrder = [
+        "In range",
+        "Single",
+        "Multiple",
+        "Frequency",
+        "Noid",
+      ];
       groupsOrder.forEach((key) => {
         result.push({ type: "subheader", title: key });
         result.push(...(groups[key] ?? []));
@@ -199,15 +207,8 @@ export default defineComponent({
               {{ (item.raw as Species).category }}
             </v-chip>
           </template>
-          <template
-            v-if="(item.raw as Species).in_range === true"
-            #append
-          >
-            <v-icon
-              v-tooltip="inRangeTooltip"
-              size="small"
-              color="#b8860b"
-            >
+          <template v-if="(item.raw as Species).in_range === true" #append>
+            <v-icon v-tooltip="inRangeTooltip" size="small" color="#b8860b">
               mdi-map
             </v-icon>
           </template>

@@ -1,11 +1,20 @@
 <script lang="ts">
-import { computed, defineComponent, ref, type Ref, onMounted, watch } from 'vue';
-import { deleteRecording, type Recording, getRecordingTags } from '../api/api';
-import UploadRecording, { type EditingRecording } from '@components/UploadRecording.vue';
-import useState from '@use/useState';
-import BatchUploadRecording from '@components/BatchUploadRecording.vue';
-import RecordingTable from '@components/RecordingTable.vue';
-import RecordingLocationsMap from '@components/RecordingLocationsMap.vue';
+import {
+  computed,
+  defineComponent,
+  ref,
+  type Ref,
+  onMounted,
+  watch,
+} from "vue";
+import { deleteRecording, type Recording, getRecordingTags } from "../api/api";
+import UploadRecording, {
+  type EditingRecording,
+} from "@components/UploadRecording.vue";
+import useState from "@use/useState";
+import BatchUploadRecording from "@components/BatchUploadRecording.vue";
+import RecordingTable from "@components/RecordingTable.vue";
+import RecordingLocationsMap from "@components/RecordingLocationsMap.vue";
 
 export default defineComponent({
   components: {
@@ -59,8 +68,8 @@ export default defineComponent({
     const editRecording = (item: Recording) => {
       editingRecording.value = {
         name: item.name,
-        equipment: item.equipment || '',
-        comments: item.comments || '',
+        equipment: item.equipment || "",
+        comments: item.comments || "",
         date: item.recorded_date,
         time: item.recorded_time,
         public: item.public,
@@ -73,10 +82,12 @@ export default defineComponent({
       };
       if (item.recording_location) {
         const [lon, lat] = item.recording_location.coordinates;
-        editingRecording.value['location'] = { lat, lon };
+        editingRecording.value["location"] = { lat, lon };
       }
       if (item.tags_text) {
-        editingRecording.value.tags = item.tags_text.filter((tag: string) => !!tag);
+        editingRecording.value.tags = item.tags_text.filter(
+          (tag: string) => !!tag,
+        );
       }
       uploadDialog.value = true;
     };
@@ -99,7 +110,11 @@ export default defineComponent({
       fetchRecordingTags();
     });
 
-    const showMyTable = computed(() => configuration.value.is_admin || configuration.value.non_admin_upload_enabled);
+    const showMyTable = computed(
+      () =>
+        configuration.value.is_admin ||
+        configuration.value.non_admin_upload_enabled,
+    );
     function setUnifiedTags(v: string[]) {
       filterTags.value = v;
       sharedFilterTags.value = v;
@@ -122,10 +137,12 @@ export default defineComponent({
       }
     });
 
-    const listBboxFilter = computed((): [number, number, number, number] | null => {
-      if (!showMap.value || !filterListsByMap.value) return null;
-      return mapBounds.value;
-    });
+    const listBboxFilter = computed(
+      (): [number, number, number, number] | null => {
+        if (!showMap.value || !filterListsByMap.value) return null;
+        return mapBounds.value;
+      },
+    );
 
     function onMapBounds(bounds: [number, number, number, number]) {
       mapBounds.value = bounds;
@@ -167,9 +184,7 @@ export default defineComponent({
     <v-card class="mb-3">
       <v-card-title>
         <v-row>
-          <div v-if="showMyTable">
-            My Recordings
-          </div>
+          <div v-if="showMyTable">My Recordings</div>
           <v-spacer />
           <div class="d-flex justify-center align-center">
             <v-checkbox
@@ -199,10 +214,7 @@ export default defineComponent({
             />
             <v-menu v-if="showMyTable">
               <template #activator="{ props }">
-                <v-btn
-                  color="primary"
-                  v-bind="props"
-                >
+                <v-btn color="primary" v-bind="props">
                   Upload <v-icon>mdi-chevron-down</v-icon>
                 </v-btn>
               </template>
@@ -220,40 +232,25 @@ export default defineComponent({
       </v-card-title>
     </v-card>
 
-    <div
-      class="recordings-layout"
-      :class="{ 'with-map': showMap }"
-    >
+    <div class="recordings-layout" :class="{ 'with-map': showMap }">
       <div class="recordings-lists">
-        <v-dialog
-          v-model="deleteDialogOpen"
-          width="auto"
-        >
+        <v-dialog v-model="deleteDialogOpen" width="auto">
           <v-card>
             <v-card-title class="pa-4">
-              Delete {{ recordingToDelete?.name || 'this recording' }}?
+              Delete {{ recordingToDelete?.name || "this recording" }}?
             </v-card-title>
             <v-card-actions class="pa-4">
-              <v-btn
-                variant="flat"
-                @click="deleteDialogOpen = false"
-              >
+              <v-btn variant="flat" @click="deleteDialogOpen = false">
                 Cancel
               </v-btn>
-              <v-btn
-                variant="flat"
-                color="error"
-                @click="deleteOneRecording()"
-              >
+              <v-btn variant="flat" color="error" @click="deleteOneRecording()">
                 Delete
               </v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
 
-        <v-card
-          v-if="showMyTable"
-        >
+        <v-card v-if="showMyTable">
           <v-card-text>
             <recording-table
               ref="myRecordingsTableRef"
@@ -293,16 +290,16 @@ export default defineComponent({
       </div>
 
       <v-expand-x-transition>
-        <v-card
-          v-if="showMap"
-          class="recordings-map-panel"
-        >
+        <v-card v-if="showMap" class="recordings-map-panel">
           <v-card-text class="pa-3 h-100">
             <RecordingLocationsMap
               class="map-right"
               height="100%"
               :tags="filterTags"
-              :exclude-submitted="configuration.mark_annotations_completed_enabled && !showSubmittedRecordings"
+              :exclude-submitted="
+                configuration.mark_annotations_completed_enabled &&
+                !showSubmittedRecordings
+              "
               :resize-tick="mapResizeTick"
               :report-bounds="showMap && filterListsByMap"
               :initial-bounds="mapBounds"
@@ -313,23 +310,23 @@ export default defineComponent({
       </v-expand-x-transition>
     </div>
 
-    <v-dialog
-      v-model="uploadDialog"
-      width="700"
-    >
+    <v-dialog v-model="uploadDialog" width="700">
       <upload-recording
         :editing="editingRecording"
         @done="uploadDone()"
-        @cancel="uploadDialog = false; editingRecording = null"
+        @cancel="
+          uploadDialog = false;
+          editingRecording = null;
+        "
       />
     </v-dialog>
-    <v-dialog
-      v-model="batchUploadDialog"
-      width="700"
-    >
+    <v-dialog v-model="batchUploadDialog" width="700">
       <batch-upload-recording
         @done="uploadDone()"
-        @cancel="batchUploadDialog = false; editingRecording = null"
+        @cancel="
+          batchUploadDialog = false;
+          editingRecording = null;
+        "
       />
     </v-dialog>
   </div>

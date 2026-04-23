@@ -1,18 +1,25 @@
 <script lang="ts">
+import { computed, defineComponent, type PropType, ref, type Ref } from "vue";
+import { RecordingMimeTypes } from "../constants";
+import useRequest from "@use/useRequest";
 import {
-  computed,
-  defineComponent,
-  type PropType,
-  ref,
-  type Ref,
-} from 'vue';
-import { RecordingMimeTypes } from '../constants';
-import useRequest from '@use/useRequest';
-import { type UploadLocation, uploadRecordingFile, patchRecording, getCellLocation, getCellfromLocation, getGuanoMetadata, type RecordingFileParameters } from '../api/api';
-import MapLocation from './MapLocation.vue';
-import { useDate } from 'vuetify';
-import { DEFAULT_SAMPLE_FRAME_ID, getCurrentTime, extractDateTimeComponents, parseRecordingFilename } from '@use/useUtils';
-import useState from '@use/useState';
+  type UploadLocation,
+  uploadRecordingFile,
+  patchRecording,
+  getCellLocation,
+  getCellfromLocation,
+  getGuanoMetadata,
+  type RecordingFileParameters,
+} from "../api/api";
+import MapLocation from "./MapLocation.vue";
+import { useDate } from "vuetify";
+import {
+  DEFAULT_SAMPLE_FRAME_ID,
+  getCurrentTime,
+  extractDateTimeComponents,
+  parseRecordingFilename,
+} from "@use/useUtils";
+import useState from "@use/useState";
 
 export interface EditingRecording {
   id: number;
@@ -22,7 +29,7 @@ export interface EditingRecording {
   equipment: string;
   comments: string;
   public: boolean;
-  location?: { lat: number, lon: number };
+  location?: { lat: number; lon: number };
   siteName?: string;
   software?: string;
   detector?: string;
@@ -39,9 +46,9 @@ export default defineComponent({
     editing: {
       type: Object as PropType<EditingRecording | null>,
       default: () => null,
-    }
+    },
   },
-  emits: ['done', 'cancel'],
+  emits: ["done", "cancel"],
   setup(props, { emit }) {
     const { recordingTagList } = useState();
     const tagOptions = computed(() => [...recordingTagList.value]);
@@ -52,40 +59,53 @@ export default defineComponent({
     const fileInputEl: Ref<HTMLInputElement | null> = ref(null);
     const fileModel: Ref<File | undefined> = ref();
     const successfulUpload = ref(false);
-    const errorText = ref('');
-    const progressState = ref('');
-    const recordedDate = ref(props.editing ? props.editing.date : new Date().toISOString().split('T')[0]); // YYYY-MM-DD Time
-    const recordedTime = ref(props.editing && props.editing.time ? props.editing.time.replace(/:/g, "") : getCurrentTime()); // HHMMSS
+    const errorText = ref("");
+    const progressState = ref("");
+    const recordedDate = ref(
+      props.editing
+        ? props.editing.date
+        : new Date().toISOString().split("T")[0],
+    ); // YYYY-MM-DD Time
+    const recordedTime = ref(
+      props.editing && props.editing.time
+        ? props.editing.time.replace(/:/g, "")
+        : getCurrentTime(),
+    ); // HHMMSS
     const uploadProgress = ref(0);
-    const name = ref(props.editing ? props.editing.name : '');
-    const equipment = ref(props.editing ? props.editing.equipment : '');
-    const comments = ref(props.editing ? props.editing.comments : '');
+    const name = ref(props.editing ? props.editing.name : "");
+    const equipment = ref(props.editing ? props.editing.equipment : "");
+    const comments = ref(props.editing ? props.editing.comments : "");
     const validForm = ref(false);
-    const latitude: Ref<number | undefined> = ref(props.editing?.location?.lat ? props.editing.location.lat : undefined);
-    const longitude: Ref<number | undefined> = ref(props.editing?.location?.lon ? props.editing.location.lon : undefined);
+    const latitude: Ref<number | undefined> = ref(
+      props.editing?.location?.lat ? props.editing.location.lat : undefined,
+    );
+    const longitude: Ref<number | undefined> = ref(
+      props.editing?.location?.lon ? props.editing.location.lon : undefined,
+    );
     const gridCellId: Ref<number | undefined> = ref();
     const sampleFrameId: Ref<number> = ref(DEFAULT_SAMPLE_FRAME_ID);
     const publicVal = ref(props.editing ? props.editing.public : false);
     // Guano Metadata
-    const siteName = ref(props.editing?.siteName || '');
-    const software = ref(props.editing?.software || '');
-    const detector = ref(props.editing?.detector || '');
-    const speciesList = ref(props.editing?.speciesList || '');
-    const unusualOccurrences = ref(props.editing?.unusualOccurrences || '');
+    const siteName = ref(props.editing?.siteName || "");
+    const software = ref(props.editing?.software || "");
+    const detector = ref(props.editing?.detector || "");
+    const speciesList = ref(props.editing?.speciesList || "");
+    const unusualOccurrences = ref(props.editing?.unusualOccurrences || "");
     const autoFill = async (filename: string) => {
       const parsedFilename = parseRecordingFilename(filename);
-      sampleFrameId.value = parsedFilename?.sampleFrameId ?? DEFAULT_SAMPLE_FRAME_ID;
+      sampleFrameId.value =
+        parsedFilename?.sampleFrameId ?? DEFAULT_SAMPLE_FRAME_ID;
       if (!parsedFilename) {
         return null;
       }
 
       if (parsedFilename.cellId) {
         gridCellId.value = parsedFilename.cellId;
-        const { latitude: lat , longitude: lon } = (
+        const { latitude: lat, longitude: lon } = (
           await getCellLocation(
             gridCellId.value,
             parsedFilename.quadrant,
-            sampleFrameId.value
+            sampleFrameId.value,
           )
         ).data;
         if (lat && lon) {
@@ -102,7 +122,7 @@ export default defineComponent({
       }
     };
     const readFile = async (e: Event) => {
-      const target = (e.target as HTMLInputElement);
+      const target = e.target as HTMLInputElement;
       if (target?.files?.length) {
         const file = target.files.item(0);
         if (!file) {
@@ -111,7 +131,7 @@ export default defineComponent({
         name.value = file.name.replace(/\.[^/.]+$/, "");
         await autoFill(name.value);
         if (!RecordingMimeTypes.includes(file.type)) {
-          errorText.value = `Selected file is not one of the following types: ${RecordingMimeTypes.join(' ')}`;
+          errorText.value = `Selected file is not one of the following types: ${RecordingMimeTypes.join(" ")}`;
           return;
         }
         fileModel.value = file;
@@ -123,11 +143,10 @@ export default defineComponent({
       }
     }
 
-
     const { request: submit, loading: submitLoading } = useRequest(async () => {
       const file = fileModel.value;
       if (!file) {
-        throw new Error('Unreachable');
+        throw new Error("Unreachable");
       }
       let location: UploadLocation = null;
       if (latitude.value && longitude.value) {
@@ -138,9 +157,9 @@ export default defineComponent({
       }
       if (gridCellId.value !== null) {
         if (location === null) {
-          location  = {};
+          location = {};
         }
-        location['gridCellId'] = gridCellId.value;
+        location["gridCellId"] = gridCellId.value;
       }
       const fileUploadParams: RecordingFileParameters = {
         name: name.value,
@@ -158,7 +177,7 @@ export default defineComponent({
         unusual_occurrences: unusualOccurrences.value,
       };
       await uploadRecordingFile(file, fileUploadParams);
-      emit('done');
+      emit("done");
     });
 
     const getMetadata = async () => {
@@ -174,7 +193,7 @@ export default defineComponent({
           detector.value = results.nabat_detector_type;
         }
         if (results.nabat_species_list) {
-          speciesList.value = results.nabat_species_list.join(',');
+          speciesList.value = results.nabat_species_list.join(",");
         }
         if (results.nabat_unusual_occurrences) {
           unusualOccurrences.value = results.nabat_unusual_occurrences;
@@ -186,7 +205,7 @@ export default defineComponent({
         const NABatlatitude = results.nabat_latitude;
         const NABatlongitude = results.nabat_longitude;
         if (startTime) {
-          const {date, time} = extractDateTimeComponents(startTime);
+          const { date, time } = extractDateTimeComponents(startTime);
           recordedDate.value = date;
           recordedTime.value = time;
         }
@@ -214,9 +233,9 @@ export default defineComponent({
         }
         if (gridCellId.value !== null) {
           if (location === null) {
-            location  = {};
+            location = {};
           }
-          location['gridCellId'] = gridCellId.value;
+          location["gridCellId"] = gridCellId.value;
         }
         const fileUploadParams: RecordingFileParameters = {
           name: name.value,
@@ -234,43 +253,46 @@ export default defineComponent({
           unusual_occurrences: unusualOccurrences.value,
         };
         await patchRecording(props.editing.id, fileUploadParams);
-        emit('done');
+        emit("done");
       } else {
         submit();
       }
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateTime = (time: any)  => {
-    recordedDate.value = new Date(time as string).toISOString().split('T')[0];
-  };
+    const updateTime = (time: any) => {
+      recordedDate.value = new Date(time as string).toISOString().split("T")[0];
+    };
 
-  const setLocation = async ({lat, lon}: {lat: number, lon: number}) => {
-    latitude.value = lat;
-    longitude.value = lon;
-    const result  = await getCellfromLocation(lat, lon, sampleFrameId.value);
-    if (result.data.grid_cell_id) {
-      gridCellId.value = result.data.grid_cell_id;
-    } else if (result.data.error) {
-      gridCellId.value = undefined;
-    }
-  };
-
-  const gridCellChanged = async () => {
-    if (gridCellId.value) {
-      const result = await getCellLocation(gridCellId.value, undefined, sampleFrameId.value);
-      if (result.data.latitude && result.data.longitude) {
-        latitude.value = result.data.latitude;
-        longitude.value = result.data.longitude;
-        triggerUpdateMap();
-
+    const setLocation = async ({ lat, lon }: { lat: number; lon: number }) => {
+      latitude.value = lat;
+      longitude.value = lon;
+      const result = await getCellfromLocation(lat, lon, sampleFrameId.value);
+      if (result.data.grid_cell_id) {
+        gridCellId.value = result.data.grid_cell_id;
+      } else if (result.data.error) {
+        gridCellId.value = undefined;
       }
-    }
-  };
+    };
 
-  const updateMap = ref(0); // updates the map when lat/lon change by editing directly;
+    const gridCellChanged = async () => {
+      if (gridCellId.value) {
+        const result = await getCellLocation(
+          gridCellId.value,
+          undefined,
+          sampleFrameId.value,
+        );
+        if (result.data.latitude && result.data.longitude) {
+          latitude.value = result.data.latitude;
+          longitude.value = result.data.longitude;
+          triggerUpdateMap();
+        }
+      }
+    };
 
-  const triggerUpdateMap = () => updateMap.value += 1;
+    const updateMap = ref(0); // updates the map when lat/lon change by editing directly;
+
+    const triggerUpdateMap = () => (updateMap.value += 1);
 
     return {
       errorText,
@@ -315,10 +337,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <div
-    style="height: 100%"
-    class="d-flex pa-1"
-  >
+  <div style="height: 100%" class="d-flex pa-1">
     <v-alert
       v-if="successfulUpload"
       v-model="successfulUpload"
@@ -333,19 +352,21 @@ export default defineComponent({
       type="file"
       accept="audio/*"
       @change="readFile"
-    >
-    <v-card
-      width="100%"
-      style="max-height:90vh; overflow-y: scroll;"
-    >
+    />
+    <v-card width="100%" style="max-height: 90vh; overflow-y: scroll">
       <v-container>
         <v-card-title>
-          {{ editing ? 'Edit' : 'Upload' }} Recording
+          {{ editing ? "Edit" : "Upload" }} Recording
         </v-card-title>
         <v-card-text>
           <v-form v-model="validForm">
             <v-row
-              v-if="errorText === '' && progressState === '' && fileModel !== undefined && !editing"
+              v-if="
+                errorText === '' &&
+                progressState === '' &&
+                fileModel !== undefined &&
+                !editing
+              "
               class="mx-2"
             >
               Upload {{ fileModel.name }} ?
@@ -354,34 +375,25 @@ export default defineComponent({
               v-else-if="fileModel === undefined && !editing"
               class="mx-2 my-2"
             >
-              <v-btn
-                block
-                color="primary"
-                @click="selectFile"
-              >
-                <v-icon class="pr-2">
-                  mdi-audio
-                </v-icon>
+              <v-btn block color="primary" @click="selectFile">
+                <v-icon class="pr-2"> mdi-audio </v-icon>
                 Choose Audio
               </v-btn>
             </v-row>
-            <v-row
-              v-else-if="progressState !== '' && !editing"
-              class="mx-2"
-            >
+            <v-row v-else-if="progressState !== '' && !editing" class="mx-2">
               <v-progress-linear
                 v-model="uploadProgress"
                 color="secondary"
                 height="25"
                 class="ma-auto text-xs-center"
               >
-                <strong>{{ progressState }} : {{ Math.ceil(uploadProgress) }}%</strong>
+                <strong
+                  >{{ progressState }} :
+                  {{ Math.ceil(uploadProgress) }}%</strong
+                >
               </v-progress-linear>
             </v-row>
-            <v-row
-              v-else-if="!editing"
-              class="mx-2"
-            >
+            <v-row v-else-if="!editing" class="mx-2">
               <v-alert type="error">
                 {{ errorText }}
               </v-alert>
@@ -390,7 +402,7 @@ export default defineComponent({
               <v-text-field
                 v-model="name"
                 label="name"
-                :rules="[ v => !!v || 'Requires a name']"
+                :rules="[(v) => !!v || 'Requires a name']"
               />
             </v-row>
             <v-row>
@@ -414,16 +426,9 @@ export default defineComponent({
               />
             </v-row>
             <v-row class="pb-4">
-              <v-menu
-                open-delay="20"
-                :close-on-content-click="false"
-              >
-                <template #activator="{ props:subProps }">
-                  <v-btn
-                    color="primary"
-                    v-bind="subProps"
-                    class="mr-2"
-                  >
+              <v-menu open-delay="20" :close-on-content-click="false">
+                <template #activator="{ props: subProps }">
+                  <v-btn color="primary" v-bind="subProps" class="mr-2">
                     <b>Recorded:</b>
                     <span> {{ recordedDate }}</span>
                   </v-btn>
@@ -484,8 +489,8 @@ export default defineComponent({
                     <v-row>
                       <v-spacer />
                       <map-location
-                        :size="{width: 600, height: 400}"
-                        :location="{ x: longitude, y: latitude}"
+                        :size="{ width: 600, height: 400 }"
+                        :location="{ x: longitude, y: latitude }"
                         :update-map="updateMap"
                         @location="setLocation($event)"
                       />
@@ -497,21 +502,17 @@ export default defineComponent({
                   <v-expansion-panel-title>Details</v-expansion-panel-title>
                   <v-expansion-panel-text>
                     <v-row>
-                      <v-text-field
-                        v-model="equipment"
-                        label="equipment"
-                      />
+                      <v-text-field v-model="equipment" label="equipment" />
                     </v-row>
                     <v-row>
-                      <v-text-field
-                        v-model="comments"
-                        label="comments"
-                      />
+                      <v-text-field v-model="comments" label="comments" />
                     </v-row>
                   </v-expansion-panel-text>
                 </v-expansion-panel>
                 <v-expansion-panel>
-                  <v-expansion-panel-title>Guano Metadata</v-expansion-panel-title>
+                  <v-expansion-panel-title
+                    >Guano Metadata</v-expansion-panel-title
+                  >
                   <v-expansion-panel-text>
                     <v-row v-if="fileModel">
                       <v-btn
@@ -523,22 +524,13 @@ export default defineComponent({
                       </v-btn>
                     </v-row>
                     <v-row>
-                      <v-text-field
-                        v-model="siteName"
-                        label="Site Name"
-                      />
+                      <v-text-field v-model="siteName" label="Site Name" />
                     </v-row>
                     <v-row>
-                      <v-text-field
-                        v-model="software"
-                        label="Software"
-                      />
+                      <v-text-field v-model="software" label="Software" />
                     </v-row>
                     <v-row>
-                      <v-text-field
-                        v-model="detector"
-                        label="Detector"
-                      />
+                      <v-text-field v-model="detector" label="Detector" />
                     </v-row>
                     <v-row>
                       <v-text-field
@@ -560,22 +552,19 @@ export default defineComponent({
         </v-card-text>
         <v-card-actions>
           <v-spacer />
+          <v-btn @click="$emit('cancel', true)"> Cancel </v-btn>
           <v-btn
-            @click="$emit('cancel', true)"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-            :disabled=" (!fileModel && !editing) || errorText !== '' || submitLoading || !validForm"
+            :disabled="
+              (!fileModel && !editing) ||
+              errorText !== '' ||
+              submitLoading ||
+              !validForm
+            "
             color="primary"
             @click="handleSubmit"
           >
-            <span v-if="!submitLoading">
-              Submit
-            </span>
-            <v-icon v-else>
-              mdi-loading mdi-spin
-            </v-icon>
+            <span v-if="!submitLoading"> Submit </span>
+            <v-icon v-else> mdi-loading mdi-spin </v-icon>
           </v-btn>
         </v-card-actions>
       </v-container>

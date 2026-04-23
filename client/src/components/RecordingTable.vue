@@ -7,14 +7,26 @@ import {
   onMounted,
   watch,
   type PropType,
-} from 'vue';
-import { getRecordings, type Recording, type FileAnnotation, type RecordingListParams } from '../api/api';
-import MapLocation from '@components/MapLocation.vue';
-import RecordingInfoDisplay from '@components/RecordingInfoDisplay.vue';
-import RecordingAnnotationSummary from '@components/RecordingAnnotationSummary.vue';
-import useState from '@use/useState';
+} from "vue";
+import {
+  getRecordings,
+  type Recording,
+  type FileAnnotation,
+  type RecordingListParams,
+} from "../api/api";
+import MapLocation from "@components/MapLocation.vue";
+import RecordingInfoDisplay from "@components/RecordingInfoDisplay.vue";
+import RecordingAnnotationSummary from "@components/RecordingAnnotationSummary.vue";
+import useState from "@use/useState";
 
-const SERVER_SORT_FIELDS: readonly string[] = ['id', 'name', 'created', 'modified', 'recorded_date', 'owner_username'];
+const SERVER_SORT_FIELDS: readonly string[] = [
+  "id",
+  "name",
+  "created",
+  "modified",
+  "recorded_date",
+  "owner_username",
+];
 
 export interface RecordingTableHeader {
   title: string;
@@ -25,7 +37,7 @@ export interface RecordingTableHeader {
 }
 
 export default defineComponent({
-  name: 'RecordingTable',
+  name: "RecordingTable",
   components: {
     MapLocation,
     RecordingInfoDisplay,
@@ -33,7 +45,7 @@ export default defineComponent({
   },
   props: {
     variant: {
-      type: String as PropType<'my' | 'shared'>,
+      type: String as PropType<"my" | "shared">,
       required: true,
     },
     tags: {
@@ -50,11 +62,13 @@ export default defineComponent({
     },
     /** When set, list requests include this WGS84 bbox [minLon, minLat, maxLon, maxLat]. */
     bboxFilter: {
-      type: Array as unknown as PropType<[number, number, number, number] | null>,
+      type: Array as unknown as PropType<
+        [number, number, number, number] | null
+      >,
       default: null,
     },
   },
-  emits: ['update:tags'],
+  emits: ["update:tags"],
   setup(props, { emit, expose }) {
     const {
       configuration,
@@ -69,7 +83,9 @@ export default defineComponent({
       sharedList,
     } = useState();
 
-    const sortBy: Ref<{ key: string; order: 'asc' | 'desc' }[]> = ref([{ key: 'created', order: 'desc' }]);
+    const sortBy: Ref<{ key: string; order: "asc" | "desc" }[]> = ref([
+      { key: "created", order: "desc" },
+    ]);
     const loading = ref(false);
     const totalCount = ref(0);
     let intervalRef: number | null = null;
@@ -77,22 +93,26 @@ export default defineComponent({
     const filterTagsModel = computed({
       get: () => {
         if (props.tags !== undefined) return props.tags;
-        return props.variant === 'my' ? filterTags.value : sharedFilterTags.value;
+        return props.variant === "my"
+          ? filterTags.value
+          : sharedFilterTags.value;
       },
       set: (v: string[]) => {
         if (props.tags !== undefined) {
-          emit('update:tags', v);
+          emit("update:tags", v);
           return;
         }
-        if (props.variant === 'my') filterTags.value = v;
+        if (props.variant === "my") filterTags.value = v;
         else sharedFilterTags.value = v;
       },
     });
 
-    const items = computed(() => (props.variant === 'my' ? recordingList.value : sharedList.value));
+    const items = computed(() =>
+      props.variant === "my" ? recordingList.value : sharedList.value,
+    );
 
     const recordingTagOptions = computed(() =>
-      recordingTagList.value.filter(Boolean)
+      recordingTagList.value.filter(Boolean),
     );
 
     const defaultColumnVisibilityMy: Record<string, boolean> = {
@@ -126,14 +146,19 @@ export default defineComponent({
       submittedLabel: true,
       userMadeAnnotations: false,
     };
-    function getStorageKey(variant: 'my' | 'shared'): string {
-      const user = currentUser.value || 'anonymous';
+    function getStorageKey(variant: "my" | "shared"): string {
+      const user = currentUser.value || "anonymous";
       return `recordingTableColumns_${variant}_${user}`;
     }
 
-    function loadColumnVisibility(variant: 'my' | 'shared'): Record<string, boolean> {
-      const base = variant === 'my' ? defaultColumnVisibilityMy : defaultColumnVisibilityShared;
-      if (typeof window === 'undefined') {
+    function loadColumnVisibility(
+      variant: "my" | "shared",
+    ): Record<string, boolean> {
+      const base =
+        variant === "my"
+          ? defaultColumnVisibilityMy
+          : defaultColumnVisibilityShared;
+      if (typeof window === "undefined") {
         return { ...base };
       }
       try {
@@ -148,43 +173,157 @@ export default defineComponent({
       }
     }
 
-    const columnVisibilityMy = ref<Record<string, boolean>>(loadColumnVisibility('my'));
-    const columnVisibilityShared = ref<Record<string, boolean>>(loadColumnVisibility('shared'));
+    const columnVisibilityMy = ref<Record<string, boolean>>(
+      loadColumnVisibility("my"),
+    );
+    const columnVisibilityShared = ref<Record<string, boolean>>(
+      loadColumnVisibility("shared"),
+    );
 
     const baseHeadersMy: RecordingTableHeader[] = [
-      { title: 'Name', key: 'name', value: 'name', sortable: SERVER_SORT_FIELDS.includes('name') },
-      { title: 'Annotation', key: 'annotation', value: 'annotation', sortable: SERVER_SORT_FIELDS.includes('annotation') },
-      { title: 'Owner', key: 'owner_username', value: 'owner_username', sortable: SERVER_SORT_FIELDS.includes('owner_username') },
-      { title: 'Tags', key: 'tag_text', value: 'tag_text', sortable: SERVER_SORT_FIELDS.includes('tag_text') },
-      { title: 'Recorded Date', key: 'recorded_date', value: 'recorded_date', sortable: SERVER_SORT_FIELDS.includes('recorded_date') },
-      { title: 'Public', key: 'public', value: 'public', sortable: SERVER_SORT_FIELDS.includes('public') },
-      { title: 'GRTS CellId', key: 'grts_cell_id', value: 'grts_cell_id', sortable: SERVER_SORT_FIELDS.includes('grts_cell_id') },
-      { title: 'Details', key: 'comments', value: 'comments', sortable: SERVER_SORT_FIELDS.includes('comments') },
-      { title: 'User Pulse Annotations', key: 'userAnnotations', value: 'userAnnotations', sortable: SERVER_SORT_FIELDS.includes('userAnnotations') },
-      { title: 'Edit', key: 'edit', value: 'edit', sortable: false },
+      {
+        title: "Name",
+        key: "name",
+        value: "name",
+        sortable: SERVER_SORT_FIELDS.includes("name"),
+      },
+      {
+        title: "Annotation",
+        key: "annotation",
+        value: "annotation",
+        sortable: SERVER_SORT_FIELDS.includes("annotation"),
+      },
+      {
+        title: "Owner",
+        key: "owner_username",
+        value: "owner_username",
+        sortable: SERVER_SORT_FIELDS.includes("owner_username"),
+      },
+      {
+        title: "Tags",
+        key: "tag_text",
+        value: "tag_text",
+        sortable: SERVER_SORT_FIELDS.includes("tag_text"),
+      },
+      {
+        title: "Recorded Date",
+        key: "recorded_date",
+        value: "recorded_date",
+        sortable: SERVER_SORT_FIELDS.includes("recorded_date"),
+      },
+      {
+        title: "Public",
+        key: "public",
+        value: "public",
+        sortable: SERVER_SORT_FIELDS.includes("public"),
+      },
+      {
+        title: "GRTS CellId",
+        key: "grts_cell_id",
+        value: "grts_cell_id",
+        sortable: SERVER_SORT_FIELDS.includes("grts_cell_id"),
+      },
+      {
+        title: "Details",
+        key: "comments",
+        value: "comments",
+        sortable: SERVER_SORT_FIELDS.includes("comments"),
+      },
+      {
+        title: "User Pulse Annotations",
+        key: "userAnnotations",
+        value: "userAnnotations",
+        sortable: SERVER_SORT_FIELDS.includes("userAnnotations"),
+      },
+      { title: "Edit", key: "edit", value: "edit", sortable: false },
     ];
 
     const baseHeadersShared: RecordingTableHeader[] = [
-      { title: 'Name', key: 'name', value: 'name', sortable: SERVER_SORT_FIELDS.includes('name') },
-      { title: 'Annotation', key: 'annotation', value: 'annotation', sortable: SERVER_SORT_FIELDS.includes('annotation') },
-      { title: 'Owner', key: 'owner_username', value: 'owner_username', sortable: SERVER_SORT_FIELDS.includes('owner_username') },
-      { title: 'Tags', key: 'tag_text', value: 'tag_text', sortable: SERVER_SORT_FIELDS.includes('tag_text') },
-      { title: 'Recorded Date', key: 'recorded_date', value: 'recorded_date', sortable: SERVER_SORT_FIELDS.includes('recorded_date') },
-      { title: 'Public', key: 'public', value: 'public', sortable: SERVER_SORT_FIELDS.includes('public') },
-      { title: 'GRTS CellId', key: 'grts_cell_id', value: 'grts_cell_id', sortable: SERVER_SORT_FIELDS.includes('grts_cell_id') },
-      { title: 'Details', key: 'comments', value: 'comments', sortable: SERVER_SORT_FIELDS.includes('comments') },
-      { title: 'Annotated by Me', key: 'userMadeAnnotations', value: 'userMadeAnnotations', sortable: SERVER_SORT_FIELDS.includes('userMadeAnnotations') },
+      {
+        title: "Name",
+        key: "name",
+        value: "name",
+        sortable: SERVER_SORT_FIELDS.includes("name"),
+      },
+      {
+        title: "Annotation",
+        key: "annotation",
+        value: "annotation",
+        sortable: SERVER_SORT_FIELDS.includes("annotation"),
+      },
+      {
+        title: "Owner",
+        key: "owner_username",
+        value: "owner_username",
+        sortable: SERVER_SORT_FIELDS.includes("owner_username"),
+      },
+      {
+        title: "Tags",
+        key: "tag_text",
+        value: "tag_text",
+        sortable: SERVER_SORT_FIELDS.includes("tag_text"),
+      },
+      {
+        title: "Recorded Date",
+        key: "recorded_date",
+        value: "recorded_date",
+        sortable: SERVER_SORT_FIELDS.includes("recorded_date"),
+      },
+      {
+        title: "Public",
+        key: "public",
+        value: "public",
+        sortable: SERVER_SORT_FIELDS.includes("public"),
+      },
+      {
+        title: "GRTS CellId",
+        key: "grts_cell_id",
+        value: "grts_cell_id",
+        sortable: SERVER_SORT_FIELDS.includes("grts_cell_id"),
+      },
+      {
+        title: "Details",
+        key: "comments",
+        value: "comments",
+        sortable: SERVER_SORT_FIELDS.includes("comments"),
+      },
+      {
+        title: "Annotated by Me",
+        key: "userMadeAnnotations",
+        value: "userMadeAnnotations",
+        sortable: SERVER_SORT_FIELDS.includes("userMadeAnnotations"),
+      },
     ];
 
-    const ORDER_MY = ['name', 'tag_text', 'grts_cell_id', 'submitted', 'recorded_date', 'owner_username', 'public', 'edit'];
-    const ORDER_SHARED = ['name', 'tag_text', 'grts_cell_id', 'submitted', 'recorded_date', 'public', 'userMadeAnnotations', 'owner_username'];
+    const ORDER_MY = [
+      "name",
+      "tag_text",
+      "grts_cell_id",
+      "submitted",
+      "recorded_date",
+      "owner_username",
+      "public",
+      "edit",
+    ];
+    const ORDER_SHARED = [
+      "name",
+      "tag_text",
+      "grts_cell_id",
+      "submitted",
+      "recorded_date",
+      "public",
+      "userMadeAnnotations",
+      "owner_username",
+    ];
 
     function getActiveColumnVisibility(): Record<string, boolean> {
-      return props.variant === 'my' ? columnVisibilityMy.value : columnVisibilityShared.value;
+      return props.variant === "my"
+        ? columnVisibilityMy.value
+        : columnVisibilityShared.value;
     }
 
     function isColumnVisible(key: string): boolean {
-      if (key === 'name' || key === 'edit') {
+      if (key === "name" || key === "edit") {
         return true;
       }
       const visibility = getActiveColumnVisibility();
@@ -192,12 +331,15 @@ export default defineComponent({
       return true;
     }
 
-    function saveColumnVisibility(variant: 'my' | 'shared') {
-      if (typeof window === 'undefined') {
+    function saveColumnVisibility(variant: "my" | "shared") {
+      if (typeof window === "undefined") {
         return;
       }
       const key = getStorageKey(variant);
-      const visibility = variant === 'my' ? columnVisibilityMy.value : columnVisibilityShared.value;
+      const visibility =
+        variant === "my"
+          ? columnVisibilityMy.value
+          : columnVisibilityShared.value;
       try {
         window.localStorage.setItem(key, JSON.stringify(visibility));
       } catch {
@@ -206,25 +348,39 @@ export default defineComponent({
     }
 
     function setColumnVisible(key: string, value: boolean) {
-      if (key === 'name' || key === 'edit') {
+      if (key === "name" || key === "edit") {
         return;
       }
-      const targetRef = props.variant === 'my' ? columnVisibilityMy : columnVisibilityShared;
+      const targetRef =
+        props.variant === "my" ? columnVisibilityMy : columnVisibilityShared;
       targetRef.value = { ...targetRef.value, [key]: value };
       saveColumnVisibility(props.variant);
     }
 
     const rawHeaders = computed((): RecordingTableHeader[] => {
-      const base = props.variant === 'my' ? baseHeadersMy : baseHeadersShared;
+      const base = props.variant === "my" ? baseHeadersMy : baseHeadersShared;
       let h = [...base];
       if (configuration.value.mark_annotations_completed_enabled) {
-        h = h.filter((x) => !['comments', 'details', 'annotation', 'userAnnotations'].includes(x.key));
-        h.push({ title: 'Submission Status', key: 'submitted', value: 'submitted' });
+        h = h.filter(
+          (x) =>
+            !["comments", "details", "annotation", "userAnnotations"].includes(
+              x.key,
+            ),
+        );
+        h.push({
+          title: "Submission Status",
+          key: "submitted",
+          value: "submitted",
+        });
         if (showSubmittedRecordings.value) {
-          h.push({ title: 'My Submitted Label', key: 'submittedLabel', value: 'submittedLabel' });
+          h.push({
+            title: "My Submitted Label",
+            key: "submittedLabel",
+            value: "submittedLabel",
+          });
         }
       }
-      const order = props.variant === 'my' ? ORDER_MY : ORDER_SHARED;
+      const order = props.variant === "my" ? ORDER_MY : ORDER_SHARED;
       h.sort((a, b) => {
         const ia = order.indexOf(a.key);
         const ib = order.indexOf(b.key);
@@ -236,24 +392,36 @@ export default defineComponent({
       return h;
     });
 
-    const headers = computed((): RecordingTableHeader[] => rawHeaders.value.filter((header) => isColumnVisible(header.key)));
+    const headers = computed((): RecordingTableHeader[] =>
+      rawHeaders.value.filter((header) => isColumnVisible(header.key)),
+    );
 
-    function buildParams(options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }): RecordingListParams {
+    function buildParams(options: {
+      page: number;
+      itemsPerPage: number;
+      sortBy?: { key: string; order: string }[];
+    }): RecordingListParams {
       const sortByFirst = options.sortBy?.[0];
-      const sortKey = (sortByFirst?.key && (SERVER_SORT_FIELDS as readonly string[]).includes(sortByFirst.key))
-        ? sortByFirst.key
-        : 'created';
-      const sort_direction = sortByFirst?.order === 'asc' ? 'asc' : 'desc';
+      const sortKey =
+        sortByFirst?.key &&
+        (SERVER_SORT_FIELDS as readonly string[]).includes(sortByFirst.key)
+          ? sortByFirst.key
+          : "created";
+      const sort_direction = sortByFirst?.order === "asc" ? "asc" : "desc";
       const tags = filterTagsModel.value;
       const params: RecordingListParams = {
         page: options.page,
         limit: options.itemsPerPage,
-        sort_by: sortKey as RecordingListParams['sort_by'],
+        sort_by: sortKey as RecordingListParams["sort_by"],
         sort_direction,
         tags: tags.length ? tags : undefined,
-        exclude_submitted: configuration.value.mark_annotations_completed_enabled && !showSubmittedRecordings.value ? true : undefined,
+        exclude_submitted:
+          configuration.value.mark_annotations_completed_enabled &&
+          !showSubmittedRecordings.value
+            ? true
+            : undefined,
       };
-      if (props.variant === 'shared') {
+      if (props.variant === "shared") {
         params.public = true;
       }
       const bf = props.bboxFilter;
@@ -263,17 +431,28 @@ export default defineComponent({
       return params;
     }
 
-    const lastOptions = ref<{ page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }>({ page: 1, itemsPerPage: 20 });
+    const lastOptions = ref<{
+      page: number;
+      itemsPerPage: number;
+      sortBy?: { key: string; order: string }[];
+    }>({ page: 1, itemsPerPage: 20 });
 
-    async function fetchRecordings(options: { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] }) {
+    async function fetchRecordings(options: {
+      page: number;
+      itemsPerPage: number;
+      sortBy?: { key: string; order: string }[];
+    }) {
       const opts = { ...options, sortBy: options.sortBy ?? sortBy.value };
       lastOptions.value = opts;
       loading.value = true;
       try {
-        const res = await getRecordings(props.variant === 'shared', buildParams(opts));
+        const res = await getRecordings(
+          props.variant === "shared",
+          buildParams(opts),
+        );
         const list = res.data.items;
         const count = res.data.count;
-        if (props.variant === 'my') {
+        if (props.variant === "my") {
           recordingList.value = list;
           let missingSpectro = false;
           for (let i = 0; i < list.length; i += 1) {
@@ -283,7 +462,10 @@ export default defineComponent({
             }
           }
           if (missingSpectro && intervalRef === null) {
-            intervalRef = setInterval(() => fetchRecordings(lastOptions.value), 5000);
+            intervalRef = setInterval(
+              () => fetchRecordings(lastOptions.value),
+              5000,
+            );
           } else if (!missingSpectro && intervalRef !== null) {
             clearInterval(intervalRef);
             intervalRef = null;
@@ -297,7 +479,9 @@ export default defineComponent({
       }
     }
 
-    function getItemLocation(item: Recording): { x: number; y: number } | undefined {
+    function getItemLocation(
+      item: Recording,
+    ): { x: number; y: number } | undefined {
       if (configuration.value.mark_annotations_completed_enabled) {
         return undefined;
       }
@@ -311,22 +495,27 @@ export default defineComponent({
     }
 
     function getRowProps(data: { item: Recording }) {
-      return { class: { 'current-recording-row': data.item?.id === currentRecordingId.value } };
+      return {
+        class: {
+          "current-recording-row": data.item?.id === currentRecordingId.value,
+        },
+      };
     }
 
     function currentUserSubmissionStatus(recording: Recording): number {
-      const userAnnotations = recording.fileAnnotations.filter((a: FileAnnotation) => (
-        a.owner === currentUser.value && a.model === 'User Defined'
-      ));
+      const userAnnotations = recording.fileAnnotations.filter(
+        (a: FileAnnotation) =>
+          a.owner === currentUser.value && a.model === "User Defined",
+      );
       if (userAnnotations.find((a: FileAnnotation) => a.submitted)) return 1;
       return userAnnotations.length ? 0 : -1;
     }
 
     function currentUserSubmissionLabel(recording: Recording): string {
-      const ann = recording.fileAnnotations.find((a: FileAnnotation) => (
-        a.owner === currentUser.value && a.submitted
-      ));
-      return ann?.species?.[0]?.species_code ?? '';
+      const ann = recording.fileAnnotations.find(
+        (a: FileAnnotation) => a.owner === currentUser.value && a.submitted,
+      );
+      return ann?.species?.[0]?.species_code ?? "";
     }
 
     function addTagToFilter(tag: string) {
@@ -335,27 +524,40 @@ export default defineComponent({
       }
     }
 
-    type OptionsPayload = { page: number; itemsPerPage: number; sortBy?: { key: string; order: string }[] };
+    type OptionsPayload = {
+      page: number;
+      itemsPerPage: number;
+      sortBy?: { key: string; order: string }[];
+    };
     function onUpdateOptions(options: OptionsPayload) {
       fetchRecordings(options);
     }
 
-    function onUpdateSortBy(e: { key: string; order: 'asc' | 'desc' }[]) {
+    function onUpdateSortBy(e: { key: string; order: "asc" | "desc" }[]) {
       sortBy.value = e;
     }
 
-    const tableClass = computed(() => (props.variant === 'my' ? 'my-recordings' : 'shared-recordings'));
+    const tableClass = computed(() =>
+      props.variant === "my" ? "my-recordings" : "shared-recordings",
+    );
 
-    const showTotalCount = computed(() => (
-      totalCount.value > 0
-      && configuration.value.mark_annotations_completed_enabled
-      && (props.variant === 'shared' || configuration.value.is_admin || configuration.value.non_admin_upload_enabled)
-    ));
+    const showTotalCount = computed(
+      () =>
+        totalCount.value > 0 &&
+        configuration.value.mark_annotations_completed_enabled &&
+        (props.variant === "shared" ||
+          configuration.value.is_admin ||
+          configuration.value.non_admin_upload_enabled),
+    );
 
-    watch(filterTagsModel, () => {
-      fetchRecordings(lastOptions.value);
-      saveFilterTags();
-    }, { deep: true });
+    watch(
+      filterTagsModel,
+      () => {
+        fetchRecordings(lastOptions.value);
+        saveFilterTags();
+      },
+      { deep: true },
+    );
 
     watch(showSubmittedRecordings, () => {
       fetchRecordings(lastOptions.value);
@@ -366,7 +568,7 @@ export default defineComponent({
       () => {
         fetchRecordings(lastOptions.value);
       },
-      { deep: true }
+      { deep: true },
     );
 
     onMounted(() => {
@@ -412,7 +614,12 @@ export default defineComponent({
     :loading="loading"
     :row-props="getRowProps"
     items-per-page="20"
-    :items-per-page-options="[{ value: 10, title: '10' }, { value: 20, title: '20' }, { value: 50, title: '50' }, { value: 100, title: '100' }]"
+    :items-per-page-options="[
+      { value: 10, title: '10' },
+      { value: 20, title: '20' },
+      { value: 50, title: '50' },
+      { value: 100, title: '100' },
+    ]"
     density="compact"
     class="elevation-1"
     :class="tableClass"
@@ -420,10 +627,7 @@ export default defineComponent({
     @update:sort-by="onUpdateSortBy"
   >
     <template #top>
-      <div
-        class="d-flex align-center"
-        max-height="100px"
-      >
+      <div class="d-flex align-center" max-height="100px">
         <v-autocomplete
           v-model="filterTagsModel"
           :items="recordingTagOptions"
@@ -437,12 +641,7 @@ export default defineComponent({
         />
         <v-menu>
           <template #activator="{ props }">
-            <v-btn
-              v-bind="props"
-              icon
-              class="ml-2"
-              variant="text"
-            >
+            <v-btn v-bind="props" icon class="ml-2" variant="text">
               <v-icon>mdi-cog</v-icon>
             </v-btn>
           </template>
@@ -459,7 +658,9 @@ export default defineComponent({
                 :disabled="header.key === 'name' || header.key === 'edit'"
                 hide-details
                 density="compact"
-                @update:model-value="(val) => setColumnVisible(header.key, !!val)"
+                @update:model-value="
+                  (val) => setColumnVisible(header.key, !!val)
+                "
               />
             </v-list-item>
           </v-list>
@@ -471,13 +672,8 @@ export default defineComponent({
       v-if="variant === 'my' && editRecording && openDeleteRecordingDialog"
       #item.edit="{ item }"
     >
-      <v-icon @click="editRecording(item)">
-        mdi-pencil
-      </v-icon>
-      <v-icon
-        color="error"
-        @click="openDeleteRecordingDialog(item)"
-      >
+      <v-icon @click="editRecording(item)"> mdi-pencil </v-icon>
+      <v-icon color="error" @click="openDeleteRecordingDialog(item)">
         mdi-delete
       </v-icon>
     </template>
@@ -532,19 +728,18 @@ export default defineComponent({
 
     <template #item.grts_cell_id="{ item }">
       <span class="d-flex align-center gap-1">
-        <div>{{ item.grts_cell_id ?? '—' }}</div>
+        <div>{{ item.grts_cell_id ?? "—" }}</div>
         <v-menu
-          v-if="item.recording_location || (configuration.mark_annotations_completed_enabled && item.grts_cell_id)"
+          v-if="
+            item.recording_location ||
+            (configuration.mark_annotations_completed_enabled &&
+              item.grts_cell_id)
+          "
           open-on-hover
           :close-on-content-click="false"
         >
           <template #activator="{ props }">
-            <v-icon 
-              v-bind="props" 
-              color="primary" 
-              class="ml-2"
-              size="x-large"
-            >
+            <v-icon v-bind="props" color="primary" class="ml-2" size="x-large">
               mdi-map
             </v-icon>
           </template>
@@ -553,7 +748,11 @@ export default defineComponent({
               :editor="false"
               :size="{ width: 400, height: 400 }"
               :location="getItemLocation(item)"
-              :grts-cell-id="configuration.mark_annotations_completed_enabled ? item.grts_cell_id || undefined : undefined"
+              :grts-cell-id="
+                configuration.mark_annotations_completed_enabled
+                  ? item.grts_cell_id || undefined
+                  : undefined
+              "
             />
           </v-card>
         </v-menu>
@@ -567,49 +766,28 @@ export default defineComponent({
         :close-on-content-click="false"
       >
         <template #activator="{ props }">
-          <v-icon v-bind="props">
-            mdi-information-outline
-          </v-icon>
+          <v-icon v-bind="props"> mdi-information-outline </v-icon>
         </template>
         <recording-info-display
           :recording-info="item"
-          :minimal-metadata="configuration.mark_annotations_completed_enabled && variant === 'my'"
+          :minimal-metadata="
+            configuration.mark_annotations_completed_enabled && variant === 'my'
+          "
           disable-button
         />
       </v-menu>
     </template>
 
     <template #item.public="{ item }">
-      <v-icon
-        v-if="item.public"
-        color="success"
-      >
-        mdi-check
-      </v-icon>
-      <v-icon
-        v-else
-        color="error"
-      >
-        mdi-close
-      </v-icon>
+      <v-icon v-if="item.public" color="success"> mdi-check </v-icon>
+      <v-icon v-else color="error"> mdi-close </v-icon>
     </template>
 
-    <template
-      v-if="variant === 'shared'"
-      #item.userMadeAnnotations="{ item }"
-    >
-      <v-icon
-        v-if="item.userMadeAnnotations"
-        color="success"
-      >
+    <template v-if="variant === 'shared'" #item.userMadeAnnotations="{ item }">
+      <v-icon v-if="item.userMadeAnnotations" color="success">
         mdi-check
       </v-icon>
-      <v-icon
-        v-else
-        color="error"
-      >
-        mdi-close
-      </v-icon>
+      <v-icon v-else color="error"> mdi-close </v-icon>
     </template>
 
     <template
@@ -618,40 +796,28 @@ export default defineComponent({
     >
       <v-tooltip v-if="currentUserSubmissionStatus(item) === 1">
         <template #activator="{ props }">
-          <v-icon
-            v-bind="props"
-            color="success"
-          >
-            mdi-check
-          </v-icon>
+          <v-icon v-bind="props" color="success"> mdi-check </v-icon>
         </template>
         You have submitted an annotation for this recording
       </v-tooltip>
       <v-tooltip v-else-if="currentUserSubmissionStatus(item) === 0">
         <template #activator="{ props }">
-          <v-icon
-            v-bind="props"
-            color="warning"
-          >
-            mdi-circle-outline
-          </v-icon>
+          <v-icon v-bind="props" color="warning"> mdi-circle-outline </v-icon>
         </template>
         You have created an annotation, but it has not been submitted
       </v-tooltip>
       <v-tooltip v-else>
         <template #activator="{ props }">
-          <v-icon
-            v-bind="props"
-            color="error"
-          >
-            mdi-close
-          </v-icon>
+          <v-icon v-bind="props" color="error"> mdi-close </v-icon>
         </template>
         You have not created an annotation for this recording
       </v-tooltip>
     </template>
     <template
-      v-if="configuration.mark_annotations_completed_enabled && showSubmittedRecordings"
+      v-if="
+        configuration.mark_annotations_completed_enabled &&
+        showSubmittedRecordings
+      "
       #item.submittedLabel="{ item }"
     >
       {{ currentUserSubmissionLabel(item) }}

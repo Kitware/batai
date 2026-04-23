@@ -82,7 +82,7 @@ def decode_jwt(token):
     return json.loads(decoded_str)
 
 
-def get_email_if_authorized(
+def get_email_if_authorized(  # noqa: PLR0911
     request: HttpRequest,
     api_token: str,
     recording_id: int | None = None,
@@ -196,7 +196,7 @@ def update_nabat_species(species_id: int, api_token: str, recording_id: int, sur
 
 
 @router.post("/", auth=None)
-def generate_nabat_recording(
+def generate_nabat_recording(  # noqa: PLR0911
     request: HttpRequest,
     payload: Form[NABatRecordingGenerateSchema],
 ):

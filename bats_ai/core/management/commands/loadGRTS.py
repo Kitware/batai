@@ -16,20 +16,20 @@ from bats_ai.core.models import GRTSCells
 
 logger = logging.getLogger(__name__)
 
-"""
-"id","description","short_name","mr_master_sample_id"
-12,Mexico 10x10km Grid,Mexico,
-14,Conus (Continental US) 10x10km Grid,Continental US,10
-19,Canada 10x10km Grid,Canada,11
-20,Alaska 10x10km Grid,Alaska,12
-21,Puerto Rico 5x5km Grid,Puerto Rico,
-15,Hawaii 5x5km Grid,Hawaii,13
-22,Offshore Caribbean 10x10km Grid,Offshore Caribbean,
-23,Offshore AKCAN 10x10km Grid,Offshore AKCAN,
-24,Offshore CONUS 10x10km Grid,Offshore CONUS,
-25,Offshore Hawaii 10x10km Grid,Offshore Hawaii,
-26,Offshore Mexico 10x10km Grid,Offshore Mexico,
-"""
+
+# "id","description","short_name","mr_master_sample_id"
+# 12,Mexico 10x10km Grid,Mexico,
+# 14,Conus (Continental US) 10x10km Grid,Continental US,10
+# 19,Canada 10x10km Grid,Canada,11
+# 20,Alaska 10x10km Grid,Alaska,12
+# 21,Puerto Rico 5x5km Grid,Puerto Rico,
+# 15,Hawaii 5x5km Grid,Hawaii,13
+# 22,Offshore Caribbean 10x10km Grid,Offshore Caribbean,
+# 23,Offshore AKCAN 10x10km Grid,Offshore AKCAN,
+# 24,Offshore CONUS 10x10km Grid,Offshore CONUS,
+# 25,Offshore Hawaii 10x10km Grid,Offshore Hawaii,
+# 26,Offshore Mexico 10x10km Grid,Offshore Mexico,
+
 
 LOCATION_SOURCES = {
     "CONUS": (
@@ -111,7 +111,7 @@ class Command(BaseCommand):
             f"or a sample frame ID ({', '.join(sorted(LOCATION_ID_TO_KEY.keys()))})."
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa: C901, PLR0912, PLR0915
         batch_size = options["batch_size"]
         selected_locations = options["locations"]
         selected_keys = []

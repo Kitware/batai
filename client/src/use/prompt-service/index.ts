@@ -1,6 +1,6 @@
-import { createApp, type App, inject } from 'vue';
-import { createVuetify } from 'vuetify';
-import Prompt from './Prompt.vue';
+import { createApp, type App, inject } from "vue";
+import { createVuetify } from "vuetify";
+import Prompt from "./Prompt.vue";
 
 export interface PromptParams {
   title: string;
@@ -11,7 +11,6 @@ export interface PromptParams {
 }
 
 class PromptService {
-
   private app: App;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private component: any;
@@ -20,7 +19,7 @@ class PromptService {
     const app = createApp(Prompt);
     const Vuetify = createVuetify({});
     app.use(Vuetify);
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     document.body.appendChild(div);
     this.component = app.mount(div);
     this.app = app;
@@ -50,8 +49,8 @@ class PromptService {
         this.set(
           params.title,
           params.text,
-          params.positiveButton ?? 'Confirm',
-          params.negativeButton ?? 'Cancel',
+          params.positiveButton ?? "Confirm",
+          params.negativeButton ?? "Cancel",
           params.confirm ?? false,
           resolve,
         );
@@ -65,8 +64,8 @@ class PromptService {
         this.set(
           params.title,
           params.text,
-          params.positiveButton ?? 'Confirm',
-          params.negativeButton ?? 'Cancel',
+          params.positiveButton ?? "Confirm",
+          params.negativeButton ?? "Cancel",
           params.confirm ?? false,
           resolve,
         );
@@ -87,7 +86,7 @@ class PromptService {
   }
 }
 
-const PromptSymbol = Symbol('PromptService');
+const PromptSymbol = Symbol("PromptService");
 
 export function installPrompt(app: App) {
   const promptService = new PromptService();
@@ -97,7 +96,7 @@ export function installPrompt(app: App) {
 export function usePrompt() {
   const promptService = inject<PromptService>(PromptSymbol);
   if (!promptService) {
-    throw new Error('PromptService not provided');
+    throw new Error("PromptService not provided");
   }
   return {
     prompt: (params: PromptParams) => promptService.show(params),

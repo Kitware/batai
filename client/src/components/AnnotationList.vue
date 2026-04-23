@@ -1,10 +1,19 @@
 <script lang="ts">
-import { computed, defineComponent, type PropType, type CSSProperties } from "vue";
-import type { SpectroInfo } from './geoJS/geoJSUtils';
+import {
+  computed,
+  defineComponent,
+  type PropType,
+  type CSSProperties,
+} from "vue";
+import type { SpectroInfo } from "./geoJS/geoJSUtils";
 import useState from "@use/useState";
 import { watch, ref } from "vue";
 import AnnotationEditor from "./AnnotationEditor.vue";
-import type { Species, SpectrogramAnnotation, SpectrogramSequenceAnnotation } from "../api/api";
+import type {
+  Species,
+  SpectrogramAnnotation,
+  SpectrogramSequenceAnnotation,
+} from "../api/api";
 import RecordingAnnotations from "./RecordingAnnotations.vue";
 export default defineComponent({
   name: "AnnotationList",
@@ -18,19 +27,21 @@ export default defineComponent({
       default: () => undefined,
     },
     selectedAnnotation: {
-      type: Object as PropType<SpectrogramAnnotation | SpectrogramSequenceAnnotation | null>,
+      type: Object as PropType<
+        SpectrogramAnnotation | SpectrogramSequenceAnnotation | null
+      >,
       default: () => null,
     },
     species: {
-        type: Array as PropType<Species[]>,
-        required: true,
+      type: Array as PropType<Species[]>,
+      required: true,
     },
     recordingId: {
-        type: String,
-        required: true,
-    }
+      type: String,
+      required: true,
+    },
   },
-  emits: ['select', 'update:annotation', 'delete:annotation'],
+  emits: ["select", "update:annotation", "delete:annotation"],
   setup() {
     const {
       creationType,
@@ -44,11 +55,11 @@ export default defineComponent({
       sideTab,
       configuration,
     } = useState();
-    const tab = ref('recording');
+    const tab = ref("recording");
     const scrollToId = (id: number) => {
       const el = document.getElementById(`annotation-${id}`);
       if (el) {
-        el.scrollIntoView({block: 'end', behavior: 'smooth'});
+        el.scrollIntoView({ block: "end", behavior: "smooth" });
       }
     };
     watch(selectedId, () => {
@@ -60,17 +71,21 @@ export default defineComponent({
     watch(selectedType, () => {
       tab.value = selectedType.value;
     });
-    const pulseEnabled = computed(() => configuration.value.display_pulse_annotations);
-    const sequenceEnabled = computed(() => configuration.value.display_sequence_annotations);
+    const pulseEnabled = computed(
+      () => configuration.value.display_pulse_annotations,
+    );
+    const sequenceEnabled = computed(
+      () => configuration.value.display_sequence_annotations,
+    );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tabSwitch = (event: any) => {
       // On tab switches we want to deselect the curret annotation
-      if (['sequence', 'pulse'].includes(event)) {
-        tab.value = event as 'sequence' | 'pulse';
-        selectedType.value = event as 'sequence' | 'pulse';
+      if (["sequence", "pulse"].includes(event)) {
+        tab.value = event as "sequence" | "pulse";
+        selectedType.value = event as "sequence" | "pulse";
         selectedId.value = null;
       } else {
-        tab.value = 'recording';
+        tab.value = "recording";
       }
     };
 
@@ -83,8 +98,8 @@ export default defineComponent({
         offset += vettingOptionsHeight;
       }
       return {
-        'max-height': `calc(100vh - ${offset}px)`,
-        'overflow-y': 'auto'
+        "max-height": `calc(100vh - ${offset}px)`,
+        "overflow-y": "auto",
       };
     });
 
@@ -109,60 +124,34 @@ export default defineComponent({
 </script>
 
 <template>
-  <div
-    class="pa-2"
-    :style="styles"
-  >
+  <div class="pa-2" :style="styles">
     <v-row dense>
       <v-tabs
         v-model="tab"
         class="ma-auto"
         @update:model-value="tabSwitch($event)"
       >
-        <v-tooltip
-          location="bottom"
-          open-delay="400"
-        >
+        <v-tooltip location="bottom" open-delay="400">
           <template #activator="{ props }">
-            <v-tab
-              value="recording"
-              size="x-small"
-              v-bind="props"
-            >
+            <v-tab value="recording" size="x-small" v-bind="props">
               Recording
             </v-tab>
           </template>
           <span>Recording/File Level Species Annotations</span>
         </v-tooltip>
-        <v-tooltip
-          v-if="sequenceEnabled"
-          location="bottom"
-          open-delay="400"
-        >
+        <v-tooltip v-if="sequenceEnabled" location="bottom" open-delay="400">
           <template #activator="{ props }">
-            <v-tab
-              value="sequence"
-              size="x-small"
-              v-bind="props"
-            >
+            <v-tab value="sequence" size="x-small" v-bind="props">
               Sequence
             </v-tab>
           </template>
-          <span>Sequence Level annotations (Approach/Search/Terminal/Social)</span>
+          <span
+            >Sequence Level annotations (Approach/Search/Terminal/Social)</span
+          >
         </v-tooltip>
-        <v-tooltip
-          v-if="pulseEnabled"
-          location="bottom"
-          open-delay="400"
-        >
+        <v-tooltip v-if="pulseEnabled" location="bottom" open-delay="400">
           <template #activator="{ props }">
-            <v-tab
-              value="pulse"
-              size="x-small"
-              v-bind="props"
-            >
-              Pulse
-            </v-tab>
+            <v-tab value="pulse" size="x-small" v-bind="props"> Pulse </v-tab>
           </template>
           <span>Pulse Level Annotations (for a single pulse)</span>
         </v-tooltip>
@@ -171,14 +160,15 @@ export default defineComponent({
     <v-window v-model="tab">
       <v-window-item value="pulse">
         <v-row class="pa-2">
-          <v-col>
-            Annotations
-          </v-col>
+          <v-col> Annotations </v-col>
           <v-spacer />
           <v-col>
             <v-btn
               :disabled="annotationState === 'creating'"
-              @click="annotationState = 'creating'; creationType = 'pulse' "
+              @click="
+                annotationState = 'creating';
+                creationType = 'pulse';
+              "
             >
               Add<v-icon>mdi-plus</v-icon>
             </v-btn>
@@ -190,17 +180,27 @@ export default defineComponent({
             v-for="annotation in annotations"
             :id="`annotation-${annotation.id}`"
             :key="annotation.id"
-            :class="{selected: annotation.id===selectedId}"
+            :class="{ selected: annotation.id === selectedId }"
             class="annotation-item"
             @click="setSelectedId(annotation.id, 'pulse')"
           >
             <v-row>
               <v-col class="annotation-time">
-                <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
-                <span class="pl-2"><b>({{ annotation.end_time - annotation.start_time }}ms)</b></span>
+                <span
+                  >{{ annotation.start_time }}-{{ annotation.end_time }}ms</span
+                >
+                <span class="pl-2"
+                  ><b
+                    >({{ annotation.end_time - annotation.start_time }}ms)</b
+                  ></span
+                >
               </v-col>
               <v-col class="annotation-freq">
-                <span>{{ (annotation.low_freq/1000).toFixed(1) }}-{{ (annotation.high_freq/1000).toFixed() }}Khz </span>
+                <span
+                  >{{ (annotation.low_freq / 1000).toFixed(1) }}-{{
+                    (annotation.high_freq / 1000).toFixed()
+                  }}Khz
+                </span>
               </v-col>
             </v-row>
             <v-row
@@ -212,10 +212,7 @@ export default defineComponent({
                 <div class="species-name">
                   {{ item.species_code || item.common_name }}
                 </div>
-                <div
-                  v-if="item.family"
-                  class="species-hierarchy"
-                >
+                <div v-if="item.family" class="species-hierarchy">
                   <span> {{ item.family }}</span>
                   <span v-if="item.genus">-></span>
                   <span v-if="item.genus">{{ item.genus }}</span>
@@ -227,14 +224,15 @@ export default defineComponent({
       </v-window-item>
       <v-window-item value="sequence">
         <v-row class="pa-2">
-          <v-col>
-            Annotations
-          </v-col>
+          <v-col> Annotations </v-col>
           <v-spacer />
           <v-col>
             <v-btn
               :disabled="annotationState === 'creating'"
-              @click="annotationState = 'creating'; creationType = 'sequence' "
+              @click="
+                annotationState = 'creating';
+                creationType = 'sequence';
+              "
             >
               Add<v-icon>mdi-plus</v-icon>
             </v-btn>
@@ -246,14 +244,20 @@ export default defineComponent({
             v-for="annotation in sequenceAnnotations"
             :id="`annotation-${annotation.id}`"
             :key="annotation.id"
-            :class="{selected: annotation.id===selectedId}"
+            :class="{ selected: annotation.id === selectedId }"
             class="annotation-item"
             @click="setSelectedId(annotation.id, 'sequence')"
           >
             <v-row>
               <v-col class="annotation-time">
-                <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
-                <span class="pl-2"><b>({{ annotation.end_time - annotation.start_time }}ms)</b></span>
+                <span
+                  >{{ annotation.start_time }}-{{ annotation.end_time }}ms</span
+                >
+                <span class="pl-2"
+                  ><b
+                    >({{ annotation.end_time - annotation.start_time }}ms)</b
+                  ></span
+                >
               </v-col>
               <v-col class="annotation-time">
                 <b>Type:</b><span>{{ annotation.type }}</span>
@@ -268,10 +272,7 @@ export default defineComponent({
                 <div class="species-name">
                   {{ item.species_code || item.common_name }}
                 </div>
-                <div
-                  v-if="item.family"
-                  class="species-hierarchy"
-                >
+                <div v-if="item.family" class="species-hierarchy">
                   <span> {{ item.family }}</span>
                   <span v-if="item.genus">-></span>
                   <span v-if="item.genus">{{ item.genus }}</span>
@@ -302,26 +303,26 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .annotation-id {
-    cursor:pointer;
-    text-decoration: underline;
+  cursor: pointer;
+  text-decoration: underline;
 }
 .annotation-time {
-    font-size: 1em;
+  font-size: 1em;
 }
 .annotation-freq {
-    font-size: 1em;
+  font-size: 1em;
 }
 .annotation-item {
   border: 1px solid gray;
 }
 .species-name {
-    font-weight: bold;
-    font-size: 1em;
+  font-weight: bold;
+  font-size: 1em;
 }
 .species-hierarchy {
-    font-size: 0.75em;
+  font-size: 0.75em;
 }
 .selected {
-    background-color: cyan;
+  background-color: cyan;
 }
 </style>

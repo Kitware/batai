@@ -1,15 +1,15 @@
-import '@mdi/font/css/materialdesignicons.css';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import 'vuetify/styles';
-import * as Sentry from '@sentry/vue';
-import { createApp, } from 'vue';
-import { createVuetify } from 'vuetify';
+import "@mdi/font/css/materialdesignicons.css";
+import "maplibre-gl/dist/maplibre-gl.css";
+import "vuetify/styles";
+import * as Sentry from "@sentry/vue";
+import { createApp } from "vue";
+import { createVuetify } from "vuetify";
 
-import App from './App.vue';
-import oauthClient, { maybeRestoreLogin } from './plugins/Oauth';
-import initRouter from './router';
-import { axiosInstance } from './api/api';
-import { installPrompt } from './use/prompt-service';
+import App from "./App.vue";
+import oauthClient, { maybeRestoreLogin } from "./plugins/Oauth";
+import initRouter from "./router";
+import { axiosInstance } from "./api/api";
+import { installPrompt } from "./use/prompt-service";
 
 const app = createApp(App);
 const Vuetify = createVuetify({
@@ -21,10 +21,10 @@ const Vuetify = createVuetify({
           secondary: "#9c27b0",
           warning: "#fb8c00",
           golden: "#b8860b",
-        }
-      }
-    }
-  }
+        },
+      },
+    },
+  },
 });
 
 Sentry.init({
@@ -46,8 +46,8 @@ maybeRestoreLogin().then(() => {
 
   app.use(router);
   app.use(Vuetify);
-  app.provide('oauthClient', oauthClient);
+  app.provide("oauthClient", oauthClient);
   Object.assign(axiosInstance.defaults.headers.common, oauthClient.authHeaders);
-  app.mount('#app');
+  app.mount("#app");
   installPrompt(app);
 });

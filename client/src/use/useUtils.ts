@@ -11,16 +11,16 @@ function extractDateTimeComponents(dateTimeString: string) {
 
   // Extracting date components
   const year = dateTime.getFullYear();
-  const month = String(dateTime.getMonth() + 1).padStart(2, '0');
-  const day = String(dateTime.getDate()).padStart(2, '0');
+  const month = String(dateTime.getMonth() + 1).padStart(2, "0");
+  const day = String(dateTime.getDate()).padStart(2, "0");
 
   // Forming date string in the format YYYY-MM-DD
   const dateString = `${year}-${month}-${day}`;
 
   // Extracting time components
-  const hours = String(dateTime.getHours()).padStart(2, '0');
-  const minutes = String(dateTime.getMinutes()).padStart(2, '0');
-  const seconds = String(dateTime.getSeconds()).padStart(2, '0');
+  const hours = String(dateTime.getHours()).padStart(2, "0");
+  const minutes = String(dateTime.getMinutes()).padStart(2, "0");
+  const seconds = String(dateTime.getSeconds()).padStart(2, "0");
 
   // Forming time string in the format HHMMSS
   const timeString = `${hours}${minutes}${seconds}`;
@@ -28,10 +28,14 @@ function extractDateTimeComponents(dateTimeString: string) {
   return { date: dateString, time: timeString };
 }
 
-function getImageDimensions(images: HTMLImageElement[], fallback: { width: number, height: number } = { width: 0, height: 0 }) {
+function getImageDimensions(
+  images: HTMLImageElement[],
+  fallback: { width: number; height: number } = { width: 0, height: 0 },
+) {
   if (!images.length) return { width: fallback.width, height: fallback.height };
-  let width = 0, height = 0;
-  images.forEach(img => {
+  let width = 0,
+    height = 0;
+  images.forEach((img) => {
     width += img.naturalWidth;
     height = img.naturalHeight;
   });
@@ -58,7 +62,9 @@ function parseSampleFrameIdFromFilename(filename: string) {
   return parseInt(match[1], 10);
 }
 
-function parseRecordingFilename(filename: string): ParsedRecordingFilename | null {
+function parseRecordingFilename(
+  filename: string,
+): ParsedRecordingFilename | null {
   const regexPattern = /^(\d+)_(.+)_(\d{8})_(\d{6})(?:_(.*))?$/;
   const match = filename.match(regexPattern);
   if (!match) {
@@ -72,9 +78,9 @@ function parseRecordingFilename(filename: string): ParsedRecordingFilename | nul
   const date = `${baseDate.slice(0, 4)}-${baseDate.slice(4, 6)}-${baseDate.slice(6, 8)}`;
   const secondTokenIsNumeric = /^\d+$/.test(labelName);
   const cellId = parseInt(secondTokenIsNumeric ? labelName : firstToken, 10);
-  const quadrant = (["SW", "NE", "NW", "SE"].includes(labelName)
-    ? labelName
-    : undefined) as RecordingQuadrant | undefined;
+  const quadrant = (
+    ["SW", "NE", "NW", "SE"].includes(labelName) ? labelName : undefined
+  ) as RecordingQuadrant | undefined;
   const sampleFrameId = secondTokenIsNumeric
     ? parseInt(firstToken, 10)
     : parseSampleFrameIdFromFilename(filename);
@@ -87,7 +93,6 @@ function parseRecordingFilename(filename: string): ParsedRecordingFilename | nul
     quadrant,
   };
 }
-
 
 export {
   DEFAULT_SAMPLE_FRAME_ID,

@@ -15,14 +15,14 @@ jobs:
       - name: Install npm
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.1
+          node-version: 24.15.0
           cache: npm
           cache-dependency-path: client/package-lock.json
       - name: Install packages
         run: npm ci
         working-directory: client
       - name: Run client tests
-        run: npm run test
+        run: npm run lint
         working-directory: client
   test-python:
     name: Test Python

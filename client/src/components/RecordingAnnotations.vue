@@ -1,9 +1,25 @@
 <script lang="ts">
-import { computed, defineComponent, onMounted, type PropType, type Ref, watch } from "vue";
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  type PropType,
+  type Ref,
+  watch,
+} from "vue";
 import { ref } from "vue";
-import { type FileAnnotation, getFileAnnotations, putFileAnnotation, type Species, type UpdateFileAnnotation } from "@api/api";
+import {
+  type FileAnnotation,
+  getFileAnnotations,
+  putFileAnnotation,
+  type Species,
+  type UpdateFileAnnotation,
+} from "@api/api";
 import RecordingAnnotationEditor from "./RecordingAnnotationEditor.vue";
-import { getNABatRecordingFileAnnotations, putNABatFileAnnotation } from "@api/NABatApi";
+import {
+  getNABatRecordingFileAnnotations,
+  putNABatFileAnnotation,
+} from "@api/NABatApi";
 import RecordingAnnotationDetails from "./RecordingAnnotationDetails.vue";
 import useState from "@use/useState";
 import { decodeJWT } from "../use/useJWTToken";
@@ -23,18 +39,18 @@ export default defineComponent({
       required: true,
     },
     type: {
-      type: String as PropType<'nabat' | null>,
+      type: String as PropType<"nabat" | null>,
       default: () => null,
     },
     apiToken: {
       type: String,
-      default: () => '',
+      default: () => "",
     },
   },
   emits: [],
   setup(props) {
     const selectedAnnotation: Ref<null | FileAnnotation> = ref(null);
-    const annotationState: Ref<'creating' | 'editing' | null> = ref(null);
+    const annotationState: Ref<"creating" | "editing" | null> = ref(null);
     const addingAnnotation = ref(false);
     const annotations: Ref<FileAnnotation[]> = ref([]);
     const detailsDialog = ref(false);
@@ -47,28 +63,36 @@ export default defineComponent({
 
     const currentNaBatUser: Ref<string | null> = ref(null);
 
-
-
     const loadFileAnnotations = async () => {
-      if (props.type === 'nabat') {
-        annotations.value = (await getNABatRecordingFileAnnotations(props.recordingId, props.apiToken)).data;
+      if (props.type === "nabat") {
+        annotations.value = (
+          await getNABatRecordingFileAnnotations(
+            props.recordingId,
+            props.apiToken,
+          )
+        ).data;
       } else {
         annotations.value = (await getFileAnnotations(props.recordingId)).data;
       }
     };
 
-    watch(() => props.recordingId, async () => {
-      selectedAnnotation.value = null;
-      await loadFileAnnotations();
-    });
+    watch(
+      () => props.recordingId,
+      async () => {
+        selectedAnnotation.value = null;
+        await loadFileAnnotations();
+      },
+    );
 
     onMounted(async () => {
       await loadFileAnnotations();
-      if (props.type  === 'nabat') {
+      if (props.type === "nabat") {
         const decoded = decodeJWT(props.apiToken);
-        if (decoded['email']) {
-          currentNaBatUser.value = decoded['email'];
-          const foundItem = annotations.value.find((item) => item.owner === currentNaBatUser.value);
+        if (decoded["email"]) {
+          currentNaBatUser.value = decoded["email"];
+          const foundItem = annotations.value.find(
+            (item) => item.owner === currentNaBatUser.value,
+          );
           if (foundItem) {
             setSelectedId(foundItem);
           }
@@ -82,13 +106,12 @@ export default defineComponent({
         const newAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
           recordingId: props.recordingId,
           species: [],
-          comments: '',
-          model: 'User Defined',
+          comments: "",
+          model: "User Defined",
           confidence: 1.0,
           apiToken: props.apiToken,
-
         };
-        if (props.type === 'nabat') {
+        if (props.type === "nabat") {
           await putNABatFileAnnotation(newAnnotation);
         } else {
           await putFileAnnotation(newAnnotation);
@@ -105,7 +128,9 @@ export default defineComponent({
     const updatedAnnotation = async (deleted = false) => {
       await loadFileAnnotations();
       if (selectedAnnotation.value) {
-        const found = annotations.value.find((item) => selectedAnnotation.value?.id === item.id);
+        const found = annotations.value.find(
+          (item) => selectedAnnotation.value?.id === item.id,
+        );
         if (found) {
           selectedAnnotation.value = found;
         }
@@ -115,7 +140,10 @@ export default defineComponent({
       }
     };
 
-    function handleSubmitAnnotation(annotation: FileAnnotation, submitSuccess: boolean) {
+    function handleSubmitAnnotation(
+      annotation: FileAnnotation,
+      submitSuccess: boolean,
+    ) {
       if (submitSuccess) {
         annotation.submitted = true;
       }
@@ -132,37 +160,49 @@ export default defineComponent({
       if (!configuration.value.mark_annotations_completed_enabled) {
         return undefined;
       }
-      const userAnnotations = annotations.value.filter((annotation: FileAnnotation) => annotation.owner === currentUser.value);
-      const submittedAnnotation = userAnnotations.find((annotation: FileAnnotation) => annotation.submitted);
+      const userAnnotations = annotations.value.filter(
+        (annotation: FileAnnotation) => annotation.owner === currentUser.value,
+      );
+      const submittedAnnotation = userAnnotations.find(
+        (annotation: FileAnnotation) => annotation.submitted,
+      );
       return submittedAnnotation?.id;
     });
 
     const disableNaBatAnnotations = computed(() => {
-      const currentUserAnnotations = annotations.value.filter((item) => item.owner === currentNaBatUser.value);
-      if (isAdmin.value && props.type === 'nabat' && !props.apiToken) {
+      const currentUserAnnotations = annotations.value.filter(
+        (item) => item.owner === currentNaBatUser.value,
+      );
+      if (isAdmin.value && props.type === "nabat" && !props.apiToken) {
         return true;
       }
-      return ( currentUserAnnotations.length > 0 && props.type === 'nabat');
+      return currentUserAnnotations.length > 0 && props.type === "nabat";
     });
 
-    const vettingMode = computed(() => configuration.value.mark_annotations_completed_enabled);
+    const vettingMode = computed(
+      () => configuration.value.mark_annotations_completed_enabled,
+    );
     // Count all annotations owned by current user (submitted and unsubmitted) for vetting one-annotation limit
-    const userAnnotationCount = computed(() =>
-      annotations.value.filter(
-        (a: FileAnnotation) => a.owner === currentUser.value
-      ).length
+    const userAnnotationCount = computed(
+      () =>
+        annotations.value.filter(
+          (a: FileAnnotation) => a.owner === currentUser.value,
+        ).length,
     );
-    const vettingModeAddDisabled = computed(() =>
-      vettingMode.value && userAnnotationCount.value > 0
+    const vettingModeAddDisabled = computed(
+      () => vettingMode.value && userAnnotationCount.value > 0,
     );
-    const addButtonDisabled = computed(() =>
-      addingAnnotation.value || disableNaBatAnnotations.value || vettingModeAddDisabled.value
+    const addButtonDisabled = computed(
+      () =>
+        addingAnnotation.value ||
+        disableNaBatAnnotations.value ||
+        vettingModeAddDisabled.value,
     );
     const addButtonTooltip = computed(() => {
       if (vettingModeAddDisabled.value) {
-        return 'In vetting mode you may only add one annotation per recording.';
+        return "In vetting mode you may only add one annotation per recording.";
       }
-      return '';
+      return "";
     });
 
     function getConfidenceLabelText(confidence: number) {
@@ -200,29 +240,16 @@ export default defineComponent({
 <template>
   <div>
     <v-row class="pa-4">
-      <v-col
-        v-if="!isNaBat()"
-        cols="6"
-      >
-        <v-row>
-          Annotations
-        </v-row>
-        <v-row
-          v-if="userSubmittedAnnotationId"
-          class="mt-8"
-        >
+      <v-col v-if="!isNaBat()" cols="6">
+        <v-row> Annotations </v-row>
+        <v-row v-if="userSubmittedAnnotationId" class="mt-8">
           <b>File Reviewed</b>
-          <v-icon color="success">
-            mdi-check
-          </v-icon>
+          <v-icon color="success"> mdi-check </v-icon>
         </v-row>
       </v-col>
       <v-spacer />
       <v-col v-if="!isNaBat() || !disableNaBatAnnotations">
-        <v-tooltip
-          v-if="addButtonTooltip"
-          location="bottom"
-        >
+        <v-tooltip v-if="addButtonTooltip" location="bottom">
           <template #activator="{ props: tooltipProps }">
             <div v-bind="tooltipProps">
               <v-btn
@@ -253,7 +280,11 @@ export default defineComponent({
         :id="`annotation-${annotation.id}`"
         :key="annotation.id"
         :class="{ selected: annotation.id === selectedAnnotation?.id }"
-        :disabled="type === 'nabat' && disableNaBatAnnotations && annotation.owner !== currentNaBatUser"
+        :disabled="
+          type === 'nabat' &&
+          disableNaBatAnnotations &&
+          annotation.owner !== currentNaBatUser
+        "
         class="annotation-item"
         @click="setSelectedId(annotation)"
       >
@@ -268,8 +299,8 @@ export default defineComponent({
               Details
             </v-btn>
           </v-col>
-          <v-col 
-            v-if="!configuration.mark_annotations_completed_enabled" 
+          <v-col
+            v-if="!configuration.mark_annotations_completed_enabled"
             class="annotation-confidence"
           >
             <span>{{ getConfidenceLabelText(annotation.confidence) }} </span>
@@ -279,9 +310,7 @@ export default defineComponent({
           </v-col>
           <v-col v-if="annotation.submitted">
             Submitted
-            <v-icon color="success">
-              mdi-check
-            </v-icon>
+            <v-icon color="success"> mdi-check </v-icon>
           </v-col>
         </v-row>
         <v-row
@@ -293,10 +322,7 @@ export default defineComponent({
             <div class="species-name">
               {{ item.species_code || item.common_name }}
             </div>
-            <div
-              v-if="item.family"
-              class="species-hierarchy"
-            >
+            <div v-if="item.family" class="species-hierarchy">
               <span> {{ item.family }}</span>
               <span v-if="item.genus">-></span>
               <span v-if="item.genus">{{ item.genus }}</span>
@@ -318,10 +344,7 @@ export default defineComponent({
       @delete:annotation="updatedAnnotation(true)"
       @submit:annotation="handleSubmitAnnotation"
     />
-    <v-dialog
-      v-model="detailsDialog"
-      width="600"
-    >
+    <v-dialog v-model="detailsDialog" width="600">
       <RecordingAnnotationDetails
         :recording-id="detailRecordingId"
         :api-token="apiToken"

@@ -1,14 +1,13 @@
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
-import type { SpectroInfo } from './geoJS/geoJSUtils';
+import type { SpectroInfo } from "./geoJS/geoJSUtils";
 import type { SpectrogramSequenceAnnotation } from "../api/api";
 import useState from "@use/useState";
 import { watch } from "vue";
 
 export default defineComponent({
   name: "SequenceList",
-  components: {
-  },
+  components: {},
   props: {
     spectroInfo: {
       type: Object as PropType<SpectroInfo | undefined>,
@@ -19,29 +18,31 @@ export default defineComponent({
       default: () => [],
     },
     selectedId: {
-        type: Number as PropType<number | null>,
-        default: null,
+      type: Number as PropType<number | null>,
+      default: null,
     },
   },
-  emits: ['select'],
+  emits: ["select"],
   setup(props) {
     const { annotationState, setAnnotationState } = useState();
     const scrollToId = (id: number) => {
-    const el = document.getElementById(`annotation-${id}`);
-    if (el) {
-      el.scrollIntoView({block: 'end', behavior: 'smooth'});
-    }
-  };
-  watch(() => props.selectedId, () => {
-    if (props.selectedId !== null) {
-      scrollToId(props.selectedId);
-    }
-  });
-  
+      const el = document.getElementById(`annotation-${id}`);
+      if (el) {
+        el.scrollIntoView({ block: "end", behavior: "smooth" });
+      }
+    };
+    watch(
+      () => props.selectedId,
+      () => {
+        if (props.selectedId !== null) {
+          scrollToId(props.selectedId);
+        }
+      },
+    );
 
     return {
-        annotationState,
-        setAnnotationState,
+      annotationState,
+      setAnnotationState,
     };
   },
 });
@@ -71,19 +72,21 @@ export default defineComponent({
         v-for="annotation in annotations"
         :id="`annotation-${annotation.id}`"
         :key="annotation.id"
-        :class="{selected: annotation.id===selectedId}"
+        :class="{ selected: annotation.id === selectedId }"
         class="annotation-item"
         @click="$emit('select', annotation.id)"
       >
         <v-row>
           <v-col class="annotation-time">
             <span>{{ annotation.start_time }}-{{ annotation.end_time }}ms</span>
-            <span class="pl-2"><b>({{ annotation.end_time - annotation.start_time }}ms)</b></span>
+            <span class="pl-2"
+              ><b
+                >({{ annotation.end_time - annotation.start_time }}ms)</b
+              ></span
+            >
           </v-col>
         </v-row>
-        <v-row
-          class="ma-0 pa-0"
-        >
+        <v-row class="ma-0 pa-0">
           <v-col class="ma-0 pa-0">
             <div class="type-name">
               {{ annotation.type }}
@@ -97,19 +100,20 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .annotation-id {
-    cursor:pointer;
-    text-decoration: underline;
+  cursor: pointer;
+  text-decoration: underline;
 }
 .annotation-time {
-    font-size: 1em;
+  font-size: 1em;
 }
 .annotation-item {
   border: 1px solid gray;
 }
 .type-name {
-    font-weight: bold;
-    font-size: 1em;
-}.selected {
-    background-color: cyan;
+  font-weight: bold;
+  font-size: 1em;
+}
+.selected {
+  background-color: cyan;
 }
 </style>

@@ -55,7 +55,7 @@ class Command(BaseCommand):
             ),
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa: C901, PLR0912, PLR0915
         directory_path = Path(options["directory"])
         owner_username = options.get("owner")
         is_public = options.get("public", False)

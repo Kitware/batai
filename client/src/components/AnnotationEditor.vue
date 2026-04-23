@@ -1,7 +1,22 @@
 <script lang="ts">
-import { computed, defineComponent, type PropType, ref, type Ref, watch } from "vue";
-import type { SpectroInfo } from './geoJS/geoJSUtils';
-import { deleteAnnotation, deleteSequenceAnnotation, patchAnnotation, patchSequenceAnnotation, type Species, type SpectrogramAnnotation, type SpectrogramSequenceAnnotation } from "../api/api";
+import {
+  computed,
+  defineComponent,
+  type PropType,
+  ref,
+  type Ref,
+  watch,
+} from "vue";
+import type { SpectroInfo } from "./geoJS/geoJSUtils";
+import {
+  deleteAnnotation,
+  deleteSequenceAnnotation,
+  patchAnnotation,
+  patchSequenceAnnotation,
+  type Species,
+  type SpectrogramAnnotation,
+  type SpectrogramSequenceAnnotation,
+} from "../api/api";
 import useState from "@use/useState";
 import SpeciesInfo from "./SpeciesInfo.vue";
 export default defineComponent({
@@ -15,86 +30,125 @@ export default defineComponent({
       default: () => undefined,
     },
     annotation: {
-      type: Object as PropType<SpectrogramAnnotation | SpectrogramSequenceAnnotation | null>,
+      type: Object as PropType<
+        SpectrogramAnnotation | SpectrogramSequenceAnnotation | null
+      >,
       default: () => null,
     },
     species: {
-        type: Array as PropType<Species[]>,
-        required: true,
+      type: Array as PropType<Species[]>,
+      required: true,
     },
     recordingId: {
-        type: String,
-        required: true,
-    }
+      type: String,
+      required: true,
+    },
   },
-  emits: ['update:annotation', 'delete:annotation'],
+  emits: ["update:annotation", "delete:annotation"],
   setup(props, { emit }) {
     const { selectedType } = useState();
     const speciesList = computed(() => {
-        return props.species.map((item) => (item.species_code || item.common_name)).sort();
+      return props.species
+        .map((item) => item.species_code || item.common_name)
+        .sort();
     });
 
-    const speciesEdit: Ref<string[]> = ref( props.annotation?.species?.map((item) => item.species_code || item.common_name) || []);
-    const comments: Ref<string> = ref(props.annotation?.comments || '');
+    const speciesEdit: Ref<string[]> = ref(
+      props.annotation?.species?.map(
+        (item) => item.species_code || item.common_name,
+      ) || [],
+    );
+    const comments: Ref<string> = ref(props.annotation?.comments || "");
     const type: Ref<string[]> = ref([]);
-    const callTypes = ref(['Search', 'Approach', 'Terminal', 'Social']);
+    const callTypes = ref(["Search", "Approach", "Terminal", "Social"]);
 
-      type.value = (props.annotation as SpectrogramSequenceAnnotation).type?.split('+') || [];
+    type.value =
+      (props.annotation as SpectrogramSequenceAnnotation).type?.split("+") ||
+      [];
 
-    watch(() => props.annotation, () => {
+    watch(
+      () => props.annotation,
+      () => {
         if (props.annotation?.species) {
-            speciesEdit.value = props.annotation.species.map((item) => item.species_code || item.common_name);
+          speciesEdit.value = props.annotation.species.map(
+            (item) => item.species_code || item.common_name,
+          );
         }
-        if (selectedType.value === 'pulse' && props.annotation?.comments) {
-            comments.value = props.annotation.comments;
+        if (selectedType.value === "pulse" && props.annotation?.comments) {
+          comments.value = props.annotation.comments;
         }
-        if (selectedType.value === 'pulse' && (props.annotation as SpectrogramSequenceAnnotation).type) {
-            type.value = (props.annotation as SpectrogramSequenceAnnotation).type?.split('+') || [];
+        if (
+          selectedType.value === "pulse" &&
+          (props.annotation as SpectrogramSequenceAnnotation).type
+        ) {
+          type.value =
+            (props.annotation as SpectrogramSequenceAnnotation).type?.split(
+              "+",
+            ) || [];
         }
-    });
+      },
+    );
     const updateAnnotation = async () => {
-        if (props.annotation) {
-            // convert species names to Ids;
-            const speciesIds: number[] = [];
-            speciesEdit.value.forEach((item) => {
-                const found = props.species.find((specie) => specie.species_code === item);
-                if (found) {
-                    speciesIds.push(found.pk);
-                }
-            });
-            const updateType = type.value.join('+');
-            if (selectedType.value === 'pulse') {
-              await patchAnnotation(props.recordingId, props.annotation?.id, { ...props.annotation, comments: comments.value, type: updateType }, speciesIds );
-            } else if (selectedType.value === 'sequence') {
-              await patchSequenceAnnotation(props.recordingId, props.annotation.id, {...props.annotation, comments: comments.value, type: updateType }, speciesIds);
-            }
-            // Signal to redownload the updated annotation values if possible
-            emit('update:annotation');
+      if (props.annotation) {
+        // convert species names to Ids;
+        const speciesIds: number[] = [];
+        speciesEdit.value.forEach((item) => {
+          const found = props.species.find(
+            (specie) => specie.species_code === item,
+          );
+          if (found) {
+            speciesIds.push(found.pk);
+          }
+        });
+        const updateType = type.value.join("+");
+        if (selectedType.value === "pulse") {
+          await patchAnnotation(
+            props.recordingId,
+            props.annotation?.id,
+            { ...props.annotation, comments: comments.value, type: updateType },
+            speciesIds,
+          );
+        } else if (selectedType.value === "sequence") {
+          await patchSequenceAnnotation(
+            props.recordingId,
+            props.annotation.id,
+            { ...props.annotation, comments: comments.value, type: updateType },
+            speciesIds,
+          );
         }
-
+        // Signal to redownload the updated annotation values if possible
+        emit("update:annotation");
+      }
     };
 
     const deleteAnno = async () => {
-      if (props.annotation && props.recordingId && selectedType.value === 'pulse') {
-            await deleteAnnotation(props.recordingId, props.annotation.id);
-            emit('delete:annotation');
-        }
-        if (props.annotation && props.recordingId && selectedType.value === 'sequence') {
-            await deleteSequenceAnnotation(props.recordingId, props.annotation.id);
-            emit('delete:annotation');
-        }
-        
+      if (
+        props.annotation &&
+        props.recordingId &&
+        selectedType.value === "pulse"
+      ) {
+        await deleteAnnotation(props.recordingId, props.annotation.id);
+        emit("delete:annotation");
+      }
+      if (
+        props.annotation &&
+        props.recordingId &&
+        selectedType.value === "sequence"
+      ) {
+        await deleteSequenceAnnotation(props.recordingId, props.annotation.id);
+        emit("delete:annotation");
+      }
     };
     return {
-        callTypes,
-        speciesList,
-        speciesEdit,
-        comments,
-        type,
-        selectedType,
-        updateAnnotation,
-        deleteAnnotation,
-        deleteAnno,
+      callTypes,
+      speciesList,
+      speciesEdit,
+      comments,
+      type,
+      selectedType,
+      updateAnnotation,
+      deleteAnnotation,
+      deleteAnno,
     };
   },
 });
@@ -106,12 +160,7 @@ export default defineComponent({
       <v-row class="pa-2">
         Edit Annotations
         <v-spacer />
-        <v-btn
-          size="x-small"
-          color="error"
-          class="mt-1"
-          @click="deleteAnno()"
-        >
+        <v-btn size="x-small" color="error" class="mt-1" @click="deleteAnno()">
           Delete<v-icon>mdi-delete</v-icon>
         </v-btn>
       </v-row>
@@ -157,10 +206,8 @@ export default defineComponent({
           @change="updateAnnotation()"
         />
       </v-row>
-    </v-card-text> 
+    </v-card-text>
   </v-card>
 </template>
 
-<style lang="scss" scoped>
-
-</style>
+<style lang="scss" scoped></style>

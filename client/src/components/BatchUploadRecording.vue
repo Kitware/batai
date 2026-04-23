@@ -1,19 +1,31 @@
 <script lang="ts">
-import { computed, defineComponent, ref, type Ref, watch } from 'vue';
-import { RecordingMimeTypes } from '../constants';
-import useRequest from '@use/useRequest';
-import { type UploadLocation, uploadRecordingFile, getCellLocation, type RecordingFileParameters, getGuanoMetadata } from '../api/api';
-import BatchRecordingElement, { type BatchRecording } from './BatchRecordingElement.vue';
-import { cloneDeep } from 'lodash';
-import { DEFAULT_SAMPLE_FRAME_ID, extractDateTimeComponents, getCurrentTime, parseRecordingFilename } from '@use/useUtils';
-import useState from '@use/useState';
-
+import { computed, defineComponent, ref, type Ref, watch } from "vue";
+import { RecordingMimeTypes } from "../constants";
+import useRequest from "@use/useRequest";
+import {
+  type UploadLocation,
+  uploadRecordingFile,
+  getCellLocation,
+  type RecordingFileParameters,
+  getGuanoMetadata,
+} from "../api/api";
+import BatchRecordingElement, {
+  type BatchRecording,
+} from "./BatchRecordingElement.vue";
+import { cloneDeep } from "lodash";
+import {
+  DEFAULT_SAMPLE_FRAME_ID,
+  extractDateTimeComponents,
+  getCurrentTime,
+  parseRecordingFilename,
+} from "@use/useUtils";
+import useState from "@use/useState";
 
 interface AutoFillResult {
   name?: string;
   date?: string;
   time?: string;
-  location?: {lat: number, lon: number};
+  location?: { lat: number; lon: number };
   gridCellId?: number;
   sampleFrameId?: number;
 }
@@ -22,7 +34,7 @@ export default defineComponent({
   components: {
     BatchRecordingElement,
   },
-  emits: ['done', 'cancel'],
+  emits: ["done", "cancel"],
   setup(props, { emit }) {
     const { recordingTagList } = useState();
     const tagOptions = computed(() => [...recordingTagList.value]);
@@ -32,12 +44,12 @@ export default defineComponent({
     const recordings: Ref<BatchRecording[]> = ref([]);
     const successfulUpload = ref(false);
     const uploadProgress = ref(0);
-    const errorText = ref('');
-    const progressState = ref('');
+    const errorText = ref("");
+    const progressState = ref("");
 
     const globalPublic = ref(false);
-    const globalEquipment = ref('');
-    const globalComments = ref('');
+    const globalEquipment = ref("");
+    const globalComments = ref("");
     const globalTags = ref([] as string[]);
 
     const autoFill = async (filename: string) => {
@@ -53,11 +65,11 @@ export default defineComponent({
       };
       if (parsedFilename.cellId) {
         results.gridCellId = parsedFilename.cellId;
-        const { latitude: lat , longitude: lon } = (
+        const { latitude: lat, longitude: lon } = (
           await getCellLocation(
             results.gridCellId,
             parsedFilename.quadrant,
-            parsedFilename.sampleFrameId
+            parsedFilename.sampleFrameId,
           )
         ).data;
         if (lat && lon) {
@@ -74,17 +86,17 @@ export default defineComponent({
       return results;
     };
     const readFile = async (e: Event) => {
-      const target = (e.target as HTMLInputElement);
+      const target = e.target as HTMLInputElement;
       if (target?.files?.length) {
         const files = target.files;
         if (!files) {
           return;
         }
-        for (let i = 0; i< files.length; i+=1) {
+        for (let i = 0; i < files.length; i += 1) {
           const file = files.item(i);
           if (file) {
             if (!RecordingMimeTypes.includes(file.type)) {
-              errorText.value = `Selected file is not one of the following types: ${RecordingMimeTypes.join(' ')}`;
+              errorText.value = `Selected file is not one of the following types: ${RecordingMimeTypes.join(" ")}`;
               return;
             }
             const name = file.name.replace(/\.[^/.]+$/, "");
@@ -98,24 +110,22 @@ export default defineComponent({
                 location: data.location,
                 gridCellId: data.gridCellId,
                 sampleFrameId: data.sampleFrameId ?? DEFAULT_SAMPLE_FRAME_ID,
-                equipment: '',
-                comments: '',
+                equipment: "",
+                comments: "",
                 public: false,
-
               };
               recordings.value.push(newRecording);
             } else {
               recordings.value.push({
                 file,
                 name: file.name,
-                date: new Date().toISOString().split('T')[0],
+                date: new Date().toISOString().split("T")[0],
                 time: getCurrentTime(),
                 sampleFrameId: DEFAULT_SAMPLE_FRAME_ID,
-                equipment: '',
-                comments: '',
+                equipment: "",
+                comments: "",
                 public: false,
               });
-
             }
           }
         }
@@ -127,24 +137,26 @@ export default defineComponent({
       }
     }
 
-
     const { request: submit, loading: submitLoading } = useRequest(async () => {
       const recordingCopies = cloneDeep(recordings.value);
       for (let i = 0; i < recordingCopies.length; i += 1) {
         const fileElement = recordingCopies[i];
         const file = fileElement.file;
         if (!file) {
-          throw new Error('Unreachable');
+          throw new Error("Unreachable");
         }
         let location: UploadLocation = null;
         if (fileElement.location) {
-          location = { latitude: fileElement.location.lat, longitude: fileElement.location.lon };
+          location = {
+            latitude: fileElement.location.lat,
+            longitude: fileElement.location.lon,
+          };
         }
         if (fileElement.gridCellId !== null) {
           if (location === null) {
-            location  = {};
+            location = {};
           }
-          location['gridCellId'] = fileElement.gridCellId;
+          location["gridCellId"] = fileElement.gridCellId;
         }
         const fileUploadParams: RecordingFileParameters = {
           name: fileElement.name,
@@ -164,7 +176,7 @@ export default defineComponent({
         await uploadRecordingFile(file, fileUploadParams);
         recordings.value.splice(0, 1);
       }
-      emit('done');
+      emit("done");
     });
 
     const updateRecording = (index: number, data: BatchRecording) => {
@@ -181,7 +193,7 @@ export default defineComponent({
     const getBatchMetadata = async () => {
       const updatedRecordings: BatchRecording[] = [];
       for (let i = 0; i < recordings.value.length; i += 1) {
-        const recording  = recordings.value[i];
+        const recording = recordings.value[i];
         const results = await getGuanoMetadata(recording.file);
         if (results.nabat_site_name) {
           recording.siteName = results.nabat_site_name;
@@ -193,7 +205,7 @@ export default defineComponent({
           recording.detector = results.nabat_detector_type;
         }
         if (results.nabat_species_list) {
-          recording.speciesList = results.nabat_species_list.join(',');
+          recording.speciesList = results.nabat_species_list.join(",");
         }
         if (results.nabat_unusual_occurrences) {
           recording.unusualOccurrences = results.nabat_unusual_occurrences;
@@ -205,12 +217,12 @@ export default defineComponent({
         const NABatlatitude = results.nabat_latitude;
         const NABatlongitude = results.nabat_longitude;
         if (startTime) {
-          const {date, time} = extractDateTimeComponents(startTime);
+          const { date, time } = extractDateTimeComponents(startTime);
           recording.date = date;
           recording.time = time;
         }
         if (NaBatgridCellId) {
-          recording.gridCellId= parseInt(NaBatgridCellId);
+          recording.gridCellId = parseInt(NaBatgridCellId);
         }
         if (NaBatSampleFrameId !== undefined && NaBatSampleFrameId !== null) {
           recording.sampleFrameId = Number(NaBatSampleFrameId);
@@ -218,7 +230,7 @@ export default defineComponent({
         if (NABatlatitude && NABatlongitude) {
           recording.location = {
             lat: NABatlatitude,
-            lon: NABatlongitude
+            lon: NABatlongitude,
           };
         }
         updatedRecordings.push(recording);
@@ -226,8 +238,10 @@ export default defineComponent({
       recordings.value = updatedRecordings;
     };
 
-    watch([globalPublic, globalComments, globalEquipment, globalTags], () => {
-      const newResults: BatchRecording[] = [];
+    watch(
+      [globalPublic, globalComments, globalEquipment, globalTags],
+      () => {
+        const newResults: BatchRecording[] = [];
         recordings.value.forEach((item) => {
           item.public = globalPublic.value;
           if (globalComments.value) {
@@ -239,8 +253,10 @@ export default defineComponent({
           item.tags = globalTags.value;
           newResults.push(item);
         });
-      recordings.value = newResults;
-    }, { deep: true });
+        recordings.value = newResults;
+      },
+      { deep: true },
+    );
 
     return {
       tagOptions,
@@ -268,10 +284,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <div
-    style="height: 100%"
-    class="d-flex pa-1"
-  >
+  <div style="height: 100%" class="d-flex pa-1">
     <v-alert
       v-if="successfulUpload"
       v-model="successfulUpload"
@@ -287,25 +300,14 @@ export default defineComponent({
       accept="audio/*"
       multiple
       @change="readFile"
-    >
-    <v-card
-      width="100%"
-      style="max-height:90vh; overflow-y: scroll;"
-    >
+    />
+    <v-card width="100%" style="max-height: 90vh; overflow-y: scroll">
       <v-container>
-        <v-card-title>
-          Upload Multiple Recordings
-        </v-card-title>
+        <v-card-title> Upload Multiple Recordings </v-card-title>
         <v-card-text>
           <v-row v-if="recordings.length === 0">
-            <v-btn
-              block
-              color="primary"
-              @click="selectFile"
-            >
-              <v-icon class="pr-2">
-                mdi-audio
-              </v-icon>
+            <v-btn block color="primary" @click="selectFile">
+              <v-icon class="pr-2"> mdi-audio </v-icon>
               Choose Audio Files
             </v-btn>
           </v-row>
@@ -316,10 +318,7 @@ export default defineComponent({
               </v-expansion-panel-title>
               <v-expansion-panel-text>
                 <v-row>
-                  <v-btn
-                    color="secondary"
-                    @click="getBatchMetadata()"
-                  >
+                  <v-btn color="secondary" @click="getBatchMetadata()">
                     Get Guano Metadata
                   </v-btn>
                 </v-row>
@@ -347,16 +346,10 @@ export default defineComponent({
                   />
                 </v-row>
                 <v-row>
-                  <v-text-field
-                    v-model="globalEquipment"
-                    label="equipment"
-                  />
+                  <v-text-field v-model="globalEquipment" label="equipment" />
                 </v-row>
                 <v-row>
-                  <v-text-field
-                    v-model="globalComments"
-                    label="comments"
-                  />
+                  <v-text-field v-model="globalComments" label="comments" />
                 </v-row>
               </v-expansion-panel-text>
             </v-expansion-panel>
@@ -364,7 +357,9 @@ export default defineComponent({
               v-for="(recording, index) in recordings"
               :key="`batch_${recording.name}`"
             >
-              <v-expansion-panel-title>{{ recording.name }}</v-expansion-panel-title>
+              <v-expansion-panel-title>{{
+                recording.name
+              }}</v-expansion-panel-title>
               <v-expansion-panel-text>
                 <batch-recording-element
                   :editing="recording"
@@ -377,22 +372,14 @@ export default defineComponent({
         </v-card-text>
         <v-card-actions>
           <v-spacer />
+          <v-btn @click="$emit('cancel')"> Cancel </v-btn>
           <v-btn
-            @click="$emit('cancel')"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-            :disabled=" (!recordings.length) || errorText !== '' || submitLoading"
+            :disabled="!recordings.length || errorText !== '' || submitLoading"
             color="primary"
             @click="submit()"
           >
-            <span v-if="!submitLoading">
-              Submit
-            </span>
-            <v-icon v-else>
-              mdi-loading mdi-spin
-            </v-icon>
+            <span v-if="!submitLoading"> Submit </span>
+            <v-icon v-else> mdi-loading mdi-spin </v-icon>
           </v-btn>
         </v-card-actions>
       </v-container>

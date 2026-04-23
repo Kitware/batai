@@ -1,6 +1,19 @@
 <script lang="ts">
-import { computed, defineComponent, onMounted, onUnmounted, type PropType, ref, type Ref, watch } from "vue";
-import { type SpectroInfo, spectroToCenter, useGeoJS } from "./geoJS/geoJSUtils";
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  onUnmounted,
+  type PropType,
+  ref,
+  type Ref,
+  watch,
+} from "vue";
+import {
+  type SpectroInfo,
+  spectroToCenter,
+  useGeoJS,
+} from "./geoJS/geoJSUtils";
 import {
   patchAnnotation,
   patchSequenceAnnotation,
@@ -22,13 +35,24 @@ export default defineComponent({
   components: { LayerManager, PulseMetadataTooltip },
   props: {
     images: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
-    maskImages: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
-    waveplotImages: { type: Array as PropType<HTMLImageElement[]>, default: () => [] },
+    maskImages: {
+      type: Array as PropType<HTMLImageElement[]>,
+      default: () => [],
+    },
+    waveplotImages: {
+      type: Array as PropType<HTMLImageElement[]>,
+      default: () => [],
+    },
     spectroInfo: { type: Object as PropType<SpectroInfo>, required: true },
     recordingId: { type: String as PropType<string | null>, required: true },
-    compressed: { type: Boolean, required: true }
+    compressed: { type: Boolean, required: true },
   },
-  emits: ["update:annotation", "create:annotation", "geoViewerRef", "hoverData"],
+  emits: [
+    "update:annotation",
+    "create:annotation",
+    "geoViewerRef",
+    "hoverData",
+  ],
   setup(props, { emit }) {
     const {
       annotations,
@@ -55,17 +79,33 @@ export default defineComponent({
     const cursor = ref("");
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
 
-    const setCursor = (newCursor: string) => { cursor.value = newCursor; };
+    const setCursor = (newCursor: string) => {
+      cursor.value = newCursor;
+    };
 
-    const baseDimensions = computed(() => getImageDimensions(props.images, props.spectroInfo));
-    const waveplotDisplayHeight = computed(() => Math.floor(baseDimensions.value.height / 5));
-    const showWaveplot = computed(() => (viewWaveplot.value && props.waveplotImages.length && waveplotDisplayHeight.value > 0));
-    const totalDisplayHeight = computed(() =>
-      scaledHeight.value + (showWaveplot.value ? waveplotDisplayHeight.value : 0)
+    const baseDimensions = computed(() =>
+      getImageDimensions(props.images, props.spectroInfo),
+    );
+    const waveplotDisplayHeight = computed(() =>
+      Math.floor(baseDimensions.value.height / 5),
+    );
+    const showWaveplot = computed(
+      () =>
+        viewWaveplot.value &&
+        props.waveplotImages.length &&
+        waveplotDisplayHeight.value > 0,
+    );
+    const totalDisplayHeight = computed(
+      () =>
+        scaledHeight.value +
+        (showWaveplot.value ? waveplotDisplayHeight.value : 0),
     );
 
     function updateScaledDimensions() {
-      const { width, height } = getImageDimensions(props.images, props.spectroInfo);
+      const { width, height } = getImageDimensions(
+        props.images,
+        props.spectroInfo,
+      );
       scaledWidth.value = width * scaledVals.value.x;
       scaledHeight.value = height * scaledVals.value.y;
       if (scaledWidth.value < width) {
@@ -104,23 +144,36 @@ export default defineComponent({
       const width = Math.max(scaledWidth.value, props.spectroInfo.width);
       const height = Math.max(scaledHeight.value, props.spectroInfo.height);
 
-      const freq = height - y >= 0
-        ? ((height - y) * (props.spectroInfo.high_freq - props.spectroInfo.low_freq)) / height / 1000 + props.spectroInfo.low_freq / 1000
-        : -1;
+      const freq =
+        height - y >= 0
+          ? ((height - y) *
+              (props.spectroInfo.high_freq - props.spectroInfo.low_freq)) /
+              height /
+              1000 +
+            props.spectroInfo.low_freq / 1000
+          : -1;
 
       let time = -1;
       if (x >= 0 && height - y >= 0) {
         if (!props.compressed) {
-          time = x * ((props.spectroInfo.end_time - props.spectroInfo.start_time) / width);
-        } else if (props.spectroInfo.start_times && props.spectroInfo.end_times) {
-          const timeLength = props.spectroInfo.end_time - props.spectroInfo.start_time;
+          time =
+            x *
+            ((props.spectroInfo.end_time - props.spectroInfo.start_time) /
+              width);
+        } else if (
+          props.spectroInfo.start_times &&
+          props.spectroInfo.end_times
+        ) {
+          const timeLength =
+            props.spectroInfo.end_time - props.spectroInfo.start_time;
           const timeToPixels = (width / timeLength) * scaledVals.value.x;
           let offsetAdditive = 0;
           for (let i = 0; i < props.spectroInfo.start_times.length; i++) {
             const start_time = props.spectroInfo.start_times[i];
             const end_time = props.spectroInfo.end_times[i];
             const startX = offsetAdditive;
-            const endX = offsetAdditive + (end_time - start_time) * timeToPixels;
+            const endX =
+              offsetAdditive + (end_time - start_time) * timeToPixels;
             if (x > startX && x < endX) {
               time = start_time + (x - offsetAdditive) / timeToPixels;
               break;
@@ -132,7 +185,9 @@ export default defineComponent({
       emit("hoverData", { time, freq });
     };
 
-    const effectiveImageOpacity = computed(() => (contoursEnabled.value ? imageOpacity.value : 1));
+    const effectiveImageOpacity = computed(() =>
+      contoursEnabled.value ? imageOpacity.value : 1,
+    );
 
     function resetViewerBounds(resetCam = false) {
       const viewer = geoJS.getGeoViewer().value;
@@ -176,7 +231,7 @@ export default defineComponent({
           scaledWidth.value,
           waveplotDisplayHeight.value,
           scaledHeight.value,
-          1
+          1,
         );
       } else {
         geoJS.clearWaveplotQuadFeatures(true);
@@ -187,28 +242,59 @@ export default defineComponent({
       updateScaledDimensions();
       const totalHeight = totalDisplayHeight.value;
       if (containerRef.value && !geoJS.getGeoViewer().value) {
-        geoJS.initializeViewer(containerRef.value, scaledWidth.value, totalHeight, false, props.images.length);
+        geoJS.initializeViewer(
+          containerRef.value,
+          scaledWidth.value,
+          totalHeight,
+          false,
+          props.images.length,
+        );
         geoJS.getGeoViewer().value.geoOn(geo.event.mousemove, mouseMoveEvent);
       }
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity.value);
+        geoJS.drawImages(
+          props.images,
+          scaledWidth.value,
+          scaledHeight.value,
+          true,
+          effectiveImageOpacity.value,
+        );
       }
       if (viewMaskOverlay.value && props.maskImages.length) {
-        geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
+        geoJS.drawMaskImages(
+          props.maskImages,
+          scaledWidth.value,
+          scaledHeight.value,
+          maskOverlayOpacity.value,
+        );
       }
       resetViewerBounds(true);
       initialized.value = true;
       emit("geoViewerRef", geoJS.getGeoViewer());
 
       if (props.compressed) {
-        scaledVals.value = { x: configuration.value.spectrogram_x_stretch, y: 1 };
+        scaledVals.value = {
+          x: configuration.value.spectrogram_x_stretch,
+          y: 1,
+        };
         updateScaledDimensions();
         resetViewerBounds(true);
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
+          geoJS.drawImages(
+            props.images,
+            scaledWidth.value,
+            scaledHeight.value,
+            false,
+            effectiveImageOpacity.value,
+          );
         }
         if (viewMaskOverlay.value && props.maskImages.length) {
-          geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
+          geoJS.drawMaskImages(
+            props.maskImages,
+            scaledWidth.value,
+            scaledHeight.value,
+            maskOverlayOpacity.value,
+          );
         }
         drawWaveplotIfEnabled();
       }
@@ -221,42 +307,70 @@ export default defineComponent({
       scaledVals.value = { x: 1, y: 1 };
     });
 
-    watch([containerRef, () => props.spectroInfo, () => props.images], initializeViewerAndImages);
+    watch(
+      [containerRef, () => props.spectroInfo, () => props.images],
+      initializeViewerAndImages,
+    );
 
-    watch(() => props.spectroInfo, () => {
-      updateScaledDimensions();
-      resetViewerBounds(true);
-      if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, true, effectiveImageOpacity.value);
-      }
-      if (viewMaskOverlay.value && props.maskImages.length) {
-        geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
-      }
-      drawWaveplotIfEnabled();
-    });
+    watch(
+      () => props.spectroInfo,
+      () => {
+        updateScaledDimensions();
+        resetViewerBounds(true);
+        if (props.images.length) {
+          geoJS.drawImages(
+            props.images,
+            scaledWidth.value,
+            scaledHeight.value,
+            true,
+            effectiveImageOpacity.value,
+          );
+        }
+        if (viewMaskOverlay.value && props.maskImages.length) {
+          geoJS.drawMaskImages(
+            props.maskImages,
+            scaledWidth.value,
+            scaledHeight.value,
+            maskOverlayOpacity.value,
+          );
+        }
+        drawWaveplotIfEnabled();
+      },
+    );
 
     const updateAnnotation = async (
-      annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation
+      annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation,
     ) => {
       if (props.recordingId !== null && selectedId.value !== null) {
         if (selectedType.value === "pulse") {
-          await patchAnnotation(props.recordingId, selectedId.value, annotation);
+          await patchAnnotation(
+            props.recordingId,
+            selectedId.value,
+            annotation,
+          );
         } else if (selectedType.value === "sequence") {
-          await patchSequenceAnnotation(props.recordingId, selectedId.value, annotation);
+          await patchSequenceAnnotation(
+            props.recordingId,
+            selectedId.value,
+            annotation,
+          );
         }
         emit("update:annotation", annotation);
       }
     };
 
     const createAnnotation = async (
-      annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation
+      annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation,
     ) => {
       if (props.recordingId !== null) {
         if (creationType.value === "pulse") {
           const response = await putAnnotation(props.recordingId, annotation);
           emit("create:annotation", response.data.id);
         } else if (creationType.value === "sequence") {
-          const response = await putSequenceAnnotation(props.recordingId, annotation);
+          const response = await putSequenceAnnotation(
+            props.recordingId,
+            annotation,
+          );
           emit("create:annotation", response.data.id);
         }
       }
@@ -271,9 +385,15 @@ export default defineComponent({
       const found =
         selectedType.value === "pulse"
           ? annotations.value.find((item) => item.id === selectedId.value)
-          : sequenceAnnotations.value.find((item) => item.id === selectedId.value);
+          : sequenceAnnotations.value.find(
+              (item) => item.id === selectedId.value,
+            );
       if (found && props.spectroInfo) {
-        const [x, y] = spectroToCenter(found, props.spectroInfo, selectedType.value);
+        const [x, y] = spectroToCenter(
+          found,
+          props.spectroInfo,
+          selectedType.value,
+        );
         const bounds = geoJS.getGeoViewer().value.bounds();
         if (x < bounds.left || x > bounds.right) {
           geoJS.getGeoViewer().value.center({ x, y });
@@ -282,7 +402,8 @@ export default defineComponent({
     });
 
     const wheelEvent = (event: WheelEvent) => {
-      const incrementX = 0.1, incrementY = 0.1;
+      const incrementX = 0.1,
+        incrementY = 0.1;
 
       if (event.ctrlKey) {
         scaledVals.value.x += event.deltaY > 0 ? -incrementX : incrementX;
@@ -290,10 +411,21 @@ export default defineComponent({
         updateScaledDimensions();
         resetViewerBounds(false);
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
+          geoJS.drawImages(
+            props.images,
+            scaledWidth.value,
+            scaledHeight.value,
+            false,
+            effectiveImageOpacity.value,
+          );
         }
         if (viewMaskOverlay.value && props.maskImages.length) {
-          geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
+          geoJS.drawMaskImages(
+            props.maskImages,
+            scaledWidth.value,
+            scaledHeight.value,
+            maskOverlayOpacity.value,
+          );
         }
         drawWaveplotIfEnabled();
       } else if (event.shiftKey) {
@@ -302,10 +434,21 @@ export default defineComponent({
         updateScaledDimensions();
         resetViewerBounds(false);
         if (props.images.length) {
-          geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
+          geoJS.drawImages(
+            props.images,
+            scaledWidth.value,
+            scaledHeight.value,
+            false,
+            effectiveImageOpacity.value,
+          );
         }
         if (viewMaskOverlay.value && props.maskImages.length) {
-          geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
+          geoJS.drawMaskImages(
+            props.maskImages,
+            scaledWidth.value,
+            scaledHeight.value,
+            maskOverlayOpacity.value,
+          );
         }
         drawWaveplotIfEnabled();
       }
@@ -315,13 +458,24 @@ export default defineComponent({
 
     watch([contoursEnabled, imageOpacity], () => {
       if (props.images.length) {
-        geoJS.drawImages(props.images, scaledWidth.value, scaledHeight.value, false, effectiveImageOpacity.value);
+        geoJS.drawImages(
+          props.images,
+          scaledWidth.value,
+          scaledHeight.value,
+          false,
+          effectiveImageOpacity.value,
+        );
       }
     });
 
     watch([viewMaskOverlay, maskOverlayOpacity, () => props.maskImages], () => {
       if (viewMaskOverlay.value && props.maskImages.length) {
-        geoJS.drawMaskImages(props.maskImages, scaledWidth.value, scaledHeight.value, maskOverlayOpacity.value);
+        geoJS.drawMaskImages(
+          props.maskImages,
+          scaledWidth.value,
+          scaledHeight.value,
+          maskOverlayOpacity.value,
+        );
       } else {
         geoJS.clearMaskQuadFeatures(true);
       }
@@ -386,10 +540,7 @@ export default defineComponent({
       @set-cursor="setCursor($event)"
       @pulse-metadata-tooltip="onPulseMetadataTooltip($event)"
     />
-    <div
-      ref="imageCursorRef"
-      class="imageCursor"
-    >
+    <div ref="imageCursorRef" class="imageCursor">
       <v-icon color="white">
         {{ cursor }}
       </v-icon>
