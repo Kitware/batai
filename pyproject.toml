@@ -20,7 +20,7 @@ dependencies = [
   "django-environ==0.13.0",
   "django-extensions==4.1",
   "django-oauth-toolkit==3.2.0",
-  "django-resonant-settings[allauth,celery]==0.48.1",
+  "django-resonant-settings[allauth,celery]==0.50.4",
   "django-resonant-utils[allauth,s3_storage]==0.19.0",
   "django-s3-file-field[s3]==1.1.0",
   "django-storages[s3]==1.14.6",
@@ -200,6 +200,10 @@ extend-immutable-calls = ["ninja.Query"]
 
 [tool.ruff.lint.flake8-self]
 extend-ignore-names = ["_base_manager", "_default_manager",  "_meta"]
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+runtime-evaluated-decorators = ["pydantic.validate_call"]
 
 [tool.ruff.lint.isort]
 # Sort by name, don't cluster "from" vs "import"
