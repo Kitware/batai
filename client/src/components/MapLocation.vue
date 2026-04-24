@@ -31,6 +31,10 @@ export default defineComponent({
       type: Number,
       default: undefined,
     },
+    sampleFrameId: {
+      type: Number,
+      default: 14,
+    },
     updateMap: {
       type: Number,
       default: 0,
@@ -113,7 +117,10 @@ export default defineComponent({
         ) {
           drawBbox(props.bbox);
         } else if (props.grtsCellId !== undefined) {
-          const annotation = await getCellBbox(props.grtsCellId);
+          const annotation = await getCellBbox(
+            props.grtsCellId,
+            props.sampleFrameId,
+          );
           const coordinates = annotation.data.geometry.coordinates;
           const data = coordinates.map((point: number[]) => ({
             x: point[0],

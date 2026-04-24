@@ -111,6 +111,7 @@ export default defineComponent({
           :size="{ width: 400, height: 400 }"
           :location="location"
           :grts-cell-id="recordingInfo.grts_cell_id || undefined"
+          :sample-frame-id="recordingInfo.sample_frame_id || 14"
         />
       </v-row>
       <v-row

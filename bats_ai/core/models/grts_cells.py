@@ -18,7 +18,7 @@ sample_frame_map = {
 
 
 class GRTSCells(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     grts_cell_id = models.IntegerField()
     sample_frame_id = models.IntegerField(blank=True, null=True)
     grts_geom = models.GeometryField(blank=True, null=True)

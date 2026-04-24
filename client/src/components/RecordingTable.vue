@@ -753,6 +753,7 @@ export default defineComponent({
                   ? item.grts_cell_id || undefined
                   : undefined
               "
+              :sample-frame-id="item.sample_frame_id || 14"
             />
           </v-card>
         </v-menu>
