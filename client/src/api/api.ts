@@ -551,8 +551,10 @@ async function getCellLocation(
   });
 }
 
-async function getCellBbox(cellId: number) {
-  return await axiosInstance.get<GRTSCellBbox>(`/grts/${cellId}/bbox`);
+async function getCellBbox(cellId: number, sampleFrameId = 14) {
+  return await axiosInstance.get<GRTSCellBbox>(`/grts/${cellId}/bbox`, {
+    params: { sample_frame: sampleFrameId },
+  });
 }
 
 export interface RecordingLocationsParams {

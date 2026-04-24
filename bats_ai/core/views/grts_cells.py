@@ -35,15 +35,27 @@ def get_grid_cell_id(
             return JsonResponse({"grid_cell_id": cell.grts_cell_id})
         else:
             return JsonResponse(
-                {"error": "No grid cell found for the provided latitude and longitude"}, status=200
+                {"error": "No grid cell found for the provided latitude and longitude"},
+                status=200,
             )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=200)
 
 
-@router.get("/{pk}")
-def get_cell_center(request: HttpRequest, pk: int, quadrant: str | None = None):
-    cells = get_list_or_404(GRTSCells, grts_cell_id=pk)
+@router.get("/{grts_cell_id}")
+def get_cell_center(
+    request: HttpRequest,
+    grts_cell_id: int,
+    quadrant: str | None = None,
+    sample_frame: int | None = Query(None),
+):
+    if sample_frame is not None:
+        sample_frame = normalize_sample_frame_id(sample_frame)
+        cells = get_list_or_404(
+            GRTSCells, grts_cell_id=grts_cell_id, sample_frame_id=sample_frame
+        )
+    else:
+        cells = get_list_or_404(GRTSCells, grts_cell_id=grts_cell_id)
 
     # Define a custom order for sample_frame_id
     custom_order = GRTSCells.sort_order()  # Define your custom order here
@@ -88,19 +100,22 @@ def get_cell_center(request: HttpRequest, pk: int, quadrant: str | None = None):
     center_latitude = center.y
     center_longitude = center.x
 
-    return JsonResponse({"latitude": center_latitude, "longitude": center_longitude})
+    return JsonResponse(
+        {"latitude": center_latitude, "longitude": center_longitude}
+    )
 
 
-@router.get("/{pk}/bbox")
-def get_grts_cell_bbox(request: HttpRequest, pk: int):
-    cells = get_list_or_404(GRTSCells, grts_cell_id=pk)
-    custom_order = GRTSCells.sort_order()
-
-    def custom_sort_key(cell):
-        return custom_order.index(cell.sample_frame_id)
-
-    sorted_cells = sorted(cells, key=custom_sort_key)
-    cell = sorted_cells[0]
+@router.get("/{grts_cell_id}/bbox")
+def get_grts_cell_bbox(
+    request: HttpRequest,
+    grts_cell_id: int,
+    sample_frame: int = Query(14),
+):
+    sample_frame = normalize_sample_frame_id(sample_frame)
+    cells = get_list_or_404(
+        GRTSCells, grts_cell_id=grts_cell_id, sample_frame_id=sample_frame
+    )
+    cell = cells[0]
     geom = cell.geom_4326
 
     min_x, min_y, max_x, max_y = geom.extent
@@ -117,7 +132,7 @@ def get_grts_cell_bbox(request: HttpRequest, pk: int):
             ],
         },
         "properties": {
-            "grts_cell_id": pk,
+            "grts_cell_id": grts_cell_id,
             "annotationType": "rectangle",
         },
     }
