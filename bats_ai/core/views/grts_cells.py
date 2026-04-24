@@ -51,9 +51,7 @@ def get_cell_center(
 ):
     if sample_frame is not None:
         sample_frame = normalize_sample_frame_id(sample_frame)
-        cells = get_list_or_404(
-            GRTSCells, grts_cell_id=grts_cell_id, sample_frame_id=sample_frame
-        )
+        cells = get_list_or_404(GRTSCells, grts_cell_id=grts_cell_id, sample_frame_id=sample_frame)
     else:
         cells = get_list_or_404(GRTSCells, grts_cell_id=grts_cell_id)
 
@@ -100,9 +98,7 @@ def get_cell_center(
     center_latitude = center.y
     center_longitude = center.x
 
-    return JsonResponse(
-        {"latitude": center_latitude, "longitude": center_longitude}
-    )
+    return JsonResponse({"latitude": center_latitude, "longitude": center_longitude})
 
 
 @router.get("/{grts_cell_id}/bbox")
@@ -112,9 +108,7 @@ def get_grts_cell_bbox(
     sample_frame: int = Query(14),
 ):
     sample_frame = normalize_sample_frame_id(sample_frame)
-    cells = get_list_or_404(
-        GRTSCells, grts_cell_id=grts_cell_id, sample_frame_id=sample_frame
-    )
+    cells = get_list_or_404(GRTSCells, grts_cell_id=grts_cell_id, sample_frame_id=sample_frame)
     cell = cells[0]
     geom = cell.geom_4326
 

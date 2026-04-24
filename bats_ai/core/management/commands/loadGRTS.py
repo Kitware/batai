@@ -44,7 +44,7 @@ LOCATION_SOURCES = {
         "https://www.sciencebase.gov/catalog/file/get/5b7753a8e4b0f5d578820452?facet=akcan_mastersample_10km_GRTS",
         20,
         "Alaska/Canada",
-        None,
+        "https://data.kitware.com/api/v1/item/697cc601e7dea9be44ec5aee/download",
     ),
     "HAWAII": (
         "https://www.sciencebase.gov/catalog/file/get/5b7753c2e4b0f5d578820457?facet=HI_mastersample_5km_GRTS",
@@ -121,9 +121,6 @@ class Command(BaseCommand):
                 selected_keys.append(location_key)
         shapefiles = [LOCATION_SOURCES[location_key] for location_key in selected_keys]
 
-        # Track existing IDs to avoid duplicates
-        existing_ids = set(GRTSCells.objects.values_list("id", flat=True))
-
         for url, sample_frame_id, name, backup_url in shapefiles:
             logger.info("Downloading shapefile for Location %s...", name)
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -170,8 +167,24 @@ class Command(BaseCommand):
                 else:
                     logger.warning("Shapefile CRS unknown; assuming EPSG:4326")
 
+                # Replace-on-reimport behavior: delete existing rows for any
+                # (grts_cell_id, sample_frame_id) present in this import batch.
+                incoming_grts_ids = set(gdf["GRTS_ID"].dropna().astype(int).tolist())
+                if incoming_grts_ids:
+                    deleted_count, _ = GRTSCells.objects.filter(
+                        sample_frame_id=sample_frame_id,
+                        grts_cell_id__in=incoming_grts_ids,
+                    ).delete()
+                    if deleted_count:
+                        logger.info(
+                            "Removed %s existing rows for sample frame %s before reload.",
+                            deleted_count,
+                            sample_frame_id,
+                        )
+
                 records_to_create = []
                 count_new = 0
+                seen_in_file = set()
 
                 for idx, row in tqdm(
                     gdf.iterrows(),
@@ -183,10 +196,8 @@ class Command(BaseCommand):
                         raise CommandError(f"Row {idx} missing required GRTS_ID field!")
 
                     grts_id = int(row["GRTS_ID"])
-                    # fallback to first field
-                    cell_id = int(row.get(next(iter(row.keys())), grts_id))
-
-                    if grts_id in existing_ids:
+                    cell_key = (grts_id, sample_frame_id)
+                    if cell_key in seen_in_file:
                         continue
 
                     geom_4326 = row.geometry.wkt
@@ -197,7 +208,6 @@ class Command(BaseCommand):
                         grts_geom = row.geometry.wkt
 
                     cell = GRTSCells(
-                        id=cell_id,
                         grts_cell_id=grts_id,
                         sample_frame_id=sample_frame_id,
                         grts_geom=grts_geom,
@@ -205,6 +215,7 @@ class Command(BaseCommand):
                         centroid_4326=centroid_4326,
                     )
                     records_to_create.append(cell)
+                    seen_in_file.add(cell_key)
                     count_new += 1
 
                     if len(records_to_create) >= batch_size:
