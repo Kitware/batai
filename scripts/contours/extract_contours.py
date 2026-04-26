@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import colorsys
+import contextlib
 import json
 import logging
 from pathlib import Path
@@ -114,10 +115,8 @@ def compute_auto_levels(  # noqa: PLR0913
         return []
 
     if mode == "multi-otsu":
-        try:
+        with contextlib.suppress(ValueError):
             return threshold_multiotsu(valid, classes=multi_otsu_classes).tolist()
-        except Exception:
-            pass
 
     if mode == "histogram":
         return auto_histogram_levels(
