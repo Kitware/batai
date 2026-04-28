@@ -409,7 +409,7 @@ export default defineComponent({
                       v-model="sampleFrameId"
                       type="number"
                       label="Sample Frame ID"
-                      hint="Defaults to 14 when not found"
+                      hint="Defaults to 14 (Continental US) when not found"
                       persistent-hint
                       readonly
                     />

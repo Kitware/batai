@@ -8,6 +8,7 @@ from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 from ninja import Query, Router, Schema
 from ninja.errors import HttpError
 
+from bats_ai.core.constants import DEFAULT_SAMPLE_FRAME_ID
 from bats_ai.core.models import (
     Configuration,
     GRTSCells,
@@ -21,9 +22,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 router = Router()
-
-# Continental US sample frame ID, defaulting to CONUS GRTS.
-_CONUS_SAMPLE_FRAME_ID = 14
 
 
 class RecordingLocationsQuerySchema(Schema):
@@ -138,10 +136,11 @@ def _precompute_grts_cell_centroids(
     if not cell_ids:
         return {}
 
-    # Default to Continental US (sample_frame_id=14). We currently only import
+    # Default to Continental US
+    # (sample_frame_id=DEFAULT_SAMPLE_FRAME_ID). We currently only import
     # CONUS GRTS, so this keeps centroid selection aligned with loaded data.
     frame_rank = Case(
-        When(sample_frame_id=_CONUS_SAMPLE_FRAME_ID, then=Value(0)),
+        When(sample_frame_id=DEFAULT_SAMPLE_FRAME_ID, then=Value(0)),
         default=Value(1),
         output_field=IntegerField(),
     )

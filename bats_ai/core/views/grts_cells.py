@@ -6,6 +6,7 @@ from django.shortcuts import get_list_or_404
 from ninja import Query
 from ninja.pagination import RouterPaginated
 
+from bats_ai.core.constants import DEFAULT_SAMPLE_FRAME_ID
 from bats_ai.core.models import GRTSCells
 from bats_ai.core.utils.grts_utils import normalize_sample_frame_id
 
@@ -17,7 +18,7 @@ def get_grid_cell_id(
     request: HttpRequest,
     latitude: float = Query(...),
     longitude: float = Query(...),
-    sample_frame: int = Query(14),
+    sample_frame: int = Query(DEFAULT_SAMPLE_FRAME_ID),
 ):
     try:
         sample_frame = normalize_sample_frame_id(sample_frame)
@@ -47,7 +48,7 @@ def get_cell_center(
     request: HttpRequest,
     grts_cell_id: int,
     quadrant: str | None = None,
-    sample_frame: int | None = Query(None),
+    sample_frame: int | None = Query(DEFAULT_SAMPLE_FRAME_ID),
 ):
     if sample_frame is not None:
         sample_frame = normalize_sample_frame_id(sample_frame)
@@ -105,7 +106,7 @@ def get_cell_center(
 def get_grts_cell_bbox(
     request: HttpRequest,
     grts_cell_id: int,
-    sample_frame: int = Query(14),
+    sample_frame: int = Query(DEFAULT_SAMPLE_FRAME_ID),
 ):
     sample_frame = normalize_sample_frame_id(sample_frame)
     cells = get_list_or_404(GRTSCells, grts_cell_id=grts_cell_id, sample_frame_id=sample_frame)
@@ -128,6 +129,7 @@ def get_grts_cell_bbox(
         "properties": {
             "grts_cell_id": grts_cell_id,
             "annotationType": "rectangle",
+            "sample_frame": sample_frame,
         },
     }
     return JsonResponse(geojson)
