@@ -2,6 +2,7 @@ import axios from "axios";
 import { AxiosError } from "axios";
 import type { SpectroInfo } from "@components/geoJS/geoJSUtils";
 import type { FeatureCollection, Point } from "geojson";
+import { DEFAULT_SAMPLE_FRAME_ID } from "../constants";
 
 export interface Recording {
   id: number;
@@ -551,7 +552,10 @@ async function getCellLocation(
   });
 }
 
-async function getCellBbox(cellId: number, sampleFrameId = 14) {
+async function getCellBbox(
+  cellId: number,
+  sampleFrameId = DEFAULT_SAMPLE_FRAME_ID,
+) {
   return await axiosInstance.get<GRTSCellBbox>(`/grts/${cellId}/bbox`, {
     params: { sample_frame: sampleFrameId },
   });
@@ -638,7 +642,7 @@ interface CellIDReponse {
 async function getCellfromLocation(
   latitude: number,
   longitude: number,
-  sampleFrameId = 14,
+  sampleFrameId = DEFAULT_SAMPLE_FRAME_ID,
 ) {
   return axiosInstance.get<CellIDReponse>(`/grts/grid_cell_id`, {
     params: { latitude, longitude, sample_frame: sampleFrameId },

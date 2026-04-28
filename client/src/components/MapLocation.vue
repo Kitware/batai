@@ -4,6 +4,7 @@ import { defineComponent, type PropType, type Ref, ref, onMounted } from "vue";
 import { watch } from "vue";
 import { getCellBbox } from "@api/api";
 import geo, { type GeoEvent } from "geojs";
+import { DEFAULT_SAMPLE_FRAME_ID } from "../constants";
 
 export default defineComponent({
   name: "MapLocation",
@@ -33,7 +34,7 @@ export default defineComponent({
     },
     sampleFrameId: {
       type: Number,
-      default: 14,
+      default: DEFAULT_SAMPLE_FRAME_ID,
     },
     updateMap: {
       type: Number,

@@ -1,3 +1,5 @@
+import { DEFAULT_SAMPLE_FRAME_ID } from "../constants";
+
 function getCurrentTime() {
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, "0");
@@ -41,8 +43,6 @@ function getImageDimensions(
   });
   return { width, height };
 }
-
-const DEFAULT_SAMPLE_FRAME_ID = 14;
 
 type RecordingQuadrant = "SW" | "NE" | "NW" | "SE";
 

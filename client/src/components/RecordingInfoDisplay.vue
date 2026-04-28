@@ -2,6 +2,7 @@
 import { computed, defineComponent, type PropType } from "vue";
 import type { Recording } from "../api/api";
 import MapLocation from "./MapLocation.vue";
+import { DEFAULT_SAMPLE_FRAME_ID } from "../constants";
 
 export default defineComponent({
   components: {
@@ -43,6 +44,7 @@ export default defineComponent({
       () => props.displayMode === "both" || props.displayMode === "map",
     );
     return {
+      DEFAULT_SAMPLE_FRAME_ID,
       location,
       showMetadata,
       showMap,
@@ -111,7 +113,9 @@ export default defineComponent({
           :size="{ width: 400, height: 400 }"
           :location="location"
           :grts-cell-id="recordingInfo.grts_cell_id || undefined"
-          :sample-frame-id="recordingInfo.sample_frame_id || 14"
+          :sample-frame-id="
+            recordingInfo.sample_frame_id || DEFAULT_SAMPLE_FRAME_ID
+          "
         />
       </v-row>
       <v-row

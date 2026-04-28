@@ -18,6 +18,7 @@ import MapLocation from "@components/MapLocation.vue";
 import RecordingInfoDisplay from "@components/RecordingInfoDisplay.vue";
 import RecordingAnnotationSummary from "@components/RecordingAnnotationSummary.vue";
 import useState from "@use/useState";
+import { DEFAULT_SAMPLE_FRAME_ID } from "../constants";
 
 const SERVER_SORT_FIELDS: readonly string[] = [
   "id",
@@ -578,6 +579,7 @@ export default defineComponent({
     expose({ refetch: () => fetchRecordings(lastOptions.value) });
 
     return {
+      DEFAULT_SAMPLE_FRAME_ID,
       sortBy,
       headers,
       items,
@@ -753,7 +755,7 @@ export default defineComponent({
                   ? item.grts_cell_id || undefined
                   : undefined
               "
-              :sample-frame-id="item.sample_frame_id || 14"
+              :sample-frame-id="item.sample_frame_id || DEFAULT_SAMPLE_FRAME_ID"
             />
           </v-card>
         </v-menu>
