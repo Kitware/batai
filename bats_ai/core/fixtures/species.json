@@ -781,20 +781,20 @@
   },
   {
     "fields": {
-      "category": "noid",
-      "common_name": "Not a bat/Noise",
+      "category": "Other",
+      "common_name": "Noise",
       "family": "",
       "genus": "",
-      "species": "Not a bat",
+      "species": "Noise",
       "species_code": "NOISE",
-      "species_code_6": "NOTBAT"
+      "species_code_6": "NOISE"
     },
     "model": "core.Species",
     "pk": "65"
   },
   {
     "fields": {
-      "category": "noid",
+      "category": "Other",
       "common_name": "No Id can be determined",
       "family": "",
       "genus": "",
@@ -1067,8 +1067,8 @@
   },
   {
     "fields": {
-      "category": "noid",
-      "common_name": "Code used for surveys that recorded 0 bats",
+      "category": "Other",
+      "common_name": "Not a bat",
       "family": "",
       "genus": "",
       "species": "",
