@@ -57,7 +57,7 @@ export default defineComponent({
       multiple: "secondary",
       frequency: "warning",
       [suggestedSpeciesKey]: "success",
-      noid: "",
+      Other: "",
     };
 
     const categoryPriority: Record<string, number> = {
@@ -65,7 +65,7 @@ export default defineComponent({
       single: 1,
       multiple: 2,
       frequency: 3,
-      noid: 4,
+      Other: 4,
     };
 
     const inRangeTooltip =
@@ -102,7 +102,7 @@ export default defineComponent({
         "Single",
         "Multiple",
         "Frequency",
-        "Noid",
+        "Other",
       ];
       groupsOrder.forEach((key) => {
         result.push({ type: "subheader", title: key });
@@ -129,6 +129,10 @@ export default defineComponent({
       }
     };
 
+    const commonNameInfoThreshold = 36;
+    const showCommonNameInfo = (commonName: string) =>
+      commonName.length > commonNameInfoThreshold;
+
     return {
       search,
       selectedCode,
@@ -138,6 +142,7 @@ export default defineComponent({
       speciesAutocomplete,
       onClearOrDeleteClick,
       inRangeTooltip,
+      showCommonNameInfo,
     };
   },
 });
@@ -163,7 +168,10 @@ export default defineComponent({
       :custom-filter="customFilter"
       clear-on-select
       label="Select species"
-      :menu-props="{ maxHeight: '300px', maxWidth: '400px' }"
+      :menu-props="{
+        maxHeight: '300px',
+        maxWidth: '400px',
+      }"
       :disabled="disabled"
       class="species-autocomplete-fill"
       density="compact"
@@ -192,10 +200,23 @@ export default defineComponent({
         </v-list-subheader>
       </template>
       <template #item="{ props: itemProps, item }">
-        <v-list-item
-          v-bind="itemProps"
-          :title="(item.raw as Species).common_name"
-        >
+        <v-list-item v-bind="itemProps" class="species-option-item">
+          <template #title>
+            <div class="species-option-title-row">
+              <span class="species-option-title">
+                {{ (item.raw as Species).common_name }}
+              </span>
+              <v-icon
+                v-if="showCommonNameInfo((item.raw as Species).common_name)"
+                v-tooltip="(item.raw as Species).common_name"
+                size="x-small"
+                color="info"
+                class="species-option-info-icon"
+              >
+                mdi-information-outline
+              </v-icon>
+            </div>
+          </template>
           <template #subtitle="{}">
             <span>{{ (item.raw as Species).species_code }}</span>
             <v-chip
@@ -239,5 +260,24 @@ export default defineComponent({
 .species-autocomplete-fill {
   flex: 1 1 0;
   min-width: 0;
+}
+
+.species-option-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.species-option-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.species-option-info-icon {
+  flex: 0 0 auto;
 }
 </style>
