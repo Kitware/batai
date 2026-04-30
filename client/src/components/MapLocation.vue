@@ -4,6 +4,7 @@ import { defineComponent, type PropType, type Ref, ref, onMounted } from "vue";
 import { watch } from "vue";
 import { getCellBbox } from "@api/api";
 import geo, { type GeoEvent } from "geojs";
+import { DEFAULT_SAMPLE_FRAME_ID } from "../constants";
 
 export default defineComponent({
   name: "MapLocation",
@@ -30,6 +31,10 @@ export default defineComponent({
     grtsCellId: {
       type: Number,
       default: undefined,
+    },
+    sampleFrameId: {
+      type: Number,
+      default: DEFAULT_SAMPLE_FRAME_ID,
     },
     updateMap: {
       type: Number,
@@ -113,7 +118,10 @@ export default defineComponent({
         ) {
           drawBbox(props.bbox);
         } else if (props.grtsCellId !== undefined) {
-          const annotation = await getCellBbox(props.grtsCellId);
+          const annotation = await getCellBbox(
+            props.grtsCellId,
+            props.sampleFrameId,
+          );
           const coordinates = annotation.data.geometry.coordinates;
           const data = coordinates.map((point: number[]) => ({
             x: point[0],

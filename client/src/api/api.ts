@@ -2,6 +2,7 @@ import axios from "axios";
 import { AxiosError } from "axios";
 import type { SpectroInfo } from "@components/geoJS/geoJSUtils";
 import type { FeatureCollection, Point } from "geojson";
+import { DEFAULT_SAMPLE_FRAME_ID } from "../constants";
 
 export interface Recording {
   id: number;
@@ -544,14 +545,20 @@ async function getOtherUserAnnotations(recordingId: string) {
 async function getCellLocation(
   cellId: number,
   quadrant?: "SW" | "NE" | "NW" | "SE",
+  sampleFrameId?: number,
 ) {
   return axiosInstance.get<GRTSCellCenter>(`/grts/${cellId}`, {
-    params: { quadrant },
+    params: { quadrant, sample_frame: sampleFrameId },
   });
 }
 
-async function getCellBbox(cellId: number) {
-  return await axiosInstance.get<GRTSCellBbox>(`/grts/${cellId}/bbox`);
+async function getCellBbox(
+  cellId: number,
+  sampleFrameId = DEFAULT_SAMPLE_FRAME_ID,
+) {
+  return await axiosInstance.get<GRTSCellBbox>(`/grts/${cellId}/bbox`, {
+    params: { sample_frame: sampleFrameId },
+  });
 }
 
 export interface RecordingLocationsParams {
@@ -632,9 +639,13 @@ interface CellIDReponse {
   grid_cell_id?: number;
   error?: string;
 }
-async function getCellfromLocation(latitude: number, longitude: number) {
+async function getCellfromLocation(
+  latitude: number,
+  longitude: number,
+  sampleFrameId = DEFAULT_SAMPLE_FRAME_ID,
+) {
   return axiosInstance.get<CellIDReponse>(`/grts/grid_cell_id`, {
-    params: { latitude, longitude },
+    params: { latitude, longitude, sample_frame: sampleFrameId },
   });
 }
 
@@ -726,6 +737,7 @@ async function cancelProcessingTask(
 
 interface GuanoMetadata {
   nabat_grid_cell_grts_id?: string;
+  nabat_sample_frame_id?: number;
   nabat_latitude?: number;
   nabat_longitude?: number;
   nabat_site_name?: string;

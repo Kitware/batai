@@ -13,7 +13,12 @@ import BatchRecordingElement, {
   type BatchRecording,
 } from "./BatchRecordingElement.vue";
 import { cloneDeep } from "lodash";
-import { extractDateTimeComponents, getCurrentTime } from "@use/useUtils";
+import {
+  DEFAULT_SAMPLE_FRAME_ID,
+  extractDateTimeComponents,
+  getCurrentTime,
+  parseRecordingFilename,
+} from "@use/useUtils";
 import useState from "@use/useState";
 
 interface AutoFillResult {
@@ -22,6 +27,7 @@ interface AutoFillResult {
   time?: string;
   location?: { lat: number; lon: number };
   gridCellId?: number;
+  sampleFrameId?: number;
 }
 
 export default defineComponent({
@@ -47,47 +53,35 @@ export default defineComponent({
     const globalTags = ref([] as string[]);
 
     const autoFill = async (filename: string) => {
-      const regexPattern = /^(\d+)_(.+)_(\d{8})_(\d{6})(?:_(.*))?$/;
-
-      // Match the file name against the regular expression
-      const match = filename.match(regexPattern);
-
-      // If there's no match, return null
-      if (!match) {
+      const parsedFilename = parseRecordingFilename(filename);
+      if (!parsedFilename) {
         return null;
       }
 
-      // Extract the matched groups
-      const cellId = match[1];
-      const labelName = match[2];
-      const baseDate = match[3];
-      const timestamp = match[4];
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const extraData = match[5] || null; // Additional data after the required parts
       // Extracting individual components
       const results: AutoFillResult = {
         name: filename.replace(/\.[^/.]+$/, ""),
+        sampleFrameId: parsedFilename.sampleFrameId,
       };
-      if (cellId) {
-        results.gridCellId = parseInt(cellId, 10);
-        let updatedQuadrant;
-        if (["SW", "NE", "NW", "SE"].includes(labelName)) {
-          updatedQuadrant = labelName as "SW" | "NE" | "NW" | "SE" | undefined;
-        }
+      if (parsedFilename.cellId) {
+        results.gridCellId = parsedFilename.cellId;
         const { latitude: lat, longitude: lon } = (
-          await getCellLocation(results.gridCellId, updatedQuadrant)
+          await getCellLocation(
+            results.gridCellId,
+            parsedFilename.quadrant,
+            parsedFilename.sampleFrameId,
+          )
         ).data;
         if (lat && lon) {
           results.location = { lat, lon };
         }
         // Next we get the latitude longitude for this sell Id and quadarnt
       }
-      if (baseDate && baseDate.length === 8) {
-        // We convert it to the YYYY-MM-DD time;
-        results.date = `${baseDate.slice(0, 4)}-${baseDate.slice(4, 6)}-${baseDate.slice(6, 8)}`;
+      if (parsedFilename.date) {
+        results.date = parsedFilename.date;
       }
-      if (timestamp) {
-        results.time = timestamp;
+      if (parsedFilename.time) {
+        results.time = parsedFilename.time;
       }
       return results;
     };
@@ -115,6 +109,7 @@ export default defineComponent({
                 date: data.date,
                 location: data.location,
                 gridCellId: data.gridCellId,
+                sampleFrameId: data.sampleFrameId ?? DEFAULT_SAMPLE_FRAME_ID,
                 equipment: "",
                 comments: "",
                 public: false,
@@ -126,6 +121,7 @@ export default defineComponent({
                 name: file.name,
                 date: new Date().toISOString().split("T")[0],
                 time: getCurrentTime(),
+                sampleFrameId: DEFAULT_SAMPLE_FRAME_ID,
                 equipment: "",
                 comments: "",
                 public: false,
@@ -217,6 +213,7 @@ export default defineComponent({
         // Finally we get the latitude/longitude or gridCell Id if it's available.
         const startTime = results.nabat_activation_start_time;
         const NaBatgridCellId = results.nabat_grid_cell_grts_id;
+        const NaBatSampleFrameId = results.nabat_sample_frame_id;
         const NABatlatitude = results.nabat_latitude;
         const NABatlongitude = results.nabat_longitude;
         if (startTime) {
@@ -226,6 +223,9 @@ export default defineComponent({
         }
         if (NaBatgridCellId) {
           recording.gridCellId = parseInt(NaBatgridCellId);
+        }
+        if (NaBatSampleFrameId !== undefined && NaBatSampleFrameId !== null) {
+          recording.sampleFrameId = Number(NaBatSampleFrameId);
         }
         if (NABatlatitude && NABatlongitude) {
           recording.location = {

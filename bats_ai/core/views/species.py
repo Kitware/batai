@@ -13,15 +13,14 @@ from django.db.models import (
 from django.shortcuts import get_object_or_404
 from ninja import Query, Router, Schema
 
+from bats_ai.core.constants import DEFAULT_SAMPLE_FRAME_ID
 from bats_ai.core.models import GRTSCells, Recording, Species, SpeciesRange
+from bats_ai.core.utils.grts_utils import normalize_sample_frame_id
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
 router = Router()
-
-# Continental US sample frame ID, defaulting to CONUS GRTS when not specified.
-CONUS_SAMPLE_FRAME_ID = 14
 
 
 class SpeciesSchema(Schema):
@@ -33,9 +32,10 @@ class SpeciesSchema(Schema):
     species_code_6: str | None
     category: str | None = None
     pk: int | None = None
-    # in_range indicates whether the species' range intersects the specified GRTS cell Id
-    # True: if grts_cell_id geometry exists and intercepts the species range geometry
-    # False: if grts_cell_id geometry exists but does not intersect the species range
+    # in_range indicates whether the species range intersects the
+    # specified GRTS cell Id.
+    # True: grts_cell_id geometry exists and intersects the species range.
+    # False: grts_cell_id geometry exists but does not intersect the range.
     # None: if grts_cell_id geometry does not exist
     in_range: bool | None = None
 
@@ -44,19 +44,21 @@ class SpeciesSchema(Schema):
 def get_species(
     request: HttpRequest,
     grts_cell_id: int | None = Query(None),
-    sample_frame_id: int = Query(CONUS_SAMPLE_FRAME_ID),
+    sample_frame_id: int = Query(DEFAULT_SAMPLE_FRAME_ID),
     recording_id: int | None = Query(None),
 ):
+    sample_frame_id = normalize_sample_frame_id(sample_frame_id)
+
     if recording_id is not None:
         recording = get_object_or_404(
             Recording.objects.only("grts_cell_id", "sample_frame_id"),
             pk=recording_id,
         )
         grts_cell_id = recording.grts_cell_id
-        sample_frame_id = (
+        sample_frame_id = normalize_sample_frame_id(
             recording.sample_frame_id
             if recording.sample_frame_id is not None
-            else CONUS_SAMPLE_FRAME_ID
+            else DEFAULT_SAMPLE_FRAME_ID
         )
 
     null_in_range = Value(None, output_field=BooleanField(null=True))
