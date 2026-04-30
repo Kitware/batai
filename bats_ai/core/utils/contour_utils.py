@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 from pathlib import Path
 from typing import Any
@@ -102,10 +103,8 @@ def compute_auto_levels(  # noqa: PLR0913
         return []
 
     if mode == "multi-otsu":
-        try:
+        with contextlib.suppress(ValueError):
             return threshold_multiotsu(valid, classes=multi_otsu_classes).tolist()
-        except Exception:
-            pass
 
     if mode == "histogram":
         return auto_histogram_levels(

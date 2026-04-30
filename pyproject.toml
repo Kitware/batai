@@ -163,7 +163,6 @@ ignore = [
   "PLC0415", # import-outside-top-level
   "PLW2901", # redefined-loop-name
   "PTH", # flake8-use-pathlib
-  "S110", # try-except-pass
   "TRY300", # try-consider-else
   "TRY301", # raise-within-try
 ]
