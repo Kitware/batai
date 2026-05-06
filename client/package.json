@@ -33,7 +33,7 @@
     "vuetify": "3.12.5"
   },
   "devDependencies": {
-    "@sentry/vite-plugin": "5.2.0",
+    "@sentry/vite-plugin": "5.2.1",
     "@tsconfig/node24": "24.0.4",
     "@types/geojson": "7946.0.16",
     "@types/lodash": "4.17.24",
@@ -41,7 +41,7 @@
     "@vitejs/plugin-vue": "6.0.6",
     "@vue/eslint-config-typescript": "14.7.0",
     "@vue/tsconfig": "0.9.1",
-    "eslint": "10.2.1",
+    "eslint": "10.3.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-vue": "10.9.0",
     "jiti": "2.6.1",
