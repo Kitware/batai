@@ -769,9 +769,20 @@ export interface ExportStatus {
   expiresAt: string;
 }
 
+export interface ExportTagSummaryResponse {
+  exportId: number;
+}
+
 async function getExportStatus(exportId: number) {
   const result = await axiosInstance.get<ExportStatus>(
     `/export-annotation/${exportId}`,
+  );
+  return result.data;
+}
+
+async function exportTagSummary(): Promise<ExportTagSummaryResponse> {
+  const result = await axiosInstance.post<ExportTagSummaryResponse>(
+    "/configuration/export-tag-summary",
   );
   return result.data;
 }
@@ -899,6 +910,7 @@ export {
   getFilteredProcessingTasks,
   getFileAnnotationDetails,
   getExportStatus,
+  exportTagSummary,
   getRecordingTags,
   getUnsubmittedNeighbors,
   getComputedPulseContour,
