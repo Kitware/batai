@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from datetime import timedelta
 import logging
 
 from django.http import JsonResponse
+from django.utils.timezone import now
 from ninja import Schema
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import Configuration
+from bats_ai.core.models import Configuration, ExportedAnnotationFile
+from bats_ai.core.tasks.export_task import export_tag_annotation_summary_task
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +44,9 @@ def get_configuration(request):
         spectrogram_x_stretch=config.spectrogram_x_stretch,
         spectrogram_view=config.spectrogram_view,
         default_color_scheme=config.default_color_scheme,
-        default_spectrogram_background_color=config.default_spectrogram_background_color,
+        default_spectrogram_background_color=(config.default_spectrogram_background_color),
         non_admin_upload_enabled=config.non_admin_upload_enabled,
-        mark_annotations_completed_enabled=config.mark_annotations_completed_enabled,
+        mark_annotations_completed_enabled=(config.mark_annotations_completed_enabled),
         is_admin=request.user.is_authenticated and request.user.is_superuser,
     )
 
@@ -78,3 +81,21 @@ def get_current_user(request):
             "id": request.user.id,
         }
     return {"email": "", "name": ""}
+
+
+class ExportTagSummaryResponse(Schema):
+    exportId: int
+
+
+@router.post("/export-tag-summary", response=ExportTagSummaryResponse)
+def export_tag_summary(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return JsonResponse({"error": "Permission denied"}, status=403)
+
+    export = ExportedAnnotationFile.objects.create(
+        filters_applied={"type": "tag_annotation_summary"},
+        status="pending",
+        expires_at=now() + timedelta(hours=24),
+    )
+    export_tag_annotation_summary_task.delay(export.id)
+    return {"exportId": export.id}
