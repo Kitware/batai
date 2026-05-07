@@ -1,10 +1,11 @@
 <script lang="ts">
 import { reactive, defineComponent, watch, ref, type Ref } from "vue";
 import useState from "@use/useState";
-import { patchConfiguration } from "../api/api";
+import { exportTagSummary, patchConfiguration } from "../api/api";
 import NABatAdmin from "./NABat/NABatAdmin.vue";
 import ColorPickerMenu from "@components/ColorPickerMenu.vue";
 import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
+import Exporting from "@components/Exporting.vue";
 
 export default defineComponent({
   name: "Admin",
@@ -12,6 +13,7 @@ export default defineComponent({
     NABatAdmin,
     ColorPickerMenu,
     ColorSchemeSelect,
+    Exporting,
   },
   setup() {
     // Reactive state for the settings
@@ -40,6 +42,7 @@ export default defineComponent({
       { title: "Compressed", value: "compressed" },
       { title: "Uncompressed", value: "uncompressed" },
     ];
+    const exportId: Ref<number | null> = ref(null);
     watch(configuration, () => {
       settings.displayPulseAnnotations =
         configuration.value.display_pulse_annotations;
@@ -78,6 +81,15 @@ export default defineComponent({
       loadConfiguration();
     };
 
+    const runTagSummaryExport = async () => {
+      const result = await exportTagSummary();
+      exportId.value = result.exportId;
+    };
+
+    const clearExport = () => {
+      exportId.value = null;
+    };
+
     return {
       settings,
       saveSettings,
@@ -85,6 +97,9 @@ export default defineComponent({
       tab,
       colorSchemes,
       defaultColorScheme,
+      exportId,
+      runTagSummaryExport,
+      clearExport,
     };
   },
 });
@@ -185,8 +200,22 @@ export default defineComponent({
             >
               Save
             </v-btn>
+            <v-btn
+              color="secondary"
+              variant="outlined"
+              class="mx-2"
+              @click="runTagSummaryExport"
+            >
+              Export Tag Annotation Summary
+            </v-btn>
           </v-row>
         </v-card-actions>
+        <Exporting
+          v-if="exportId"
+          :export-id="exportId"
+          @cancel="clearExport"
+          @exit="clearExport"
+        />
       </v-window-item>
       <v-window-item value="nabat">
         <NABatAdmin />
