@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import csv
 from datetime import timedelta
-from io import BytesIO
+from io import BytesIO, StringIO
 import json
 import zipfile
 
+from django.contrib.auth.models import User
 from django.core.files import File
 from django.utils.timezone import now
 
@@ -14,6 +15,7 @@ from bats_ai.core.models import (
     Annotations,
     ExportedAnnotationFile,
     RecordingAnnotation,
+    RecordingTag,
     SequenceAnnotations,
 )
 
@@ -152,3 +154,214 @@ def export_annotations_task(filters: dict, annotation_types: list, export_id: in
         export_record.status = "failed"
         export_record.save()
         raise
+
+
+@app.task(bind=True)
+def export_tag_annotation_summary_task(self, export_id: int):
+    export_record = ExportedAnnotationFile.objects.get(pk=export_id)
+    try:
+        tag_rows, tag_user_rows = _collect_tag_summary_rows()
+
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+            _write_tag_exports(zipf, tag_rows, tag_user_rows)
+
+        buffer.seek(0)
+        filename = f"tag-annotation-summary-{export_id}.zip"
+        export_record.file.save(filename, File(buffer), save=False)
+        export_record.download_url = export_record.file.url
+        export_record.status = "complete"
+        export_record.expires_at = now() + timedelta(hours=24)
+        export_record.save()
+    except Exception:
+        export_record.status = "failed"
+        export_record.save()
+        raise
+
+
+def _collect_tag_summary_rows():
+    tag_rows = []
+    tag_user_rows = []
+    users = list(User.objects.order_by("username").values("id", "username"))
+    tags = RecordingTag.objects.select_related("user").prefetch_related(
+        "recording_set__recordingannotation_set__owner"
+    )
+
+    for tag in tags:
+        tag_row, user_rows = _build_rows_for_tag(tag, users)
+        tag_rows.append(tag_row)
+        tag_user_rows.extend(user_rows)
+
+    return tag_rows, tag_user_rows
+
+
+def _build_rows_for_tag(tag, users):
+    recordings = list(tag.recording_set.all())
+    total_recordings = len(recordings)
+    annotations_by_user = _group_recording_annotations_by_user(recordings)
+    annotated_total, submitted_total, unsubmitted_total = _collect_total_sets(annotations_by_user)
+
+    tag_row = {
+        "tag_id": tag.id,
+        "tag_text": tag.text,
+        "tag_owner": tag.user.username,
+        "total_recordings": total_recordings,
+        "annotated_recordings": len(annotated_total),
+        "submitted_recordings": len(submitted_total),
+        "unsubmitted_recordings": len(unsubmitted_total),
+        "remaining_recordings": total_recordings - len(annotated_total),
+    }
+    user_rows = _build_user_rows(
+        tag,
+        total_recordings,
+        annotations_by_user,
+        users,
+    )
+    return tag_row, user_rows
+
+
+def _group_recording_annotations_by_user(recordings):
+    annotations_by_user = {}
+    for recording in recordings:
+        for annotation in recording.recordingannotation_set.all():
+            key = annotation.owner_id
+            if key not in annotations_by_user:
+                annotations_by_user[key] = {
+                    "username": annotation.owner.username,
+                    "annotated_recordings": set(),
+                    "submitted_recordings": set(),
+                    "unsubmitted_recordings": set(),
+                }
+            user_stats = annotations_by_user[key]
+            user_stats["annotated_recordings"].add(recording.id)
+            if annotation.submitted:
+                user_stats["submitted_recordings"].add(recording.id)
+            else:
+                user_stats["unsubmitted_recordings"].add(recording.id)
+    return annotations_by_user
+
+
+def _collect_total_sets(annotations_by_user):
+    annotated_total = set()
+    submitted_total = set()
+    unsubmitted_total = set()
+    for user_stats in annotations_by_user.values():
+        annotated_total.update(user_stats["annotated_recordings"])
+        submitted_total.update(user_stats["submitted_recordings"])
+        unsubmitted_total.update(user_stats["unsubmitted_recordings"])
+    return annotated_total, submitted_total, unsubmitted_total
+
+
+def _build_user_rows(tag, total_recordings, annotations_by_user, users):
+    user_rows = []
+    for user in users:
+        owner_id = user["id"]
+        username = user["username"]
+        user_stats = annotations_by_user.get(owner_id)
+        if user_stats is None:
+            user_stats = {
+                "username": username,
+                "annotated_recordings": set(),
+                "submitted_recordings": set(),
+                "unsubmitted_recordings": set(),
+            }
+        annotated_count = len(user_stats["annotated_recordings"])
+        user_rows.append(
+            {
+                "tag_id": tag.id,
+                "tag_text": tag.text,
+                "tag_owner": tag.user.username,
+                "user_id": owner_id,
+                "username": username,
+                "total_recordings": total_recordings,
+                "annotated_recordings": annotated_count,
+                "submitted_recordings": len(user_stats["submitted_recordings"]),
+                "unsubmitted_recordings": len(user_stats["unsubmitted_recordings"]),
+                "remaining_recordings": total_recordings - annotated_count,
+            }
+        )
+    return user_rows
+
+
+def _write_tag_exports(zipf, tag_rows, tag_user_rows):
+    tag_fieldnames = [
+        "tag_id",
+        "tag_text",
+        "tag_owner",
+        "total_recordings",
+        "annotated_recordings",
+        "submitted_recordings",
+        "unsubmitted_recordings",
+        "remaining_recordings",
+    ]
+    tag_user_fieldnames = [
+        "tag_id",
+        "tag_text",
+        "tag_owner",
+        "user_id",
+        "username",
+        "total_recordings",
+        "annotated_recordings",
+        "submitted_recordings",
+        "unsubmitted_recordings",
+        "remaining_recordings",
+    ]
+
+    tag_csv_buf = StringIO()
+    tag_writer = csv.DictWriter(tag_csv_buf, fieldnames=tag_fieldnames)
+    tag_writer.writeheader()
+    for row in tag_rows:
+        tag_writer.writerow(row)
+    zipf.writestr("tag_summary.csv", tag_csv_buf.getvalue())
+
+    tag_user_csv_buf = StringIO()
+    tag_user_writer = csv.DictWriter(tag_user_csv_buf, fieldnames=tag_user_fieldnames)
+    tag_user_writer.writeheader()
+    for row in tag_user_rows:
+        tag_user_writer.writerow(row)
+    zipf.writestr("tag_summary_by_user.csv", tag_user_csv_buf.getvalue())
+
+    users_payload = _build_users_payload(tag_user_rows)
+    zipf.writestr(
+        "tag_annotation_summary.json",
+        json.dumps(
+            {
+                "users": users_payload,
+            },
+            indent=2,
+        ),
+    )
+
+
+def _build_users_payload(tag_user_rows):
+    users_by_id = {}
+    for row in tag_user_rows:
+        user_id = row["user_id"]
+        if user_id not in users_by_id:
+            users_by_id[user_id] = {
+                "user_id": user_id,
+                "username": row["username"],
+                "tags": [],
+            }
+
+        tag_entry = {
+            "tag_id": row["tag_id"],
+            "tag_text": row["tag_text"],
+            "tag_owner": row["tag_owner"],
+            "has_annotations": row["annotated_recordings"] > 0,
+        }
+        if row["annotated_recordings"] > 0:
+            tag_entry.update(
+                {
+                    "total_recordings": row["total_recordings"],
+                    "annotated_recordings": row["annotated_recordings"],
+                    "submitted_recordings": row["submitted_recordings"],
+                    "unsubmitted_recordings": row["unsubmitted_recordings"],
+                    "remaining_recordings": row["remaining_recordings"],
+                }
+            )
+        else:
+            tag_entry["annotated_recordings"] = 0
+        users_by_id[user_id]["tags"].append(tag_entry)
+
+    return sorted(users_by_id.values(), key=lambda user: user["username"])
