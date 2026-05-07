@@ -30,6 +30,7 @@ services:
       dockerfile: ./dev/django.Dockerfile
     command: [
       "uv", "run",
+      "--project", "/home/vscode/bats-ai",
       "--extra" ,"tasks",
       "celery",
       "--app", "bats_ai.celery",
@@ -39,7 +40,8 @@ services:
     ]
     # uv progress doesn't display properly with a Docker TTY
     tty: false
-    working_dir: /home/vscode/bats-ai
+    # batbot writes `batbot.log` in the CWD, so keep CWD writable even if the bind mount isn't.
+    working_dir: /home/vscode
     env_file: ./dev/.env.docker-compose
     volumes:
       - .:/home/vscode/bats-ai
