@@ -489,7 +489,9 @@ function getEffectiveScaledWidth(spectroInfo: SpectroInfo, scaledWidth = 0) {
       ? Math.max(scaledWidth, spectroInfo.compressedWidth)
       : spectroInfo.compressedWidth;
   }
-  return scaledWidth > 0 ? Math.max(scaledWidth, spectroInfo.width) : spectroInfo.width;
+  return scaledWidth > 0
+    ? Math.max(scaledWidth, spectroInfo.width)
+    : spectroInfo.width;
 }
 
 function spectroXToTime(
@@ -560,7 +562,11 @@ function spectroXToTime(
   return spectroInfo.start_time + (clampedX / effectiveWidth) * timeRange;
 }
 
-function spectroTimeToX(time: number, spectroInfo: SpectroInfo, scaledWidth = 0) {
+function spectroTimeToX(
+  time: number,
+  spectroInfo: SpectroInfo,
+  scaledWidth = 0,
+) {
   if (!Number.isFinite(time)) {
     return -1;
   }
