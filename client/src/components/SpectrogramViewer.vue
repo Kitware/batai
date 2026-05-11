@@ -196,8 +196,8 @@ export default defineComponent({
       const prevCenter = viewer.center?.();
       const prevZoom = viewer.zoom?.();
 
-      // Always reset maxBounds/clamping to current content size, but avoid the default "fit everything"
-      // camera reset (we want a left-anchored view that fits vertical height).
+      // Always reset maxBounds/clamping to current content size, but avoid the default
+      // "fit everything" camera reset so the spectrogram loads flush left.
       geoJS.resetMapDimensions(scaledWidth.value, totalHeight, 0.3, false);
 
       if (!resetCam) {
@@ -212,11 +212,12 @@ export default defineComponent({
       const viewportH = viewport?.height ?? 0;
       const aspect = viewportW > 0 && viewportH > 0 ? viewportW / viewportH : 1;
 
-      // Show the left edge (with padding) and fit the full vertical height.
-      const pad = Math.max(10, scaledWidth.value * 0.01);
+      // Keep the initial view left-aligned with no leading gutter while fitting the
+      // full vertical height. If the content is narrower than the viewport, any extra
+      // space should appear on the right instead of centering the image.
       const desiredWidth = Math.max(200, totalHeight * aspect);
-      const left = -pad;
-      const right = Math.min(scaledWidth.value + pad, left + desiredWidth);
+      const left = 0;
+      const right = left + desiredWidth;
       const viewBounds = { left, top: 0, right, bottom: totalHeight };
 
       const zoomAndCenter = viewer.zoomAndCenterFromBounds(viewBounds, 0);
