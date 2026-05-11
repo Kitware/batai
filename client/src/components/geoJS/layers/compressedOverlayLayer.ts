@@ -22,8 +22,12 @@ function scaleCompressedTime(
   const heightScale =
     adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
   // Now we remap our annotation to pixel coordinates
-  const low_freq = adjustedHeight - spectroInfo.low_freq * heightScale;
-  const high_freq = adjustedHeight - spectroInfo.high_freq * heightScale;
+  const low_freq =
+    adjustedHeight -
+    (spectroInfo.low_freq - spectroInfo.low_freq) * heightScale;
+  const high_freq =
+    adjustedHeight -
+    (spectroInfo.high_freq - spectroInfo.low_freq) * heightScale;
   const start_time_scaled = start_time * widthScale;
   const end_time_scaled = end_time * widthScale;
   return {
