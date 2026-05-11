@@ -12,6 +12,8 @@ import {
 import {
   type SpectroInfo,
   spectroToCenter,
+  spectroTimeToX,
+  spectroXToTime,
   useGeoJS,
 } from "./geoJS/geoJSUtils";
 import {
@@ -46,12 +48,17 @@ export default defineComponent({
     spectroInfo: { type: Object as PropType<SpectroInfo>, required: true },
     recordingId: { type: String as PropType<string | null>, required: true },
     compressed: { type: Boolean, required: true },
+    restoreCenterTimeMs: {
+      type: Number as PropType<number | null>,
+      default: null,
+    },
   },
   emits: [
     "update:annotation",
     "create:annotation",
     "geoViewerRef",
     "hoverData",
+    "restoreCenterComplete",
   ],
   setup(props, { emit }) {
     const {
@@ -78,6 +85,7 @@ export default defineComponent({
     const initialized = ref(false);
     const cursor = ref("");
     const imageCursorRef: Ref<HTMLElement | undefined> = ref();
+    const restoredCenterTimeMs = ref<number | null>(null);
 
     const setCursor = (newCursor: string) => {
       cursor.value = newCursor;
@@ -141,7 +149,6 @@ export default defineComponent({
     const mouseMoveEvent = (e: GeoEvent) => {
       if (!props.spectroInfo) return;
       const { x, y } = e.geo;
-      const width = Math.max(scaledWidth.value, props.spectroInfo.width);
       const height = Math.max(scaledHeight.value, props.spectroInfo.height);
 
       const freq =
@@ -155,32 +162,7 @@ export default defineComponent({
 
       let time = -1;
       if (x >= 0 && height - y >= 0) {
-        if (!props.compressed) {
-          time =
-            x *
-            ((props.spectroInfo.end_time - props.spectroInfo.start_time) /
-              width);
-        } else if (
-          props.spectroInfo.start_times &&
-          props.spectroInfo.end_times
-        ) {
-          const timeLength =
-            props.spectroInfo.end_time - props.spectroInfo.start_time;
-          const timeToPixels = (width / timeLength) * scaledVals.value.x;
-          let offsetAdditive = 0;
-          for (let i = 0; i < props.spectroInfo.start_times.length; i++) {
-            const start_time = props.spectroInfo.start_times[i];
-            const end_time = props.spectroInfo.end_times[i];
-            const startX = offsetAdditive;
-            const endX =
-              offsetAdditive + (end_time - start_time) * timeToPixels;
-            if (x > startX && x < endX) {
-              time = start_time + (x - offsetAdditive) / timeToPixels;
-              break;
-            }
-            offsetAdditive += (end_time - start_time) * timeToPixels;
-          }
-        }
+        time = spectroXToTime(x, props.spectroInfo, scaledWidth.value);
       }
       emit("hoverData", { time, freq });
     };
@@ -223,6 +205,36 @@ export default defineComponent({
       const zoomAndCenter = viewer.zoomAndCenterFromBounds(viewBounds, 0);
       viewer.zoom(zoomAndCenter.zoom);
       viewer.center(zoomAndCenter.center);
+    }
+
+    function restoreCenterIfNeeded() {
+      const requestedCenterTime = props.restoreCenterTimeMs;
+      if (requestedCenterTime === null) {
+        restoredCenterTimeMs.value = null;
+        return;
+      }
+      if (requestedCenterTime === restoredCenterTimeMs.value) {
+        return;
+      }
+
+      const viewer = geoJS.getGeoViewer().value;
+      const currentCenter = viewer?.center?.();
+      if (!viewer || !currentCenter) {
+        return;
+      }
+
+      const nextX = spectroTimeToX(
+        requestedCenterTime,
+        props.spectroInfo,
+        scaledWidth.value,
+      );
+      if (nextX < 0) {
+        return;
+      }
+
+      viewer.center({ x: nextX, y: currentCenter.y });
+      restoredCenterTimeMs.value = requestedCenterTime;
+      emit("restoreCenterComplete", requestedCenterTime);
     }
 
     function drawWaveplotIfEnabled() {
@@ -299,6 +311,7 @@ export default defineComponent({
         }
         drawWaveplotIfEnabled();
       }
+      restoreCenterIfNeeded();
     }
 
     onMounted(() => {
@@ -336,6 +349,18 @@ export default defineComponent({
           );
         }
         drawWaveplotIfEnabled();
+        restoreCenterIfNeeded();
+      },
+    );
+
+    watch(
+      () => props.restoreCenterTimeMs,
+      () => {
+        if (props.restoreCenterTimeMs === null) {
+          restoredCenterTimeMs.value = null;
+          return;
+        }
+        restoreCenterIfNeeded();
       },
     );
 

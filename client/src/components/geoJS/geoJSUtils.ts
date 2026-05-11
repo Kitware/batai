@@ -479,6 +479,155 @@ export interface SpectroInfo {
   high_freq: number;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getEffectiveScaledWidth(spectroInfo: SpectroInfo, scaledWidth = 0) {
+  if (spectroInfo.compressedWidth) {
+    return scaledWidth > 0
+      ? Math.max(scaledWidth, spectroInfo.compressedWidth)
+      : spectroInfo.compressedWidth;
+  }
+  return scaledWidth > 0 ? Math.max(scaledWidth, spectroInfo.width) : spectroInfo.width;
+}
+
+function spectroXToTime(
+  x: number,
+  spectroInfo: SpectroInfo,
+  scaledWidth = 0,
+  clampToRange = false,
+) {
+  const effectiveWidth = getEffectiveScaledWidth(spectroInfo, scaledWidth);
+  if (!Number.isFinite(x) || effectiveWidth <= 0) {
+    return -1;
+  }
+  if (!clampToRange && (x < 0 || x > effectiveWidth)) {
+    return -1;
+  }
+  const clampedX = clamp(x, 0, effectiveWidth);
+
+  if (
+    spectroInfo.compressedWidth &&
+    spectroInfo.start_times &&
+    spectroInfo.end_times &&
+    spectroInfo.widths
+  ) {
+    const { start_times, end_times, widths, compressedWidth } = spectroInfo;
+    const segmentCount = Math.min(
+      start_times.length,
+      end_times.length,
+      widths.length,
+    );
+    if (!segmentCount || compressedWidth <= 0) {
+      return -1;
+    }
+    const epsilon = 1e-6;
+    const scaleFactor = effectiveWidth / compressedWidth;
+    let segmentOffset = 0;
+
+    for (let i = 0; i < segmentCount; i += 1) {
+      const startTime = start_times[i];
+      const endTime = end_times[i];
+      const segmentWidth = widths[i] * scaleFactor;
+      const segmentEnd = segmentOffset + segmentWidth;
+
+      if (segmentWidth <= 0 || endTime <= startTime) {
+        segmentOffset = segmentEnd;
+        continue;
+      }
+
+      if (i > 0 && Math.abs(clampedX - segmentOffset) <= epsilon) {
+        return (end_times[i - 1] + startTime) / 2;
+      }
+
+      if (clampedX < segmentEnd || i === segmentCount - 1) {
+        const localX = clamp(clampedX - segmentOffset, 0, segmentWidth);
+        return startTime + (localX / segmentWidth) * (endTime - startTime);
+      }
+
+      segmentOffset = segmentEnd;
+    }
+
+    return end_times[segmentCount - 1];
+  }
+
+  const timeRange = spectroInfo.end_time - spectroInfo.start_time;
+  if (timeRange <= 0) {
+    return -1;
+  }
+
+  return spectroInfo.start_time + (clampedX / effectiveWidth) * timeRange;
+}
+
+function spectroTimeToX(time: number, spectroInfo: SpectroInfo, scaledWidth = 0) {
+  if (!Number.isFinite(time)) {
+    return -1;
+  }
+
+  const effectiveWidth = getEffectiveScaledWidth(spectroInfo, scaledWidth);
+  if (effectiveWidth <= 0) {
+    return -1;
+  }
+
+  if (
+    spectroInfo.compressedWidth &&
+    spectroInfo.start_times &&
+    spectroInfo.end_times &&
+    spectroInfo.widths
+  ) {
+    const { start_times, end_times, widths, compressedWidth } = spectroInfo;
+    const segmentCount = Math.min(
+      start_times.length,
+      end_times.length,
+      widths.length,
+    );
+    if (!segmentCount || compressedWidth <= 0) {
+      return -1;
+    }
+
+    const scaleFactor = effectiveWidth / compressedWidth;
+    if (time <= start_times[0]) {
+      return 0;
+    }
+
+    let segmentOffset = 0;
+    for (let i = 0; i < segmentCount; i += 1) {
+      const startTime = start_times[i];
+      const endTime = end_times[i];
+      const segmentWidth = widths[i] * scaleFactor;
+
+      if (time < startTime) {
+        return segmentOffset;
+      }
+
+      if (segmentWidth > 0 && endTime > startTime && time <= endTime) {
+        const clampedTime = clamp(time, startTime, endTime);
+        return (
+          segmentOffset +
+          ((clampedTime - startTime) / (endTime - startTime)) * segmentWidth
+        );
+      }
+
+      segmentOffset += Math.max(segmentWidth, 0);
+
+      if (time <= endTime) {
+        return segmentOffset;
+      }
+    }
+
+    return segmentOffset;
+  }
+
+  const clampedTime = clamp(time, spectroInfo.start_time, spectroInfo.end_time);
+  const timeRange = spectroInfo.end_time - spectroInfo.start_time;
+  if (timeRange <= 0) {
+    return -1;
+  }
+
+  return ((clampedTime - spectroInfo.start_time) / timeRange) * effectiveWidth;
+}
+
 function spectroSequenceToGeoJSon(
   annotation: SpectrogramSequenceAnnotation,
   spectroInfo: SpectroInfo,
@@ -974,6 +1123,8 @@ export {
   reOrdergeoJSON,
   useGeoJS,
   spectroToCenter,
+  spectroXToTime,
+  spectroTimeToX,
   spectroSequenceToGeoJSon,
   textColorFromBackground,
   rectVertex,

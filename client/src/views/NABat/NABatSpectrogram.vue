@@ -6,7 +6,7 @@ import {
   getNABatSpectrogramCompressed,
 } from "@api/NABatApi";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
-import type { SpectroInfo } from "@components/geoJS/geoJSUtils";
+import { spectroXToTime, type SpectroInfo } from "@components/geoJS/geoJSUtils";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import useState from "@use/useState";
 import ColorSchemeDialog from "@components/ColorSchemeDialog.vue";
@@ -45,6 +45,7 @@ export default defineComponent({
       selectedId,
       selectedType,
       scaledVals,
+      scaledWidth,
       viewCompressedOverlay,
       sideTab,
       configuration,
@@ -146,24 +147,50 @@ export default defineComponent({
     const setSelection = (annotationId: number) => {
       selectedId.value = annotationId;
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parentGeoViewerRef: Ref<any> = ref(null);
+    const pendingCenterTimeMs = ref<number | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const setParentGeoViewer = (data: any) => {
+      parentGeoViewerRef.value = data;
+    };
+    const getParentGeoViewer = () => parentGeoViewerRef.value?.value;
+    const captureCurrentCenterTime = () => {
+      const geoViewer = getParentGeoViewer();
+      const centerX = geoViewer?.center?.()?.x;
+      if (typeof centerX !== "number" || !spectroInfo.value) {
+        pendingCenterTimeMs.value = null;
+        return;
+      }
+
+      const centerTime = spectroXToTime(
+        centerX,
+        spectroInfo.value,
+        scaledWidth.value,
+        true,
+      );
+      pendingCenterTimeMs.value = centerTime >= 0 ? centerTime : null;
+    };
+    const toggleCompressedView = () => {
+      captureCurrentCenterTime();
+      compressed.value = !compressed.value;
+    };
+    const clearPendingCenterRestore = () => {
+      pendingCenterTimeMs.value = null;
+    };
     watch(gridEnabled, () => {
       toggleLayerVisibility("grid");
     });
     watch(
       () => props.id,
       () => {
+        pendingCenterTimeMs.value = null;
         loadData();
       },
     );
     onMounted(() => {
       loadData();
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parentGeoViewerRef: Ref<any> = ref(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const setParentGeoViewer = (data: any) => {
-      parentGeoViewerRef.value = data;
-    };
 
     const timeRef = ref(0);
     const freqRef = ref(0);
@@ -202,6 +229,7 @@ export default defineComponent({
       errorMessage,
       additionalErrors,
       compressed,
+      pendingCenterTimeMs,
       loadedImage,
       images,
       spectroInfo,
@@ -209,6 +237,8 @@ export default defineComponent({
       selectedType,
       setSelection,
       setParentGeoViewer,
+      toggleCompressedView,
+      clearPendingCenterRestore,
       setHoverData,
       toggleLayerVisibility,
       speciesList,
@@ -312,7 +342,7 @@ export default defineComponent({
                   v-bind="subProps"
                   size="40"
                   :color="compressed ? 'blue' : ''"
-                  @click="compressed = !compressed"
+                  @click="toggleCompressedView"
                 >
                   mdi-calendar-collapse-horizontal
                 </v-icon>
@@ -476,10 +506,12 @@ export default defineComponent({
         :recording-id="id"
         :grid="gridEnabled"
         :compressed="compressed"
+        :restore-center-time-ms="pendingCenterTimeMs"
         class="spectro-main"
         @selected="setSelection($event)"
         @geo-viewer-ref="setParentGeoViewer($event)"
         @hover-data="setHoverData($event)"
+        @restore-center-complete="clearPendingCenterRestore()"
       />
       <thumbnail-viewer
         v-if="loadedImage && parentGeoViewerRef"
