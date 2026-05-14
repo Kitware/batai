@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from django.contrib.gis.geos import Polygon
-from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
+from django.db.models import Q, QuerySet
 from ninja import Query, Router, Schema
 from ninja.errors import HttpError
 
@@ -15,6 +15,7 @@ from bats_ai.core.models import (
     Recording,
     RecordingAnnotation,
 )
+from bats_ai.core.utils.grts_utils import normalize_sample_frame_id
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
@@ -125,40 +126,43 @@ def _get_recording_location_coords(recording: Recording) -> list[float] | None:
     return [float(point.x), float(point.y)]
 
 
-def _precompute_grts_cell_centroids(
-    cell_ids: set[int],
-) -> dict[int, list[float]]:
-    """Precompute centroid coordinates for each `grts_cell_id`.
+def _recording_grts_lookup_pair(recording: Recording) -> tuple[int, int] | None:
+    """Return ``(grts_cell_id, sample_frame_id)`` for GRTS DB lookup, if applicable."""
+    if recording.grts_cell_id is None:
+        return None
+    frame_id = (
+        recording.sample_frame_id
+        if recording.sample_frame_id is not None
+        else DEFAULT_SAMPLE_FRAME_ID
+    )
+    normalized = normalize_sample_frame_id(frame_id)
+    if normalized is None:
+        normalized = DEFAULT_SAMPLE_FRAME_ID
+    return (recording.grts_cell_id, normalized)
 
-    Choose the same "best" cell as `core/views/grts_cells.py` does,
-    then compute `[lon, lat]` from its centroid.
-    """
-    if not cell_ids:
+
+def _precompute_grts_cell_centroids(
+    pairs: set[tuple[int, int]],
+) -> dict[tuple[int, int], list[float]]:
+    """Map each ``(grts_cell_id, sample_frame_id)`` to ``[lon, lat]`` centroid."""
+    if not pairs:
         return {}
 
-    # Default to Continental US
-    # (sample_frame_id=DEFAULT_SAMPLE_FRAME_ID). We currently only import
-    # CONUS GRTS, so this keeps centroid selection aligned with loaded data.
-    frame_rank = Case(
-        When(sample_frame_id=DEFAULT_SAMPLE_FRAME_ID, then=Value(0)),
-        default=Value(1),
-        output_field=IntegerField(),
-    )
+    pair_filter = Q()
+    for grts_cell_id, sample_frame_id in pairs:
+        pair_filter |= Q(grts_cell_id=grts_cell_id, sample_frame_id=sample_frame_id)
 
-    rows = (
-        GRTSCells.objects.filter(
-            grts_cell_id__in=cell_ids,
-            centroid_4326__isnull=False,
-        )
-        .annotate(frame_rank=frame_rank)
-        .order_by("grts_cell_id", "frame_rank")
-        .distinct("grts_cell_id")
-        .values_list("grts_cell_id", "centroid_4326")
-    )
+    rows = GRTSCells.objects.filter(
+        pair_filter,
+        centroid_4326__isnull=False,
+    ).values_list("grts_cell_id", "sample_frame_id", "centroid_4326")
 
     return {
-        int(cell_id): [float(centroid.x), float(centroid.y)]
-        for cell_id, centroid in rows
+        (int(grts_cell_id), int(sample_frame_id)): [
+            float(centroid.x),
+            float(centroid.y),
+        ]
+        for grts_cell_id, sample_frame_id, centroid in rows
         if centroid is not None
     }
 
@@ -210,20 +214,34 @@ def get_recording_locations(
         grts_cell_ids=grts_cell_ids,
     )
 
-    my_list = list(my_qs.only("id", "audio_file", "recording_location", "grts_cell_id", "created"))
+    my_list = list(
+        my_qs.only(
+            "id",
+            "audio_file",
+            "recording_location",
+            "grts_cell_id",
+            "sample_frame_id",
+            "created",
+        )
+    )
     shared_list = list(
         shared_qs.only(
             "id",
             "audio_file",
             "recording_location",
             "grts_cell_id",
+            "sample_frame_id",
             "created",
         )
     )
     recordings = my_list + shared_list
 
-    required_cell_ids = {r.grts_cell_id for r in recordings if r.grts_cell_id is not None}
-    centroids_by_cell_id = _precompute_grts_cell_centroids(required_cell_ids)
+    grts_pairs = set()
+    for r in recordings:
+        pair = _recording_grts_lookup_pair(r)
+        if pair is not None:
+            grts_pairs.add(pair)
+    centroids_by_pair = _precompute_grts_cell_centroids(grts_pairs)
 
     features: list[dict[str, Any]] = []
     for rec in recordings:
@@ -233,14 +251,18 @@ def get_recording_locations(
             # When vetting is enabled, we only show the centroid of the
             # GRTS cell and not the direct recording location.
             if rec.grts_cell_id is not None:
-                coords = centroids_by_cell_id.get(rec.grts_cell_id)
+                pair = _recording_grts_lookup_pair(rec)
+                if pair is not None:
+                    coords = centroids_by_pair.get(pair)
             # If we can't resolve a centroid, fall back to recording_location.
             if coords is None:
                 coords = _get_recording_location_coords(rec)
         else:
             coords = _get_recording_location_coords(rec)
             if coords is None and rec.grts_cell_id is not None:
-                coords = centroids_by_cell_id.get(rec.grts_cell_id)
+                pair = _recording_grts_lookup_pair(rec)
+                if pair is not None:
+                    coords = centroids_by_pair.get(pair)
 
         if coords is None:
             continue
