@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from django.contrib.gis.geos import Polygon
-from django.db.models import Q, QuerySet
+from django.db.models import Exists, OuterRef, Q, QuerySet
 from ninja import Query, Router, Schema
 from ninja.errors import HttpError
 
@@ -14,7 +14,10 @@ from bats_ai.core.models import (
     Recording,
     RecordingAnnotation,
 )
-from bats_ai.core.utils.grts_utils import normalize_sample_frame_id
+from bats_ai.core.utils.grts_utils import (
+    normalize_sample_frame_id,
+    recording_effective_sample_frame_id_case,
+)
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
@@ -60,14 +63,33 @@ def _split_tags(tags: str | None) -> list[str]:
     return [t.strip() for t in tags.split(",") if t.strip()]
 
 
-def _apply_recording_filters_and_sort(  # noqa: PLR0913
+def filter_recordings_by_map_bbox(
+    qs: QuerySet[Recording],
+    bbox_poly: Polygon,
+) -> QuerySet[Recording]:
+    """Keep recordings whose point lies in the bbox or whose GRTS cell centroid matches.
+
+    Cell matching uses ``(grts_cell_id, sample_frame_id)`` on ``GRTSCells``, with the
+    same effective sample frame rules as ``normalize_sample_frame_id``.
+    """
+    cell_centroid_in_bbox = GRTSCells.objects.filter(
+        centroid_4326__intersects=bbox_poly,
+        grts_cell_id=OuterRef("grts_cell_id"),
+        sample_frame_id=OuterRef("_map_bbox_effective_sf"),
+    )
+    return qs.annotate(_map_bbox_effective_sf=recording_effective_sample_frame_id_case()).filter(
+        Q(recording_location__intersects=bbox_poly)
+        | (Q(grts_cell_id__isnull=False) & Exists(cell_centroid_in_bbox))
+    )
+
+
+def _apply_recording_filters_and_sort(
     *,
     qs: QuerySet[Recording],
     exclude_submitted: bool,
     submitted_by_user: QuerySet[int] | None,
     tags: str | None,
     bbox_poly: Polygon | None,
-    grts_cell_ids: QuerySet[int] | None,
 ) -> QuerySet[Recording]:
     if exclude_submitted and submitted_by_user is not None:
         qs = qs.exclude(pk__in=submitted_by_user)
@@ -78,10 +100,8 @@ def _apply_recording_filters_and_sort(  # noqa: PLR0913
             qs = qs.filter(tags__text=tag)
         qs = qs.distinct()
 
-    if bbox_poly is not None and grts_cell_ids is not None:
-        qs = qs.filter(
-            Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
-        )
+    if bbox_poly is not None:
+        qs = filter_recordings_by_map_bbox(qs, bbox_poly)
 
     # Keep deterministic ordering even though we don't expose sorting params.
     return qs.order_by("-created")
@@ -177,12 +197,8 @@ def get_recording_locations(
 
     bbox = _parse_bbox(q.bbox)
     bbox_poly: Polygon | None = None
-    grts_cell_ids: QuerySet[int] | None = None
     if bbox is not None:
         bbox_poly = Polygon.from_bbox((bbox[0], bbox[1], bbox[2], bbox[3]))
-        grts_cell_ids = GRTSCells.objects.filter(centroid_4326__intersects=bbox_poly).values_list(
-            "grts_cell_id", flat=True
-        )
 
     my_qs = _apply_recording_filters_and_sort(
         qs=my_qs,
@@ -190,7 +206,6 @@ def get_recording_locations(
         submitted_by_user=submitted_by_user,
         tags=q.tags,
         bbox_poly=bbox_poly,
-        grts_cell_ids=grts_cell_ids,
     )
     shared_qs = _apply_recording_filters_and_sort(
         qs=shared_qs,
@@ -198,7 +213,6 @@ def get_recording_locations(
         submitted_by_user=submitted_by_user,
         tags=q.tags,
         bbox_poly=bbox_poly,
-        grts_cell_ids=grts_cell_ids,
     )
 
     my_list = list(
@@ -226,7 +240,7 @@ def get_recording_locations(
     sample_frame_cell_id_pairs = {
         (normalize_sample_frame_id(r.sample_frame_id), r.grts_cell_id)
         for r in recordings
-        if r.sample_frame_id is not None and r.grts_cell_id is not None
+        if r.grts_cell_id is not None
     }
     cell_centroids_by_sample_frame_id = _precompute_grts_cell_centroids(sample_frame_cell_id_pairs)
 

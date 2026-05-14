@@ -19,7 +19,6 @@ from ninja.pagination import RouterPaginated
 from bats_ai.core.models import (
     Annotations,
     CompressedSpectrogram,
-    GRTSCells,
     PulseMetadata,
     Recording,
     RecordingAnnotation,
@@ -29,7 +28,7 @@ from bats_ai.core.models import (
     Spectrogram,
 )
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
-from bats_ai.core.views.recording_location import _parse_bbox
+from bats_ai.core.views.recording_location import _parse_bbox, filter_recordings_by_map_bbox
 from bats_ai.core.views.species import SpeciesSchema
 
 if TYPE_CHECKING:
@@ -525,13 +524,7 @@ def get_recordings(  # noqa: C901
     if q.bbox and q.bbox.strip():
         min_lon, min_lat, max_lon, max_lat = _parse_bbox(q.bbox)
         bbox_poly = Polygon.from_bbox((min_lon, min_lat, max_lon, max_lat))
-        # Need to check the GRTSCells centroids as well as the recording_location
-        grts_cell_ids = GRTSCells.objects.filter(centroid_4326__intersects=bbox_poly).values_list(
-            "grts_cell_id", flat=True
-        )
-        queryset = queryset.filter(
-            Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
-        )
+        queryset = filter_recordings_by_map_bbox(queryset, bbox_poly)
 
     sort_field = q.sort_by or "created"
     order_prefix = "" if q.sort_direction == "asc" else "-"
@@ -610,13 +603,7 @@ def _unsubmitted_recording_ids_ordered(
         if bbox and bbox.strip():
             min_lon, min_lat, max_lon, max_lat = _parse_bbox(bbox)
             bbox_poly = Polygon.from_bbox((min_lon, min_lat, max_lon, max_lat))
-            # Need to check the GRTSCells centroids as well as the recording_location
-            grts_cell_ids = GRTSCells.objects.filter(
-                centroid_4326__intersects=bbox_poly
-            ).values_list("grts_cell_id", flat=True)
-            qs = qs.filter(
-                Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
-            )
+            qs = filter_recordings_by_map_bbox(qs, bbox_poly)
         order_prefix = "" if sort_direction == "asc" else "-"
         if sort_by == "owner_username":
             qs = qs.order_by(f"{order_prefix}owner__username")
