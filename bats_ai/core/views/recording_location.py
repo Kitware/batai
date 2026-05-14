@@ -14,6 +14,7 @@ from bats_ai.core.models import (
     Recording,
     RecordingAnnotation,
 )
+from bats_ai.core.utils.grts_utils import normalize_sample_frame_id
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
@@ -223,7 +224,7 @@ def get_recording_locations(
     recordings = my_list + shared_list
 
     sample_frame_cell_id_pairs = {
-        (r.sample_frame_id, r.grts_cell_id)
+        (normalize_sample_frame_id(r.sample_frame_id), r.grts_cell_id)
         for r in recordings
         if r.sample_frame_id is not None and r.grts_cell_id is not None
     }
@@ -232,22 +233,27 @@ def get_recording_locations(
     features: list[dict[str, Any]] = []
     for rec in recordings:
         coords: list[float] | None = None
+        sample_frame_for_grts = normalize_sample_frame_id(rec.sample_frame_id)
 
         if vetting_enabled:
             # When vetting is enabled, we only show the centroid of the
             # GRTS cell and not the direct recording location.
-            if rec.grts_cell_id is not None:
+            if rec.grts_cell_id is not None and sample_frame_for_grts is not None:
                 coords = cell_centroids_by_sample_frame_id.get(
-                    (rec.sample_frame_id, rec.grts_cell_id)
+                    (sample_frame_for_grts, rec.grts_cell_id)
                 )
             # If we can't resolve a centroid, fall back to recording_location.
             if coords is None:
                 coords = _get_recording_location_coords(rec)
         else:
             coords = _get_recording_location_coords(rec)
-            if coords is None and rec.grts_cell_id is not None:
+            if (
+                coords is None
+                and rec.grts_cell_id is not None
+                and sample_frame_for_grts is not None
+            ):
                 coords = cell_centroids_by_sample_frame_id.get(
-                    (rec.sample_frame_id, rec.grts_cell_id)
+                    (sample_frame_for_grts, rec.grts_cell_id)
                 )
 
         if coords is None:
