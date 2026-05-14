@@ -128,7 +128,9 @@ class Command(BaseCommand):
         shapefiles = [LOCATION_SOURCES[location_key] for location_key in selected_keys]
 
         for url, sample_frame_id, name, backup_url in shapefiles:
-            logger.info(f"Downloading shapefile for Location {name} with sample frame id {sample_frame_id}")
+            logger.info(
+                f"Downloading shapefile for Location {name} with sample frame id {sample_frame_id}"
+            )
             with tempfile.TemporaryDirectory() as tmpdir:
                 tmpdir = Path(tmpdir)
 
@@ -186,9 +188,7 @@ class Command(BaseCommand):
 
                 # Replace-on-reimport behavior: delete existing rows for any
                 # (grts_cell_id, sample_frame_id) present in this import batch.
-                incoming_grts_ids = set(
-                    gdf[grts_id_col].dropna().astype(int).tolist()
-                )
+                incoming_grts_ids = set(gdf[grts_id_col].dropna().astype(int).tolist())
                 if incoming_grts_ids:
                     deleted_count, _ = GRTSCells.objects.filter(
                         sample_frame_id=sample_frame_id,
@@ -212,9 +212,7 @@ class Command(BaseCommand):
                 ):
                     # Hard fail if GRTS id is missing
                     if grts_id_col not in row or row[grts_id_col] is None:
-                        raise CommandError(
-                            f"Row {idx} missing required {grts_id_col} field!"
-                        )
+                        raise CommandError(f"Row {idx} missing required {grts_id_col} field!")
 
                     grts_id = int(row[grts_id_col])
                     cell_key = (grts_id, sample_frame_id)
