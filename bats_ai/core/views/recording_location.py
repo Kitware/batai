@@ -222,7 +222,11 @@ def get_recording_locations(
     )
     recordings = my_list + shared_list
 
-    sample_frame_cell_id_pairs = {(r.sample_frame_id, r.grts_cell_id) for r in recordings if r.sample_frame_id is not None and r.grts_cell_id is not None}
+    sample_frame_cell_id_pairs = {
+        (r.sample_frame_id, r.grts_cell_id)
+        for r in recordings
+        if r.sample_frame_id is not None and r.grts_cell_id is not None
+    }
     cell_centroids_by_sample_frame_id = _precompute_grts_cell_centroids(sample_frame_cell_id_pairs)
 
     features: list[dict[str, Any]] = []
@@ -233,14 +237,18 @@ def get_recording_locations(
             # When vetting is enabled, we only show the centroid of the
             # GRTS cell and not the direct recording location.
             if rec.grts_cell_id is not None:
-                coords = cell_centroids_by_sample_frame_id.get((rec.sample_frame_id, rec.grts_cell_id))
+                coords = cell_centroids_by_sample_frame_id.get(
+                    (rec.sample_frame_id, rec.grts_cell_id)
+                )
             # If we can't resolve a centroid, fall back to recording_location.
             if coords is None:
                 coords = _get_recording_location_coords(rec)
         else:
             coords = _get_recording_location_coords(rec)
             if coords is None and rec.grts_cell_id is not None:
-                coords = cell_centroids_by_sample_frame_id.get((rec.sample_frame_id, rec.grts_cell_id))
+                coords = cell_centroids_by_sample_frame_id.get(
+                    (rec.sample_frame_id, rec.grts_cell_id)
+                )
 
         if coords is None:
             continue
