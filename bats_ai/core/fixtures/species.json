@@ -1623,5 +1623,18 @@
     },
     "model": "core.Species",
     "pk": "133"
+  },
+  {
+    "fields": {
+      "category": "frequency",
+      "common_name": "Florida bonneted bat, Brazilian free-tailed bat",
+      "family": "",
+      "genus": "",
+      "species": "Eumops floridanus, Tadarida brasiliensis",
+      "species_code": "EUFLTABR",
+      "species_code_6": ""
+    },
+    "model": "core.Species",
+    "pk": 134
   }
 ]
