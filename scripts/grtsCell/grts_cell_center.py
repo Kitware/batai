@@ -114,7 +114,7 @@ def lookup_cell_center(zip_path: Path, grts_cell_id: int) -> CellCenterResult:
     default=False,
     help="Print a single JSON object instead of plain text.",
 )
-def main(shapefile_zip: Path, grts_cell_id: int, as_json: bool) -> None:
+def main(shapefile_zip: Path, grts_cell_id: int, as_json: bool) -> None:  # noqa: FBT001
     result = lookup_cell_center(shapefile_zip, grts_cell_id)
     if as_json:
         click.echo(json.dumps(dict(result), indent=2))

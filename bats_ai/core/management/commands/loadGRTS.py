@@ -129,7 +129,9 @@ class Command(BaseCommand):
 
         for url, sample_frame_id, name, backup_url in shapefiles:
             logger.info(
-                f"Downloading shapefile for Location {name} with sample frame id {sample_frame_id}"
+                "Downloading shapefile for Location %s with sample frame id %s",
+                name,
+                sample_frame_id,
             )
             with tempfile.TemporaryDirectory() as tmpdir:
                 tmpdir = Path(tmpdir)

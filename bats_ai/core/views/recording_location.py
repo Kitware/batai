@@ -167,6 +167,31 @@ def _precompute_grts_cell_centroids(
     }
 
 
+def _resolve_recording_map_coords(
+    rec: Recording,
+    *,
+    vetting_enabled: bool,
+    centroids_by_pair: dict[tuple[int, int], list[float]],
+) -> list[float] | None:
+    """Pick map coordinates for one recording (GRTS centroid vs true location)."""
+    if vetting_enabled:
+        coords: list[float] | None = None
+        if rec.grts_cell_id is not None:
+            pair = _recording_grts_lookup_pair(rec)
+            if pair is not None:
+                coords = centroids_by_pair.get(pair)
+        if coords is None:
+            coords = _get_recording_location_coords(rec)
+        return coords
+
+    coords = _get_recording_location_coords(rec)
+    if coords is None and rec.grts_cell_id is not None:
+        pair = _recording_grts_lookup_pair(rec)
+        if pair is not None:
+            coords = centroids_by_pair.get(pair)
+    return coords
+
+
 @router.get("/", response=RecordingLocationsResponseSchema)
 def get_recording_locations(
     request: HttpRequest,
@@ -245,24 +270,11 @@ def get_recording_locations(
 
     features: list[dict[str, Any]] = []
     for rec in recordings:
-        coords: list[float] | None = None
-
-        if vetting_enabled:
-            # When vetting is enabled, we only show the centroid of the
-            # GRTS cell and not the direct recording location.
-            if rec.grts_cell_id is not None:
-                pair = _recording_grts_lookup_pair(rec)
-                if pair is not None:
-                    coords = centroids_by_pair.get(pair)
-            # If we can't resolve a centroid, fall back to recording_location.
-            if coords is None:
-                coords = _get_recording_location_coords(rec)
-        else:
-            coords = _get_recording_location_coords(rec)
-            if coords is None and rec.grts_cell_id is not None:
-                pair = _recording_grts_lookup_pair(rec)
-                if pair is not None:
-                    coords = centroids_by_pair.get(pair)
+        coords = _resolve_recording_map_coords(
+            rec,
+            vetting_enabled=vetting_enabled,
+            centroids_by_pair=centroids_by_pair,
+        )
 
         if coords is None:
             continue

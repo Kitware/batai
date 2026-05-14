@@ -65,7 +65,7 @@ def _pick_shp(root: Path, inner: str | None) -> Path:
     inner_norm = inner.replace("\\", "/").strip("/")
     for p in shps:
         rel = p.relative_to(root).as_posix()
-        if rel == inner_norm or p.name == inner_norm or rel.endswith(inner_norm):
+        if inner_norm in (rel, p.name) or rel.endswith(inner_norm):
             return p
     raise click.ClickException(
         f"No .shp matched --inner {inner!r}. Paths in archive:\n"
@@ -139,7 +139,7 @@ def inspect_shapefile_zip(zip_path: Path, inner: str | None) -> ShapefileZipRepo
     default=False,
     help="Print a JSON object (includes feature_count when available).",
 )
-def main(shapefile_zip: Path, inner: str | None, as_json: bool) -> None:
+def main(shapefile_zip: Path, inner: str | None, as_json: bool) -> None:  # noqa: FBT001
     report = inspect_shapefile_zip(shapefile_zip, inner)
     if as_json:
         click.echo(json.dumps(report, indent=2))
