@@ -4,16 +4,19 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from django.contrib.gis.geos import Polygon
-from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
+from django.db.models import Exists, OuterRef, Q, QuerySet
 from ninja import Query, Router, Schema
 from ninja.errors import HttpError
 
-from bats_ai.core.constants import DEFAULT_SAMPLE_FRAME_ID
 from bats_ai.core.models import (
     Configuration,
     GRTSCells,
     Recording,
     RecordingAnnotation,
+)
+from bats_ai.core.utils.grts_utils import (
+    normalize_sample_frame_id,
+    recording_effective_sample_frame_id_case,
 )
 
 if TYPE_CHECKING:
@@ -60,14 +63,33 @@ def _split_tags(tags: str | None) -> list[str]:
     return [t.strip() for t in tags.split(",") if t.strip()]
 
 
-def _apply_recording_filters_and_sort(  # noqa: PLR0913
+def filter_recordings_by_map_bbox(
+    qs: QuerySet[Recording],
+    bbox_poly: Polygon,
+) -> QuerySet[Recording]:
+    """Keep recordings whose point lies in the bbox or whose GRTS cell centroid matches.
+
+    Cell matching uses ``(grts_cell_id, sample_frame_id)`` on ``GRTSCells``, with the
+    same effective sample frame rules as ``normalize_sample_frame_id``.
+    """
+    cell_centroid_in_bbox = GRTSCells.objects.filter(
+        centroid_4326__intersects=bbox_poly,
+        grts_cell_id=OuterRef("grts_cell_id"),
+        sample_frame_id=OuterRef("_map_bbox_effective_sf"),
+    )
+    return qs.annotate(_map_bbox_effective_sf=recording_effective_sample_frame_id_case()).filter(
+        Q(recording_location__intersects=bbox_poly)
+        | (Q(grts_cell_id__isnull=False) & Exists(cell_centroid_in_bbox))
+    )
+
+
+def _apply_recording_filters_and_sort(
     *,
     qs: QuerySet[Recording],
     exclude_submitted: bool,
     submitted_by_user: QuerySet[int] | None,
     tags: str | None,
     bbox_poly: Polygon | None,
-    grts_cell_ids: QuerySet[int] | None,
 ) -> QuerySet[Recording]:
     if exclude_submitted and submitted_by_user is not None:
         qs = qs.exclude(pk__in=submitted_by_user)
@@ -78,10 +100,8 @@ def _apply_recording_filters_and_sort(  # noqa: PLR0913
             qs = qs.filter(tags__text=tag)
         qs = qs.distinct()
 
-    if bbox_poly is not None and grts_cell_ids is not None:
-        qs = qs.filter(
-            Q(recording_location__intersects=bbox_poly) | Q(grts_cell_id__in=grts_cell_ids)
-        )
+    if bbox_poly is not None:
+        qs = filter_recordings_by_map_bbox(qs, bbox_poly)
 
     # Keep deterministic ordering even though we don't expose sorting params.
     return qs.order_by("-created")
@@ -126,39 +146,30 @@ def _get_recording_location_coords(recording: Recording) -> list[float] | None:
 
 
 def _precompute_grts_cell_centroids(
-    cell_ids: set[int],
-) -> dict[int, list[float]]:
-    """Precompute centroid coordinates for each `grts_cell_id`.
-
-    Choose the same "best" cell as `core/views/grts_cells.py` does,
-    then compute `[lon, lat]` from its centroid.
-    """
-    if not cell_ids:
+    sample_frame_cell_id_pairs: set[tuple[int, int]],
+) -> dict[tuple[int, int], list[float]]:
+    """Precompute centroid `[lon, lat]` for each `(sample_frame_id, grts_cell_id)` pair."""
+    if not sample_frame_cell_id_pairs:
         return {}
 
-    # Default to Continental US
-    # (sample_frame_id=DEFAULT_SAMPLE_FRAME_ID). We currently only import
-    # CONUS GRTS, so this keeps centroid selection aligned with loaded data.
-    frame_rank = Case(
-        When(sample_frame_id=DEFAULT_SAMPLE_FRAME_ID, then=Value(0)),
-        default=Value(1),
-        output_field=IntegerField(),
-    )
-
+    cell_ids = {cell_id for sample_frame_id, cell_id in sample_frame_cell_id_pairs}
+    sample_frame_ids = {sample_frame_id for sample_frame_id, cell_id in sample_frame_cell_id_pairs}
     rows = (
         GRTSCells.objects.filter(
             grts_cell_id__in=cell_ids,
+            sample_frame_id__in=sample_frame_ids,
             centroid_4326__isnull=False,
         )
-        .annotate(frame_rank=frame_rank)
-        .order_by("grts_cell_id", "frame_rank")
-        .distinct("grts_cell_id")
-        .values_list("grts_cell_id", "centroid_4326")
+        # DISTINCT ON columns must match the leading ORDER BY columns; `pk`
+        # breaks ties if duplicate (grts_cell_id, sample_frame_id) rows exist.
+        .order_by("grts_cell_id", "sample_frame_id", "pk")
+        .distinct("grts_cell_id", "sample_frame_id")
+        .values_list("sample_frame_id", "grts_cell_id", "centroid_4326")
     )
 
     return {
-        int(cell_id): [float(centroid.x), float(centroid.y)]
-        for cell_id, centroid in rows
+        (int(sample_frame_id), int(cell_id)): [float(centroid.x), float(centroid.y)]
+        for sample_frame_id, cell_id, centroid in rows
         if centroid is not None
     }
 
@@ -186,12 +197,8 @@ def get_recording_locations(
 
     bbox = _parse_bbox(q.bbox)
     bbox_poly: Polygon | None = None
-    grts_cell_ids: QuerySet[int] | None = None
     if bbox is not None:
         bbox_poly = Polygon.from_bbox((bbox[0], bbox[1], bbox[2], bbox[3]))
-        grts_cell_ids = GRTSCells.objects.filter(centroid_4326__intersects=bbox_poly).values_list(
-            "grts_cell_id", flat=True
-        )
 
     my_qs = _apply_recording_filters_and_sort(
         qs=my_qs,
@@ -199,7 +206,6 @@ def get_recording_locations(
         submitted_by_user=submitted_by_user,
         tags=q.tags,
         bbox_poly=bbox_poly,
-        grts_cell_ids=grts_cell_ids,
     )
     shared_qs = _apply_recording_filters_and_sort(
         qs=shared_qs,
@@ -207,40 +213,62 @@ def get_recording_locations(
         submitted_by_user=submitted_by_user,
         tags=q.tags,
         bbox_poly=bbox_poly,
-        grts_cell_ids=grts_cell_ids,
     )
 
-    my_list = list(my_qs.only("id", "audio_file", "recording_location", "grts_cell_id", "created"))
+    my_list = list(
+        my_qs.only(
+            "id",
+            "audio_file",
+            "recording_location",
+            "grts_cell_id",
+            "sample_frame_id",
+            "created",
+        )
+    )
     shared_list = list(
         shared_qs.only(
             "id",
             "audio_file",
             "recording_location",
             "grts_cell_id",
+            "sample_frame_id",
             "created",
         )
     )
     recordings = my_list + shared_list
 
-    required_cell_ids = {r.grts_cell_id for r in recordings if r.grts_cell_id is not None}
-    centroids_by_cell_id = _precompute_grts_cell_centroids(required_cell_ids)
+    sample_frame_cell_id_pairs = {
+        (normalize_sample_frame_id(r.sample_frame_id), r.grts_cell_id)
+        for r in recordings
+        if r.grts_cell_id is not None
+    }
+    cell_centroids_by_sample_frame_id = _precompute_grts_cell_centroids(sample_frame_cell_id_pairs)
 
     features: list[dict[str, Any]] = []
     for rec in recordings:
         coords: list[float] | None = None
+        sample_frame_for_grts = normalize_sample_frame_id(rec.sample_frame_id)
 
         if vetting_enabled:
             # When vetting is enabled, we only show the centroid of the
             # GRTS cell and not the direct recording location.
-            if rec.grts_cell_id is not None:
-                coords = centroids_by_cell_id.get(rec.grts_cell_id)
+            if rec.grts_cell_id is not None and sample_frame_for_grts is not None:
+                coords = cell_centroids_by_sample_frame_id.get(
+                    (sample_frame_for_grts, rec.grts_cell_id)
+                )
             # If we can't resolve a centroid, fall back to recording_location.
             if coords is None:
                 coords = _get_recording_location_coords(rec)
         else:
             coords = _get_recording_location_coords(rec)
-            if coords is None and rec.grts_cell_id is not None:
-                coords = centroids_by_cell_id.get(rec.grts_cell_id)
+            if (
+                coords is None
+                and rec.grts_cell_id is not None
+                and sample_frame_for_grts is not None
+            ):
+                coords = cell_centroids_by_sample_frame_id.get(
+                    (sample_frame_for_grts, rec.grts_cell_id)
+                )
 
         if coords is None:
             continue

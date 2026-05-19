@@ -37,7 +37,7 @@ LOCATION_SOURCES = {
         14,
         "CONUS",
         # Backup URL
-        "https://data.kitware.com/api/v1/item/697cc601e7dea9be44ec5aee/download",
+        "https://data.kitware.com/api/v1/item/6a05c0aef88b2b3dd9854751/download",
     ),
     # Optional regions (disabled by default). Include via --locations.
     "AKCAN": (
@@ -62,6 +62,12 @@ LOCATION_SOURCES = {
         "https://www.sciencebase.gov/catalog/file/get/5b7753d8e4b0f5d57882045b?facet=PR_mastersample_5km_GRTS",
         21,
         "Puerto Rico",
+        None,
+    ),
+    "CONUS_OFFSHORE": (
+        "https://data.kitware.com/api/v1/item/6a05c0dbf88b2b3dd9854754/download",
+        24,
+        "Offshore CONUS",
         None,
     ),
 }
@@ -122,7 +128,11 @@ class Command(BaseCommand):
         shapefiles = [LOCATION_SOURCES[location_key] for location_key in selected_keys]
 
         for url, sample_frame_id, name, backup_url in shapefiles:
-            logger.info("Downloading shapefile for Location %s...", name)
+            logger.info(
+                "Downloading shapefile for Location %s with sample frame id %s",
+                name,
+                sample_frame_id,
+            )
             with tempfile.TemporaryDirectory() as tmpdir:
                 tmpdir = Path(tmpdir)
 
@@ -167,9 +177,20 @@ class Command(BaseCommand):
                 else:
                     logger.warning("Shapefile CRS unknown; assuming EPSG:4326")
 
+                if "GRTS_ID" in gdf.columns:
+                    grts_id_col = "GRTS_ID"
+                elif "grts_id" in gdf.columns:
+                    grts_id_col = "grts_id"
+                    logger.info("GRTS_ID column not found; using grts_id for cell ids.")
+                else:
+                    raise CommandError(
+                        "Shapefile must contain a GRTS_ID or grts_id column; "
+                        f"columns present: {', '.join(map(str, gdf.columns))}"
+                    )
+
                 # Replace-on-reimport behavior: delete existing rows for any
                 # (grts_cell_id, sample_frame_id) present in this import batch.
-                incoming_grts_ids = set(gdf["GRTS_ID"].dropna().astype(int).tolist())
+                incoming_grts_ids = set(gdf[grts_id_col].dropna().astype(int).tolist())
                 if incoming_grts_ids:
                     deleted_count, _ = GRTSCells.objects.filter(
                         sample_frame_id=sample_frame_id,
@@ -191,11 +212,11 @@ class Command(BaseCommand):
                     total=len(gdf),
                     desc=f"Importing {sample_frame_id}",
                 ):
-                    # Hard fail if GRTS_ID is missing
-                    if "GRTS_ID" not in row or row["GRTS_ID"] is None:
-                        raise CommandError(f"Row {idx} missing required GRTS_ID field!")
+                    # Hard fail if GRTS id is missing
+                    if grts_id_col not in row or row[grts_id_col] is None:
+                        raise CommandError(f"Row {idx} missing required {grts_id_col} field!")
 
-                    grts_id = int(row["GRTS_ID"])
+                    grts_id = int(row[grts_id_col])
                     cell_key = (grts_id, sample_frame_id)
                     if cell_key in seen_in_file:
                         continue
@@ -220,13 +241,13 @@ class Command(BaseCommand):
 
                     if len(records_to_create) >= batch_size:
                         with transaction.atomic():
-                            GRTSCells.objects.bulk_create(records_to_create, ignore_conflicts=True)
+                            GRTSCells.objects.bulk_create(records_to_create)
                         records_to_create.clear()
 
                 # Insert remaining records
                 if records_to_create:
                     with transaction.atomic():
-                        GRTSCells.objects.bulk_create(records_to_create, ignore_conflicts=True)
+                        GRTSCells.objects.bulk_create(records_to_create)
 
                 logger.info(
                     "Finished importing shapefile for sample frame %s: %s new records",

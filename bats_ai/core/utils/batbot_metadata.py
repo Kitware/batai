@@ -534,9 +534,7 @@ def generate_spectrogram_assets(
     )
     mask_paths, mask_origsr_paths = _split_origsr_paths(metadata.spectrogram.mask_path)
     masked_paths, masked_origsr_paths = _split_origsr_paths(metadata.spectrogram.masked_path)
-    waveplot_paths, waveplot_origsr_paths = _split_origsr_paths(
-        metadata.spectrogram.waveplot_path
-    )
+    waveplot_paths, waveplot_origsr_paths = _split_origsr_paths(metadata.spectrogram.waveplot_path)
     compressed_waveplot_paths, compressed_waveplot_origsr_paths = _split_origsr_paths(
         metadata.spectrogram.waveplot_compressed_path
     )
