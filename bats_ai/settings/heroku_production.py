@@ -16,3 +16,6 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Inform rate limiting that "X-Forwarded-For" should be trusted, as it's appended by Heroku.
 ALLAUTH_TRUSTED_PROXY_COUNT = 1
+
+# Spectrogram generation takes too much memory for worker parallelism
+CELERY_WORKER_CONCURRENCY = 1

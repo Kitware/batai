@@ -38,6 +38,8 @@
         // Django
         "batisteo.vscode-django",
         "augustocdias.tasks-shell-input",
+        // Vue
+        "vue.volar",
         // Other file formats
         "editorconfig.editorconfig",
         "mikestead.dotenv",

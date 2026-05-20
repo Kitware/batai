@@ -15,7 +15,7 @@ jobs:
       - name: Install npm
         uses: actions/setup-node@v6
         with:
-          node-version: 24.15.0
+          node-version: 24
           cache: npm
           cache-dependency-path: client/package-lock.json
       - name: Install packages
@@ -40,7 +40,7 @@ jobs:
         ports:
           - 5432:5432
       rabbitmq:
-        image: rabbitmq:4.2-management-alpine
+        image: rabbitmq:4.3-management-alpine
         options: >-
           --health-cmd "rabbitmq-diagnostics ping"
           --health-start-period 30s

@@ -14,14 +14,13 @@
 ## Run
 Open the **Run and Debug** panel (`Ctrl+Shift+D`) and select a launch configuration:
 
-* **Django: Server** — Starts the development server at <http://localhost:8000/>
-* **Django: Server (eager Celery)** — Same, but Celery tasks run synchronously
+* **Django: Server** - Starts the development server at <http://localhost:8000/>
+* **Django: Server (eager Celery)** - Same, but Celery tasks run synchronously
   in the web process (useful for debugging task code without a worker)
-* **Celery: Worker** — Starts only the Celery worker
-* **Django + Celery** — Starts both the server and a Celery worker
-* **Django: Management Command** — Pick and run any management command
+* **Celery: Worker** - Starts only the Celery worker
+* **Django: Management Command** - Pick and run any management command
 * **Vite: Dev Server** - Starts the frontend development server at <http://localhost:8080/>
-* **Django + Celery + Vite** - Starts the server, a Celery worker, and the frontend.
+* **Django + Celery + Vite** - Starts the server, a Celery worker, and the frontend
 
 ## Test
 Run the full test suite from a terminal: `tox`

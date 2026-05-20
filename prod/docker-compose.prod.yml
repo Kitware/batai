@@ -74,7 +74,9 @@ services:
       "--app", "bats_ai.celery",
       "worker",
       "--loglevel", "INFO",
-      "--without-heartbeat"
+      "--without-mingle",
+      "--without-heartbeat",
+      "--without-gossip"
     ]
     # Docker Compose does not set the TTY width, which causes Celery errors
     tty: false
