@@ -134,9 +134,9 @@ class Command(BaseCommand):
                 sample_frame_id,
             )
             with tempfile.TemporaryDirectory() as tmpdir:
-                tmpdir = Path(tmpdir)
+                tmp_path = Path(tmpdir)
 
-                zip_path = tmpdir / "file.zip"
+                zip_path = tmp_path / "file.zip"
                 try:
                     self._download_file(url, zip_path)
                 except requests.RequestException as e:
@@ -157,12 +157,12 @@ class Command(BaseCommand):
 
                 logger.info("Extracting zip file...")
                 with zipfile.ZipFile(zip_path, "r") as zf:
-                    zf.extractall(tmpdir)
+                    zf.extractall(tmp_path)
                 logger.info("Extraction complete.")
 
                 # Look for shapefile in the extracted directory
                 shp_files = [
-                    os.path.join(tmpdir, f) for f in os.listdir(tmpdir) if f.endswith(".shp")
+                    os.path.join(tmp_path, f) for f in os.listdir(tmp_path) if f.endswith(".shp")
                 ]
                 if not shp_files:
                     raise CommandError("No .shp file found in archive!")
