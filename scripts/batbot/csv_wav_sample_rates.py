@@ -6,7 +6,7 @@
 # ]
 #
 # ///
-"""Download random WAV files from a vetting CSV and report their sample rates."""
+"""Download WAV files from a vetting CSV and report their sample rates."""
 
 from __future__ import annotations
 
@@ -27,7 +27,13 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
-from wav_sample_rates import collect_sample_rates  # noqa: E402
+from wav_sample_rates import (  # noqa: E402
+    DEFAULT_ABOVE_SAMPLE_RATE_HZ,
+    collect_sample_rates,
+    print_sample_rate_counts,
+    write_above_sample_rate_reports,
+    write_sample_rate_summary,
+)
 
 DEFAULT_BUCKET = "nabat-public-acoustic-recordings"
 DEFAULT_OUTPUT_DIR = Path("./csv_wav_check")
@@ -42,6 +48,8 @@ class RunConfig:
     output_dir: Path
     download_dir: Path | None
     seed: int | None
+    download_all: bool
+    above_sample_rate_hz: int | None
 
 
 def _read_file_keys(csv_path: Path, file_key_column: str) -> list[str]:
@@ -97,6 +105,14 @@ def _download_files(
     return downloaded, failures
 
 
+def _resolve_above_sample_rate_hz(config: RunConfig) -> int | None:
+    if config.above_sample_rate_hz is not None:
+        return config.above_sample_rate_hz
+    if config.download_all:
+        return DEFAULT_ABOVE_SAMPLE_RATE_HZ
+    return None
+
+
 @click.command()
 @click.argument(
     "csv_path",
@@ -142,33 +158,47 @@ def _download_files(
     default=None,
     help="Random seed for reproducible file selection.",
 )
+@click.option(
+    "--all",
+    "download_all",
+    is_flag=True,
+    help="Download every file in the CSV (ignores --count and --seed).",
+)
+@click.option(
+    "--above-sample-rate",
+    "above_sample_rate_hz",
+    type=click.IntRange(min=1),
+    default=None,
+    help=(
+        "Write above_sample_rate_files.csv/json for rates strictly above "
+        f"this value (Hz). With --all, defaults to {DEFAULT_ABOVE_SAMPLE_RATE_HZ} "
+        "when omitted."
+    ),
+)
 @click.pass_context
 def main(ctx: click.Context) -> None:
     """Sample WAVs from a vetting CSV, download from S3, and write sample rates."""
-    params = ctx.params
-    run(
-        RunConfig(
-            csv_path=params["csv_path"],
-            count=params["count"],
-            bucket=params["bucket"],
-            file_key_column=params["file_key_column"],
-            output_dir=params["output_dir"],
-            download_dir=params["download_dir"],
-            seed=params["seed"],
-        )
-    )
+    run(RunConfig(**ctx.params))
 
 
 def run(config: RunConfig) -> None:
-    if config.count < 1:
+    if not config.download_all and config.count < 1:
         raise click.ClickException("--count must be at least 1")
+
+    above_threshold = _resolve_above_sample_rate_hz(config)
+    if above_threshold is not None and above_threshold < 1:
+        raise click.ClickException("--above-sample-rate must be at least 1")
 
     csv_path = config.csv_path.resolve()
     output_dir = config.output_dir.resolve()
     download_dir = (config.download_dir or output_dir / "downloads").resolve()
 
     all_keys = _read_file_keys(csv_path, config.file_key_column)
-    selected_keys = _sample_file_keys(all_keys, config.count, config.seed)
+    if config.download_all:
+        selected_keys = all_keys
+        click.echo(f"Downloading all {len(selected_keys)} file(s) from CSV.")
+    else:
+        selected_keys = _sample_file_keys(all_keys, config.count, config.seed)
 
     s3_client = boto3.client("s3", config=Config(signature_version=UNSIGNED))
     try:
@@ -188,8 +218,10 @@ def run(config: RunConfig) -> None:
     selection_payload = {
         "csv_path": str(csv_path),
         "bucket": config.bucket,
-        "requested_count": config.count,
-        "seed": config.seed,
+        "download_all": config.download_all,
+        "requested_count": len(selected_keys) if config.download_all else config.count,
+        "seed": None if config.download_all else config.seed,
+        "above_sample_rate_hz": above_threshold,
         "selected_file_keys": selected_keys,
         "downloaded_file_keys": downloaded_keys,
         "download_failures": download_failures,
@@ -204,19 +236,12 @@ def run(config: RunConfig) -> None:
 
     sample_rates_path = output_dir / "sample_rates.json"
     entries = collect_sample_rates(download_dir)
-    with sample_rates_path.open("w", encoding="utf-8") as f:
-        json.dump(entries, f, indent=2)
-        f.write("\n")
+    summary = write_sample_rate_summary(entries, sample_rates_path)
     click.echo(f"Wrote {len(entries)} sample-rate entries to {sample_rates_path}")
+    print_sample_rate_counts(summary)
 
-    rates = sorted(
-        {entry["sample_rate_hz"] for entry in entries if entry.get("sample_rate_hz") is not None}
-    )
-    if rates:
-        click.echo(f"Sample rates (Hz): {rates}")
-    errors = [entry for entry in entries if entry.get("error")]
-    if errors:
-        click.echo(f"{len(errors)} file(s) could not be read as WAV", err=True)
+    if above_threshold is not None:
+        write_above_sample_rate_reports(entries, above_threshold, output_dir)
 
 
 if __name__ == "__main__":

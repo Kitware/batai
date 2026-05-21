@@ -21,6 +21,10 @@ from batbot import log
 import click
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+# Set to True to promote .origsr.jpg assets into the main normal/compressed buckets
+# in the output JSON.
+USE_ORIGINAL_SR_SPECTROGRAMS = False
+
 
 class SpectrogramMetadata(BaseModel):
     """Metadata about BatBot spectrogram image outputs.
@@ -29,12 +33,15 @@ class SpectrogramMetadata(BaseModel):
     default outputs when `include_original_sr=True`. Those files use the
     `.origsr.jpg` suffix and are split into dedicated `origsr` buckets by
     `generate_spectrogram_assets()`.
+
+    BatBot also writes ``masked.path`` (``*.masked.jpg``): the compressed spectrogram
+    multiplied by segmentation weights. This script ignores those paths. Use
+    ``mask.path`` (``*.mask.jpg``) only — the cost/weight image for contours.
     """
 
     uncompressed_path: list[str] = Field(default_factory=list, alias="uncompressed.path")
     compressed_path: list[str] = Field(default_factory=list, alias="compressed.path")
     mask_path: list[str] = Field(default_factory=list, alias="mask.path")
-    masked_path: list[str] = Field(default_factory=list, alias="masked.path")
     waveplot_path: list[str] = Field(default_factory=list, alias="waveplot.path")
     waveplot_compressed_path: list[str] = Field(
         default_factory=list,
@@ -57,7 +64,6 @@ class SizeMetadata(BaseModel):
     compressed_origsr: ImageSize | None = None
     uncompressed_origsr: ImageSize | None = None
     mask_origsr: ImageSize | None = None
-    masked_origsr: ImageSize | None = None
 
 
 class FrequencyMetadata(BaseModel):
@@ -266,7 +272,6 @@ class SpectrogramAssetResult(TypedDict, total=False):
 class SpectrogramCompressedAssetResult(TypedDict, total=False):
     paths: list[str]
     masks: list[str]
-    masked_paths: list[str]
     waveplots: list[str]
     width: int
     height: int
@@ -274,7 +279,6 @@ class SpectrogramCompressedAssetResult(TypedDict, total=False):
     starts: list[float]
     stops: list[float]
     mask_size: NotRequired[dict[str, int]]
-    masked_size: NotRequired[dict[str, int]]
     origsr: NotRequired[SpectrogramCompressedAssetResult]
 
 
@@ -342,8 +346,6 @@ def _build_compressed_origsr_asset_result(
         result["paths"] = path_overrides["paths"]
     if path_overrides.get("masks"):
         result["masks"] = path_overrides["masks"]
-    if path_overrides.get("masked_paths"):
-        result["masked_paths"] = path_overrides["masked_paths"]
     if path_overrides.get("waveplots"):
         result["waveplots"] = path_overrides["waveplots"]
     if size.compressed_origsr is not None:
@@ -361,11 +363,6 @@ def _build_compressed_origsr_asset_result(
         result["mask_size"] = {
             "width": size.mask_origsr.width_px,
             "height": size.mask_origsr.height_px,
-        }
-    if size.masked_origsr is not None:
-        result["masked_size"] = {
-            "width": size.masked_origsr.width_px,
-            "height": size.masked_origsr.height_px,
         }
     return result or None
 
@@ -385,6 +382,36 @@ def _calculate_uncompressed_widths(metadata: BatbotMetadata) -> list[float]:
     return uncompressed_widths
 
 
+def _promote_original_sr_assets(result: SpectrogramAssets) -> None:
+    normal_origsr = result["normal"].get("origsr")
+    if normal_origsr:
+        result["normal"].update(normal_origsr)
+
+    compressed_origsr = result["compressed"].get("origsr")
+    if compressed_origsr:
+        result["compressed"].update(compressed_origsr)
+
+    metadata_origsr = result.get("metadata_origsr")
+    if not isinstance(metadata_origsr, dict):
+        return
+
+    duration_ms = metadata_origsr.get("duration.ms")
+    if isinstance(duration_ms, (int, float)):
+        result["duration"] = float(duration_ms)
+
+    frequencies = metadata_origsr.get("frequencies")
+    if not isinstance(frequencies, dict):
+        return
+
+    min_hz = frequencies.get("min.hz")
+    if isinstance(min_hz, int):
+        result["freq_min"] = min_hz
+
+    max_hz = frequencies.get("max.hz")
+    if isinstance(max_hz, int):
+        result["freq_max"] = max_hz
+
+
 @contextmanager
 def working_directory(path):
     previous = os.getcwd()
@@ -402,7 +429,8 @@ def generate_spectrogram_assets(
 
     BatBot is run with ``include_original_sr=True`` so additional ``.origsr.jpg``
     images are written. Those paths are split into dedicated ``origsr`` buckets in
-    the returned asset JSON.
+    the returned asset JSON. Set ``USE_ORIGINAL_SR_SPECTROGRAMS`` to promote those
+    assets into the main ``normal`` and ``compressed`` buckets.
     """
     batbot.pipeline(
         recording_path,
@@ -425,7 +453,6 @@ def generate_spectrogram_assets(
         metadata.spectrogram.compressed_path
     )
     mask_paths, mask_origsr_paths = _split_origsr_paths(metadata.spectrogram.mask_path)
-    masked_paths, masked_origsr_paths = _split_origsr_paths(metadata.spectrogram.masked_path)
     waveplot_paths, waveplot_origsr_paths = _split_origsr_paths(metadata.spectrogram.waveplot_path)
     compressed_waveplot_paths, compressed_waveplot_origsr_paths = _split_origsr_paths(
         metadata.spectrogram.waveplot_compressed_path
@@ -434,13 +461,11 @@ def generate_spectrogram_assets(
     uncompressed_paths = _normalize_paths(uncompressed_paths)
     compressed_paths = _normalize_paths(compressed_paths)
     mask_paths = _normalize_paths(mask_paths)
-    masked_paths = _normalize_paths(masked_paths)
     waveplot_paths = _normalize_paths(waveplot_paths)
     compressed_waveplot_paths = _normalize_paths(compressed_waveplot_paths)
     uncompressed_origsr_paths = _normalize_paths(uncompressed_origsr_paths)
     compressed_origsr_paths = _normalize_paths(compressed_origsr_paths)
     mask_origsr_paths = _normalize_paths(mask_origsr_paths)
-    masked_origsr_paths = _normalize_paths(masked_origsr_paths)
     waveplot_origsr_paths = _normalize_paths(waveplot_origsr_paths)
     compressed_waveplot_origsr_paths = _normalize_paths(compressed_waveplot_origsr_paths)
 
@@ -463,7 +488,6 @@ def generate_spectrogram_assets(
         "compressed": {
             "paths": compressed_paths,
             "masks": mask_paths,
-            "masked_paths": masked_paths,
             "waveplots": compressed_waveplot_paths,
             "width": metadata.size.compressed.width_px,
             "height": metadata.size.compressed.height_px,
@@ -487,7 +511,6 @@ def generate_spectrogram_assets(
         path_overrides={
             "paths": compressed_origsr_paths,
             "masks": mask_origsr_paths,
-            "masked_paths": masked_origsr_paths,
             "waveplots": compressed_waveplot_origsr_paths,
         },
         size=metadata.size,
@@ -498,6 +521,9 @@ def generate_spectrogram_assets(
     original_sr_metadata = _build_original_sr_metadata_result(metadata.metadata_origsr)
     if original_sr_metadata is not None:
         result["metadata_origsr"] = original_sr_metadata
+
+    if USE_ORIGINAL_SR_SPECTROGRAMS:
+        _promote_original_sr_assets(result)
 
     return result
 
