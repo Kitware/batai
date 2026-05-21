@@ -161,7 +161,6 @@ ignore = [
   "N815", # mixed-case-variable-in-class-scope
   "N999", # invalid-module-name
   "PLC0415", # import-outside-top-level
-  "PLW2901", # redefined-loop-name
   "PTH", # flake8-use-pathlib
   "TRY300", # try-consider-else
   "TRY301", # raise-within-try

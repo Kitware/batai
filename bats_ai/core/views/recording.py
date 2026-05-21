@@ -338,8 +338,8 @@ def create_recording(
 
     if payload.tags:
         for tag in payload.tags:
-            tag, _ = RecordingTag.objects.get_or_create(user=request.user, text=tag)
-            recording.tags.add(tag)
+            tag_obj, _ = RecordingTag.objects.get_or_create(user=request.user, text=tag)
+            recording.tags.add(tag_obj)
 
     recording.save()
     # Start generating recording as soon as created
