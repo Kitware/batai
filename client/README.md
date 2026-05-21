@@ -1,13 +1,13 @@
 # Vue Project Template
 
 This is a project boilerplate template designed for building SPAs that
-will serve as front-ends to Girder 4-based servers. The following features
+will serve as front-ends to Resonant-based servers. The following features
 are included:
 
 - `vuetify` installation and configuration
 - `axios` installation and configuration
 - `vue-router` installation and skeleton boilerplate
-- Girder 4 OAuth client library installation and configuration
+- Resonant OAuth client library installation and configuration
 - A home page containing a working OAuth login / logout button
 - Sentry integration (if no DSN is provided, this will be inactive)
 - TypeScript
