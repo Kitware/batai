@@ -127,6 +127,10 @@ for a list of environment variables that you'll need to populate for your deploy
   spectrogram masks and save them to `PulseMetadata.contours`. When `false` or unset, contour
   extraction is skipped and stored contours are empty, which lowers DB storage size. Set to
   `true` if you need pulse contour data (e.g. the spectrogram contour overlay in the client).
+- `DJANGO_BATAI_USE_ORIGINAL_SR_SPECTROGRAMS` (optional, default `true`): when `true`, Celery
+  spectrogram tasks use BatBot's original-sample-rate (`.origsr.jpg`) images for uncompressed and
+  compressed spectrograms instead of the default resampled outputs. Set to `false` to use resampled
+  images.
 - `VITE_API_ROUTE`: this tells the Vue application where the backend (Django) API can be found.
 - `DJANGO_BATAI_URL_PATH`: this allows the Django application to be mounted at a subpath in a URL.
    It is used by the Django application itself and the nginx configuration at nginx.subpath.template

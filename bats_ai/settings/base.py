@@ -109,6 +109,12 @@ BATAI_SAVE_SPECTROGRAM_CONTOURS: bool = env.bool(
     "DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS", default=False
 )
 
+# DJANGO_BATAI_USE_ORIGINAL_SR_SPECTROGRAMS: when true, BatBot writes .origsr.jpg assets and
+# spectrogram tasks store those images as the uncompressed/compressed spectrograms (and masks).
+BATAI_USE_ORIGINAL_SR_SPECTROGRAMS: bool = env.bool(
+    "DJANGO_BATAI_USE_ORIGINAL_SR_SPECTROGRAMS", default=True
+)
+
 # Django's docs suggest that STATIC_URL should be a relative path,
 # for convenience serving a site on a subpath.
 STATIC_URL = "static/"

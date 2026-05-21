@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from dataclasses import dataclass
 import json
 import logging
 import os
@@ -29,6 +30,11 @@ class SpectrogramMetadata(BaseModel):
     default outputs when `include_original_sr=True`. Those files use the
     `.origsr.jpg` suffix and are split into dedicated `origsr` buckets by
     `generate_spectrogram_assets()`.
+
+    BatBot also writes ``masked.path`` (``*.masked.jpg``): the compressed spectrogram
+    multiplied by segmentation weights. Batai does not read or store those files.
+    Use ``mask.path`` (``*.mask.jpg``) only — the cost/weight image used for contours
+    and stored as compressed spectrogram masks.
     """
 
     uncompressed_path: list[str] = Field(default_factory=list, alias="uncompressed.path")
@@ -55,6 +61,7 @@ class SizeMetadata(BaseModel):
     compressed: ImageSize
     compressed_origsr: ImageSize | None = None
     uncompressed_origsr: ImageSize | None = None
+    mask_origsr: ImageSize | None = None
 
 
 class FrequencyMetadata(BaseModel):
@@ -402,6 +409,127 @@ def _split_origsr_paths(paths: list[str]) -> tuple[list[str], list[str]]:
     return default_paths, origsr_paths
 
 
+def _resolve_metadata_file(
+    metadata_path: str | Path,
+    output_folder: str | Path,
+    recording_path: str | Path,
+) -> Path:
+    out_dir = Path(output_folder).resolve()
+    metadata_file = Path(metadata_path)
+    if not metadata_file.is_absolute():
+        metadata_file = out_dir / metadata_file
+    if metadata_file.exists():
+        return metadata_file
+    fallback = out_dir / Path(recording_path).with_suffix(".metadata.json").name
+    if fallback.exists():
+        return fallback
+    raise FileNotFoundError(f"Metadata file not found: {metadata_path}")
+
+
+@dataclass(frozen=True)
+class _SplitSpectrogramPaths:
+    uncompressed: list[str]
+    uncompressed_origsr: list[str]
+    compressed: list[str]
+    compressed_origsr: list[str]
+    mask: list[str]
+    mask_origsr: list[str]
+    waveplot: list[str]
+    waveplot_origsr: list[str]
+    waveplot_compressed: list[str]
+    waveplot_compressed_origsr: list[str]
+
+
+def _split_all_spectrogram_paths(metadata: BatbotMetadata) -> _SplitSpectrogramPaths:
+    spec = metadata.spectrogram
+    uncompressed, uncompressed_origsr = _split_origsr_paths(spec.uncompressed_path)
+    compressed, compressed_origsr = _split_origsr_paths(spec.compressed_path)
+    mask, mask_origsr = _split_origsr_paths(spec.mask_path)
+    waveplot, waveplot_origsr = _split_origsr_paths(spec.waveplot_path)
+    waveplot_compressed, waveplot_compressed_origsr = _split_origsr_paths(
+        spec.waveplot_compressed_path
+    )
+    return _SplitSpectrogramPaths(
+        uncompressed=uncompressed,
+        uncompressed_origsr=uncompressed_origsr,
+        compressed=compressed,
+        compressed_origsr=compressed_origsr,
+        mask=mask,
+        mask_origsr=mask_origsr,
+        waveplot=waveplot,
+        waveplot_origsr=waveplot_origsr,
+        waveplot_compressed=waveplot_compressed,
+        waveplot_compressed_origsr=waveplot_compressed_origsr,
+    )
+
+
+def _build_base_spectrogram_assets(
+    metadata: BatbotMetadata,
+    paths: _SplitSpectrogramPaths,
+) -> SpectrogramAssets:
+    compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
+    segment_curve_data = convert_to_segment_data(metadata)
+    return {
+        "duration": metadata.duration_ms,
+        "freq_min": metadata.frequencies.min_hz,
+        "freq_max": metadata.frequencies.max_hz,
+        "normal": {
+            "paths": paths.uncompressed,
+            "waveplot_paths": paths.waveplot,
+            "width": metadata.size.uncompressed.width_px,
+            "height": metadata.size.uncompressed.height_px,
+        },
+        "compressed": {
+            "paths": paths.compressed,
+            "masks": paths.mask,
+            "waveplot_paths": paths.waveplot_compressed,
+            "width": metadata.size.compressed.width_px,
+            "height": metadata.size.compressed.height_px,
+            "widths": compressed_metadata.widths,
+            "starts": compressed_metadata.starts,
+            "stops": compressed_metadata.stops,
+            "segments": segment_curve_data,
+        },
+    }
+
+
+def _attach_origsr_spectrogram_assets(
+    result: SpectrogramAssets,
+    metadata: BatbotMetadata,
+    paths: _SplitSpectrogramPaths,
+) -> None:
+    normal_origsr = _build_normal_origsr_asset_result(
+        paths=paths.uncompressed_origsr,
+        waveplot_paths=paths.waveplot_origsr,
+        size=metadata.size.uncompressed_origsr,
+    )
+    if normal_origsr:
+        result["normal"]["origsr"] = normal_origsr
+
+    compressed_origsr = _build_compressed_origsr_asset_result(
+        metadata=metadata,
+        path_overrides={
+            "paths": paths.compressed_origsr,
+            "masks": paths.mask_origsr,
+            "waveplot_paths": paths.waveplot_compressed_origsr,
+        },
+        size=metadata.size,
+    )
+    if compressed_origsr:
+        result["compressed"]["origsr"] = compressed_origsr
+
+    original_sr_metadata = _build_original_sr_metadata_result(metadata.metadata_origsr)
+    if original_sr_metadata is not None:
+        result["metadata_origsr"] = original_sr_metadata
+
+
+def _finalize_spectrogram_contours(result: SpectrogramAssets) -> None:
+    if settings.BATAI_SAVE_SPECTROGRAM_CONTOURS:
+        result["compressed"]["contours"] = process_spectrogram_assets_for_contours(result)
+    else:
+        result["compressed"]["contours"] = {"segments": [], "total_segments": 0}
+
+
 def _build_original_sr_metadata_result(
     metadata: OriginalSrMetadata | None,
 ) -> dict[str, Any] | None:
@@ -439,8 +567,6 @@ def _build_compressed_origsr_asset_result(
         result["paths"] = path_overrides["paths"]
     if path_overrides.get("masks"):
         result["masks"] = path_overrides["masks"]
-    if path_overrides.get("masked_paths"):
-        result["masked_paths"] = path_overrides["masked_paths"]
     if path_overrides.get("waveplot_paths"):
         result["waveplot_paths"] = path_overrides["waveplot_paths"]
     if size.compressed_origsr is not None:
@@ -452,15 +578,12 @@ def _build_compressed_origsr_asset_result(
                 compressed_width=size.compressed_origsr.width_px,
             )
             result["widths"] = compressed_metadata.widths
+            result["starts"] = compressed_metadata.starts
+            result["stops"] = compressed_metadata.stops
     if size.mask_origsr is not None:
         result["mask_size"] = {
             "width": size.mask_origsr.width_px,
             "height": size.mask_origsr.height_px,
-        }
-    if size.masked_origsr is not None:
-        result["masked_size"] = {
-            "width": size.masked_origsr.width_px,
-            "height": size.masked_origsr.height_px,
         }
     return result or None
 
@@ -499,7 +622,7 @@ def generate_spectrogram_assets(
     recording_path: str,
     output_folder: str,
     *,
-    use_original_sr: bool = False,
+    use_original_sr: bool | None = None,
 ) -> SpectrogramAssets:
     """Generate spectrogram assets from BatBot metadata.
 
@@ -508,10 +631,14 @@ def generate_spectrogram_assets(
     This wrapper separates those files into dedicated `origsr` result buckets.
     When `use_original_sr=True`, those override values are promoted into the main
     `normal` and `compressed` results before returning.
+
+    If `use_original_sr` is omitted, ``settings.BATAI_USE_ORIGINAL_SR_SPECTROGRAMS`` is used
+    (env: ``DJANGO_BATAI_USE_ORIGINAL_SR_SPECTROGRAMS``).
     """
-    include_original_sr = False
-    if use_original_sr:
-        include_original_sr = True
+    if use_original_sr is None:
+        use_original_sr = settings.BATAI_USE_ORIGINAL_SR_SPECTROGRAMS
+
+    include_original_sr = use_original_sr
 
     pipeline_kwargs: dict[str, Any] = {
         "output_folder": output_folder,
@@ -520,82 +647,17 @@ def generate_spectrogram_assets(
     if include_original_sr:
         pipeline_kwargs["include_original_sr"] = True
 
-    batbot.pipeline(recording_path, **pipeline_kwargs)
-    # There should be a .metadata.json file in the output_base directory by replacing extentions
-    metadata_file = Path(recording_path).with_suffix(".metadata.json").name
-    metadata_file = Path(output_folder) / metadata_file
-    metadata = parse_batbot_metadata(metadata_file)
-    # from the metadata we should have the images that are used
-    uncompressed_paths, uncompressed_origsr_paths = _split_origsr_paths(
-        metadata.spectrogram.uncompressed_path
-    )
-    compressed_paths, compressed_origsr_paths = _split_origsr_paths(
-        metadata.spectrogram.compressed_path
-    )
-    mask_paths, mask_origsr_paths = _split_origsr_paths(metadata.spectrogram.mask_path)
-    masked_paths, masked_origsr_paths = _split_origsr_paths(metadata.spectrogram.masked_path)
-    waveplot_paths, waveplot_origsr_paths = _split_origsr_paths(metadata.spectrogram.waveplot_path)
-    compressed_waveplot_paths, compressed_waveplot_origsr_paths = _split_origsr_paths(
-        metadata.spectrogram.waveplot_compressed_path
+    out_dir = Path(output_folder).resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    _output_paths, _compressed_paths, metadata_path = batbot.pipeline(
+        str(recording_path), **pipeline_kwargs
     )
 
-    compressed_metadata = convert_to_compressed_spectrogram_data(metadata)
-    segment_curve_data = convert_to_segment_data(metadata)
-    result: SpectrogramAssets = {
-        "duration": metadata.duration_ms,
-        "freq_min": metadata.frequencies.min_hz,
-        "freq_max": metadata.frequencies.max_hz,
-        "normal": {
-            "paths": uncompressed_paths,
-            "waveplot_paths": waveplot_paths,
-            "width": metadata.size.uncompressed.width_px,
-            "height": metadata.size.uncompressed.height_px,
-        },
-        "compressed": {
-            "paths": compressed_paths,
-            "masks": mask_paths,
-            "masked_paths": masked_paths,
-            "waveplot_paths": compressed_waveplot_paths,
-            "width": metadata.size.compressed.width_px,
-            "height": metadata.size.compressed.height_px,
-            "widths": compressed_metadata.widths,
-            "starts": compressed_metadata.starts,
-            "stops": compressed_metadata.stops,
-            "segments": segment_curve_data,
-        },
-    }
-
-    normal_origsr = _build_normal_origsr_asset_result(
-        paths=uncompressed_origsr_paths,
-        waveplot_paths=waveplot_origsr_paths,
-        size=metadata.size.uncompressed_origsr,
-    )
-    if normal_origsr:
-        result["normal"]["origsr"] = normal_origsr
-
-    compressed_origsr = _build_compressed_origsr_asset_result(
-        metadata=metadata,
-        path_overrides={
-            "paths": compressed_origsr_paths,
-            "masks": mask_origsr_paths,
-            "masked_paths": masked_origsr_paths,
-            "waveplot_paths": compressed_waveplot_origsr_paths,
-        },
-        size=metadata.size,
-    )
-    if compressed_origsr:
-        result["compressed"]["origsr"] = compressed_origsr
-
-    original_sr_metadata = _build_original_sr_metadata_result(metadata.metadata_origsr)
-    if original_sr_metadata is not None:
-        result["metadata_origsr"] = original_sr_metadata
-
+    metadata = parse_batbot_metadata(_resolve_metadata_file(metadata_path, out_dir, recording_path))
+    paths = _split_all_spectrogram_paths(metadata)
+    result = _build_base_spectrogram_assets(metadata, paths)
+    _attach_origsr_spectrogram_assets(result, metadata, paths)
     if use_original_sr:
         _promote_original_sr_assets(result)
-
-    if settings.BATAI_SAVE_SPECTROGRAM_CONTOURS:
-        result["compressed"]["contours"] = process_spectrogram_assets_for_contours(result)
-    else:
-        result["compressed"]["contours"] = {"segments": [], "total_segments": 0}
-
+    _finalize_spectrogram_contours(result)
     return result
