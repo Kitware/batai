@@ -10,9 +10,9 @@ from django.contrib.gis.geos import Point, Polygon
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from ninja import File, Form, Query, Schema
-from ninja.errors import HttpError
 
 # Django-Ninja accesses additional params directly, so we need to ignore the type checker.
 from ninja.files import UploadedFile  # noqa: TC002
