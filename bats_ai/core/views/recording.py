@@ -10,6 +10,8 @@ from django.contrib.gis.geos import Point, Polygon
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from ninja import File, Form, Query, Schema
 
 # Django-Ninja accesses additional params directly, so we need to ignore the type checker.
@@ -742,14 +744,10 @@ def get_recording_annotations(request: HttpRequest, recording_id: int):
 
 @router.get("/{pk}/spectrogram")
 def get_spectrogram(request: HttpRequest, pk: int):
-    try:
-        recording = Recording.objects.get(pk=pk)
-    except Recording.DoesNotExist:
-        return {"error": "Recording not found"}
+    recording = get_object_or_404(Recording, pk=pk)
 
     spectrogram = recording.spectrograms.latest("created")
-
-    compressed = recording.compressed_spectrograms.latest("created")
+    compressed = recording.compressed_spectrograms.order_by("-created").first()
 
     spectro_data = {
         "urls": spectrogram.image_url_list,
@@ -816,13 +814,12 @@ def get_spectrogram(request: HttpRequest, pk: int):
 
 @router.get("/{pk}/spectrogram/compressed")
 def get_spectrogram_compressed(request: HttpRequest, pk: int):
-    try:
-        recording = Recording.objects.get(pk=pk)
-        compressed_spectrogram = CompressedSpectrogram.objects.filter(recording=pk).first()
-    except compressed_spectrogram.DoesNotExist:
-        return {"error": "Compressed Spectrogram"}
-    except recording.DoesNotExist:
-        return {"error": "Recording does not exist"}
+    recording = get_object_or_404(Recording, pk=pk)
+    compressed_spectrogram = (
+        CompressedSpectrogram.objects.filter(recording=pk).order_by("-created").first()
+    )
+    if compressed_spectrogram is None:
+        raise Http404(404, f"Compressed spectrogram for recording {pk} not found")
 
     spectro_data = {
         "urls": compressed_spectrogram.image_url_list,
