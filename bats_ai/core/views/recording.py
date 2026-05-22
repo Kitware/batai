@@ -819,7 +819,7 @@ def get_spectrogram_compressed(request: HttpRequest, pk: int):
         CompressedSpectrogram.objects.filter(recording=pk).order_by("-created").first()
     )
     if compressed_spectrogram is None:
-        raise HttpError(404, f"Compressed spectrogram for recording {pk} not found")
+        raise Http404(404, f"Compressed spectrogram for recording {pk} not found")
 
     spectro_data = {
         "urls": compressed_spectrogram.image_url_list,
