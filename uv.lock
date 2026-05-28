@@ -308,7 +308,7 @@ requires-dist = [
     { name = "django-minio-storage", marker = "extra == 'development'", specifier = "==0.5.9" },
     { name = "django-ninja", specifier = "==1.6.2" },
     { name = "django-oauth-toolkit", specifier = "==3.2.0" },
-    { name = "django-resonant-settings", extras = ["allauth", "celery"], specifier = "==0.50.5" },
+    { name = "django-resonant-settings", extras = ["allauth", "celery"], specifier = "==0.51.0" },
     { name = "django-resonant-utils", extras = ["allauth", "s3-storage"], specifier = "==0.19.0" },
     { name = "django-resonant-utils", extras = ["minio-storage"], marker = "extra == 'development'", specifier = "==0.19.0" },
     { name = "django-s3-file-field", extras = ["minio"], marker = "extra == 'development'", specifier = "==1.1.0" },
@@ -968,15 +968,15 @@ wheels = [
 
 [[package]]
 name = "django-resonant-settings"
-version = "0.50.5"
+version = "0.51.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "django-environ" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/73/f1/a9f3f19b1817ee41da29515afe6d750e489e3b0f470541168b0f7c09068e/django_resonant_settings-0.50.5.tar.gz", hash = "sha256:0677b4c96144cccc99a96703d42b3cf563908875ce54c0707e71192d3c4ccda5", size = 19183, upload-time = "2026-05-01T15:08:50.572Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/9e/fb3148d870c693f5fcd0201c779615d48458815820ddbcabc84e2697cf60/django_resonant_settings-0.51.0.tar.gz", hash = "sha256:9229b696173bc90a7e681bd2c35495c1623d078b3795bcaca357fcee48f8c2c4", size = 19543, upload-time = "2026-05-19T20:57:46.953Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1b/48/73077203c84d7e1764a9cdb2aa47d2f09edfc30f1df2c619604da91ba727/django_resonant_settings-0.50.5-py3-none-any.whl", hash = "sha256:0383f805d61b7da372d5d0e278af62d0117ada43a3c0b15daf6f9b5eb8397624", size = 25988, upload-time = "2026-05-01T15:08:49.602Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/38/3c5710724f8b4011d4eef8e54857b2687dbe3c0170917e4342809cde54ce/django_resonant_settings-0.51.0-py3-none-any.whl", hash = "sha256:37ca78683ee7d811d19a080955ddaa0538289105ab71c04618172fe05ad83f38", size = 26378, upload-time = "2026-05-19T20:57:46.072Z" },
 ]
 
 [package.optional-dependencies]

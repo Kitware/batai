@@ -55,7 +55,9 @@ ExecStart=/usr/local/bin/uv run --extra tasks \
   --app bats_ai.celery \
   worker \
   --loglevel INFO \
-  --without-heartbeat
+  --without-mingle \
+  --without-heartbeat \
+  --without-gossip
 
 TimeoutStopSec=90s
 # Only SIGTERM the main process, since Celery is pre-fork by default
