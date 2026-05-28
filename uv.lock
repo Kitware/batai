@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -187,7 +187,7 @@ wheels = [
 
 [[package]]
 name = "batbot"
-version = "0.1.3"
+version = "0.1.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -207,9 +207,9 @@ dependencies = [
     { name = "sphinx-click" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/96/ef93db9cb220833ba894dcf7cee0281d1175d2180a8569fb49cd2db6738f/batbot-0.1.3.tar.gz", hash = "sha256:ab9565a147895f84d072af87717973c84240d2f432201aac515bec7564c5ae7e", size = 3903495, upload-time = "2026-03-18T13:52:58.955Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/a4/95a07b636ab5c712b19ed9ebd7c9c7c25aa74e80e1d9db9053be771d0ad3/batbot-0.1.5.tar.gz", hash = "sha256:f16824de26cd3cc079e5dc6174c57be1403c6c1835b1c586a71a0820cc06af81", size = 3904595, upload-time = "2026-05-12T15:45:16.273Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f8/ad/8e7d8132c902cb1e503459628c2e26cca9ec1ef006db81f6d11023db5ab8/batbot-0.1.3-py3-none-any.whl", hash = "sha256:93ba423ceaa708595f2ab931d16aeb0926bd051e025b461f03bf5f5790ea4096", size = 35899, upload-time = "2026-03-18T13:52:57.639Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/25/e33ac888a3923c9ba85fe6b0f4ea2365d4a6df76f3866be7cd3c8e1b0421/batbot-0.1.5-py3-none-any.whl", hash = "sha256:2251afc41bbea45e475a5d31743df59c1ac325d1d4914c3d3237c89c4599af39", size = 37268, upload-time = "2026-05-12T15:45:14.81Z" },
 ]
 
 [[package]]
@@ -293,7 +293,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batbot", marker = "extra == 'tasks'", specifier = "==0.1.3" },
+    { name = "batbot", marker = "extra == 'tasks'", specifier = "==0.1.5" },
     { name = "celery", specifier = "==5.6.3" },
     { name = "django", extras = ["argon2"], specifier = "==6.0.5" },
     { name = "django-allauth", specifier = "==65.16.1" },

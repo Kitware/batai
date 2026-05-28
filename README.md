@@ -131,6 +131,12 @@ Spectrogram processing tasks honor `DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS` envi
 Set to `False` by default so workers skip contour extraction (less DB storage space); set to `True` if you need
 contours in the UI (UI for contours currently disabled due to performance)
 
+### Original sample-rate spectrograms
+
+By default (`DJANGO_BATAI_USE_ORIGINAL_SR_SPECTROGRAMS=true`), BatBot's `.origsr.jpg` outputs are stored as the
+uncompressed and compressed spectrogram images (and related masks/waveplots). Set
+`DJANGO_BATAI_USE_ORIGINAL_SR_SPECTROGRAMS=false` to use resampled images instead.
+
 ### Species Suggestions by Range
 
 The suggested species for a given location are determined by spatial data stored in `/bats_ai/core/data/species-range.geojson`.
