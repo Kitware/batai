@@ -4,10 +4,14 @@ import csv
 from datetime import timedelta
 from io import BytesIO, StringIO
 import json
+from urllib.parse import urljoin
 import zipfile
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
+from django.core.files.storage import default_storage
+from django.db.models import Prefetch
 from django.utils.timezone import now
 
 from bats_ai.celery import app
@@ -18,6 +22,7 @@ from bats_ai.core.models import (
     RecordingTag,
     SequenceAnnotations,
 )
+from bats_ai.core.models.recording_annotation import RecordingAnnotationSpecies
 
 
 def build_filters(filters, *, has_confidence=False):
@@ -177,6 +182,89 @@ def export_tag_annotation_summary_task(self, export_id: int):
         export_record.status = "failed"
         export_record.save()
         raise
+
+
+@app.task(bind=True)
+def export_recording_annotation_hierarchy_task(self, export_id: int):
+    export_record = ExportedAnnotationFile.objects.get(pk=export_id)
+    try:
+        recordings_payload = _build_recording_annotations_payload()
+
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+            zipf.writestr(
+                "recording_annotations.json",
+                json.dumps({"recordings": recordings_payload}, indent=2),
+            )
+
+        buffer.seek(0)
+        filename = f"recording-annotations-{export_id}.zip"
+        export_record.file.save(filename, File(buffer), save=False)
+        export_record.download_url = export_record.file.url
+        export_record.status = "complete"
+        export_record.expires_at = now() + timedelta(hours=24)
+        export_record.save()
+    except Exception:
+        export_record.status = "failed"
+        export_record.save()
+        raise
+
+
+def _build_recording_annotations_payload():
+    species_links_prefetch = Prefetch(
+        "recordingannotationspecies_set",
+        queryset=RecordingAnnotationSpecies.objects.select_related("species").order_by("order"),
+        to_attr="ordered_species_links",
+    )
+    annotations = (
+        RecordingAnnotation.objects.select_related("recording", "owner")
+        .prefetch_related(species_links_prefetch)
+        .order_by("recording_id", "id")
+    )
+
+    recordings_by_id = {}
+    for annotation in annotations:
+        recording = annotation.recording
+        recording_entry = recordings_by_id.get(recording.id)
+        if recording_entry is None:
+            recording_entry = {
+                "recording_id": recording.id,
+                "filename": recording.name,
+                "grts_cell_id": recording.grts_cell_id,
+                "sample_frame_id": recording.sample_frame_id,
+                "submitted_annotations": 0,
+                "unsubmitted_annotations": 0,
+                "spectrogram_url": urljoin(
+                    settings.BATAI_WEB_URL, f"/recording/{recording.id}/spectrogram"
+                ),
+                "wav_download_url": (
+                    default_storage.url(recording.audio_file.name) if recording.audio_file else None
+                ),
+                "annotations": [],
+            }
+            recordings_by_id[recording.id] = recording_entry
+
+        if annotation.submitted:
+            recording_entry["submitted_annotations"] += 1
+        else:
+            recording_entry["unsubmitted_annotations"] += 1
+
+        species_codes = [
+            species_link.species.species_code for species_link in annotation.ordered_species_links
+        ]
+        recording_entry["annotations"].append(
+            {
+                "annotation_id": annotation.id,
+                "user": annotation.owner.username,
+                "species_codes": species_codes,
+                "confidence": annotation.confidence,
+                "additional_data": annotation.additional_data,
+                "comment": annotation.comments,
+                "submitted": annotation.submitted,
+            }
+        )
+
+    return list(recordings_by_id.values())
 
 
 def _collect_tag_summary_rows():

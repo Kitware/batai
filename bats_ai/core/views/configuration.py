@@ -9,7 +9,10 @@ from ninja import Schema
 from ninja.pagination import RouterPaginated
 
 from bats_ai.core.models import Configuration, ExportedAnnotationFile
-from bats_ai.core.tasks.export_task import export_tag_annotation_summary_task
+from bats_ai.core.tasks.export_task import (
+    export_recording_annotation_hierarchy_task,
+    export_tag_annotation_summary_task,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -98,4 +101,21 @@ def export_tag_summary(request):
         expires_at=now() + timedelta(hours=24),
     )
     export_tag_annotation_summary_task.delay(export.id)
+    return {"exportId": export.id}
+
+
+@router.post(
+    "/export-recording-annotations",
+    response=ExportTagSummaryResponse,
+)
+def export_recording_annotations(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return JsonResponse({"error": "Permission denied"}, status=403)
+
+    export = ExportedAnnotationFile.objects.create(
+        filters_applied={"type": "recording_annotation_hierarchy"},
+        status="pending",
+        expires_at=now() + timedelta(hours=24),
+    )
+    export_recording_annotation_hierarchy_task.delay(export.id)
     return {"exportId": export.id}

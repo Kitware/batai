@@ -1,7 +1,11 @@
 <script lang="ts">
 import { reactive, defineComponent, watch, ref, type Ref } from "vue";
 import useState from "@use/useState";
-import { exportTagSummary, patchConfiguration } from "../api/api";
+import {
+  exportRecordingAnnotations,
+  exportTagSummary,
+  patchConfiguration,
+} from "../api/api";
 import NABatAdmin from "./NABat/NABatAdmin.vue";
 import ColorPickerMenu from "@components/ColorPickerMenu.vue";
 import ColorSchemeSelect from "@components/ColorSchemeSelect.vue";
@@ -86,6 +90,11 @@ export default defineComponent({
       exportId.value = result.exportId;
     };
 
+    const runRecordingAnnotationsExport = async () => {
+      const result = await exportRecordingAnnotations();
+      exportId.value = result.exportId;
+    };
+
     const clearExport = () => {
       exportId.value = null;
     };
@@ -99,6 +108,7 @@ export default defineComponent({
       defaultColorScheme,
       exportId,
       runTagSummaryExport,
+      runRecordingAnnotationsExport,
       clearExport,
     };
   },
@@ -207,6 +217,14 @@ export default defineComponent({
               @click="runTagSummaryExport"
             >
               Export Tag Annotation Summary
+            </v-btn>
+            <v-btn
+              color="secondary"
+              variant="outlined"
+              class="mx-2"
+              @click="runRecordingAnnotationsExport"
+            >
+              Export Recording Annotations
             </v-btn>
           </v-row>
         </v-card-actions>
