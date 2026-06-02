@@ -24,7 +24,7 @@ dependencies = [
   "django-resonant-utils[allauth,s3_storage]==0.19.0",
   "django-s3-file-field[s3]==1.1.0",
   "django-storages[s3]==1.14.6",
-  "django-stubs-ext==6.0.4",
+  "django-stubs-ext==6.0.5",
   "psycopg[binary]==3.3.4",
   "pydantic==2.13.4",
   "requests==2.34.0",
@@ -71,17 +71,17 @@ dev = [
   # The "dev" dependency group is installed by default,
   # so use this to install "development" and "tasks" extras by default too
   "bats-ai[development,tasks]",
-  "tox==4.53.1",
+  "tox==4.55.0",
   "tox-uv==1.35.2",
 ]
 lint = [
-  "ruff==0.15.12",
+  "ruff==0.15.15",
 ]
 type = [
   "mypy==1.20.2",
   "celery-types==0.26.0",
-  "django-stubs[compatible-mypy]==6.0.4",
-  "types-requests==2.33.0.20260508",
+  "django-stubs[compatible-mypy]==6.0.5",
+  "types-requests==2.33.0.20260518",
 ]
 test = [
   "factory-boy==3.3.3",
