@@ -4,10 +4,14 @@ import csv
 from datetime import timedelta
 from io import BytesIO, StringIO
 import json
+from urllib.parse import urljoin
 import zipfile
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
+from django.core.files.storage import default_storage
+from django.db.models import Prefetch
 from django.utils.timezone import now
 
 from bats_ai.celery import app
@@ -18,6 +22,28 @@ from bats_ai.core.models import (
     RecordingTag,
     SequenceAnnotations,
 )
+from bats_ai.core.models.recording_annotation import RecordingAnnotationSpecies
+
+RECORDING_ANNOTATION_EXPORT_SCHEMA_VERSION = 1
+
+RECORDING_ANNOTATION_FLAT_FIELDNAMES = [
+    "recording_id",
+    "filename",
+    "grts_cell_id",
+    "sample_frame_id",
+    "id",
+    "owner",
+    "comments",
+    "created",
+    "model",
+    "species",
+    "species_codes",
+    "confidence",
+    "submitted",
+    "additional_data",
+    "spectrogram_url",
+    "wav_download_url",
+]
 
 
 def build_filters(filters, *, has_confidence=False):
@@ -177,6 +203,175 @@ def export_tag_annotation_summary_task(self, export_id: int):
         export_record.status = "failed"
         export_record.save()
         raise
+
+
+@app.task(bind=True)
+def export_recording_annotation_hierarchy_task(self, export_id: int):
+    export_record = ExportedAnnotationFile.objects.get(pk=export_id)
+    try:
+        recordings_payload, flat_rows, manifest = _collect_recording_annotations_export()
+
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+            _write_recording_annotations_zip(
+                zipf,
+                recordings_payload,
+                flat_rows,
+                manifest,
+            )
+
+        buffer.seek(0)
+        filename = f"recording-annotations-{export_id}.zip"
+        export_record.file.save(filename, File(buffer), save=False)
+        export_record.download_url = export_record.file.url
+        export_record.status = "complete"
+        export_record.expires_at = now() + timedelta(hours=24)
+        export_record.save()
+    except Exception:
+        export_record.status = "failed"
+        export_record.save()
+        raise
+
+
+def _recording_species_lists(annotation):
+    common_names = []
+    species_codes = []
+    for species_link in annotation.ordered_species_links:
+        species = species_link.species
+        common_names.append(species.common_name)
+        species_codes.append(species.species_code)
+    return common_names, species_codes
+
+
+def _recording_annotation_entry_dict(annotation, species, species_codes):
+    return {
+        "id": annotation.id,
+        "owner": annotation.owner.username,
+        "comments": annotation.comments,
+        "created": annotation.created.isoformat(),
+        "model": annotation.model,
+        "species": species,
+        "species_codes": species_codes,
+        "confidence": annotation.confidence,
+        "additional_data": annotation.additional_data,
+        "submitted": annotation.submitted,
+    }
+
+
+def _recording_export_metadata(recording):
+    return {
+        "recording_id": recording.id,
+        "filename": recording.name,
+        "grts_cell_id": recording.grts_cell_id,
+        "sample_frame_id": recording.sample_frame_id,
+        "spectrogram_url": urljoin(
+            settings.BATAI_WEB_URL,
+            f"/recording/{recording.id}/spectrogram",
+        ),
+        "wav_download_url": (
+            default_storage.url(recording.audio_file.name) if recording.audio_file else None
+        ),
+    }
+
+
+def _collect_recording_annotations_export():
+    species_links_prefetch = Prefetch(
+        "recordingannotationspecies_set",
+        queryset=RecordingAnnotationSpecies.objects.select_related("species").order_by("order"),
+        to_attr="ordered_species_links",
+    )
+    annotations = (
+        RecordingAnnotation.objects.select_related("recording", "owner")
+        .prefetch_related(species_links_prefetch)
+        .order_by("recording_id", "id")
+    )
+
+    recordings_by_id = {}
+    flat_rows = []
+    submitted_annotation_count = 0
+    unsubmitted_annotation_count = 0
+
+    for annotation in annotations:
+        recording = annotation.recording
+        recording_entry = recordings_by_id.get(recording.id)
+        if recording_entry is None:
+            recording_metadata = _recording_export_metadata(recording)
+            recording_entry = {
+                **recording_metadata,
+                "submitted_annotations": 0,
+                "unsubmitted_annotations": 0,
+                "annotations": [],
+            }
+            recordings_by_id[recording.id] = recording_entry
+
+        if annotation.submitted:
+            recording_entry["submitted_annotations"] += 1
+            submitted_annotation_count += 1
+        else:
+            recording_entry["unsubmitted_annotations"] += 1
+            unsubmitted_annotation_count += 1
+
+        species, species_codes = _recording_species_lists(annotation)
+        annotation_entry = _recording_annotation_entry_dict(
+            annotation,
+            species,
+            species_codes,
+        )
+        recording_entry["annotations"].append(annotation_entry)
+        flat_rows.append(
+            {
+                **_recording_export_metadata(recording),
+                **annotation_entry,
+            }
+        )
+
+    recordings_payload = sorted(
+        recordings_by_id.values(),
+        key=lambda recording: recording["recording_id"],
+    )
+    annotation_count = submitted_annotation_count + unsubmitted_annotation_count
+    manifest = {
+        "export_type": "recording_annotation_hierarchy",
+        "schema_version": RECORDING_ANNOTATION_EXPORT_SCHEMA_VERSION,
+        "exported_at": now().isoformat(),
+        "recording_count": len(recordings_by_id),
+        "annotation_count": annotation_count,
+        "submitted_annotation_count": submitted_annotation_count,
+        "unsubmitted_annotation_count": unsubmitted_annotation_count,
+    }
+    return recordings_payload, flat_rows, manifest
+
+
+def _flat_row_for_csv(row):
+    csv_row = {key: row.get(key) for key in RECORDING_ANNOTATION_FLAT_FIELDNAMES}
+    for key in ("species", "species_codes"):
+        value = csv_row.get(key)
+        if isinstance(value, list):
+            csv_row[key] = "|".join("" if item is None else str(item) for item in value)
+    if csv_row.get("additional_data") is not None:
+        csv_row["additional_data"] = json.dumps(csv_row["additional_data"])
+    return csv_row
+
+
+def _write_recording_annotations_zip(zipf, recordings_payload, flat_rows, manifest):
+    zipf.writestr("export_manifest.json", json.dumps(manifest))
+    zipf.writestr(
+        "recording_annotations.json",
+        json.dumps({"recordings": recordings_payload}),
+    )
+    if not flat_rows:
+        return
+
+    zipf.writestr(
+        "recording_annotations_flat.json",
+        json.dumps(flat_rows),
+    )
+    csv_buf = StringIO()
+    writer = csv.DictWriter(csv_buf, fieldnames=RECORDING_ANNOTATION_FLAT_FIELDNAMES)
+    writer.writeheader()
+    for row in flat_rows:
+        writer.writerow(_flat_row_for_csv(row))
+    zipf.writestr("recording_annotations_flat.csv", csv_buf.getvalue())
 
 
 def _collect_tag_summary_rows():

@@ -23,10 +23,22 @@ def _is_tag_annotation_summary_export(export: ExportedAnnotationFile) -> bool:
     )
 
 
+def _is_recording_annotation_hierarchy_export(
+    export: ExportedAnnotationFile,
+) -> bool:
+    filters_applied = export.filters_applied
+    return (
+        isinstance(filters_applied, dict)
+        and filters_applied.get("type") == "recording_annotation_hierarchy"
+    )
+
+
 def _can_access_export(request, export: ExportedAnnotationFile) -> bool:
     # Tag annotation summary exports include user-level aggregate stats,
     # so only admins can access them.
-    if _is_tag_annotation_summary_export(export):
+    if _is_tag_annotation_summary_export(export) or _is_recording_annotation_hierarchy_export(
+        export
+    ):
         return request.user.is_authenticated and request.user.is_superuser
     return True
 

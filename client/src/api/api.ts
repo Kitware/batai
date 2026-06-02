@@ -787,6 +787,13 @@ async function exportTagSummary(): Promise<ExportTagSummaryResponse> {
   return result.data;
 }
 
+async function exportRecordingAnnotations(): Promise<ExportTagSummaryResponse> {
+  const result = await axiosInstance.post<ExportTagSummaryResponse>(
+    "/configuration/export-recording-annotations",
+  );
+  return result.data;
+}
+
 export interface VettingDetails {
   id: number;
   user_id: number;
@@ -911,6 +918,7 @@ export {
   getFileAnnotationDetails,
   getExportStatus,
   exportTagSummary,
+  exportRecordingAnnotations,
   getRecordingTags,
   getUnsubmittedNeighbors,
   getComputedPulseContour,
