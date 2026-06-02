@@ -194,7 +194,7 @@ def export_recording_annotation_hierarchy_task(self, export_id: int):
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
             zipf.writestr(
                 "recording_annotations.json",
-                json.dumps({"recordings": recordings_payload}, indent=2),
+                json.dumps({"recordings": recordings_payload}),
             )
 
         buffer.seek(0)
