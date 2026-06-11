@@ -15,6 +15,7 @@ import type {
   SpectrogramSequenceAnnotation,
 } from "../api/api";
 import RecordingAnnotations from "./RecordingAnnotations.vue";
+import { formatSignificantDigits } from "@use/useUtils";
 export default defineComponent({
   name: "AnnotationList",
   components: {
@@ -107,6 +108,7 @@ export default defineComponent({
       annotationState,
       annotations,
       creationType,
+      formatSignificantDigits,
       sequenceAnnotations,
       selectedId,
       selectedType,
@@ -191,7 +193,11 @@ export default defineComponent({
                 >
                 <span class="pl-2"
                   ><b
-                    >({{ annotation.end_time - annotation.start_time }}ms)</b
+                    >({{
+                      formatSignificantDigits(
+                        annotation.end_time - annotation.start_time,
+                      )
+                    }}ms)</b
                   ></span
                 >
               </v-col>

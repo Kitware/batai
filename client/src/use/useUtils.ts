@@ -30,6 +30,13 @@ function extractDateTimeComponents(dateTimeString: string) {
   return { date: dateString, time: timeString };
 }
 
+/** Format a numeric value to the given number of significant digits. */
+function formatSignificantDigits(value: number, significantDigits = 3): string {
+  if (!Number.isFinite(value)) return String(value);
+  if (value === 0) return "0";
+  return String(Number(value.toPrecision(significantDigits)));
+}
+
 function getImageDimensions(
   images: HTMLImageElement[],
   fallback: { width: number; height: number } = { width: 0, height: 0 },
@@ -96,6 +103,7 @@ function parseRecordingFilename(
 
 export {
   DEFAULT_SAMPLE_FRAME_ID,
+  formatSignificantDigits,
   getCurrentTime,
   extractDateTimeComponents,
   getImageDimensions,

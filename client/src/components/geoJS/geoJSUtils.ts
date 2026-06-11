@@ -914,18 +914,30 @@ function spectroToCenter(
   annotation: SpectrogramAnnotation | SpectrogramSequenceAnnotation,
   spectroInfo: SpectroInfo,
   type: "sequence" | "pulse",
+  scaledWidth = 0,
+  scaledHeight = 0,
 ) {
   if (type === "pulse") {
-    const geoJSON = spectroToGeoJSon(
-      annotation as SpectrogramAnnotation,
-      spectroInfo,
-    );
-    return findPolygonCenter(geoJSON);
+    const pulse = annotation as SpectrogramAnnotation;
+    const centerTime = (pulse.start_time + pulse.end_time) / 2;
+    const x = spectroTimeToX(centerTime, spectroInfo, scaledWidth);
+    const adjustedHeight =
+      scaledHeight > spectroInfo.height ? scaledHeight : spectroInfo.height;
+    const centerFreq = (pulse.low_freq + pulse.high_freq) / 2;
+    const heightScale =
+      adjustedHeight / (spectroInfo.high_freq - spectroInfo.low_freq);
+    const y =
+      adjustedHeight - (centerFreq - spectroInfo.low_freq) * heightScale;
+    return [x, y];
   }
   if (type === "sequence") {
     const geoJSON = spectroSequenceToGeoJSon(
       annotation as SpectrogramSequenceAnnotation,
       spectroInfo,
+      0,
+      10,
+      scaledWidth,
+      scaledHeight,
     );
     return findPolygonCenter(geoJSON);
   }

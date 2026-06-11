@@ -4,6 +4,7 @@ import type { PulseMetadata } from "@api/api";
 import type { LayerStyle, LineData, TextData } from "./types";
 import BaseTextLayer from "./baseTextLayer";
 import type { PulseMetadataLabelsMode } from "@use/usePulseMetadata";
+import { formatSignificantDigits } from "@use/useUtils";
 
 /** Point data for char_freq, knee, heel with pixel coords and label. */
 interface PulsePointData {
@@ -398,7 +399,7 @@ export default class PulseMetadataLayer extends BaseTextLayer<TextData> {
 
         const durationMidX = (bottomLeft.x + bottomRight.x) / 2;
         pulseText.push({
-          text: `${durationMs.toFixed(1)} ms`,
+          text: `${formatSignificantDigits(durationMs)} ms`,
           x: durationMidX,
           y: bottomLeft.y + labelOffset,
           offsetX: 0,

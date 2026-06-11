@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent, nextTick, type PropType, ref, watch } from "vue";
 import type { PulseMetadataTooltipData } from "./geoJS/layers/pulseMetadataLayer";
+import { formatSignificantDigits } from "@use/useUtils";
 
 const MIN_WIDTH = 180;
 
@@ -41,7 +42,7 @@ export default defineComponent({
       { immediate: true },
     );
 
-    return { cardRef, clampedLeft };
+    return { cardRef, clampedLeft, formatSignificantDigits };
   },
 });
 </script>
@@ -113,7 +114,7 @@ export default defineComponent({
           </div> -->
           <div class="d-flex align-center">
             <span class="text-caption text-medium-emphasis mr-2">Duration</span>
-            <span>{{ data.durationMs.toFixed(1) }} ms</span>
+            <span>{{ formatSignificantDigits(data.durationMs) }} ms</span>
           </div>
           <div class="d-flex align-center">
             <span class="text-caption text-medium-emphasis mr-2">Fₘᵢₙ</span>

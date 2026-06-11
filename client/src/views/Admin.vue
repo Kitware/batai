@@ -157,7 +157,9 @@ export default defineComponent({
           <v-row>
             <v-switch
               v-model="settings.createPulseAnnotationsFromBatbot"
-              :color="settings.createPulseAnnotationsFromBatbot ? 'primary' : ''"
+              :color="
+                settings.createPulseAnnotationsFromBatbot ? 'primary' : ''
+              "
               label="Create pulse annotations from BatBot on import"
             />
           </v-row>
