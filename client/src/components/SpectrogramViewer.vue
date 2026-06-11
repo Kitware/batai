@@ -419,10 +419,12 @@ export default defineComponent({
           found,
           props.spectroInfo,
           selectedType.value,
+          scaledWidth.value,
+          scaledHeight.value,
         );
-        const bounds = geoJS.getGeoViewer().value.bounds();
-        if (x < bounds.left || x > bounds.right) {
-          geoJS.getGeoViewer().value.center({ x, y });
+        const viewer = geoJS.getGeoViewer().value;
+        if (viewer && x >= 0 && y >= 0) {
+          viewer.center({ x, y });
         }
       }
     });
