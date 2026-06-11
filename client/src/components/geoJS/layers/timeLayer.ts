@@ -7,6 +7,7 @@ import {
   spectroSequenceToGeoJSon,
   spectroToGeoJSon,
 } from "../geoJSUtils";
+import { formatSignificantDigits } from "@use/useUtils";
 import BaseTextLayer from "./baseTextLayer";
 import type { LayerStyle } from "./types";
 
@@ -242,7 +243,7 @@ export default class TimeLayer extends BaseTextLayer<TextData> {
         const ypos = (ymax + ymin) / 2.0;
         // Now we need to create the text Labels
         this.textData.push({
-          text: `${end_time - start_time}ₘₛ`,
+          text: `${formatSignificantDigits(end_time - start_time)}ₘₛ`,
           x: xpos,
           y: ypos + lineDist,
         });
