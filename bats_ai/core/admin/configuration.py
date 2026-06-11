@@ -11,6 +11,7 @@ class ConfigurationAdmin(admin.ModelAdmin):
         "display_pulse_annotations",
         "display_sequence_annotations",
         "run_inference_on_upload",
+        "create_pulse_annotations_from_batbot",
         "spectrogram_x_stretch",
         "spectrogram_view",
     ]

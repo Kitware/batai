@@ -70,6 +70,7 @@ const configuration: Ref<Configuration> = ref({
   spectrogram_view: "compressed",
   spectrogram_x_stretch: 2.5,
   run_inference_on_upload: true,
+  create_pulse_annotations_from_batbot: false,
   default_color_scheme: "inferno",
   default_spectrogram_background_color: "rgb(0, 0, 0)",
   is_admin: false,

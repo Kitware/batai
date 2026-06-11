@@ -22,6 +22,7 @@ class Configuration(models.Model):
     display_pulse_annotations = models.BooleanField(default=True)
     display_sequence_annotations = models.BooleanField(default=True)
     run_inference_on_upload = models.BooleanField(default=True)
+    create_pulse_annotations_from_batbot = models.BooleanField(default=False)
     spectrogram_x_stretch = models.DecimalField(default=2.5, max_digits=3, decimal_places=2)
     spectrogram_view = models.CharField(
         max_length=12, choices=SpectrogramViewMode, default=SpectrogramViewMode.COMPRESSED

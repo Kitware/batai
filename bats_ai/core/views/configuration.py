@@ -26,6 +26,7 @@ class ConfigurationSchema(Schema):
     display_sequence_annotations: bool
     is_admin: bool | None = None
     run_inference_on_upload: bool
+    create_pulse_annotations_from_batbot: bool
     spectrogram_x_stretch: float
     spectrogram_view: Configuration.SpectrogramViewMode
     default_color_scheme: Configuration.AvailableColorScheme
@@ -44,6 +45,7 @@ def get_configuration(request):
         display_pulse_annotations=config.display_pulse_annotations,
         display_sequence_annotations=config.display_sequence_annotations,
         run_inference_on_upload=config.run_inference_on_upload,
+        create_pulse_annotations_from_batbot=config.create_pulse_annotations_from_batbot,
         spectrogram_x_stretch=config.spectrogram_x_stretch,
         spectrogram_view=config.spectrogram_view,
         default_color_scheme=config.default_color_scheme,
@@ -62,7 +64,7 @@ def update_configuration(request, payload: ConfigurationSchema):
     config = Configuration.objects.first()
     if not config:
         return JsonResponse({"error": "No configuration found"}, status=404)
-    for attr, value in payload.dict().items():
+    for attr, value in payload.dict(exclude={"is_admin"}).items():
         setattr(config, attr, value)
     config.save()
     return ConfigurationSchema.from_orm(config)
