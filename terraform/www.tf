@@ -4,53 +4,69 @@ locals {
   }
 }
 
-data "cloudflare_accounts" "this" {
-  name = "Kitware"
+data "cloudflare_account" "this" {
+  # Kitware
+  account_id = "b7ba799b50a979650d3362e965257042"
 }
 
 resource "cloudflare_pages_project" "www" {
-  account_id        = data.cloudflare_accounts.this.accounts[0].id
+  account_id        = data.cloudflare_account.this.id
   name              = "bats-ai"
   production_branch = "main"
 
-  source {
+  source = {
     type = "github"
-    config {
+    config = {
       production_branch = "main"
       owner             = "Kitware"
       repo_name         = "batai"
+      path_includes     = ["client/*"]
     }
   }
 
-  build_config {
+  build_config = {
     build_caching   = true
     root_dir        = "client"
     build_command   = "npm run build"
     destination_dir = "dist"
   }
 
-  deployment_configs {
-    preview {
-      environment_variables = local.www_env_vars
+  deployment_configs = {
+    preview = {
+      env_vars = {
+        for k, v in local.www_env_vars : k => {
+          type  = "plain_text"
+          value = v
+        }
+      }
     }
-    production {
-      environment_variables = merge(
-        local.www_env_vars,
+    production = {
+      env_vars = merge(
         {
-          VITE_SENTRY_DSN = "https://a224627951abd0f0606d8578cacef5d6@o267860.ingest.us.sentry.io/4510829950730240"
+          for k, v in local.www_env_vars : k => {
+            type  = "plain_text"
+            value = v
+          }
+        },
+        {
+          VITE_SENTRY_DSN = {
+            type  = "plain_text"
+            value = "https://a224627951abd0f0606d8578cacef5d6@o267860.ingest.us.sentry.io/4510829950730240"
+          }
+          SENTRY_AUTH_TOKEN = {
+            type  = "secret_text"
+            value = var.SENTRY_AUTH_TOKEN
+          }
         },
       )
-      secrets = {
-        SENTRY_AUTH_TOKEN = var.SENTRY_AUTH_TOKEN
-      }
     }
   }
 }
 
 resource "cloudflare_pages_domain" "www" {
-  account_id   = data.cloudflare_accounts.this.accounts[0].id
+  account_id   = data.cloudflare_account.this.id
   project_name = cloudflare_pages_project.www.name
-  domain       = aws_route53_record.www.fqdn
+  name         = aws_route53_record.www.fqdn
 }
 
 resource "aws_route53_record" "www" {
