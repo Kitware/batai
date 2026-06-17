@@ -17,8 +17,7 @@ terraform {
       source = "heroku/heroku"
     }
     cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "4.52.7"
+      source = "cloudflare/cloudflare"
     }
   }
 }
