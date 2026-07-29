@@ -95,8 +95,7 @@ export default defineComponent({
     async function refreshSource() {
       if (!mapRef.value) return;
       const src = mapRef.value.getSource("recording-locations") as
-        | GeoJSONSource
-        | undefined;
+        GeoJSONSource | undefined;
       if (!src) return;
       loading.value = true;
       error.value = null;

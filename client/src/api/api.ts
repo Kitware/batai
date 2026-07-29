@@ -314,12 +314,7 @@ export interface RecordingListParams {
   /** Filter by tags: recording must have all listed tags. Comma-separated or array. */
   tags?: string | string[];
   sort_by?:
-    | "id"
-    | "name"
-    | "created"
-    | "modified"
-    | "recorded_date"
-    | "owner_username";
+    "id" | "name" | "created" | "modified" | "recorded_date" | "owner_username";
   sort_direction?: "asc" | "desc";
   page?: number;
   limit?: number;
@@ -376,12 +371,7 @@ async function getRecording(id: string) {
 
 export interface UnsubmittedNeighborsParams {
   sort_by?:
-    | "id"
-    | "name"
-    | "created"
-    | "modified"
-    | "recorded_date"
-    | "owner_username";
+    "id" | "name" | "created" | "modified" | "recorded_date" | "owner_username";
   sort_direction?: "asc" | "desc";
   /** Comma-separated or array of tag texts; recording must have all listed tags. */
   tags?: string | string[];

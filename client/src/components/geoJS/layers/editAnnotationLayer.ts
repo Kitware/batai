@@ -378,9 +378,7 @@ export default class EditAnnotationLayer {
    */
   formatData(
     annotationData:
-      | SpectrogramAnnotation
-      | null
-      | SpectrogramSequenceAnnotation,
+      SpectrogramAnnotation | null | SpectrogramSequenceAnnotation,
     type: "pulse" | "sequence",
   ) {
     this.selectedHandleIndex = -1;
