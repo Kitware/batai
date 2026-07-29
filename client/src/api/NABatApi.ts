@@ -28,8 +28,7 @@ export interface NABatRecordingDataResponse {
   recordingId: string;
 }
 export type NABatRecordingResponse =
-  | NABatRecordingCompleteResponse
-  | NABatRecordingDataResponse;
+  NABatRecordingCompleteResponse | NABatRecordingDataResponse;
 
 function isNABatRecordingCompleteResponse(
   response: NABatRecordingResponse,

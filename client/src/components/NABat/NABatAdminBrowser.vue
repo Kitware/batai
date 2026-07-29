@@ -40,10 +40,7 @@ export default defineComponent({
       offset?: number;
       limit?: number;
       sort_by?:
-        | "created"
-        | "recording_id"
-        | "survey_event_id"
-        | "annotation_count";
+        "created" | "recording_id" | "survey_event_id" | "annotation_count";
       sort_direction?: "asc" | "desc";
     }>({});
 
@@ -114,10 +111,7 @@ export default defineComponent({
         ].includes(sortBy.value[0].key)
       ) {
         filters.value.sort_by = sortBy.value[0].key as
-          | "created"
-          | "recording_id"
-          | "survey_event_id"
-          | "annotation_count";
+          "created" | "recording_id" | "survey_event_id" | "annotation_count";
         filters.value.sort_direction =
           sortBy.value[0].order === "asc" ? "asc" : "desc";
       }
@@ -165,9 +159,7 @@ export default defineComponent({
             )
           ) {
             annotationFilters.value.sort_by = sortByAnnotations.value[0].key as
-              | "created"
-              | "user_email"
-              | "confidence";
+              "created" | "user_email" | "confidence";
             annotationFilters.value.sort_direction =
               sortByAnnotations.value[0].order === "asc" ? "asc" : "desc";
           }

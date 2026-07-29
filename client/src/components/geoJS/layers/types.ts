@@ -1,9 +1,7 @@
 export type StyleFunction<T, D> =
-  | T
-  | ((point: [number, number], index: number, data: D) => T | undefined);
+  T | ((point: [number, number], index: number, data: D) => T | undefined);
 export type ObjectFunction<T, D> =
-  | T
-  | ((data: D, index: number) => T | undefined);
+  T | ((data: D, index: number) => T | undefined);
 export type PointFunction<T, D> = T | ((data: D) => T | undefined);
 
 export interface LayerStyle<D> {
