@@ -2,19 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from django.db.models import (
-    BooleanField,
-    Case,
-    Exists,
-    OuterRef,
-    Value,
-    When,
-)
+from django.db.models import BooleanField, Case, Exists, OuterRef, Value, When
 from django.shortcuts import get_object_or_404
 from ninja import Query, Router, Schema
 
 from bats_ai.core.constants import DEFAULT_SAMPLE_FRAME_ID
 from bats_ai.core.models import GRTSCells, Recording, Species, SpeciesRange
+from bats_ai.core.models.nabat.nabat_recording import NABatRecording
 from bats_ai.core.utils.grts_utils import normalize_sample_frame_id
 
 if TYPE_CHECKING:
@@ -46,14 +40,22 @@ def get_species(
     grts_cell_id: int | None = Query(None),
     sample_frame_id: int = Query(DEFAULT_SAMPLE_FRAME_ID),
     recording_id: int | None = Query(None),
+    nabat: bool | None = Query(None)
 ):
     sample_frame_id = normalize_sample_frame_id(sample_frame_id)
 
     if recording_id is not None:
-        recording = get_object_or_404(
-            Recording.objects.only("grts_cell_id", "sample_frame_id"),
-            pk=recording_id,
-        )
+        recording = None
+        if not nabat:
+            recording = get_object_or_404(
+                Recording.objects.only("grts_cell_id", "sample_frame_id"),
+                pk=recording_id,
+            )
+        else:
+            recording = get_object_or_404(
+                NABatRecording.objects.only("grts_cell_id", "sample_frame_id"),
+                pk=recording_id
+            )
         grts_cell_id = recording.grts_cell_id
         sample_frame_id = normalize_sample_frame_id(
             recording.sample_frame_id

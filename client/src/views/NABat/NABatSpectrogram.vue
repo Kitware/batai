@@ -1,9 +1,10 @@
 <script lang="ts">
 import { defineComponent, onMounted, type Ref, ref, watch } from "vue";
-import { getSpecies, type Species } from "@api/api";
+import { type Species } from "@api/api";
 import {
   getNABatSpectrogram,
   getNABatSpectrogramCompressed,
+  getNABatSpecies,
 } from "@api/NABatApi";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { spectroXToTime, type SpectroInfo } from "@components/geoJS/geoJSUtils";
@@ -119,7 +120,7 @@ export default defineComponent({
           spectroInfo.value.end_times = response.data.compressed.end_times;
           viewCompressedOverlay.value = false;
         }
-        const speciesResponse = await getSpecies({
+        const speciesResponse = await getNABatSpecies({
           recordingId: parseInt(props.id),
         });
         // Removing NOISE species from list and any duplicates
