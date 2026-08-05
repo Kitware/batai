@@ -34,27 +34,28 @@ class SpeciesSchema(Schema):
     in_range: bool | None = None
 
 
-@router.get("/", response=list[SpeciesSchema], auth=None)
-def get_species(
-    request: HttpRequest,
-    grts_cell_id: int | None = Query(None),
-    sample_frame_id: int = Query(DEFAULT_SAMPLE_FRAME_ID),
-    recording_id: int | None = Query(None),
-    nabat: bool | None = Query(None)
-):
-    sample_frame_id = normalize_sample_frame_id(sample_frame_id)
+class SpeciesQuerySchema(Schema):
+    grts_cell_id: int | None = None
+    sample_frame_id: int = DEFAULT_SAMPLE_FRAME_ID
+    recording_id: int | None = None
+    nabat: bool | None = None
 
-    if recording_id is not None:
+
+@router.get("/", response=list[SpeciesSchema], auth=None)
+def get_species(request: HttpRequest, q: Query[SpeciesQuerySchema]):
+    grts_cell_id = q.grts_cell_id
+    sample_frame_id = normalize_sample_frame_id(q.sample_frame_id)
+
+    if q.recording_id is not None:
         recording = None
-        if not nabat:
+        if not q.nabat:
             recording = get_object_or_404(
                 Recording.objects.only("grts_cell_id", "sample_frame_id"),
-                pk=recording_id,
+                pk=q.recording_id,
             )
         else:
             recording = get_object_or_404(
-                NABatRecording.objects.only("grts_cell_id", "sample_frame_id"),
-                pk=recording_id
+                NABatRecording.objects.only("grts_cell_id", "sample_frame_id"), pk=q.recording_id
             )
         grts_cell_id = recording.grts_cell_id
         sample_frame_id = normalize_sample_frame_id(

@@ -8,8 +8,8 @@ from .nabat_spectrogram import NABatSpectrogram
 
 __all__ = [
     "NABatCompressedSpectrogram",
+    "NABatPulseMetadata",
     "NABatRecording",
     "NABatRecordingAnnotation",
     "NABatSpectrogram",
-    "NABatPulseMetadata",
 ]

@@ -5,8 +5,12 @@ from django.contrib import admin
 from django.contrib.gis.db import models as gis_models
 from django.utils.html import format_html_join
 
-from bats_ai.core.models.nabat import (NABatCompressedSpectrogram, NABatRecording,
-                                       NABatRecordingAnnotation, NABatSpectrogram)
+from bats_ai.core.models.nabat import (
+    NABatCompressedSpectrogram,
+    NABatRecording,
+    NABatRecordingAnnotation,
+    NABatSpectrogram,
+)
 from bats_ai.core.models.nabat.nabat_pulse_metadata import NABatPulseMetadata
 
 
