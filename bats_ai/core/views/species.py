@@ -2,19 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from django.db.models import (
-    BooleanField,
-    Case,
-    Exists,
-    OuterRef,
-    Value,
-    When,
-)
+from django.db.models import BooleanField, Case, Exists, OuterRef, Value, When
 from django.shortcuts import get_object_or_404
 from ninja import Query, Router, Schema
 
 from bats_ai.core.constants import DEFAULT_SAMPLE_FRAME_ID
 from bats_ai.core.models import GRTSCells, Recording, Species, SpeciesRange
+from bats_ai.core.models.nabat.nabat_recording import NABatRecording
 from bats_ai.core.utils.grts_utils import normalize_sample_frame_id
 
 if TYPE_CHECKING:
@@ -40,20 +34,29 @@ class SpeciesSchema(Schema):
     in_range: bool | None = None
 
 
-@router.get("/", response=list[SpeciesSchema], auth=None)
-def get_species(
-    request: HttpRequest,
-    grts_cell_id: int | None = Query(None),
-    sample_frame_id: int = Query(DEFAULT_SAMPLE_FRAME_ID),
-    recording_id: int | None = Query(None),
-):
-    sample_frame_id = normalize_sample_frame_id(sample_frame_id)
+class SpeciesQuerySchema(Schema):
+    grts_cell_id: int | None = None
+    sample_frame_id: int = DEFAULT_SAMPLE_FRAME_ID
+    recording_id: int | None = None
+    nabat: bool | None = None
 
-    if recording_id is not None:
-        recording = get_object_or_404(
-            Recording.objects.only("grts_cell_id", "sample_frame_id"),
-            pk=recording_id,
-        )
+
+@router.get("/", response=list[SpeciesSchema], auth=None)
+def get_species(request: HttpRequest, q: Query[SpeciesQuerySchema]):
+    grts_cell_id = q.grts_cell_id
+    sample_frame_id = normalize_sample_frame_id(q.sample_frame_id)
+
+    if q.recording_id is not None:
+        recording = None
+        if not q.nabat:
+            recording = get_object_or_404(
+                Recording.objects.only("grts_cell_id", "sample_frame_id"),
+                pk=q.recording_id,
+            )
+        else:
+            recording = get_object_or_404(
+                NABatRecording.objects.only("grts_cell_id", "sample_frame_id"), pk=q.recording_id
+            )
         grts_cell_id = recording.grts_cell_id
         sample_frame_id = normalize_sample_frame_id(
             recording.sample_frame_id
