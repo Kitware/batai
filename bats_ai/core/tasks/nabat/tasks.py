@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+import requests
 from django.conf import settings
 from django.contrib.gis.geos import LineString, Point, Polygon
-import requests
 
-from bats_ai.core.models import ProcessingTask, PulseMetadata
-from bats_ai.utils.spectrogram_utils import (
-    generate_nabat_compressed_spectrogram,
-    generate_nabat_spectrogram,
-)
+from bats_ai.core.models import ProcessingTask
+from bats_ai.core.models.nabat import NABatPulseMetadata
+from bats_ai.utils.spectrogram_utils import (generate_nabat_compressed_spectrogram,
+                                             generate_nabat_spectrogram)
 
 if TYPE_CHECKING:
     from bats_ai.core.models.nabat import NABatRecording
@@ -66,8 +65,8 @@ def generate_spectrograms(  # noqa: C901, PLR0915
         segment_index_map = {}
         contour_segments = compressed.get("contours", {}).get("segments", [])
         for segment in contour_segments:
-            pulse_metadata_obj, _ = PulseMetadata.objects.get_or_create(
-                recording=compressed_obj.recording,
+            pulse_metadata_obj, _ = NABatPulseMetadata.objects.get_or_create(
+                nabat_recording=compressed_obj.nabat_recording,
                 index=segment["segment_index"],
                 defaults={
                     "contours": segment["contours"],
@@ -92,7 +91,7 @@ def generate_spectrograms(  # noqa: C901, PLR0915
                     "heel": Point(segment["heel_ms"], segment["heel_hz"]),
                     "slopes": segment.get("slopes"),
                 }
-                # `PulseMetadata.bounding_box` is non-nullable, so always populate it
+                # `NABatPulseMetadata.bounding_box` is non-nullable, so always populate it
                 # for rows not created from `compressed["contours"]`.
                 segment_bbox = segment.get("bbox")
                 if segment_bbox and len(segment_bbox) == 4:
@@ -121,8 +120,8 @@ def generate_spectrograms(  # noqa: C901, PLR0915
                 if not settings.BATAI_SAVE_SPECTROGRAM_CONTOURS:
                     defaults["contours"] = []
 
-                PulseMetadata.objects.update_or_create(
-                    recording=compressed_obj.recording,
+                NABatPulseMetadata.objects.update_or_create(
+                    nabat_recording=compressed_obj.nabat_recording,
                     index=segment["segment_index"],
                     defaults=defaults,
                 )
