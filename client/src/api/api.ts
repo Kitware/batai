@@ -66,6 +66,7 @@ export interface SpectrogramAnnotation {
   comments?: string;
   type?: string;
   owner_email?: string;
+  model?: string;
 }
 
 export interface SpectrogramSequenceAnnotation {
@@ -643,6 +644,7 @@ export interface ConfigurationSettings {
   display_pulse_annotations: boolean;
   display_sequence_annotations: boolean;
   run_inference_on_upload: boolean;
+  create_pulse_annotations_from_batbot: boolean;
   spectrogram_x_stretch: number;
   spectrogram_view: "compressed" | "uncompressed";
   is_admin?: boolean;

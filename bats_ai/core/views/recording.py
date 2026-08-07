@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import date, datetime, time
 import json
 import logging
+from datetime import date, datetime, time
 from typing import TYPE_CHECKING, Any, Literal
 
 from django.contrib.auth.models import User
@@ -13,22 +13,13 @@ from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from ninja import File, Form, Query, Schema
-
 # Django-Ninja accesses additional params directly, so we need to ignore the type checker.
 from ninja.files import UploadedFile  # noqa: TC002
 from ninja.pagination import RouterPaginated
 
-from bats_ai.core.models import (
-    Annotations,
-    CompressedSpectrogram,
-    PulseMetadata,
-    Recording,
-    RecordingAnnotation,
-    RecordingTag,
-    SequenceAnnotations,
-    Species,
-    Spectrogram,
-)
+from bats_ai.core.models import (Annotations, CompressedSpectrogram, PulseMetadata, Recording,
+                                 RecordingAnnotation, RecordingTag, SequenceAnnotations, Species,
+                                 Spectrogram)
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 from bats_ai.core.views.recording_location import _parse_bbox, filter_recordings_by_map_bbox
 from bats_ai.core.views.species import SpeciesSchema
@@ -178,15 +169,16 @@ class RecordingPaginatedResponse(Schema):
 
 
 class AnnotationSchema(Schema):
-    start_time: int
-    end_time: int
-    low_freq: int
-    high_freq: int
+    start_time: float
+    end_time: float
+    low_freq: float
+    high_freq: float
     species: list[SpeciesSchema]
-    comments: str
+    comments: str = ""
     type: str | None = None
     id: int | None = None
     owner_email: str = None
+    model: str | None = None
 
     @classmethod
     def from_orm(cls, obj: Annotations, owner_email=None):
@@ -196,18 +188,19 @@ class AnnotationSchema(Schema):
             low_freq=obj.low_freq,
             high_freq=obj.high_freq,
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
-            comments=obj.comments,
+            comments=obj.comments or "",
             id=obj.id,
             type=obj.type,
             owner_email=owner_email,  # Include owner_email in the schema
+            model=obj.model,
         )
 
 
 class UpdateAnnotationsSchema(Schema):
-    start_time: int | None
-    end_time: int | None
-    low_freq: int | None
-    high_freq: int | None
+    start_time: float | None
+    end_time: float | None
+    low_freq: float | None
+    high_freq: float | None
     species: list[SpeciesSchema] | None
     comments: str | None
     type: str | None
@@ -278,10 +271,10 @@ class PulseMetadataSchema(Schema):
 
 class SequenceAnnotationSchema(Schema):
     id: int
-    start_time: int
-    end_time: int
+    start_time: float
+    end_time: float
     type: str | None
-    comments: str
+    comments: str = ""
     species: list[SpeciesSchema] | None
     owner_email: str = None
 
@@ -292,15 +285,15 @@ class SequenceAnnotationSchema(Schema):
             end_time=obj.end_time,
             type=obj.type,
             species=[SpeciesSchema.from_orm(species) for species in obj.species.all()],
-            comments=obj.comments,
+            comments=obj.comments or "",
             id=obj.id,
             owner_email=owner_email,  # Include owner_email in the schema
         )
 
 
 class UpdateSequenceAnnotationSchema(Schema):
-    start_time: int = None
-    end_time: int = None
+    start_time: float = None
+    end_time: float = None
     type: str | None = None
     comments: str | None = None
 
@@ -790,7 +783,7 @@ def get_spectrogram(request: HttpRequest, pk: int):
 
     spectro_data["currentUser"] = request.user.email
 
-    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
+    annotations_qs = Annotations.objects.filter(Q(recording=recording) & (Q(owner=request.user) | Q(model="batbot")))
     sequence_annotations_qs = SequenceAnnotations.objects.filter(
         recording=recording, owner=request.user
     )
@@ -863,7 +856,9 @@ def get_spectrogram_compressed(request: HttpRequest, pk: int):
 
     spectro_data["currentUser"] = request.user.email
 
-    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
+    annotations_qs = Annotations.objects.filter(
+        Q(owner=request.user) | Q(model="batbot"), recording=recording,
+    )
     sequence_annotations_qs = SequenceAnnotations.objects.filter(
         recording=recording, owner=request.user
     )
@@ -893,7 +888,7 @@ def get_annotations(request: HttpRequest, pk: int):
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             # Query annotations associated with the recording that are owned by the current user
-            annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
+            annotations_qs = Annotations.objects.filter(Q(recording=recording) & (Q(owner=request.user) | Q(model="batbot")))
 
             # Serialize the annotations using AnnotationSchema
             return [
@@ -1082,7 +1077,8 @@ def patch_annotation(  # noqa: C901, PLR0912
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             annotation_instance = Annotations.objects.get(
-                pk=annotation_pk, recording=recording, owner=request.user
+                (Q(owner=request.user) | Q(model="batbot")),
+                pk=annotation_pk, recording=recording,
             )
             if annotation_instance is None:
                 return {"error": "Annotation not found"}
