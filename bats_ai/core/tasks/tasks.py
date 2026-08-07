@@ -11,15 +11,8 @@ from django.contrib.gis.geos import LineString, Point, Polygon
 from django.core.files import File
 
 from bats_ai.celery import app
-from bats_ai.core.models import (
-    CompressedSpectrogram,
-    ProcessingTask,
-    ProcessingTaskType,
-    PulseMetadata,
-    Recording,
-    Spectrogram,
-    SpectrogramImage,
-)
+from bats_ai.core.models import (CompressedSpectrogram, ProcessingTask, ProcessingTaskType,
+                                 PulseMetadata, Recording, Spectrogram, SpectrogramImage)
 from bats_ai.core.utils.image_utils import waveplot_to_grayscale_transparent
 
 logging.basicConfig(level=logging.INFO)
@@ -78,9 +71,9 @@ def recording_compute_spectrogram(self, recording_id: int):  # noqa: C901, PLR09
                         content_type=ContentType.objects.get_for_model(spectrogram),
                         object_id=spectrogram.id,
                         index=idx,
+                        type="spectrogram",
                         defaults={
                             "image_file": File(f, name=os.path.basename(img_path)),
-                            "type": "spectrogram",
                         },
                     )
             for idx, img_path in enumerate(results["normal"].get("waveplot_paths", [])):
@@ -90,9 +83,9 @@ def recording_compute_spectrogram(self, recording_id: int):  # noqa: C901, PLR09
                     content_type=ContentType.objects.get_for_model(spectrogram),
                     object_id=spectrogram.id,
                     index=idx,
+                    type="waveform_uncompressed",
                     defaults={
                         "image_file": File(buf, name=f"{base}.png"),
-                        "type": "waveform_uncompressed",
                     },
                 )
             # Create or get CompressedSpectrogram
@@ -116,9 +109,9 @@ def recording_compute_spectrogram(self, recording_id: int):  # noqa: C901, PLR09
                         content_type=ContentType.objects.get_for_model(compressed_obj),
                         object_id=compressed_obj.id,
                         index=idx,
+                        type="compressed",
                         defaults={
                             "image_file": File(f, name=os.path.basename(img_path)),
-                            "type": "compressed",
                         },
                     )
 
@@ -228,9 +221,8 @@ def recording_compute_spectrogram(self, recording_id: int):  # noqa: C901, PLR09
                         pulse_metadata_obj.contours = []
                     pulse_metadata_obj.save()
 
-            from bats_ai.core.utils.batbot_annotations import (
-                create_pulse_annotations_from_batbot_segments,
-            )
+            from bats_ai.core.utils.batbot_annotations import \
+                create_pulse_annotations_from_batbot_segments
 
             create_pulse_annotations_from_batbot_segments(
                 recording,
