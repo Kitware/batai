@@ -66,6 +66,7 @@ export interface SpectrogramAnnotation {
   comments?: string;
   type?: string;
   owner_email?: string;
+  model?: string;
 }
 
 export interface SpectrogramSequenceAnnotation {
