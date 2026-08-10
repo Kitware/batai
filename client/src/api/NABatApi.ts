@@ -5,6 +5,7 @@ import {
   type ProcessingTask,
   type Spectrogram,
   type UpdateFileAnnotation,
+  type Species,
 } from "./api";
 
 export interface NABatRecordingCompleteResponse {
@@ -83,6 +84,25 @@ async function getNABatFileAnnotations(recordingId: number) {
   return axiosInstance.get<FileAnnotation[]>(
     `recording/${recordingId}/recording-annotations`,
   );
+}
+
+async function getNABatSpecies({
+  recordingId,
+  grtsCellId,
+  sampleFrameId,
+}: {
+  recordingId?: number;
+  grtsCellId?: number;
+  sampleFrameId?: number;
+}) {
+  return axiosInstance.get<Species[]>("/species/", {
+    params: {
+      recording_id: recordingId,
+      grts_cell_id: grtsCellId,
+      sample_frame_id: sampleFrameId,
+      nabat: true,
+    },
+  });
 }
 
 async function getNABatFileAnnotationDetails(
@@ -261,6 +281,7 @@ export {
   getNABatSpectrogramCompressed,
   getNABatRecordingFileAnnotations,
   getNABatFileAnnotations,
+  getNABatSpecies,
   getNABatFileAnnotationDetails,
   putNABatFileAnnotation,
   patchNABatFileAnnotationLocal,
