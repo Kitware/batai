@@ -30,7 +30,6 @@ from bats_ai.core.models import (
     Spectrogram,
 )
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
-from bats_ai.core.utils.batbot_annotations import BATBOT_ANNOTATION_MODEL
 from bats_ai.core.views.recording_location import _parse_bbox, filter_recordings_by_map_bbox
 from bats_ai.core.views.species import SpeciesSchema
 
@@ -793,9 +792,7 @@ def get_spectrogram(request: HttpRequest, pk: int):
 
     spectro_data["currentUser"] = request.user.email
 
-    annotations_qs = Annotations.objects.filter(
-        Q(recording=recording) & (Q(owner=request.user) | Q(model=BATBOT_ANNOTATION_MODEL))
-    )
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
     sequence_annotations_qs = SequenceAnnotations.objects.filter(
         recording=recording, owner=request.user
     )
@@ -868,10 +865,7 @@ def get_spectrogram_compressed(request: HttpRequest, pk: int):
 
     spectro_data["currentUser"] = request.user.email
 
-    annotations_qs = Annotations.objects.filter(
-        Q(owner=request.user) | Q(model=BATBOT_ANNOTATION_MODEL),
-        recording=recording,
-    )
+    annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
     sequence_annotations_qs = SequenceAnnotations.objects.filter(
         recording=recording, owner=request.user
     )
@@ -901,9 +895,7 @@ def get_annotations(request: HttpRequest, pk: int):
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             # Query annotations associated with the recording that are owned by the current user
-            annotations_qs = Annotations.objects.filter(
-                Q(recording=recording) & (Q(owner=request.user) | Q(model=BATBOT_ANNOTATION_MODEL))
-            )
+            annotations_qs = Annotations.objects.filter(recording=recording, owner=request.user)
 
             # Serialize the annotations using AnnotationSchema
             return [
@@ -1092,9 +1084,7 @@ def patch_annotation(  # noqa: C901, PLR0912
         # Check if the user owns the recording or if the recording is public
         if recording.owner == request.user or recording.public:
             annotation_instance = Annotations.objects.get(
-                (Q(owner=request.user) | Q(model=BATBOT_ANNOTATION_MODEL)),
-                pk=annotation_pk,
-                recording=recording,
+                pk=annotation_pk, recording=recording, owner=request.user
             )
             if annotation_instance is None:
                 return {"error": "Annotation not found"}
