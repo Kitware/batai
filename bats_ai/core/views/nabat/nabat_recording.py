@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
 from django.db import transaction
@@ -17,11 +18,16 @@ import requests
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
 from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
+    NABatPulseMetadata,
     NABatRecording,
     NABatRecordingAnnotation,
 )
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
 from bats_ai.core.views.species import SpeciesSchema
+
+if TYPE_CHECKING:
+    from bats_ai.core.views.recording import PulseMetadataSlopesSchema
+
 
 logger = logging.getLogger(__name__)
 router = RouterPaginated()
@@ -590,3 +596,79 @@ def delete_recording_annotation(
     # Check permission
     annotation.delete()
     return "Recording annotation deleted successfully."
+
+
+class NABatPulseContourSchema(Schema):
+    id: int | None
+    index: int
+    bounding_box: Any
+    contours: list
+
+    @classmethod
+    def from_orm(cls, obj: NABatPulseMetadata):
+        return cls(
+            id=obj.id,
+            index=obj.index,
+            contours=obj.contours if obj.contours is not None else [],
+            bounding_box=json.loads(obj.bounding_box.geojson),
+        )
+
+
+class NABatPulseMetadataSchema(Schema):
+    id: int | None
+    index: int
+    curve: list[list[float]] | None = None
+    char_freq: list[float] | None = None
+    knee: list[float] | None = None
+    heel: list[float] | None = None
+    slopes: PulseMetadataSlopesSchema | None = None
+
+    @classmethod
+    def from_orm(cls, obj: NABatPulseMetadata):
+        def point_to_list(pt):
+            if pt is None:
+                return None
+            return [pt.x, pt.y]
+
+        def linestring_to_list(ls):
+            if ls is None:
+                return None
+            return [[c[0], c[1]] for c in ls.coords]
+
+        return cls(
+            id=obj.id,
+            index=obj.index,
+            curve=linestring_to_list(obj.curve),
+            char_freq=point_to_list(obj.char_freq),
+            knee=point_to_list(obj.knee),
+            heel=point_to_list(obj.heel),
+            slopes=obj.slopes,
+        )
+
+
+@router.get("/{pk}/pulse_contours", auth=None)
+def get_pulse_contours(request: HttpRequest, pk: int, api_token: str):
+    recording = get_object_or_404(NABatRecording, pk=pk)
+
+    email_or_response = get_email_if_authorized(request, api_token, recording.recording_id)
+    if isinstance(email_or_response, JsonResponse):
+        return email_or_response
+
+    computed_pulse_annotation_qs = NABatPulseMetadata.objects.filter(
+        nabat_recording=recording
+    ).order_by("index")
+    return [NABatPulseContourSchema.from_orm(pulse) for pulse in computed_pulse_annotation_qs]
+
+
+@router.get("/{pk}/pulse_metadata", auth=None)
+def get_pulse_data(request: HttpRequest, pk: int, api_token: str):
+    recording = get_object_or_404(NABatRecording, pk=pk)
+
+    email_or_response = get_email_if_authorized(request, api_token, recording.recording_id)
+    if isinstance(email_or_response, JsonResponse):
+        return email_or_response
+
+    computed_pulse_annotation_qs = NABatPulseMetadata.objects.filter(
+        nabat_recording=recording
+    ).order_by("index")
+    return [NABatPulseMetadataSchema.from_orm(pulse) for pulse in computed_pulse_annotation_qs]

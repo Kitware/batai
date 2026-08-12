@@ -41,6 +41,10 @@ export default defineComponent({
       type: Array as PropType<HTMLImageElement[]>,
       default: () => [],
     },
+    maskLoaded: {
+      type: Boolean,
+      default: false,
+    },
     waveplotImages: {
       type: Array as PropType<HTMLImageElement[]>,
       default: () => [],
@@ -496,18 +500,26 @@ export default defineComponent({
       }
     });
 
-    watch([viewMaskOverlay, maskOverlayOpacity, () => props.maskImages], () => {
-      if (viewMaskOverlay.value && props.maskImages.length) {
-        geoJS.drawMaskImages(
-          props.maskImages,
-          scaledWidth.value,
-          scaledHeight.value,
-          maskOverlayOpacity.value,
-        );
-      } else {
-        geoJS.clearMaskQuadFeatures(true);
-      }
-    });
+    watch(
+      [
+        viewMaskOverlay,
+        maskOverlayOpacity,
+        () => props.maskImages,
+        () => props.maskLoaded,
+      ],
+      () => {
+        if (viewMaskOverlay.value && props.maskImages.length) {
+          geoJS.drawMaskImages(
+            props.maskImages,
+            scaledWidth.value,
+            scaledHeight.value,
+            maskOverlayOpacity.value,
+          );
+        } else {
+          geoJS.clearMaskQuadFeatures(true);
+        }
+      },
+    );
 
     watch([showWaveplot], () => {
       resetViewerBounds(false);

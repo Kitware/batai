@@ -1,5 +1,6 @@
 import { ref, type Ref, watch } from "vue";
 import { getPulseMetadata, type PulseMetadata } from "../api/api";
+import { getNabatPulseMetadata } from "@/api/NABatApi";
 
 const STORAGE_KEY = "pulseMetadata";
 
@@ -79,6 +80,18 @@ async function loadPulseMetadata(recordingId: number) {
   }
 }
 
+async function loadNabatPulseMetadata(recordingId: string, apiToken: string) {
+  pulseMetadataLoading.value = true;
+  try {
+    pulseMetadataList.value = await getNabatPulseMetadata(
+      recordingId,
+      apiToken,
+    );
+  } finally {
+    pulseMetadataLoading.value = false;
+  }
+}
+
 function clearPulseMetadata() {
   pulseMetadataList.value = [];
 }
@@ -144,6 +157,7 @@ export default function usePulseMetadata() {
     pulseMetadataList,
     pulseMetadataLoading,
     loadPulseMetadata,
+    loadNabatPulseMetadata,
     clearPulseMetadata,
     viewPulseMetadataLayer,
     toggleViewPulseMetadataLayer,
