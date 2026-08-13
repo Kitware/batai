@@ -78,9 +78,9 @@ def recording_compute_spectrogram(self, recording_id: int):  # noqa: C901, PLR09
                         content_type=ContentType.objects.get_for_model(spectrogram),
                         object_id=spectrogram.id,
                         index=idx,
+                        type="spectrogram",
                         defaults={
                             "image_file": File(f, name=os.path.basename(img_path)),
-                            "type": "spectrogram",
                         },
                     )
             for idx, img_path in enumerate(results["normal"].get("waveplot_paths", [])):
@@ -90,9 +90,9 @@ def recording_compute_spectrogram(self, recording_id: int):  # noqa: C901, PLR09
                     content_type=ContentType.objects.get_for_model(spectrogram),
                     object_id=spectrogram.id,
                     index=idx,
+                    type="waveform_uncompressed",
                     defaults={
                         "image_file": File(buf, name=f"{base}.png"),
-                        "type": "waveform_uncompressed",
                     },
                 )
             # Create or get CompressedSpectrogram
@@ -116,9 +116,9 @@ def recording_compute_spectrogram(self, recording_id: int):  # noqa: C901, PLR09
                         content_type=ContentType.objects.get_for_model(compressed_obj),
                         object_id=compressed_obj.id,
                         index=idx,
+                        type="compressed",
                         defaults={
                             "image_file": File(f, name=os.path.basename(img_path)),
-                            "type": "compressed",
                         },
                     )
 
@@ -227,6 +227,15 @@ def recording_compute_spectrogram(self, recording_id: int):  # noqa: C901, PLR09
                     if not settings.BATAI_SAVE_SPECTROGRAM_CONTOURS:
                         pulse_metadata_obj.contours = []
                     pulse_metadata_obj.save()
+
+            from bats_ai.core.utils.batbot_annotations import (
+                create_pulse_annotations_from_batbot_segments,
+            )
+
+            create_pulse_annotations_from_batbot_segments(
+                recording,
+                compressed["segments"],
+            )
 
         if processing_task:
             processing_task.status = ProcessingTask.Status.COMPLETE

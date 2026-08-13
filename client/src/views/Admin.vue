@@ -28,6 +28,8 @@ export default defineComponent({
       displaySequenceAnnotations:
         configuration.value.display_sequence_annotations,
       runInferenceOnUpload: configuration.value.run_inference_on_upload,
+      createPulseAnnotationsFromBatbot:
+        configuration.value.create_pulse_annotations_from_batbot,
       spectrogramXStretch: configuration.value.spectrogram_x_stretch,
       spectrogramView: configuration.value.spectrogram_view,
       defaultColorScheme: configuration.value.default_color_scheme,
@@ -54,6 +56,8 @@ export default defineComponent({
         configuration.value.display_sequence_annotations;
       settings.runInferenceOnUpload =
         configuration.value.run_inference_on_upload;
+      settings.createPulseAnnotationsFromBatbot =
+        configuration.value.create_pulse_annotations_from_batbot;
       settings.spectrogramXStretch = configuration.value.spectrogram_x_stretch;
       settings.defaultColorScheme = configuration.value.default_color_scheme;
       settings.defaultBackgroundColor =
@@ -74,6 +78,8 @@ export default defineComponent({
         display_pulse_annotations: settings.displayPulseAnnotations,
         display_sequence_annotations: settings.displaySequenceAnnotations,
         run_inference_on_upload: settings.runInferenceOnUpload,
+        create_pulse_annotations_from_batbot:
+          settings.createPulseAnnotationsFromBatbot,
         spectrogram_x_stretch: settings.spectrogramXStretch,
         default_color_scheme: settings.defaultColorScheme,
         default_spectrogram_background_color: settings.defaultBackgroundColor,
@@ -146,6 +152,15 @@ export default defineComponent({
               v-model="settings.runInferenceOnUpload"
               :color="settings.runInferenceOnUpload ? 'primary' : ''"
               label="Run Inference on Upload"
+            />
+          </v-row>
+          <v-row>
+            <v-switch
+              v-model="settings.createPulseAnnotationsFromBatbot"
+              :color="
+                settings.createPulseAnnotationsFromBatbot ? 'primary' : ''
+              "
+              label="Create pulse annotations from BatBot on import"
             />
           </v-row>
           <v-row>
