@@ -6,6 +6,8 @@ import {
   type Spectrogram,
   type UpdateFileAnnotation,
   type Species,
+  type ComputedPulseContour,
+  type PulseMetadata,
 } from "./api";
 
 export interface NABatRecordingCompleteResponse {
@@ -275,6 +277,22 @@ async function exportNABatAnnotations(
   return response.data;
 }
 
+async function getNabatPulseContours(recordingId: string, apiToken: string) {
+  const result = await axiosInstance.get<ComputedPulseContour[]>(
+    `nabat/recording/${recordingId}/pulse_contours`,
+    { params: { api_token: apiToken } },
+  );
+  return result.data;
+}
+
+async function getNabatPulseMetadata(recordingId: string, apiToken: string) {
+  const result = await axiosInstance.get<PulseMetadata[]>(
+    `nabat/recording/${recordingId}/pulse_metadata`,
+    { params: { api_token: apiToken } },
+  );
+  return result.data;
+}
+
 export {
   postNABatRecording,
   getNABatSpectrogram,
@@ -292,4 +310,6 @@ export {
   getNABatConfigurationRecordings,
   exportNABatAnnotations,
   adminNaBatUpdateSpecies,
+  getNabatPulseContours,
+  getNabatPulseMetadata,
 };

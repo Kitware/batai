@@ -111,6 +111,8 @@ export default defineComponent({
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const allImagesLoaded: Ref<boolean[]> = ref([]);
+    const maskLoaded = ref(false);
+    const maskImagesLoaded: Ref<boolean[]> = ref([]);
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
     const recordingMap = ref(false);
@@ -204,11 +206,20 @@ export default defineComponent({
         console.error("No URL found for the spectrogram");
       }
       maskImages.value = [];
+      maskImagesLoaded.value = [];
+      maskLoaded.value = false;
       if (spectrogramData.value.mask_urls?.length) {
-        spectrogramData.value.mask_urls.forEach((url) => {
+        spectrogramData.value.mask_urls.forEach((url, index) => {
           const image = new Image();
+          maskImagesLoaded.value.push(false);
           image.src = url;
           maskImages.value.push(image);
+          image.onload = () => {
+            maskImagesLoaded.value[index] = true;
+            if (maskImagesLoaded.value.every((item) => item)) {
+              maskLoaded.value = true;
+            }
+          };
         });
       }
       waveplotImages.value = [];
@@ -435,6 +446,7 @@ export default defineComponent({
       loading,
       images,
       maskImages,
+      maskLoaded,
       waveplotImages,
       spectroInfo,
       annotations,
@@ -804,6 +816,7 @@ export default defineComponent({
         v-if="loadedImage && spectroInfo"
         :images="images"
         :mask-images="maskImages"
+        :mask-loaded="maskLoaded"
         :waveplot-images="waveplotImages"
         :spectro-info="spectroInfo"
         :recording-id="id"
@@ -821,6 +834,7 @@ export default defineComponent({
         v-if="loadedImage && parentGeoViewerRef"
         :images="images"
         :mask-images="maskImages"
+        :mask-loaded="maskLoaded"
         :waveplot-images="waveplotImages"
         :spectro-info="spectroInfo"
         :recording-id="id"

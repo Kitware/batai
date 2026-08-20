@@ -28,6 +28,10 @@ export default defineComponent({
       type: Array as PropType<HTMLImageElement[]>,
       default: () => [],
     },
+    maskLoaded: {
+      type: Boolean,
+      default: false,
+    },
     waveplotImages: {
       type: Array as PropType<HTMLImageElement[]>,
       default: () => [],
@@ -259,21 +263,29 @@ export default defineComponent({
       drawWaveplotIfEnabled(finalWidth, finalHeight);
     });
 
-    watch([viewMaskOverlay, maskOverlayOpacity, () => props.maskImages], () => {
-      const { width, height } = getImageDimensions(props.images);
-      const finalWidth = scaledWidth.value || width;
-      const finalHeight = scaledHeight.value || height;
-      if (viewMaskOverlay.value && props.maskImages.length) {
-        geoJS.drawMaskImages(
-          props.maskImages,
-          finalWidth,
-          finalHeight,
-          maskOverlayOpacity.value,
-        );
-      } else {
-        geoJS.clearMaskQuadFeatures(true);
-      }
-    });
+    watch(
+      [
+        viewMaskOverlay,
+        maskOverlayOpacity,
+        () => props.maskImages,
+        () => props.maskLoaded,
+      ],
+      () => {
+        const { width, height } = getImageDimensions(props.images);
+        const finalWidth = scaledWidth.value || width;
+        const finalHeight = scaledHeight.value || height;
+        if (viewMaskOverlay.value && props.maskImages.length) {
+          geoJS.drawMaskImages(
+            props.maskImages,
+            finalWidth,
+            finalHeight,
+            maskOverlayOpacity.value,
+          );
+        } else {
+          geoJS.clearMaskQuadFeatures(true);
+        }
+      },
+    );
 
     watch(viewWaveplot, () => {
       const { width, height } = getImageDimensions(props.images);

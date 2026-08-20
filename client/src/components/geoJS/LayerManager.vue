@@ -101,6 +101,9 @@ export default defineComponent({
       contoursEnabled,
       contourOpacity,
       loadContours,
+      loadNabatContours,
+      isNaBat,
+      nabatApiToken,
       computedPulseContours,
       transparencyThreshold,
     } = useState();
@@ -108,6 +111,7 @@ export default defineComponent({
       viewPulseMetadataLayer,
       pulseMetadataList,
       loadPulseMetadata,
+      loadNabatPulseMetadata,
       clearPulseMetadata,
       pulseMetadataLineColor,
       pulseMetadataLineSize,
@@ -595,7 +599,11 @@ export default defineComponent({
         return;
       }
       if (computedPulseContours.value.length === 0) {
-        await loadContours(new Number(props.recordingId) as number);
+        if (isNaBat()) {
+          await loadNabatContours(props.recordingId);
+        } else {
+          await loadContours(new Number(props.recordingId) as number);
+        }
       }
       if (!contourLayer) {
         contourLayer = new ContourLayer(
@@ -636,7 +644,14 @@ export default defineComponent({
         if (!props.recordingId || !props.spectroInfo?.compressedWidth) return;
         if (viewPulseMetadataLayer.value) {
           if (pulseMetadataList.value.length === 0) {
-            await loadPulseMetadata(Number(props.recordingId));
+            if (isNaBat()) {
+              await loadNabatPulseMetadata(
+                props.recordingId,
+                nabatApiToken.value,
+              );
+            } else {
+              await loadPulseMetadata(Number(props.recordingId));
+            }
           }
           if (!pulseMetadataLayer) {
             pulseMetadataLayer = new PulseMetadataLayer(

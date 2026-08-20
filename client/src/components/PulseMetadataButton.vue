@@ -3,6 +3,7 @@ import { defineComponent, ref } from "vue";
 import usePulseMetadata, {
   PULSE_METADATA_LABELS_OPTIONS,
 } from "@use/usePulseMetadata";
+import useState from "@use/useState";
 
 export default defineComponent({
   name: "PulseMetadataButton",
@@ -22,6 +23,7 @@ export default defineComponent({
       viewPulseMetadataLayer,
       toggleViewPulseMetadataLayer,
       loadPulseMetadata,
+      loadNabatPulseMetadata,
       pulseMetadataList,
       pulseMetadataLoading,
       pulseMetadataLineColor,
@@ -35,10 +37,18 @@ export default defineComponent({
       pulseMetadataLabels,
       pulseMetadataDurationFreqLineColor,
     } = usePulseMetadata();
+    const { isNaBat, nabatApiToken } = useState();
 
     const togglePulseMetadata = async () => {
       if (pulseMetadataList.value.length === 0 && props.recordingId != null) {
-        await loadPulseMetadata(Number(props.recordingId));
+        if (isNaBat()) {
+          await loadNabatPulseMetadata(
+            String(props.recordingId),
+            nabatApiToken.value,
+          );
+        } else {
+          await loadPulseMetadata(Number(props.recordingId));
+        }
       }
       toggleViewPulseMetadataLayer();
     };

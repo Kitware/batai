@@ -10,8 +10,11 @@ import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { spectroXToTime, type SpectroInfo } from "@components/geoJS/geoJSUtils";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import useState from "@use/useState";
+import usePulseMetadata from "@/use/usePulseMetadata";
 import ColorSchemeDialog from "@components/ColorSchemeDialog.vue";
 import TransparencyFilterControl from "@/components/TransparencyFilterControl.vue";
+import PulseMetadataButton from "@/components/PulseMetadataButton.vue";
+import SpectrogramImageContentMenu from "@/components/SpectrogramImageContentMenu.vue";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import RecordingAnnotations from "@components/RecordingAnnotations.vue";
 import { usePrompt } from "@use/prompt-service";
@@ -26,6 +29,8 @@ export default defineComponent({
     RecordingAnnotations,
     ColorSchemeDialog,
     TransparencyFilterControl,
+    PulseMetadataButton,
+    SpectrogramImageContentMenu,
   },
   props: {
     id: {
@@ -56,7 +61,14 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
+      setNabatApiToken,
     } = useState();
+    const {
+      clearPulseMetadata,
+      viewPulseMetadataLayer,
+      loadNabatPulseMetadata,
+      pulseMetadataList,
+    } = usePulseMetadata();
     const secondsWarning = 60;
     const { prompt } = usePrompt();
     const { shouldWarn } = useJWTToken({
@@ -64,11 +76,14 @@ export default defineComponent({
       warningSeconds: secondsWarning,
     });
     const images: Ref<HTMLImageElement[]> = ref([]);
+    const maskImages: Ref<HTMLImageElement[]> = ref([]);
     const spectroInfo: Ref<SpectroInfo | undefined> = ref();
     const selectedUsers: Ref<string[]> = ref([]);
     const speciesList: Ref<Species[]> = ref([]);
     const loadedImage = ref(false);
     const allImagesLoaded: Ref<boolean[]> = ref([]);
+    const maskImagesLoaded: Ref<boolean[]> = ref([]);
+    const maskLoaded = ref(false);
     const compressed = ref(
       configuration.value.spectrogram_view === "compressed",
     );
@@ -87,7 +102,11 @@ export default defineComponent({
     ]);
     const loadData = async () => {
       loadedImage.value = false;
+      clearPulseMetadata();
+      setNabatApiToken(props.apiToken);
       try {
+        const tempViewPulseMetadataLayer = viewPulseMetadataLayer.value;
+        viewPulseMetadataLayer.value = false;
         const response = compressed.value
           ? await getNABatSpectrogramCompressed(props.id, props.apiToken)
           : await getNABatSpectrogram(props.id, props.apiToken);
@@ -110,9 +129,29 @@ export default defineComponent({
               }
             };
           });
+          if (tempViewPulseMetadataLayer) {
+            viewPulseMetadataLayer.value = true;
+          }
         } else {
           // TODO Error Out if there is no URL
           console.error("No URL found for the spectrogram");
+        }
+        maskImages.value = [];
+        maskImagesLoaded.value = [];
+        maskLoaded.value = false;
+        if (response.data.mask_urls?.length) {
+          response.data.mask_urls.forEach((url, index) => {
+            maskImagesLoaded.value.push(false);
+            const image = new Image();
+            image.src = url;
+            maskImages.value.push(image);
+            image.onload = () => {
+              maskImagesLoaded.value[index] = true;
+              if (maskImagesLoaded.value.every((item) => item)) {
+                maskLoaded.value = true;
+              }
+            };
+          });
         }
         spectroInfo.value = response.data["spectroInfo"];
         if (response.data["compressed"] && spectroInfo.value) {
@@ -130,6 +169,12 @@ export default defineComponent({
             index ===
               self.findIndex((t) => t.species_code === value.species_code),
         );
+        if (
+          viewPulseMetadataLayer.value &&
+          pulseMetadataList.value.length === 0
+        ) {
+          await loadNabatPulseMetadata(props.id, props.apiToken);
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         errorMessage.value = `Failed fetch Spectrogram: ${error.message}:`;
@@ -233,6 +278,8 @@ export default defineComponent({
       pendingCenterTimeMs,
       loadedImage,
       images,
+      maskImages,
+      maskLoaded,
       spectroInfo,
       selectedId,
       selectedType,
@@ -458,6 +505,18 @@ export default defineComponent({
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
             <div class="mr-1 mt-5">
+              <pulse-metadata-button
+                :recording-id="id"
+                :compressed="compressed"
+              />
+            </div>
+            <div class="mr-1 mt-5">
+              <spectrogram-image-content-menu
+                :compressed="compressed"
+                :has-mask-urls="maskImages.length > 0"
+              />
+            </div>
+            <div class="mr-1 mt-5">
               <transparency-filter-control />
             </div>
             <v-menu>
@@ -503,6 +562,8 @@ export default defineComponent({
       <spectrogram-viewer
         v-if="loadedImage && spectroInfo"
         :images="images"
+        :mask-images="maskImages"
+        :mask-loaded="maskLoaded"
         :spectro-info="spectroInfo"
         :recording-id="id"
         :grid="gridEnabled"
@@ -517,6 +578,8 @@ export default defineComponent({
       <thumbnail-viewer
         v-if="loadedImage && parentGeoViewerRef"
         :images="images"
+        :mask-images="maskImages"
+        :mask-loaded="maskLoaded"
         :spectro-info="spectroInfo"
         :recording-id="id"
         :parent-geo-viewer-ref="parentGeoViewerRef"
