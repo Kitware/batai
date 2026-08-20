@@ -150,6 +150,7 @@ const spectrogramFilename: Ref<string> = ref("");
 
 type AnnotationState = "" | "editing" | "creating" | "disabled";
 export default function useState() {
+  const router = useRouter();
   const setAnnotationState = (state: AnnotationState) => {
     annotationState.value = state;
   };
@@ -292,7 +293,6 @@ export default function useState() {
    * @returns `true` if looking at an NABat view, `false` otherwise
    */
   function isNaBat(): boolean {
-    const router = useRouter();
     return router.currentRoute.value.fullPath.includes("nabat");
   }
 
