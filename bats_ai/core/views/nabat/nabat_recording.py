@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from django.conf import settings
 from django.db import transaction
@@ -23,11 +23,10 @@ from bats_ai.core.models.nabat import (
     NABatRecordingAnnotation,
 )
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
+
+# Real (not TYPE_CHECKING) import: pydantic needs this at runtime to build NABatPulseMetadataSchema.
+from bats_ai.core.views.recording import PulseMetadataSlopesSchema
 from bats_ai.core.views.species import SpeciesSchema
-
-if TYPE_CHECKING:
-    from bats_ai.core.views.recording import PulseMetadataSlopesSchema
-
 
 logger = logging.getLogger(__name__)
 router = RouterPaginated()

@@ -31,12 +31,11 @@ from bats_ai.core.models import (
 )
 from bats_ai.core.tasks.tasks import recording_compute_spectrogram
 from bats_ai.core.views.recording_location import _parse_bbox, filter_recordings_by_map_bbox
+from bats_ai.core.views.recording_tag import RecordingTagSchema
 from bats_ai.core.views.species import SpeciesSchema
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
-
-    from bats_ai.core.views.recording_tag import RecordingTagSchema
 
 logger = logging.getLogger(__name__)
 

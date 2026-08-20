@@ -202,7 +202,7 @@ extend-immutable-calls = ["ninja.Query"]
 extend-ignore-names = ["_base_manager", "_default_manager",  "_meta"]
 
 [tool.ruff.lint.flake8-type-checking]
-runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "ninja.Schema"]
 runtime-evaluated-decorators = ["pydantic.validate_call"]
 
 [tool.ruff.lint.isort]
