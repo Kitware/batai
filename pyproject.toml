@@ -13,31 +13,31 @@ dependencies = [
   # Runtime dependendencies, always needed
   "celery==5.6.3",
   "django[argon2]==6.0.7",
-  "django-ninja==1.6.2",
-  "django-allauth==65.18.0",
+  "django-ninja==1.7.0",
+  "django-allauth==65.19.1",
   "django-auth-style==0.15.0",
   "django-cors-headers==4.9.0",
   "django-environ==0.14.0",
   "django-extensions==4.1",
-  "django-oauth-toolkit==3.4.0",
+  "django-oauth-toolkit==3.4.1",
   "django-resonant-settings[allauth,celery]==0.51.1",
   "django-resonant-utils[allauth,s3_storage]==0.19.0",
   "django-s3-file-field[s3]==1.1.0",
   "django-storages[s3]==1.14.6",
   "django-stubs-ext==6.0.7",
   "psycopg[binary]==3.3.4",
-  "pydantic==2.13.4",
+  "pydantic==2.13.5",
   "requests==2.34.2",
   "rich==14.3.4",
   "whitenoise[brotli]==6.12.0",
-  "tqdm==4.69.1",
+  "tqdm==4.70.0",
   # guano metadata
   "gdal==3.12.3.1",
   "geopandas==1.1.4",
   "guano==1.0.16",
   "django-celery-results==2.6.0",
   # Production-only
-  "sentry-sdk[celery,django,pure_eval]==2.66.1",
+  "sentry-sdk[celery,django,pure_eval]==2.68.1",
   "gunicorn==25.3.0",
 ]
 
@@ -49,8 +49,8 @@ development = [
   "django-minio-storage==0.5.9",
   "django-resonant-utils[minio_storage]==0.19.0",
   "django-s3-file-field[minio]==1.1.0",
-  "faker==40.36.0",
-  "ipython==9.15.0",
+  "faker==40.37.0",
+  "ipython==9.17.0",
   "watchdog==6.0.0",
   "werkzeug==3.1.8",
 ]
@@ -59,10 +59,10 @@ tasks = [
   # intensive tasks, such as spectrogram generation
   "batbot==0.1.5",
   "Pillow==12.3.0",
-  "numpy==2.5.1",
-  "scipy==1.18.0",
+  "numpy==2.5.2",
+  "scipy==1.18.1",
   "scikit-image==0.26.0",
-  "opencv-python-headless==4.13.0.92",
+  "opencv-python-headless==4.14.0.94",
 ]
 
 [dependency-groups]
