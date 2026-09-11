@@ -5,9 +5,8 @@ from pathlib import Path
 from typing import Any
 
 import django_stubs_ext
-from environ import Env
 import osgeo
-
+from environ import Env
 from resonant_settings.allauth import *
 from resonant_settings.celery import *
 from resonant_settings.django import *

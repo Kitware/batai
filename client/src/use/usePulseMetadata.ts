@@ -80,13 +80,10 @@ async function loadPulseMetadata(recordingId: number) {
   }
 }
 
-async function loadNabatPulseMetadata(recordingId: string, apiToken: string) {
+async function loadNabatPulseMetadata(recordingId: string) {
   pulseMetadataLoading.value = true;
   try {
-    pulseMetadataList.value = await getNabatPulseMetadata(
-      recordingId,
-      apiToken,
-    );
+    pulseMetadataList.value = await getNabatPulseMetadata(recordingId);
   } finally {
     pulseMetadataLoading.value = false;
   }

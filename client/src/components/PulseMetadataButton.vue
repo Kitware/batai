@@ -37,15 +37,12 @@ export default defineComponent({
       pulseMetadataLabels,
       pulseMetadataDurationFreqLineColor,
     } = usePulseMetadata();
-    const { isNaBat, nabatApiToken } = useState();
+    const { isNaBat } = useState();
 
     const togglePulseMetadata = async () => {
       if (pulseMetadataList.value.length === 0 && props.recordingId != null) {
         if (isNaBat()) {
-          await loadNabatPulseMetadata(
-            String(props.recordingId),
-            nabatApiToken.value,
-          );
+          await loadNabatPulseMetadata(String(props.recordingId));
         } else {
           await loadPulseMetadata(Number(props.recordingId));
         }

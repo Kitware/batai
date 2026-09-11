@@ -25,10 +25,7 @@ export default defineComponent({
     onMounted(async () => {
       try {
         const response = props.apiToken
-          ? await getNABatFileAnnotationDetails(
-              props.recordingId,
-              props.apiToken,
-            )
+          ? await getNABatFileAnnotationDetails(props.recordingId)
           : await getFileAnnotationDetails(props.recordingId);
         annotationData.value = response.data.details;
       } catch (error) {
