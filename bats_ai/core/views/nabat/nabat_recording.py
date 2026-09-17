@@ -3,8 +3,10 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import string
 from typing import Any
 
+import requests
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
@@ -13,17 +15,11 @@ from django.shortcuts import get_object_or_404
 from ninja import Form, Schema
 from ninja.pagination import RouterPaginated
 from oauth2_provider.models import AccessToken
-import requests
 
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
-from bats_ai.core.models.nabat import (
-    NABatCompressedSpectrogram,
-    NABatPulseMetadata,
-    NABatRecording,
-    NABatRecordingAnnotation,
-)
+from bats_ai.core.models.nabat import (NABatCompressedSpectrogram, NABatPulseMetadata,
+                                       NABatRecording, NABatRecordingAnnotation)
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
-
 # Real (not TYPE_CHECKING) import: pydantic needs this at runtime to build NABatPulseMetadataSchema.
 from bats_ai.core.views.recording import PulseMetadataSlopesSchema
 from bats_ai.core.views.species import SpeciesSchema
@@ -68,6 +64,14 @@ updateAcousticFileVet (
 """
 
 
+def get_auth_header(request: HttpRequest):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return None
+    auth_header_parts = auth_header.split(" ")
+    return auth_header_parts[1] if len(auth_header_parts) > 1 else None
+
+
 def decode_jwt(token):
     # Split the token into parts
     parts = token.split(".")
@@ -89,7 +93,6 @@ def decode_jwt(token):
 
 def get_email_if_authorized(  # noqa: PLR0911
     request: HttpRequest,
-    api_token: str,
     recording_id: int | None = None,
     recording_pk: int | None = None,
 ) -> str | JsonResponse:
@@ -106,6 +109,7 @@ def get_email_if_authorized(  # noqa: PLR0911
     if request.user and request.user.is_authenticated and request.user.is_superuser:
         return request.user.email or "superuser@nabat.org"
     # Decode JWT token
+    api_token = get_auth_header(request)
     try:
         payload = decode_jwt(api_token)
         email = payload.get("email")
@@ -165,9 +169,17 @@ class NABatRecordingSchema(Schema):
 
 
 class NABatRecordingGenerateSchema(Schema):
-    apiToken: str
     recordingId: int
     surveyEventId: int
+    iss: str
+    code: str
+
+
+class NABatAuthorizationSchema(Schema):
+    recordingId: int
+    surveyEventId: int
+    iss: str
+    code: str
 
 
 def update_nabat_species(species_id: int, api_token: str, recording_id: int, survey_event_id: int):
@@ -200,6 +212,44 @@ def update_nabat_species(species_id: int, api_token: str, recording_id: int, sur
     return "NABat species updated successfully."
 
 
+def _reconstruct_redirect_url(survey_event_id, recording_id):
+    url_root = settings.BATAI_WEB_URL.rstrip('/')
+    return (
+        f"{url_root}/nabat/auth/?recordingId={recording_id}&surveyEventId={survey_event_id}"
+    )
+
+
+@router.post("/authorize", auth=None)
+def authorize_nabat_requests(
+    request: HttpRequest,
+    payload: Form[NABatAuthorizationSchema]
+):
+    if payload.iss != settings.BATAI_NABAT_OIDC_ISSUER:
+        return JsonResponse({"error": "Unexpected issuer"}, status=400)
+
+    try:
+        redirect_url = _reconstruct_redirect_url(payload.surveyEventId, payload.recordingId)
+        response = requests.post(
+            f"{settings.BATAI_NABAT_OIDC_BASE_URL}/protocol/openid-connect/token",
+            data={
+                "grant_type": "authorization_code",
+                "client_id": settings.BATAI_NABAT_OIDC_CLIENT_ID,
+                "client_secret": settings.BATAI_NABAT_OIDC_CLIENT_SECRET,
+                "redirect_uri": redirect_url,
+                "code": payload.code,
+            },
+            timeout=30,
+        )
+        response_json = response.json()
+        if response.status_code != 200:
+            logger.error("Keycloak token exchange rejected: %s - %s", response.status_code, response.text)
+            return JsonResponse({"error": "Keycloak token exchange failed."}, status=response.status_code)
+        return JsonResponse(response_json, status=200)
+    except Exception as e:
+        logger.exception(e)
+        return JsonResponse({"error": "Keycloak token exchange failed"}, status=500)
+
+
 @router.post("/", auth=None)
 def generate_nabat_recording(  # noqa: PLR0911
     request: HttpRequest,
@@ -221,10 +271,11 @@ def generate_nabat_recording(  # noqa: PLR0911
         )
 
     nabat_recording = NABatRecording.objects.filter(recording_id=payload.recordingId)
+    api_token = get_auth_header(request)
     if not nabat_recording.exists():
         # use a task to start downloading the file using the API key and generate the spectrograms
         task = nabat_recording_initialize.delay(
-            payload.recordingId, payload.surveyEventId, payload.apiToken
+            payload.recordingId, payload.surveyEventId, api_token
         )
         with transaction.atomic():
             ProcessingTask.objects.create(
@@ -237,9 +288,8 @@ def generate_nabat_recording(  # noqa: PLR0911
                 celery_id=task.id,
             )
         return {"taskId": task.id}
-    # we want to check the apiToken and make sure the user has access to the file
+    # we want to check the api token and make sure the user has access to the file
     # before returning it
-    api_token = payload.apiToken
     recording_id = payload.recordingId
     headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
     batch_query = QUERY % {
@@ -308,11 +358,10 @@ def get_spectrogram(request: HttpRequest, pk: int):
 def get_spectrogram_compressed(
     request: HttpRequest,
     pk: int,
-    apiToken: str,  # noqa: N803
 ):
     nabat_recording = get_object_or_404(NABatRecording, pk=pk)
 
-    email_or_response = get_email_if_authorized(request, apiToken, nabat_recording.recording_id)
+    email_or_response = get_email_if_authorized(request, nabat_recording.recording_id)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
 
@@ -395,16 +444,14 @@ class NABatCreateRecordingAnnotationSchema(Schema):
     comments: str = None
     model: str = None
     confidence: float
-    apiToken: str
 
 
 @router.get("/{nabat_recording_id}/recording-annotations", auth=admin_auth)
 def get_nabat_recording_annotation(
     request: HttpRequest,
     nabat_recording_id: int,
-    apiToken: str | None = None,  # noqa: N803
 ):
-    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=nabat_recording_id)
+    email_or_response = get_email_if_authorized(request, recording_pk=nabat_recording_id)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
@@ -431,9 +478,8 @@ def get_nabat_recording_annotation(
 def get_recording_annotation(
     request: HttpRequest,
     pk: int,
-    apiToken: str,  # noqa: N803
 ):
-    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=pk)
+    email_or_response = get_email_if_authorized(request, recording_pk=pk)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
@@ -454,9 +500,8 @@ def get_recording_annotation(
 def get_recording_annotation_details(
     request: HttpRequest,
     pk: int,
-    apiToken: str,  # noqa: N803
 ):
-    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=pk)
+    email_or_response = get_email_if_authorized(request, recording_pk=pk)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
@@ -471,13 +516,14 @@ def get_recording_annotation_details(
 @router.put("recording-annotation", auth=None, response={200: str})
 def create_recording_annotation(request: HttpRequest, data: NABatCreateRecordingAnnotationSchema):
     email_or_response = get_email_if_authorized(
-        request, data.apiToken, recording_pk=data.recordingId
+        request, recording_pk=data.recordingId
     )
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
 
-    token_data = decode_jwt(data.apiToken)
+    api_token = get_auth_header(request)
+    token_data = decode_jwt(api_token)
     user_id = token_data["sub"]
 
     recording = get_object_or_404(NABatRecording, pk=data.recordingId)
@@ -513,7 +559,7 @@ def update_recording_annotation(
     success message or an error message if the recording or species are not found.
     """
     email_or_response = get_email_if_authorized(
-        request, data.apiToken, recording_pk=data.recordingId
+        request, recording_pk=data.recordingId
     )
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
@@ -545,7 +591,7 @@ def update_nabat_recording_annotation(
 ):
     """Update an existing recording annotation in NABat."""
     email_or_response = get_email_if_authorized(
-        request, data.apiToken, recording_pk=data.recordingId
+        request, recording_pk=data.recordingId
     )
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
@@ -569,9 +615,12 @@ def update_nabat_recording_annotation(
             status=400,
         )
     species_id = data.species[0]
+    # We can pull the Authorization token out of the headers because
+    # if it didn't exist we would have returned already
+    api_token = get_auth_header(request)
     return update_nabat_species(
         species_id,
-        data.apiToken,
+        api_token,
         annotation.nabat_recording.recording_id,
         annotation.nabat_recording.survey_event_id,
     )
@@ -582,10 +631,9 @@ def update_nabat_recording_annotation(
 def delete_recording_annotation(
     request: HttpRequest,
     pk: int,
-    apiToken: str,  # noqa: N803
     recordingId: str,  # noqa: N803
 ):
-    email_or_response = get_email_if_authorized(request, apiToken, recording_pk=recordingId)
+    email_or_response = get_email_if_authorized(request, recording_pk=recordingId)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
     user_email = email_or_response  # safe to use
@@ -646,10 +694,10 @@ class NABatPulseMetadataSchema(Schema):
 
 
 @router.get("/{pk}/pulse_contours", auth=None)
-def get_pulse_contours(request: HttpRequest, pk: int, api_token: str):
+def get_pulse_contours(request: HttpRequest, pk: int):
     recording = get_object_or_404(NABatRecording, pk=pk)
 
-    email_or_response = get_email_if_authorized(request, api_token, recording.recording_id)
+    email_or_response = get_email_if_authorized(request, recording.recording_id)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
 
@@ -660,10 +708,10 @@ def get_pulse_contours(request: HttpRequest, pk: int, api_token: str):
 
 
 @router.get("/{pk}/pulse_metadata", auth=None)
-def get_pulse_data(request: HttpRequest, pk: int, api_token: str):
+def get_pulse_data(request: HttpRequest, pk: int):
     recording = get_object_or_404(NABatRecording, pk=pk)
 
-    email_or_response = get_email_if_authorized(request, api_token, recording.recording_id)
+    email_or_response = get_email_if_authorized(request, recording.recording_id)
     if isinstance(email_or_response, JsonResponse):
         return email_or_response
 

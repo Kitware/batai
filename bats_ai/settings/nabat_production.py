@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from .base import *
-
 # Import these afterwards, to override
 from resonant_settings.production.https import *
 from resonant_settings.production.s3_storage import *
+
+from .base import *
 
 SECRET_KEY: str = env.str("DJANGO_SECRET_KEY")
 
@@ -27,3 +27,9 @@ if _proxy_subpath:
     FORCE_SCRIPT_NAME = _proxy_subpath
     # Work around https://code.djangoproject.com/ticket/36653
     STORAGES["staticfiles"].setdefault("OPTIONS", {})["base_url"] = f"{_proxy_subpath}/{STATIC_URL}"
+
+
+BATAI_NABAT_OIDC_CLIENT_ID: str = env.str("DJANGO_BATAI_NABAT_OIDC_CLIENT_ID", default="batai")
+BATAI_NABAT_OIDC_CLIENT_SECRET: str = env.str("DJANGO_BATAI_NABAT_OIDC_CLIENT_SECRET", default="batai-local-dev-secret")
+BATAI_NABAT_OIDC_ISSUER: str = env.str("DJANGO_BATAI_NABAT_OIDC_ISSUER", default="http://localhost:8081/auth/realms/NABAT")
+BATAI_NABAT_OIDC_BASE_URL: str = env.str("DJANGO_BATAI_NABAT_OIDC_BASE_URL", default="http://localhost:8081/auth/realms/NABAT")

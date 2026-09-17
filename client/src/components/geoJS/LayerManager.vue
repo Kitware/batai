@@ -103,7 +103,6 @@ export default defineComponent({
       loadContours,
       loadNabatContours,
       isNaBat,
-      nabatApiToken,
       computedPulseContours,
       transparencyThreshold,
     } = useState();
@@ -645,10 +644,7 @@ export default defineComponent({
         if (viewPulseMetadataLayer.value) {
           if (pulseMetadataList.value.length === 0) {
             if (isNaBat()) {
-              await loadNabatPulseMetadata(
-                props.recordingId,
-                nabatApiToken.value,
-              );
+              await loadNabatPulseMetadata(props.recordingId);
             } else {
               await loadPulseMetadata(Number(props.recordingId));
             }

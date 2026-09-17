@@ -15,6 +15,7 @@ import {
 import { useRouter } from "vue-router";
 import { usePrompt } from "@use/prompt-service";
 import { useJWTToken } from "@use/useJWTToken";
+import useState from "@use/useState";
 
 export default defineComponent({
   props: {
@@ -30,14 +31,21 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    iss: {
+      type: String,
+      required: false,
+      default: '',
+    },
+    code: {
+      type: String,
+      required: false,
+      default: '',
+    }
   },
   setup(props) {
     const { prompt } = usePrompt();
     const secondsWarning = 60;
-    const { shouldWarn } = useJWTToken({
-      token: props.apiToken,
-      warningSeconds: secondsWarning,
-    });
+    const { nabatApiToken, nabatRefreshToken } = useState();
     const errorMessage: Ref<string | null> = ref(null);
     const additionalErrors: Ref<string[]> = ref([]);
     const loading = ref(true);
@@ -82,7 +90,8 @@ export default defineComponent({
         const response = await postNABatRecording(
           props.recordingId,
           props.surveyEventId,
-          props.apiToken,
+          props.iss,
+          props.code,
         );
         if ("error" in response && response.error) {
           loading.value = false;
@@ -95,7 +104,7 @@ export default defineComponent({
           loading.value = false;
           // Load in new NABatSpectrogramViewer either by route or component
           const id = (response as NABatRecordingDataResponse).recordingId;
-          router.push(`/nabat/${id}/spectrogram?apiToken=${props.apiToken}`);
+          router.push(`/nabat/${id}/spectrogram`);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
@@ -123,6 +132,11 @@ export default defineComponent({
         clearTimeout(timeoutId);
         timeoutId = null;
       }
+    });
+
+    const { shouldWarn } = useJWTToken({
+      token: nabatApiToken.value,
+      warningSeconds: secondsWarning,
     });
 
     watch(

@@ -34,7 +34,16 @@ Sentry.init({
   sendDefaultPii: true,
 });
 
-maybeRestoreLogin().then(() => {
+// The NABat recording entrypoint (Django's target for NABat's own Keycloak redirect) carries
+// its own `code`/`state` query params, unrelated to this app's login. oauth-client's
+// maybeRestoreLogin() strips those from the URL unconditionally, assuming they're its own
+// callback, so skip it entirely on this one route - it doesn't rely on this app's OAuth anyway.
+const isNabatRecordingEntrypoint = /\/nabat\/[^/]+\/?$/.test(window.location.pathname);
+const restoreLogin = isNabatRecordingEntrypoint
+  ? Promise.resolve()
+  : maybeRestoreLogin();
+
+restoreLogin.then(() => {
   /*
   The router must not be initialized until after the oauth flow is complete, because it
   stores the initial history state at the time of its construction, and we don't want it

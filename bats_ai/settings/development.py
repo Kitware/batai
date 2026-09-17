@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from django_extensions.utils import InternalIPS
-
-from .base import *
-
 # Import these afterwards, to override
 from resonant_settings.development.celery import *
 from resonant_settings.development.debug_toolbar import *
 from resonant_settings.development.minio_storage import *
+
+from .base import *
 
 INSTALLED_APPS += [
     "debug_toolbar",
@@ -57,3 +56,8 @@ OAUTH2_PROVIDER["REQUEST_APPROVAL_PROMPT"] = "force"
 SHELL_PLUS_IMPORTS = [
     "from bats_ai.core import tasks",
 ]
+
+BATAI_NABAT_OIDC_CLIENT_ID: str = env.str("DJANGO_BATAI_NABAT_OIDC_CLIENT_ID", default="batai")
+BATAI_NABAT_OIDC_CLIENT_SECRET: str = env.str("DJANGO_BATAI_NABAT_OIDC_CLIENT_SECRET", default="batai-local-dev-secret")
+BATAI_NABAT_OIDC_ISSUER: str = env.str("DJANGO_BATAI_NABAT_OIDC_ISSUER", default="http://localhost:8081/auth/realms/NABAT")
+BATAI_NABAT_OIDC_BASE_URL: str = env.str("DJANGO_BATAI_NABAT_OIDC_BASE_URL", default="http://localhost:8081/auth/realms/NABAT")

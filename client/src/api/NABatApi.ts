@@ -39,18 +39,35 @@ function isNABatRecordingCompleteResponse(
   return "taskId" in response;
 }
 
+async function postNABatAuth(
+  recordingId: string,
+  surveyEventId: string,
+  iss: string,
+  code: string,
+) {
+  const formData = new FormData();
+  formData.append("iss", iss);
+  formData.append("code", code);
+  formData.append("recordingId", recordingId.toString());
+  formData.append("surveyEventId", surveyEventId.toString());
+  const response = await axiosInstance.post("nabat/recording/authorize", formData);
+  return response.data;
+}
+
 async function postNABatRecording(
   recordingId: number,
   surveyEventId: number,
-  apiToken: string,
+  iss: string = '',
+  code: string = '',
 ) {
   const formData = new FormData();
   formData.append("recordingId", recordingId.toString());
-  formData.append("apiToken", apiToken);
   formData.append("surveyEventId", surveyEventId.toString());
+  formData.append("iss", iss);
+  formData.append("code", code);
   const response = (
     await axiosInstance.post<NABatRecordingResponse>(
-      "/nabat/recording/",
+      "nabat/recording/",
       formData,
     )
   ).data;
@@ -60,25 +77,21 @@ async function postNABatRecording(
   return response as NABatRecordingDataResponse;
 }
 
-async function getNABatSpectrogram(id: string, apiToken: string) {
+async function getNABatSpectrogram(id: string) {
   return axiosInstance.get<Spectrogram>(
-    `/nabat/recording/${id}/spectrogram?apiToken=${apiToken}`,
+    `nabat/recording/${id}/spectrogram`,
   );
 }
 
-async function getNABatSpectrogramCompressed(id: string, apiToken: string) {
+async function getNABatSpectrogramCompressed(id: string) {
   return axiosInstance.get<Spectrogram>(
-    `/nabat/recording/${id}/spectrogram/compressed?apiToken=${apiToken}`,
+    `nabat/recording/${id}/spectrogram/compressed`,
   );
 }
 
-async function getNABatRecordingFileAnnotations(
-  recordingId: number,
-  apiToken?: string,
-) {
+async function getNABatRecordingFileAnnotations(recordingId: number) {
   return axiosInstance.get<FileAnnotation[]>(
-    `/nabat/recording/${recordingId}/recording-annotations`,
-    { params: { apiToken } },
+    `nabat/recording/${recordingId}/recording-annotations`,
   );
 }
 
@@ -107,19 +120,13 @@ async function getNABatSpecies({
   });
 }
 
-async function getNABatFileAnnotationDetails(
-  recordingId: number,
-  apiToken?: string,
-) {
+async function getNABatFileAnnotationDetails(recordingId: number) {
   return axiosInstance.get<FileAnnotation & { details: FileAnnotationDetails }>(
     `nabat/recording/recording-annotation/${recordingId}/details`,
-    { params: { apiToken } },
   );
 }
 
-async function putNABatFileAnnotation(
-  fileAnnotation: UpdateFileAnnotation & { apiToken?: string },
-) {
+async function putNABatFileAnnotation(fileAnnotation: UpdateFileAnnotation) {
   return axiosInstance.put<{ message: string; id: number }>(
     `nabat/recording/recording-annotation`,
     { ...fileAnnotation },
@@ -129,7 +136,7 @@ async function putNABatFileAnnotation(
 // This function is used to patch a file annotation locally, without the NABat API.
 async function patchNABatFileAnnotationLocal(
   fileAnnotationId: number,
-  fileAnnotation: UpdateFileAnnotation & { apiToken?: string },
+  fileAnnotation: UpdateFileAnnotation,
 ) {
   return axiosInstance.patch<{ message: string; id: number }>(
     `nabat/recording/recording-annotation/${fileAnnotationId}`,
@@ -140,7 +147,7 @@ async function patchNABatFileAnnotationLocal(
 // This function is used to patch a file annotation with the NABat API.  Only takes a single species code in the array
 async function pushNABatFileAnnotationToNABat(
   fileAnnotationId: number,
-  fileAnnotation: UpdateFileAnnotation & { apiToken?: string },
+  fileAnnotation: UpdateFileAnnotation,
 ) {
   return axiosInstance.patch<{ message: string; id: number }>(
     `nabat/recording/recording-annotation/${fileAnnotationId}/push-to-nabat`,
@@ -150,12 +157,11 @@ async function pushNABatFileAnnotationToNABat(
 
 async function deleteNABatFileAnnotation(
   fileAnnotationId: number,
-  apiToken?: string,
   recordingId?: number,
 ) {
   return axiosInstance.delete<{ message: string; id: number }>(
     `nabat/recording/recording-annotation/${fileAnnotationId}`,
-    { params: { apiToken, recordingId } },
+    { params: { recordingId } },
   );
 }
 
@@ -277,23 +283,22 @@ async function exportNABatAnnotations(
   return response.data;
 }
 
-async function getNabatPulseContours(recordingId: string, apiToken: string) {
+async function getNabatPulseContours(recordingId: string) {
   const result = await axiosInstance.get<ComputedPulseContour[]>(
     `nabat/recording/${recordingId}/pulse_contours`,
-    { params: { api_token: apiToken } },
   );
   return result.data;
 }
 
-async function getNabatPulseMetadata(recordingId: string, apiToken: string) {
+async function getNabatPulseMetadata(recordingId: string) {
   const result = await axiosInstance.get<PulseMetadata[]>(
     `nabat/recording/${recordingId}/pulse_metadata`,
-    { params: { api_token: apiToken } },
   );
   return result.data;
 }
 
 export {
+  postNABatAuth,
   postNABatRecording,
   getNABatSpectrogram,
   getNABatSpectrogramCompressed,

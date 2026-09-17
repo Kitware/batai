@@ -13,6 +13,7 @@ import oauthClient from "../plugins/Oauth";
 import Admin from "../views/Admin.vue";
 import NABatRecording from "../views/NABat/NABatRecording.vue";
 import NABatSpectrogram from "../views/NABat/NABatSpectrogram.vue";
+import NABatAuthorization from "@/views/NABat/NABatAuthorization.vue";
 
 function beforeEach(
   to: RouteLocationNormalized,
@@ -76,6 +77,8 @@ function routerInit() {
         props: (route) => ({
           id: route.params.id,
           apiToken: route.query.apiToken,
+          iss: route.query.iss,
+          code: route.query.code,
         }),
       },
       {
@@ -85,7 +88,19 @@ function routerInit() {
           recordingId: parseInt(route.params.recordingId as string, 10),
           apiToken: route.query.apiToken,
           surveyEventId: parseInt(route.query.surveyEventId as string, 10),
+          iss: route.query.iss,
+          code: route.query.code,
         }),
+      },
+      {
+        path: "/nabat/auth/",
+        component: NABatAuthorization,
+        props: (route) => ({
+          recordingId: route.query.recordingId,
+          surveyEventId: route.query.surveyEventId,
+          iss: route.query.iss,
+          code: route.query.code,
+        })
       },
     ],
   });
