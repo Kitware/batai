@@ -66,10 +66,7 @@ export default defineComponent({
     const loadFileAnnotations = async () => {
       if (props.type === "nabat") {
         annotations.value = (
-          await getNABatRecordingFileAnnotations(
-            props.recordingId,
-            props.apiToken,
-          )
+          await getNABatRecordingFileAnnotations(props.recordingId)
         ).data;
       } else {
         annotations.value = (await getFileAnnotations(props.recordingId)).data;
@@ -103,13 +100,12 @@ export default defineComponent({
     const addAnnotation = async () => {
       addingAnnotation.value = true;
       try {
-        const newAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
+        const newAnnotation: UpdateFileAnnotation = {
           recordingId: props.recordingId,
           species: [],
           comments: "",
           model: "User Defined",
           confidence: 1.0,
-          apiToken: props.apiToken,
         };
         if (props.type === "nabat") {
           await putNABatFileAnnotation(newAnnotation);

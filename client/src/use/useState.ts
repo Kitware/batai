@@ -3,6 +3,7 @@ import { useRouter } from "vue-router";
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import {
+  axiosInstance,
   type Configuration,
   getConfiguration,
   getCurrentUser,
@@ -117,13 +118,19 @@ async function loadContours(recordingId: number) {
 }
 
 const nabatApiToken = ref("");
+const nabatRefreshToken = ref("");
+
+axiosInstance.interceptors.request.use((config) => {
+  if (config.url?.startsWith("nabat") && nabatApiToken.value) {
+    config.headers.Authorization = `Bearer ${nabatApiToken.value}`;
+  }
+  return config;
+});
+
 async function loadNabatContours(recordingId: string) {
   contoursLoading.value = true;
   try {
-    computedPulseContours.value = await getNabatPulseContours(
-      recordingId,
-      nabatApiToken.value,
-    );
+    computedPulseContours.value = await getNabatPulseContours(recordingId);
   } finally {
     contoursLoading.value = false;
   }
@@ -300,6 +307,10 @@ export default function useState() {
     nabatApiToken.value = apiToken;
   }
 
+  function setNabatRefreshToken(refreshToken: string) {
+    nabatRefreshToken.value = refreshToken;
+  }
+
   return {
     annotationState,
     creationType,
@@ -372,5 +383,7 @@ export default function useState() {
     spectrogramFilename,
     setNabatApiToken,
     nabatApiToken,
+    setNabatRefreshToken,
+    nabatRefreshToken,
   };
 }
