@@ -1,0 +1,125 @@
+{
+  "realm": "NABAT",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 900,
+  "clientScopes": [
+    {
+      "name": "profile",
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "username",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "username",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "preferred_username"
+          }
+        }
+      ]
+    },
+    {
+      "name": "email",
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "email",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "email"
+          }
+        },
+        {
+          "name": "email verified",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "emailVerified",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "email_verified",
+            "jsonType.label": "boolean"
+          }
+        }
+      ]
+    },
+    {
+      "name": "nabat-service-audience",
+      "protocol": "openid-connect",
+      "description": "Stamps the nabat-service-prod audience onto issued tokens, matching what NABat's GraphQL API expects",
+      "protocolMappers": [
+        {
+          "name": "nabat-service-prod-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "nabat-service-prod",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "nabat-prod",
+      "name": "NABat portal (local stand-in)",
+      "description": "Stand-in for the existing NABat portal client that mints the apiToken forwarded to batai today",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:8080/*"],
+      "webOrigins": ["+"],
+      "defaultClientScopes": ["profile", "email", "nabat-service-audience"]
+    },
+    {
+      "clientId": "batai",
+      "name": "BatAI (local stand-in)",
+      "description": "Stand-in OIDC client for batai to receive a code instead of a raw apiToken. nabat-service-audience is optional so tests can toggle whether NABat's API would accept a batai-issued token.",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "batai-local-dev-secret",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:8080/*"],
+      "webOrigins": ["+"],
+      "defaultClientScopes": ["profile", "email"],
+      "optionalClientScopes": ["nabat-service-audience"]
+    }
+  ],
+  "users": [
+    {
+      "username": "testuser",
+      "enabled": true,
+      "email": "testuser@example.com",
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "testuser",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
