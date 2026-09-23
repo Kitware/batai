@@ -30,6 +30,12 @@ if _proxy_subpath:
 
 
 BATAI_NABAT_OIDC_CLIENT_ID: str = env.str("DJANGO_BATAI_NABAT_OIDC_CLIENT_ID", default="batai")
-BATAI_NABAT_OIDC_CLIENT_SECRET: str = env.str("DJANGO_BATAI_NABAT_OIDC_CLIENT_SECRET", default="batai-local-dev-secret")
-BATAI_NABAT_OIDC_ISSUER: str = env.str("DJANGO_BATAI_NABAT_OIDC_ISSUER", default="http://localhost:8081/auth/realms/NABAT")
-BATAI_NABAT_OIDC_BASE_URL: str = env.str("DJANGO_BATAI_NABAT_OIDC_BASE_URL", default="http://localhost:8081/auth/realms/NABAT")
+BATAI_NABAT_OIDC_CLIENT_SECRET: str = env.str(
+    "DJANGO_BATAI_NABAT_OIDC_CLIENT_SECRET", default="batai-local-dev-secret"
+)
+BATAI_NABAT_OIDC_ISSUER: str = env.str(
+    "DJANGO_BATAI_NABAT_OIDC_ISSUER", default="http://localhost:8081/auth/realms/NABAT"
+)
+BATAI_NABAT_OIDC_BASE_URL: str = env.str(
+    "DJANGO_BATAI_NABAT_OIDC_BASE_URL", default="http://localhost:8081/auth/realms/NABAT"
+)
