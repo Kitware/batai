@@ -10,6 +10,7 @@ import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { spectroXToTime, type SpectroInfo } from "@components/geoJS/geoJSUtils";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import useState from "@use/useState";
+import useNABatTokens from "@/use/useNABatTokens";
 import usePulseMetadata from "@/use/usePulseMetadata";
 import ColorSchemeDialog from "@components/ColorSchemeDialog.vue";
 import TransparencyFilterControl from "@/components/TransparencyFilterControl.vue";
@@ -37,11 +38,6 @@ export default defineComponent({
       type: String,
       required: true,
     },
-    apiToken: {
-      type: String,
-      required: false,
-      default: () => "",
-    },
   },
   setup(props) {
     const {
@@ -61,8 +57,8 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
-      setNabatApiToken,
     } = useState();
+    const { nabatApiToken } = useNABatTokens();
     const {
       clearPulseMetadata,
       viewPulseMetadataLayer,
@@ -72,7 +68,7 @@ export default defineComponent({
     const secondsWarning = 60;
     const { prompt } = usePrompt();
     const { shouldWarn } = useJWTToken({
-      token: props.apiToken,
+      token: nabatApiToken.value,
       warningSeconds: secondsWarning,
     });
     const images: Ref<HTMLImageElement[]> = ref([]);
@@ -103,13 +99,12 @@ export default defineComponent({
     const loadData = async () => {
       loadedImage.value = false;
       clearPulseMetadata();
-      setNabatApiToken(props.apiToken);
       try {
         const tempViewPulseMetadataLayer = viewPulseMetadataLayer.value;
         viewPulseMetadataLayer.value = false;
         const response = compressed.value
-          ? await getNABatSpectrogramCompressed(props.id, props.apiToken)
-          : await getNABatSpectrogram(props.id, props.apiToken);
+          ? await getNABatSpectrogramCompressed(props.id)
+          : await getNABatSpectrogram(props.id);
         if (response.data.urls.length) {
           const urls = response.data.urls;
           images.value = [];
@@ -173,7 +168,7 @@ export default defineComponent({
           viewPulseMetadataLayer.value &&
           pulseMetadataList.value.length === 0
         ) {
-          await loadNabatPulseMetadata(props.id, props.apiToken);
+          await loadNabatPulseMetadata(props.id);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
@@ -258,7 +253,7 @@ export default defineComponent({
     watch(
       shouldWarn,
       async () => {
-        if (shouldWarn.value && props.apiToken) {
+        if (shouldWarn.value && nabatApiToken.value) {
           await prompt({
             title: "API Token Expiration",
             text: [
@@ -620,7 +615,6 @@ export default defineComponent({
             <RecordingAnnotations
               :species="speciesList"
               :recording-id="parseInt(id)"
-              :api-token="apiToken"
               type="nabat"
             />
           </div>

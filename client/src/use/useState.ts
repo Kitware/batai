@@ -23,6 +23,7 @@ import {
   interpolateTurbo,
 } from "d3-scale-chromatic";
 import { getNabatPulseContours } from "@/api/NABatApi";
+import { NABAT_PATH_REGEX } from "@/constants";
 
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<"pulse" | "sequence"> = ref("pulse");
@@ -116,14 +117,10 @@ async function loadContours(recordingId: number) {
   contoursLoading.value = false;
 }
 
-const nabatApiToken = ref("");
 async function loadNabatContours(recordingId: string) {
   contoursLoading.value = true;
   try {
-    computedPulseContours.value = await getNabatPulseContours(
-      recordingId,
-      nabatApiToken.value,
-    );
+    computedPulseContours.value = await getNabatPulseContours(recordingId);
   } finally {
     contoursLoading.value = false;
   }
@@ -293,11 +290,7 @@ export default function useState() {
    * @returns `true` if looking at an NABat view, `false` otherwise
    */
   function isNaBat(): boolean {
-    return router.currentRoute.value.fullPath.includes("nabat");
-  }
-
-  function setNabatApiToken(apiToken: string) {
-    nabatApiToken.value = apiToken;
+    return NABAT_PATH_REGEX.test(router.currentRoute.value.fullPath);
   }
 
   return {
@@ -370,7 +363,5 @@ export default function useState() {
     clearMapFilterBounds,
     loadMapFilterBounds,
     spectrogramFilename,
-    setNabatApiToken,
-    nabatApiToken,
   };
 }

@@ -27,3 +27,9 @@ if _proxy_subpath:
     FORCE_SCRIPT_NAME = _proxy_subpath
     # Work around https://code.djangoproject.com/ticket/36653
     STORAGES["staticfiles"].setdefault("OPTIONS", {})["base_url"] = f"{_proxy_subpath}/{STATIC_URL}"
+
+
+BATAI_NABAT_OIDC_CLIENT_ID: str = env.str("DJANGO_BATAI_NABAT_OIDC_CLIENT_ID")
+BATAI_NABAT_OIDC_CLIENT_SECRET: str = env.str("DJANGO_BATAI_NABAT_OIDC_CLIENT_SECRET")
+BATAI_NABAT_OIDC_ISSUER: str = env.str("DJANGO_BATAI_NABAT_OIDC_ISSUER")
+BATAI_NABAT_OIDC_BASE_URL: str = env.str("DJANGO_BATAI_NABAT_OIDC_BASE_URL")

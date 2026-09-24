@@ -22,10 +22,6 @@ export default defineComponent({
       type: Number,
       required: true,
     },
-    apiToken: {
-      type: String,
-      default: () => "",
-    },
   },
   emits: ["close"],
 
@@ -54,16 +50,14 @@ export default defineComponent({
         error.value = null;
 
         try {
-          const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } =
-            {
-              recordingId: props.recordingId,
-              confidence: 1.0,
-              comments: "",
-              model: "User Defined",
-              species: [selected.value],
-              id: props.annotation.id,
-              apiToken: props.apiToken,
-            };
+          const updateAnnotation: UpdateFileAnnotation = {
+            recordingId: props.recordingId,
+            confidence: 1.0,
+            comments: "",
+            model: "User Defined",
+            species: [selected.value],
+            id: props.annotation.id,
+          };
 
           await pushNABatFileAnnotationToNABat(
             props.annotation.id,
