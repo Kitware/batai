@@ -1,10 +1,10 @@
-import { readonly, ref } from 'vue';
+import { readonly, ref } from "vue";
 import { axiosInstance } from "../api/api";
 import { NABAT_PATH_REGEX } from "../constants";
 
 // Force setting of the tokens to happen with the exported setters
-const _nabatApiToken = ref('');
-const _nabatRefreshToken = ref('');
+const _nabatApiToken = ref("");
+const _nabatRefreshToken = ref("");
 
 const nabatApiToken = readonly(_nabatApiToken);
 const nabatRefreshToken = readonly(_nabatRefreshToken);

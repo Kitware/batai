@@ -5,7 +5,7 @@ import {
   getFileAnnotationDetails,
 } from "../api/api";
 import { getNABatFileAnnotationDetails } from "../api/NABatApi";
-import useState from '@/use/useState';
+import useState from "@/use/useState";
 
 export default defineComponent({
   props: {

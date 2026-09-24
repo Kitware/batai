@@ -20,5 +20,10 @@ const NABAT_PATH_REGEX = /^\/?nabat(\/|$)/;
 // link) - and not deeper client-side routes like "/nabat/:id/spectrogram".
 const NABAT_ENTRYPOINT_PATH_REGEX = /^\/nabat\/[^/]+\/?$/;
 
-export { RecordingMimeTypes, DEFAULT_SAMPLE_FRAME_ID, NABAT_PATH_REGEX, NABAT_ENTRYPOINT_PATH_REGEX };
+export {
+  RecordingMimeTypes,
+  DEFAULT_SAMPLE_FRAME_ID,
+  NABAT_PATH_REGEX,
+  NABAT_ENTRYPOINT_PATH_REGEX,
+};
 export type { SpectrogramView };
