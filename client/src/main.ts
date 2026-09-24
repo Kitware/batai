@@ -10,6 +10,7 @@ import oauthClient, { maybeRestoreLogin } from "./plugins/Oauth";
 import initRouter from "./router";
 import { axiosInstance } from "./api/api";
 import { installPrompt } from "./use/prompt-service";
+import { NABAT_ENTRYPOINT_PATH_REGEX } from "./constants";
 
 const app = createApp(App);
 const Vuetify = createVuetify({
@@ -38,7 +39,7 @@ Sentry.init({
 // its own `code`/`state` query params, unrelated to this app's login. oauth-client's
 // maybeRestoreLogin() strips those from the URL unconditionally, assuming they're its own
 // callback, so skip it entirely on this one route - it doesn't rely on this app's OAuth anyway.
-const isNabatRecordingEntrypoint = /\/nabat\/[^/]+\/?$/.test(
+const isNabatRecordingEntrypoint = NABAT_ENTRYPOINT_PATH_REGEX.test(
   window.location.pathname,
 );
 const restoreLogin = isNabatRecordingEntrypoint

@@ -3,7 +3,6 @@ import { useRouter } from "vue-router";
 import { cloneDeep } from "lodash";
 import * as d3 from "d3";
 import {
-  axiosInstance,
   type Configuration,
   getConfiguration,
   getCurrentUser,
@@ -24,6 +23,7 @@ import {
   interpolateTurbo,
 } from "d3-scale-chromatic";
 import { getNabatPulseContours } from "@/api/NABatApi";
+import { NABAT_PATH_REGEX } from "@/constants";
 
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<"pulse" | "sequence"> = ref("pulse");
@@ -290,7 +290,7 @@ export default function useState() {
    * @returns `true` if looking at an NABat view, `false` otherwise
    */
   function isNaBat(): boolean {
-    return router.currentRoute.value.fullPath.includes("nabat");
+    return NABAT_PATH_REGEX.test(router.currentRoute.value.fullPath);
   }
 
   return {
