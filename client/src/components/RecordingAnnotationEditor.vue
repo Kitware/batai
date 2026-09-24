@@ -46,10 +46,6 @@ export default defineComponent({
       type: Number,
       required: true,
     },
-    apiToken: {
-      type: String,
-      default: () => "",
-    },
     type: {
       type: String as PropType<"nabat" | null>,
       default: () => null,
@@ -309,7 +305,6 @@ export default defineComponent({
           :species-list="species"
           :recording-id="recordingId"
           :annotation="annotation"
-          :api-token="apiToken"
         />
       </v-row>
       <v-row

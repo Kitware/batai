@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { postNABatAuth } from "@/api/NABatApi";
-import useState from "@/use/useState";
+import useNABatTokens from "@/use/useNABatTokens";
 import { useRouter } from "vue-router";
 
-const { setNabatApiToken, setNabatRefreshToken } = useState();
+const { setApiToken, setRefreshToken } = useNABatTokens();
 
 const props = defineProps<{
   iss: string;
@@ -28,8 +28,8 @@ async function initiateTokenExchange() {
       props.code,
     );
     if (exchangeData["access_token"] && exchangeData["refresh_token"]) {
-      setNabatApiToken(exchangeData["access_token"]);
-      setNabatRefreshToken(exchangeData["refresh_token"]);
+      setApiToken(exchangeData["access_token"]);
+      setRefreshToken(exchangeData["refresh_token"]);
       // Redirect to the nabat recording page
       router.push(
         `/nabat/${props.recordingId}/?surveyEventId=${props.surveyEventId}`,

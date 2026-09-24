@@ -15,7 +15,7 @@ import {
 import { useRouter } from "vue-router";
 import { usePrompt } from "@use/prompt-service";
 import { useJWTToken } from "@use/useJWTToken";
-import useState from "@use/useState";
+import useNABatTokens from "@/use/useNABatTokens";
 
 export default defineComponent({
   props: {
@@ -31,7 +31,7 @@ export default defineComponent({
   setup(props) {
     const { prompt } = usePrompt();
     const secondsWarning = 60;
-    const { nabatApiToken } = useState();
+    const { nabatApiToken } = useNABatTokens();
     const errorMessage: Ref<string | null> = ref(null);
     const additionalErrors: Ref<string[]> = ref([]);
     const loading = ref(true);

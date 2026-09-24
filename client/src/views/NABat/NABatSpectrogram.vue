@@ -10,6 +10,7 @@ import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { spectroXToTime, type SpectroInfo } from "@components/geoJS/geoJSUtils";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
 import useState from "@use/useState";
+import useNABatTokens from "@/use/useNABatTokens";
 import usePulseMetadata from "@/use/usePulseMetadata";
 import ColorSchemeDialog from "@components/ColorSchemeDialog.vue";
 import TransparencyFilterControl from "@/components/TransparencyFilterControl.vue";
@@ -56,8 +57,8 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
-      nabatApiToken,
     } = useState();
+    const { nabatApiToken } = useNABatTokens();
     const {
       clearPulseMetadata,
       viewPulseMetadataLayer,
@@ -298,7 +299,6 @@ export default defineComponent({
       toggleDrawingBoundingBox,
       fixedAxes,
       toggleFixedAxes,
-      nabatApiToken,
       // Other user selection
       selectedUsers,
       colorScale,
@@ -615,7 +615,6 @@ export default defineComponent({
             <RecordingAnnotations
               :species="speciesList"
               :recording-id="parseInt(id)"
-              :api-token="nabatApiToken"
               type="nabat"
             />
           </div>

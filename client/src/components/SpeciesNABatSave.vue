@@ -22,10 +22,6 @@ export default defineComponent({
       type: Number,
       required: true,
     },
-    apiToken: {
-      type: String,
-      default: () => "",
-    },
   },
   emits: ["close"],
 

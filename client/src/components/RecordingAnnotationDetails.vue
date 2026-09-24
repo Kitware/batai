@@ -5,6 +5,7 @@ import {
   getFileAnnotationDetails,
 } from "../api/api";
 import { getNABatFileAnnotationDetails } from "../api/NABatApi";
+import useState from '@/use/useState';
 
 export default defineComponent({
   props: {
@@ -12,19 +13,17 @@ export default defineComponent({
       type: Number as PropType<number>,
       required: true,
     },
-    apiToken: {
-      type: String as PropType<string | undefined>,
-      default: () => "",
-    },
   },
   emits: ["close"],
   setup(props, { emit }) {
     const annotationData = ref<FileAnnotationDetails | null>(null);
     const loading = ref(true);
 
+    const { isNaBat } = useState();
+
     onMounted(async () => {
       try {
-        const response = props.apiToken
+        const response = isNaBat()
           ? await getNABatFileAnnotationDetails(props.recordingId)
           : await getFileAnnotationDetails(props.recordingId);
         annotationData.value = response.data.details;

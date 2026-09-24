@@ -117,16 +117,6 @@ async function loadContours(recordingId: number) {
   contoursLoading.value = false;
 }
 
-const nabatApiToken = ref("");
-const nabatRefreshToken = ref("");
-
-axiosInstance.interceptors.request.use((config) => {
-  if (config.url?.startsWith("nabat") && nabatApiToken.value) {
-    config.headers.Authorization = `Bearer ${nabatApiToken.value}`;
-  }
-  return config;
-});
-
 async function loadNabatContours(recordingId: string) {
   contoursLoading.value = true;
   try {
@@ -303,14 +293,6 @@ export default function useState() {
     return router.currentRoute.value.fullPath.includes("nabat");
   }
 
-  function setNabatApiToken(apiToken: string) {
-    nabatApiToken.value = apiToken;
-  }
-
-  function setNabatRefreshToken(refreshToken: string) {
-    nabatRefreshToken.value = refreshToken;
-  }
-
   return {
     annotationState,
     creationType,
@@ -381,9 +363,5 @@ export default function useState() {
     clearMapFilterBounds,
     loadMapFilterBounds,
     spectrogramFilename,
-    setNabatApiToken,
-    nabatApiToken,
-    setNabatRefreshToken,
-    nabatRefreshToken,
   };
 }

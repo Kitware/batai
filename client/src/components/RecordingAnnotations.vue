@@ -22,6 +22,7 @@ import {
 } from "@api/NABatApi";
 import RecordingAnnotationDetails from "./RecordingAnnotationDetails.vue";
 import useState from "@use/useState";
+import useNABatTokens from "@/use/useNABatTokens";
 import { decodeJWT } from "../use/useJWTToken";
 export default defineComponent({
   name: "AnnotationList",
@@ -42,10 +43,6 @@ export default defineComponent({
       type: String as PropType<"nabat" | null>,
       default: () => null,
     },
-    apiToken: {
-      type: String,
-      default: () => "",
-    },
   },
   emits: [],
   setup(props) {
@@ -56,6 +53,7 @@ export default defineComponent({
     const detailsDialog = ref(false);
     const detailRecordingId = ref(-1);
     const { configuration, isNaBat, currentUser } = useState();
+    const { nabatApiToken } = useNABatTokens();
 
     const setSelectedId = (annotation: FileAnnotation) => {
       selectedAnnotation.value = annotation;
@@ -84,7 +82,7 @@ export default defineComponent({
     onMounted(async () => {
       await loadFileAnnotations();
       if (props.type === "nabat") {
-        const decoded = decodeJWT(props.apiToken);
+        const decoded = decodeJWT(nabatApiToken.value);
         if (decoded["email"]) {
           currentNaBatUser.value = decoded["email"];
           const foundItem = annotations.value.find(
@@ -169,7 +167,7 @@ export default defineComponent({
       const currentUserAnnotations = annotations.value.filter(
         (item) => item.owner === currentNaBatUser.value,
       );
-      if (isAdmin.value && props.type === "nabat" && !props.apiToken) {
+      if (isAdmin.value && props.type === "nabat" && !nabatApiToken.value) {
         return true;
       }
       return currentUserAnnotations.length > 0 && props.type === "nabat";
@@ -332,7 +330,6 @@ export default defineComponent({
       :species="species"
       :recording-id="recordingId"
       :annotation="selectedAnnotation"
-      :api-token="apiToken"
       :submitted-annotation-id="userSubmittedAnnotationId"
       :type="type"
       class="mt-4"
@@ -343,7 +340,6 @@ export default defineComponent({
     <v-dialog v-model="detailsDialog" width="600">
       <RecordingAnnotationDetails
         :recording-id="detailRecordingId"
-        :api-token="apiToken"
         @close="detailsDialog = false"
       />
     </v-dialog>
