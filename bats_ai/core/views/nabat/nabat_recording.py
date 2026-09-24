@@ -273,6 +273,8 @@ def generate_nabat_recording(  # noqa: PLR0911
 
     nabat_recording = NABatRecording.objects.filter(recording_id=payload.recordingId)
     api_token = get_auth_header(request)
+    if not api_token:
+        return JsonResponse({"error": "Missing or invalid Authorization header"}, status=401)
     if not nabat_recording.exists():
         # use a task to start downloading the file using the API key and generate the spectrograms
         task = nabat_recording_initialize.delay(
