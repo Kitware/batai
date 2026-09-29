@@ -46,10 +46,6 @@ export default defineComponent({
       type: Number,
       required: true,
     },
-    apiToken: {
-      type: String,
-      default: () => "",
-    },
     type: {
       type: String as PropType<"nabat" | null>,
       default: () => null,
@@ -107,14 +103,13 @@ export default defineComponent({
             speciesIds.push(found.pk);
           }
         });
-        const updateAnnotation: UpdateFileAnnotation & { apiToken?: string } = {
+        const updateAnnotation: UpdateFileAnnotation = {
           recordingId: props.recordingId,
           comments: comments.value,
           confidence: confidence.value,
           model: "User Defined",
           species: speciesIds,
           id: props.annotation.id,
-          apiToken: props.apiToken,
         };
         if (props.type === "nabat") {
           await patchNABatFileAnnotationLocal(
@@ -154,7 +149,6 @@ export default defineComponent({
           if (props.type === "nabat") {
             await deleteNABatFileAnnotation(
               props.annotation.id,
-              props.apiToken,
               props.recordingId,
             );
           } else {
@@ -311,7 +305,6 @@ export default defineComponent({
           :species-list="species"
           :recording-id="recordingId"
           :annotation="annotation"
-          :api-token="apiToken"
         />
       </v-row>
       <v-row

@@ -1,0 +1,24 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      # Mirrors production's /auth/realms/NABAT/... path shape
+      KC_HTTP_RELATIVE_PATH: /auth
+      # Pin the reported hostname+port so issued tokens always carry the same `iss`, whether
+      # requested via the browser (localhost:8081) or from another container (keycloak:8080).
+      # A bare hostname isn't enough here - Keycloak resolves scheme/port from the actual
+      # request unless given a full URL.
+      KC_HOSTNAME: http://localhost:8081/auth
+    healthcheck:
+      # No curl/wget in the keycloak image; probe the management health endpoint via bash's /dev/tcp
+      test: ['CMD-SHELL', 'exec 3<>/dev/tcp/localhost/9000 && echo -e "GET /auth/health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep -m 1 status | grep -m 1 UP']
+      start_period: 30s
+      start_interval: 2s
+    ports:
+      - 8081:8080
+    volumes:
+      - ./dev/keycloak/NABAT-realm.json:/opt/keycloak/data/import/NABAT-realm.json:ro
