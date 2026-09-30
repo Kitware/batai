@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Reproduces the NABat "open in batai" redirect flow against the local Keycloak
-# (docker-compose-keycloak.yml) without a browser: authenticates as a test user,
+# (docker-compose-nabat-mock.yml) without a browser: authenticates as a test user,
 # follows the same authorization-code redirect NABat's portal triggers, then
 # exchanges the resulting code for a token exactly like batai's backend would.
 set -euo pipefail
