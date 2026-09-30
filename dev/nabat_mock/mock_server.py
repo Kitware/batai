@@ -40,11 +40,11 @@ since only the published port is reachable from there.
 
 from __future__ import annotations
 
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import logging
 import os
 import re
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from minio import Minio
 
