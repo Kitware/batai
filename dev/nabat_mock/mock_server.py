@@ -73,7 +73,6 @@ SEED_ANNOTATION_SPECIES_ID = int(os.environ.get("SEED_ANNOTATION_SPECIES_ID", "1
 SEED_ANNOTATION_EMAIL = os.environ.get("SEED_ANNOTATION_EMAIL", "testuser@example.com")
 
 ACOUSTIC_FILE_ID_RE = re.compile(r'acousticFileId:\s*"?(\d+)"?')
-SURVEY_EVENT_ID_RE = re.compile(r'surveyEventById\(id:\s*"?(\d+)"?\)')
 
 # Presigning is pure local signing - no network I/O - as long as a region is given
 # (otherwise minio-py falls back to a live GetBucketLocation request). So this never
