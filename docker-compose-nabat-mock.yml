@@ -21,4 +21,21 @@ services:
     ports:
       - 8081:8080
     volumes:
-      - ./dev/keycloak/NABAT-realm.json:/opt/keycloak/data/import/NABAT-realm.json:ro
+      - ./dev/nabat_mock/NABAT-realm.json:/opt/keycloak/data/import/NABAT-realm.json:ro
+
+  # Stands in for NABat's GraphQL API (BATAI_NABAT_API_URL), scoped to the
+  # single-recording fetch flow. See dev/nabat_mock/mock_server.py. Never actually
+  # connects to minio (presigning is local signing), so no depends_on is needed here.
+  nabat-mock:
+    build:
+      context: ./dev/nabat_mock
+    environment:
+      # Must be a host the celery worker downloading the presigned URL can resolve:
+      # the compose-network name if celery also runs in Docker (the default), or
+      # "localhost:9000" if celery runs natively - export an override before `up`.
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: minioAccessKey
+      MINIO_SECRET_KEY: minioSecretKey
+      MINIO_BUCKET: nabat-mock
+    ports:
+      - 8082:8082

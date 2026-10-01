@@ -2,8 +2,9 @@
 # Prints a Keycloak authorization URL you can paste into a browser to kick off the
 # NABat -> batai redirect flow for real, the same way clicking "open in batai" in the
 # NABat portal does (see scripts/USGS/sampleUrl.txt for the legacy apiToken-URL equivalent).
-# Since batai doesn't handle the `code` param yet, the landing page will just show today's
-# apiToken-less route - this is for exercising the Keycloak leg of the flow in a real browser.
+# With docker-compose-nabat-mock.yml's nabat-mock service also up, this drives the full
+# pipeline end to end: Keycloak login, code exchange, and then a real fetch + spectrogram
+# generation against the mocked NABat GraphQL API and the existing minio service.
 set -euo pipefail
 
 KEYCLOAK_URL=${KEYCLOAK_URL:-http://localhost:8081/auth}
