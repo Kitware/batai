@@ -88,14 +88,10 @@ name `minio:9000` - fine if celery is also containerized. If you run celery nati
 [native-development.md](../native-development.md)), it can't resolve `minio`; only the
 published port on `localhost` is reachable from the host.
 
-`dev/.env.docker-compose-native` already sets `MINIO_ENDPOINT=localhost:9000` for exactly
-this. `docker compose` reads it as a shell-env override (`${MINIO_ENDPOINT:-minio:9000}` in
-docker-compose-nabat-mock.yml), so as long as you bring the mock stack up from a shell
-that's sourced it, the override just takes effect:
+If you run celery locally for your development, make sure to set `MINIO_ENDPOINT=localhost:9000` in your environment.
 
 ```bash
-source ./dev/export-env.sh
-docker compose -f docker-compose.yml -f docker-compose-nabat-mock.yml up
+MINIO_ENDPOINT=localhost:9000 docker compose -f docker-compose.yml -f docker-compose-nabat-mock.yml up
 ```
 
 ## Testing the full flow
