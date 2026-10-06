@@ -30,8 +30,7 @@ export interface NATBatFiles {
 export interface NABatRecordingDataResponse {
   recordingId: string;
 }
-export type NABatRecordingResponse =
-  NABatRecordingCompleteResponse | NABatRecordingDataResponse;
+export type NABatRecordingResponse = NABatRecordingCompleteResponse | NABatRecordingDataResponse;
 
 function isNABatRecordingCompleteResponse(
   response: NABatRecordingResponse,
@@ -50,10 +49,7 @@ async function postNABatAuth(
   formData.append("code", code);
   formData.append("recordingId", recordingId.toString());
   formData.append("surveyEventId", surveyEventId.toString());
-  const response = await axiosInstance.post(
-    "nabat/recording/authorize",
-    formData,
-  );
+  const response = await axiosInstance.post("nabat/recording/authorize", formData);
   return response.data;
 }
 
@@ -61,16 +57,37 @@ async function postNABatRecording(recordingId: number, surveyEventId: number) {
   const formData = new FormData();
   formData.append("recordingId", recordingId.toString());
   formData.append("surveyEventId", surveyEventId.toString());
-  const response = (
-    await axiosInstance.post<NABatRecordingResponse>(
-      "nabat/recording/",
-      formData,
-    )
-  ).data;
+  const response = (await axiosInstance.post<NABatRecordingResponse>("nabat/recording/", formData))
+    .data;
   if (isNABatRecordingCompleteResponse(response)) {
     return response as NABatRecordingCompleteResponse;
   }
   return response as NABatRecordingDataResponse;
+}
+
+async function postNABatFileListAuth(fileListId: string, iss: string, code: string) {
+  const formData = new FormData();
+  formData.append("iss", iss);
+  formData.append("code", code);
+  formData.append("fileListId", fileListId.toString());
+  const response = await axiosInstance.post("nabat/file-list/authorize", formData);
+  return response.data;
+}
+
+export interface NABatFileListCreateResponse {
+  fileListId: number;
+  taskId: string | null;
+  error?: string;
+}
+
+async function postNABatFileListCreate(fileListId: number) {
+  const formData = new FormData();
+  formData.append("fileListId", fileListId.toString());
+  const response = await axiosInstance.post<NABatFileListCreateResponse>(
+    "nabat/file-list/create",
+    formData,
+  );
+  return response.data;
 }
 
 async function getNABatSpectrogram(id: string) {
@@ -78,9 +95,7 @@ async function getNABatSpectrogram(id: string) {
 }
 
 async function getNABatSpectrogramCompressed(id: string) {
-  return axiosInstance.get<Spectrogram>(
-    `nabat/recording/${id}/spectrogram/compressed`,
-  );
+  return axiosInstance.get<Spectrogram>(`nabat/recording/${id}/spectrogram/compressed`);
 }
 
 async function getNABatRecordingFileAnnotations(recordingId: number) {
@@ -90,9 +105,7 @@ async function getNABatRecordingFileAnnotations(recordingId: number) {
 }
 
 async function getNABatFileAnnotations(recordingId: number) {
-  return axiosInstance.get<FileAnnotation[]>(
-    `recording/${recordingId}/recording-annotations`,
-  );
+  return axiosInstance.get<FileAnnotation[]>(`recording/${recordingId}/recording-annotations`);
 }
 
 async function getNABatSpecies({
@@ -149,10 +162,7 @@ async function pushNABatFileAnnotationToNABat(
   );
 }
 
-async function deleteNABatFileAnnotation(
-  fileAnnotationId: number,
-  recordingId?: number,
-) {
+async function deleteNABatFileAnnotation(fileAnnotationId: number, recordingId?: number) {
   return axiosInstance.delete<{ message: string; id: number }>(
     `nabat/recording/recording-annotation/${fileAnnotationId}`,
     { params: { recordingId } },
@@ -207,14 +217,13 @@ export interface NABatConfigurationRecordingParams {
 }
 
 // Function to get paginated recordings with filters
-async function getNABatConfigurationRecordings(
-  filters: NABatConfigurationRecordingParams,
-) {
-  const response = await axiosInstance.get<
-    PaginatedResponse<RecordingListItem>
-  >("/nabat/configuration/recordings", {
-    params: filters,
-  });
+async function getNABatConfigurationRecordings(filters: NABatConfigurationRecordingParams) {
+  const response = await axiosInstance.get<PaginatedResponse<RecordingListItem>>(
+    "/nabat/configuration/recordings",
+    {
+      params: filters,
+    },
+  );
   return response.data;
 }
 
@@ -241,9 +250,7 @@ async function getNABatConfigurationAnnotations(
 }
 
 async function getNABatConfigurationStats(): Promise<NABatStats> {
-  const response = await axiosInstance.get<NABatStats>(
-    "/nabat/configuration/stats",
-  );
+  const response = await axiosInstance.get<NABatStats>("/nabat/configuration/stats");
   return response.data;
 }
 
@@ -261,10 +268,9 @@ export interface AnnotationExportResponse {
 }
 
 async function adminNaBatUpdateSpecies(apiToken: string) {
-  return axiosInstance.post<{ taskId: string }>(
-    "/nabat/configuration/update-species",
-    { params: { apiToken } },
-  );
+  return axiosInstance.post<{ taskId: string }>("/nabat/configuration/update-species", {
+    params: { apiToken },
+  });
 }
 
 async function exportNABatAnnotations(
@@ -294,6 +300,8 @@ async function getNabatPulseMetadata(recordingId: string) {
 export {
   postNABatAuth,
   postNABatRecording,
+  postNABatFileListAuth,
+  postNABatFileListCreate,
   getNABatSpectrogram,
   getNABatSpectrogramCompressed,
   getNABatRecordingFileAnnotations,

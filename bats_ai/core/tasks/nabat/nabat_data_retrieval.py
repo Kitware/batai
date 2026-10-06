@@ -3,16 +3,17 @@ from __future__ import annotations
 import json
 import logging
 
+import requests
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
-import requests
 
 from bats_ai.celery import app
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
-from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
+from bats_ai.core.models.nabat import (NABatRecording, NABatRecordingAnnotation,
+                                       NABatRecordingListItem)
 
 from .tasks import generate_spectrograms
 
@@ -197,6 +198,14 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
         name=file_name,
         recording_location=recording_location,
     )
+
+    # nabat_recording_initialize is dispatched with just a bare recording_id, with no
+    # awareness of which NABatRecordingListItem(s), if any, triggered it - so backfill
+    # any that were waiting on this recording_id becoming available. Without this, those
+    # items would stay permanently unmaterialized
+    NABatRecordingListItem.objects.filter(
+        recording_id=recording_id, nabat_recording__isnull=True
+    ).update(nabat_recording=nabat_recording)
 
     acoustic_batches_nodes = nabat_recording_data["surveyEventById"][
         "acousticBatchesBySurveyEventId"

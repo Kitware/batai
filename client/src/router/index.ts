@@ -1,8 +1,4 @@
-import {
-  createRouter,
-  createWebHistory,
-  type RouteLocationNormalized,
-} from "vue-router";
+import { createRouter, createWebHistory, type RouteLocationNormalized } from "vue-router";
 import HelpPage from "../views/HelpPage.vue";
 import Recordings from "../views/Recordings.vue";
 import Spectrogram from "../views/Spectrogram.vue";
@@ -14,6 +10,8 @@ import Admin from "../views/Admin.vue";
 import NABatRecording from "../views/NABat/NABatRecording.vue";
 import NABatSpectrogram from "../views/NABat/NABatSpectrogram.vue";
 import NABatAuthorization from "@/views/NABat/NABatAuthorization.vue";
+import NABatFileListAuthorization from "@/views/NABat/NABatFileListAuthorization.vue";
+import NABatFileList from "@/views/NABat/NABatFileList.vue";
 
 function beforeEach(
   to: RouteLocationNormalized,
@@ -94,6 +92,22 @@ function routerInit() {
           surveyEventId: route.query.surveyEventId,
           iss: route.query.iss,
           code: route.query.code,
+        }),
+      },
+      {
+        path: "/nabat/file-list/auth/",
+        component: NABatFileListAuthorization,
+        props: (route) => ({
+          fileListId: route.query.fileListId,
+          iss: route.query.iss,
+          code: route.query.code,
+        }),
+      },
+      {
+        path: "/nabat/file-list/:fileListId/",
+        component: NABatFileList,
+        props: (route) => ({
+          fileListId: parseInt(route.params.fileListId as string, 10),
         }),
       },
     ],

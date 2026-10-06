@@ -30,6 +30,7 @@ class NABatRecordingListItem(TimeStampedModel, models.Model):
     recording_time = models.DateTimeField(null=True, blank=True)
     file_name = models.CharField(max_length=255, blank=True, null=True)
     recording_id = models.BigIntegerField()
+    survey_event_id = models.BigIntegerField()
 
     class Meta:
         verbose_name = "NABat File List Item"
