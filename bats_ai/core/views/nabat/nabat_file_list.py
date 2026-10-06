@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from enum import Enum
 import json
 import logging
-from datetime import UTC, datetime
 
-import requests
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404
 from ninja import Form, Router, Schema
+import requests
 
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingList, NABatRecordingListItem
@@ -73,9 +74,6 @@ def authorize_nabat_file_list_requests(
     if payload.iss != settings.BATAI_NABAT_OIDC_ISSUER:
         return JsonResponse({"error": "Unexpected issuer"}, status=400)
 
-    print(payload.iss)
-    print(payload.code)
-
     redirect_url = _reconstruct_file_list_redirect_url(payload.fileListId)
     data = {
         "grant_type": "authorization_code",
@@ -84,8 +82,6 @@ def authorize_nabat_file_list_requests(
         "redirect_uri": redirect_url,
         "code": payload.code,
     }
-
-    print(data)
 
     try:
         response = requests.post(
@@ -145,14 +141,21 @@ def _create_file_list(file_list_id: int, file_list_data: dict) -> NABatRecording
     return recording_list
 
 
-def _start_first_unmaterialized_item(
-    recording_list: NABatRecordingList, api_token: str
-) -> str | None:
-    # No explicit order_by: falls back to the model's default ordering
-    # ("-recording_time", "id"), so "first" here matches however the list is sorted
-    # for display.
-    item = recording_list.items.filter(nabat_recording__isnull=True).first()
-    if item is None:
+def _queue_item(item: NABatRecordingListItem, api_token: str) -> str | None:
+    """Ensure `item` is being materialized.
+
+    Dispatches nabat_recording_initialize unless it's already materialized or
+    already has a task in flight. Returns the in-flight task's celery id (whether
+    just dispatched or already running), or None if already materialized.
+
+    No live check against NABat happens here - just a present-looking token gets
+    passed through. An invalid/expired token is still caught, just inside the task
+    itself when it calls NABat, surfacing as a "failed" status rather than an
+    immediate error from this call. A previously-failed item (no ProcessingTask
+    still QUEUED/RUNNING, nothing materialized) gets retried automatically here,
+    which is intentional.
+    """
+    if item.nabat_recording_id is not None:
         return None
 
     existing_task = ProcessingTask.objects.filter(
@@ -174,6 +177,27 @@ def _start_first_unmaterialized_item(
             celery_id=task.id,
         )
     return task.id
+
+
+def _queue_positions(
+    recording_list: NABatRecordingList, position: int, api_token: str
+) -> dict[int, str]:
+    """Queue `position` and its next two neighbors (0-indexed, in the list's own default order).
+
+    Shared by create() (always position 0, so the first item a user would open is
+    already in flight by the time the list loads) and the queue-ahead endpoint
+    (whatever position the frontend is currently viewing). Silently skips any of
+    the three positions that falls past the end of the list.
+    """
+    items = list(recording_list.items.all())
+    queued_task_ids = {}
+    for target_position in (position, position + 1, position + 2):
+        if not 0 <= target_position < len(items):
+            continue
+        task_id = _queue_item(items[target_position], api_token)
+        if task_id is not None:
+            queued_task_ids[target_position] = task_id
+    return queued_task_ids
 
 
 @router.post("/create", auth=None)
@@ -225,5 +249,105 @@ def create_nabat_file_list(
                 NABatRecordingList, nabat_file_list_id=payload.fileListId
             )
 
-    task_id = _start_first_unmaterialized_item(recording_list, api_token)
-    return {"fileListId": recording_list.pk, "taskId": task_id}
+    queued_task_ids = _queue_positions(recording_list, 0, api_token)
+    return {"fileListId": recording_list.pk, "queuedTaskIds": queued_task_ids}
+
+
+@router.post("/{file_list_id}/{position}", auth=None)
+def queue_nabat_file_list_items(
+    request: HttpRequest,
+    file_list_id: int,
+    position: int,
+):
+    """Ensure `position` and the two items after it are materialized or in flight.
+
+    Called by the frontend when navigating to the `position`-th item (0-indexed,
+    in the list's own default order) of an already-created list, to keep a couple
+    of items ahead of wherever the user currently is queued up. Silently does
+    nothing for any of the three positions that falls past the end of the list.
+    """
+    api_token = get_auth_header(request)
+    if not api_token:
+        return JsonResponse({"error": "Missing or invalid Authorization header"}, status=401)
+
+    recording_list = get_object_or_404(NABatRecordingList, nabat_file_list_id=file_list_id)
+    queued_task_ids = _queue_positions(recording_list, position, api_token)
+    return {"fileListId": recording_list.pk, "queuedTaskIds": queued_task_ids}
+
+
+class NABatFileListItemStatus(str, Enum):
+    EXISTS = "exists"
+    QUEUED = "queued"
+    FAILED = "failed"
+    DOES_NOT_EXIST = "does_not_exist"
+
+
+class NABatFileListItemSchema(Schema):
+    id: int
+    recordingId: int
+    fileName: str | None
+    recordingTime: datetime | None
+    status: NABatFileListItemStatus
+    # The local NABatRecording pk, once materialized - null until then. This is
+    # what the frontend actually needs to link to /nabat/{id}/spectrogram; the
+    # NABat-side recordingId above isn't a valid route param on its own.
+    nabatRecordingId: int | None
+
+
+class NABatFileListStatusSchema(Schema):
+    fileListId: int
+    items: list[NABatFileListItemSchema]
+
+
+def _item_status(item: NABatRecordingListItem, task_statuses: list[str]) -> NABatFileListItemStatus:
+    if item.nabat_recording_id is not None:
+        return NABatFileListItemStatus.EXISTS
+    in_flight = (ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING)
+    if any(s in in_flight for s in task_statuses):
+        return NABatFileListItemStatus.QUEUED
+    if ProcessingTask.Status.ERROR in task_statuses:
+        return NABatFileListItemStatus.FAILED
+    return NABatFileListItemStatus.DOES_NOT_EXIST
+
+
+@router.get("/{file_list_id}", response=NABatFileListStatusSchema, auth=None)
+def get_nabat_file_list(request: HttpRequest, file_list_id: int):
+    """Per-item status for an already-created list: exists / queued / failed / does_not_exist.
+
+    No NABat call happens here - a token just needs to be present, for consistency
+    with every other endpoint on this router, even though nothing here actually
+    uses it.
+    """
+    api_token = get_auth_header(request)
+    if not api_token:
+        return JsonResponse({"error": "Missing or invalid Authorization header"}, status=401)
+
+    recording_list = get_object_or_404(NABatRecordingList, nabat_file_list_id=file_list_id)
+    items = list(recording_list.items.all())
+
+    task_statuses_by_recording_id: dict[int, list[str]] = {}
+    tasks = ProcessingTask.objects.filter(
+        metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+        metadata__recordingId__in=[item.recording_id for item in items],
+    )
+    for task in tasks:
+        task_statuses_by_recording_id.setdefault(task.metadata["recordingId"], []).append(
+            task.status
+        )
+
+    return {
+        "fileListId": recording_list.pk,
+        "items": [
+            {
+                "id": item.pk,
+                "recordingId": item.recording_id,
+                "fileName": item.file_name,
+                "recordingTime": item.recording_time,
+                "status": _item_status(
+                    item, task_statuses_by_recording_id.get(item.recording_id, [])
+                ),
+                "nabatRecordingId": item.nabat_recording_id,
+            }
+            for item in items
+        ],
+    }

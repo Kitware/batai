@@ -74,18 +74,53 @@ async function postNABatFileListAuth(fileListId: string, iss: string, code: stri
   return response.data;
 }
 
-export interface NABatFileListCreateResponse {
+export interface NABatFileListQueueResponse {
   fileListId: number;
-  taskId: string | null;
-  error?: string;
+  queuedTaskIds: Record<string, string>;
 }
 
+// Also queues position 0 and its two neighbors, same as postNABatFileListQueue -
+// see _queue_positions on the backend, shared by both.
 async function postNABatFileListCreate(fileListId: number) {
   const formData = new FormData();
   formData.append("fileListId", fileListId.toString());
-  const response = await axiosInstance.post<NABatFileListCreateResponse>(
+  const response = await axiosInstance.post<NABatFileListQueueResponse>(
     "nabat/file-list/create",
     formData,
+  );
+  return response.data;
+}
+
+export type NABatFileListItemStatus = "exists" | "queued" | "failed" | "does_not_exist";
+
+export interface NABatFileListItemInfo {
+  id: number;
+  recordingId: number;
+  fileName: string | null;
+  recordingTime: string | null;
+  status: NABatFileListItemStatus;
+  // The local NABatRecording id, once materialized - what /nabat/:id/spectrogram
+  // actually takes. null until the item's status is "exists".
+  nabatRecordingId: number | null;
+}
+
+export interface NABatFileListStatusResponse {
+  fileListId: number;
+  items: NABatFileListItemInfo[];
+}
+
+async function getNABatFileList(fileListId: number) {
+  const response = await axiosInstance.get<NABatFileListStatusResponse>(
+    `nabat/file-list/${fileListId}`,
+  );
+  return response.data;
+}
+
+// Queues `position` and its two neighbors (position + 1, position + 2) for
+// materialization - see queue_nabat_file_list_items on the backend.
+async function postNABatFileListQueue(fileListId: number, position: number) {
+  const response = await axiosInstance.post<NABatFileListQueueResponse>(
+    `nabat/file-list/${fileListId}/${position}`,
   );
   return response.data;
 }
@@ -302,6 +337,8 @@ export {
   postNABatRecording,
   postNABatFileListAuth,
   postNABatFileListCreate,
+  getNABatFileList,
+  postNABatFileListQueue,
   getNABatSpectrogram,
   getNABatSpectrogramCompressed,
   getNABatRecordingFileAnnotations,

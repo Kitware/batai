@@ -44,6 +44,7 @@ since only the published port is reachable from there.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import logging
@@ -77,11 +78,13 @@ SEED_ANNOTATION_SPECIES_ID = int(os.environ.get("SEED_ANNOTATION_SPECIES_ID", "1
 SEED_ANNOTATION_EMAIL = os.environ.get("SEED_ANNOTATION_EMAIL", "testuser@example.com")
 
 # nabat-mock's one file list, returned for any file_list_id - lists aren't per-id
-# fixtures any more than recordings are. Deliberately a different recording_id than
-# the single-file flow's own default example (scripts/USGS/naBatInfo.py's 190255936),
-# so testing the file-list flow fresh exercises actual materialization instead of
-# instantly reusing a NABatRecording already created by testing the single-file flow.
-FILE_LIST_ITEM_RECORDING_ID = 990000001
+# fixtures any more than recordings are. Item recording_ids start here, counting up
+# (990000001, 990000002, ...) - deliberately a different range than the single-file
+# flow's own default example (scripts/USGS/naBatInfo.py's 190255936), so testing the
+# file-list flow fresh exercises actual materialization instead of instantly reusing
+# a NABatRecording already created by testing the single-file flow.
+FILE_LIST_ITEM_COUNT = int(os.environ.get("FILE_LIST_ITEM_COUNT", "10"))
+FILE_LIST_FIRST_RECORDING_ID = 990000001
 FILE_LIST_ITEM_SURVEY_EVENT_ID = 4768736
 
 ACOUSTIC_FILE_ID_RE = re.compile(r'acousticFileId:\s*"?(\d+)"?')
@@ -171,8 +174,30 @@ def build_update_vet_response(query: str) -> dict:
 
 
 def build_file_list_response(query: str) -> dict:
-    """Mirrors nabat_file_list.py's QUERY (acousticFileList) - one file, every time."""
+    """Mirrors nabat_file_list.py's QUERY (acousticFileList).
+
+    Always returns the same FILE_LIST_ITEM_COUNT items, for any file_list_id - lists
+    aren't per-id fixtures any more than recordings are. Every item resolves to the
+    same underlying object (see presigned_recording_url) - distinct recording_ids,
+    fileNames, and recordingTimes (5 minutes apart) are enough to exercise sorting
+    and per-item status without needing distinct audio per file.
+    """
     file_list_id = extract_id(ACOUSTIC_FILE_LIST_ID_RE, query)
+    base_time = datetime(2024, 1, 1, tzinfo=UTC)
+    nodes = []
+    for i in range(FILE_LIST_ITEM_COUNT):
+        recording_id = FILE_LIST_FIRST_RECORDING_ID + i
+        recording_time = base_time + timedelta(minutes=5 * i)
+        nodes.append(
+            {
+                "acousticFileByFileId": {
+                    "id": str(recording_id),
+                    "surveyEventId": FILE_LIST_ITEM_SURVEY_EVENT_ID,
+                    "fileName": f"mock_recording_{recording_id}.wav",
+                    "recordingTime": recording_time.strftime("%Y-%m-%dT%H:%M:%S"),
+                }
+            }
+        )
     return {
         "data": {
             "acousticFileListById": {
@@ -180,17 +205,8 @@ def build_file_list_response(query: str) -> dict:
                 "projectId": 1,
                 "createdBy": SEED_ANNOTATION_EMAIL,
                 "acousticFileAcousticFileListsByListId": {
-                    "totalCount": 1,
-                    "nodes": [
-                        {
-                            "acousticFileByFileId": {
-                                "id": str(FILE_LIST_ITEM_RECORDING_ID),
-                                "surveyEventId": FILE_LIST_ITEM_SURVEY_EVENT_ID,
-                                "fileName": f"mock_recording_{FILE_LIST_ITEM_RECORDING_ID}.wav",
-                                "recordingTime": "2024-01-01T00:00:00",
-                            }
-                        }
-                    ],
+                    "totalCount": len(nodes),
+                    "nodes": nodes,
                 },
             }
         }
