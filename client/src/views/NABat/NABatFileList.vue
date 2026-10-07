@@ -1,23 +1,12 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref, type Ref } from "vue";
-import {
-  postNABatFileListCreate,
-  getNABatFileList,
-  postNABatFileListQueue,
-  type NABatFileListItemInfo,
-  type NABatFileListItemStatus,
-} from "@api/NABatApi";
+import { useRouter } from "vue-router";
+import useNABatFileListQueue from "@/use/useNABatFileListQueue";
 
-// Placeholder view: lists a file list's items and their status, with manual
-// refresh/queue controls, to exercise the file-list flow before a real
-// progress UI (one that updates itself, rather than requiring a click) exists.
-const STATUS_COLORS: Record<NABatFileListItemStatus, string> = {
-  exists: "success",
-  queued: "info",
-  failed: "error",
-  does_not_exist: "grey",
-};
-
+// Mirrors NABatRecording.vue's poll-then-redirect pattern: creates the list
+// (or re-verifies access to an already-created one), waits for its first item
+// to finish processing, then redirects into the spectrogram view - which owns
+// the actual list-browsing UI (its File List sidebar tab) from here on.
 export default defineComponent({
   props: {
     fileListId: {
@@ -26,95 +15,51 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const router = useRouter();
+    const { createFileListAndWaitForFirst } = useNABatFileListQueue();
     const loading = ref(true);
     const errorMessage: Ref<string | null> = ref(null);
-    const items: Ref<NABatFileListItemInfo[]> = ref([]);
-    const queueingPosition: Ref<number | null> = ref(null);
-
-    async function refresh() {
-      loading.value = true;
-      errorMessage.value = null;
-      try {
-        const status = await getNABatFileList(props.fileListId);
-        items.value = status.items;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        errorMessage.value = error.response?.data?.error ?? `Failed to load file list: ${error}`;
-      } finally {
-        loading.value = false;
-      }
-    }
-
-    async function queueFrom(position: number) {
-      queueingPosition.value = position;
-      try {
-        await postNABatFileListQueue(props.fileListId, position);
-        await refresh();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        errorMessage.value = error.response?.data?.error ?? `Failed to queue item: ${error}`;
-      } finally {
-        queueingPosition.value = null;
-      }
-    }
+    const taskInfo = ref("");
 
     onMounted(async () => {
       try {
-        await postNABatFileListCreate(props.fileListId);
+        const recordingId = await createFileListAndWaitForFirst(props.fileListId, (description) => {
+          taskInfo.value = description;
+        });
+        router.push(`/nabat/${recordingId}/spectrogram?fileListId=${props.fileListId}`);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        errorMessage.value = error.response?.data?.error ?? `Failed to create file list: ${error}`;
+        errorMessage.value = error.message ?? `Failed to load file list: ${error}`;
         loading.value = false;
-        return;
       }
-      await refresh();
     });
 
     return {
       loading,
       errorMessage,
-      items,
-      queueingPosition,
-      refresh,
-      queueFrom,
-      statusColor: (status: NABatFileListItemStatus) => STATUS_COLORS[status] ?? "grey",
+      taskInfo,
     };
   },
 });
 </script>
 <template>
   <v-card>
-    <v-card-title class="d-flex align-center">
-      NABat File List {{ fileListId }}
-      <v-btn class="ml-4" size="small" :loading="loading" @click="refresh"> Refresh </v-btn>
-    </v-card-title>
     <v-card-text>
-      <v-alert v-if="errorMessage" type="error" class="mb-4">
-        {{ errorMessage }}
-      </v-alert>
-      <v-progress-circular v-if="loading && !items.length" indeterminate color="primary" />
-      <v-list v-else>
-        <v-list-item v-for="(item, position) in items" :key="item.id">
-          <template #prepend>
-            <span class="mr-2 text-disabled">{{ position }}</span>
-          </template>
-          <v-list-item-title>{{ item.fileName }}</v-list-item-title>
-          <v-list-item-subtitle>{{ item.recordingTime }}</v-list-item-subtitle>
-          <template #append>
-            <v-chip :color="statusColor(item.status)" class="mr-2" size="small">
-              {{ item.status }}
-            </v-chip>
-            <v-btn
-              size="small"
-              :disabled="item.status === 'exists'"
-              :loading="queueingPosition === position"
-              @click="queueFrom(position)"
-            >
-              Queue
-            </v-btn>
-          </template>
-        </v-list-item>
-      </v-list>
+      <v-row dense>
+        <v-spacer />
+        <v-col justify="center" cols="auto">
+          <v-progress-circular v-if="loading" indeterminate :size="256" :width="30" color="primary">
+            Loading...
+          </v-progress-circular>
+          <v-alert v-else-if="errorMessage" type="error">
+            {{ errorMessage }}
+          </v-alert>
+          <h3 v-if="loading && taskInfo" style="text-align: center">
+            {{ taskInfo }}
+          </h3>
+        </v-col>
+        <v-spacer />
+      </v-row>
     </v-card-text>
   </v-card>
 </template>

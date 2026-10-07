@@ -74,6 +74,9 @@ function routerInit() {
         component: NABatSpectrogram,
         props: (route) => ({
           id: route.params.id,
+          fileListId: route.query.fileListId
+            ? parseInt(route.query.fileListId as string, 10)
+            : undefined,
         }),
       },
       {

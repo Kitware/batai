@@ -154,16 +154,23 @@ def _queue_item(item: NABatRecordingListItem, api_token: str) -> str | None:
     immediate error from this call. A previously-failed item (no ProcessingTask
     still QUEUED/RUNNING, nothing materialized) gets retried automatically here,
     which is intentional.
-    """
-    if item.nabat_recording_id is not None:
-        return None
 
+    Checks for an in-flight task before checking nabat_recording_id: that FK gets
+    backfilled by create_nabat_recording_from_response partway through
+    nabat_recording_initialize, well before the task actually finishes generating
+    spectrograms - callers need the still-running task's id to wait on, not None,
+    even once the row exists (see _item_status, which has the same ordering for
+    the same reason).
+    """
     existing_task = ProcessingTask.objects.filter(
         metadata__recordingId=item.recording_id,
         status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING],
     ).first()
     if existing_task:
         return existing_task.celery_id
+
+    if item.nabat_recording_id is not None:
+        return None
 
     task = nabat_recording_initialize.delay(item.recording_id, item.survey_event_id, api_token)
     with transaction.atomic():
@@ -300,11 +307,15 @@ class NABatFileListStatusSchema(Schema):
 
 
 def _item_status(item: NABatRecordingListItem, task_statuses: list[str]) -> NABatFileListItemStatus:
-    if item.nabat_recording_id is not None:
-        return NABatFileListItemStatus.EXISTS
+    # Checked before nabat_recording_id: that FK gets backfilled by
+    # create_nabat_recording_from_response partway through nabat_recording_initialize,
+    # well before the task actually finishes generating spectrograms - a still-running
+    # task always means "not ready yet," even once the row exists.
     in_flight = (ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING)
     if any(s in in_flight for s in task_statuses):
         return NABatFileListItemStatus.QUEUED
+    if item.nabat_recording_id is not None:
+        return NABatFileListItemStatus.EXISTS
     if ProcessingTask.Status.ERROR in task_statuses:
         return NABatFileListItemStatus.FAILED
     return NABatFileListItemStatus.DOES_NOT_EXIST
