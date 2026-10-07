@@ -20,7 +20,11 @@ const message = ref("");
 async function initiateTokenExchange() {
   loading.value = true;
   try {
-    const exchangeData = await postNABatFileListAuth(props.fileListId, props.iss, props.code);
+    const exchangeData = await postNABatFileListAuth(
+      props.fileListId,
+      props.iss,
+      props.code,
+    );
     if (exchangeData["access_token"] && exchangeData["refresh_token"]) {
       setApiToken(exchangeData["access_token"]);
       setRefreshToken(exchangeData["refresh_token"]);
@@ -43,7 +47,13 @@ onMounted(async () => initiateTokenExchange());
       <v-row dense>
         <v-spacer />
         <v-col justify="center" cols="auto">
-          <v-progress-circular v-if="loading" indeterminate :size="256" :width="30" color="primary">
+          <v-progress-circular
+            v-if="loading"
+            indeterminate
+            :size="256"
+            :width="30"
+            color="primary"
+          >
             Loading...
           </v-progress-circular>
           <v-banner v-else>

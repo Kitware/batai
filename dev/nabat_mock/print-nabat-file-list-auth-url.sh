@@ -10,7 +10,7 @@ KEYCLOAK_URL=${KEYCLOAK_URL:-http://localhost:8081/auth}
 REALM=${REALM:-NABAT}
 CLIENT_ID=${CLIENT_ID:-batai}
 BATAI_WEB_URL=${BATAI_WEB_URL:-http://localhost:8080/}
-# nabat-mock returns the same single-file list for any id - see mock_server.py.
+# nabat-mock returns the same fixed list for any id - see mock_server.py.
 FILE_LIST_ID=${FILE_LIST_ID:-1}
 # Left empty by default to mirror production, which omits `scope` and relies on the
 # client's default scopes. Set to "openid nabat-service-audience" to request the optional

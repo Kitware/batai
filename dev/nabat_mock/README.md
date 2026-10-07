@@ -114,7 +114,10 @@ local infrastructure.
 
 Same idea, but via [./print-nabat-file-list-auth-url.sh](./print-nabat-file-list-auth-url.sh)
 instead. This lands on `NABatFileList.vue`, which creates the list (or re-verifies access to
-an already-created one) and queues the first item plus its next two neighbors, then shows
-each item's status (`exists` / `queued` / `failed` / `does_not_exist`). Use the per-item
-"Queue" button to queue any other item and its next two neighbors on demand, and "Refresh"
-to re-poll status without re-queueing anything.
+an already-created one), waits for its first item to finish processing, then redirects into
+the normal spectrogram view - the same one the single-recording flow uses.
+
+From there, the "File List" sidebar tab (alongside the existing Annotations tab) shows every
+item's status (`Ready` / `In progress` / `Failed` / `Not started`) and lets you click any of
+them: an instant jump if it's already `Ready`, otherwise it's queued (along with its next two
+neighbors) and you get a spinner with live progress in the main viewer until it's ready.

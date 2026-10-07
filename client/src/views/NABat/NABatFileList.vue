@@ -23,13 +23,19 @@ export default defineComponent({
 
     onMounted(async () => {
       try {
-        const recordingId = await createFileListAndWaitForFirst(props.fileListId, (description) => {
-          taskInfo.value = description;
-        });
-        router.push(`/nabat/${recordingId}/spectrogram?fileListId=${props.fileListId}`);
+        const recordingId = await createFileListAndWaitForFirst(
+          props.fileListId,
+          (description) => {
+            taskInfo.value = description;
+          },
+        );
+        router.push(
+          `/nabat/${recordingId}/spectrogram?fileListId=${props.fileListId}`,
+        );
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        errorMessage.value = error.message ?? `Failed to load file list: ${error}`;
+        errorMessage.value =
+          error.message ?? `Failed to load file list: ${error}`;
         loading.value = false;
       }
     });
@@ -48,7 +54,13 @@ export default defineComponent({
       <v-row dense>
         <v-spacer />
         <v-col justify="center" cols="auto">
-          <v-progress-circular v-if="loading" indeterminate :size="256" :width="30" color="primary">
+          <v-progress-circular
+            v-if="loading"
+            indeterminate
+            :size="256"
+            :width="30"
+            color="primary"
+          >
             Loading...
           </v-progress-circular>
           <v-alert v-else-if="errorMessage" type="error">

@@ -229,7 +229,7 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, format_, *args):
         logger.info("%s - %s", self.address_string(), format_ % args)
 
-    def do_POST(self):  # noqa: N802
+    def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length)
         try:

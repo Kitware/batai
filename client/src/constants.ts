@@ -19,7 +19,8 @@ const NABAT_PATH_REGEX = /^\/?nabat(\/|$)/;
 // "/nabat/auth/" or "/nabat/file-list/auth/" (NABat's Keycloak redirect targets) or
 // "/nabat/:id/" (a direct link) - and not deeper client-side routes like
 // "/nabat/:id/spectrogram" or "/nabat/file-list/:id/".
-const NABAT_ENTRYPOINT_PATH_REGEX = /^\/nabat\/(?:(?:file-list\/)?auth|[^/]+)\/?$/;
+const NABAT_ENTRYPOINT_PATH_REGEX =
+  /^\/nabat\/(?:(?:file-list\/)?auth|[^/]+)\/?$/;
 
 export {
   RecordingMimeTypes,

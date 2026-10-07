@@ -1,7 +1,11 @@
 <script lang="ts">
 import { defineComponent, onMounted, type Ref, ref, watch } from "vue";
 import { type Species } from "@api/api";
-import { getNABatSpectrogram, getNABatSpectrogramCompressed, getNABatSpecies } from "@api/NABatApi";
+import {
+  getNABatSpectrogram,
+  getNABatSpectrogramCompressed,
+  getNABatSpecies,
+} from "@api/NABatApi";
 import SpectrogramViewer from "@components/SpectrogramViewer.vue";
 import { spectroXToTime, type SpectroInfo } from "@components/geoJS/geoJSUtils";
 import ThumbnailViewer from "@components/ThumbnailViewer.vue";
@@ -83,7 +87,9 @@ export default defineComponent({
     const allImagesLoaded: Ref<boolean[]> = ref([]);
     const maskImagesLoaded: Ref<boolean[]> = ref([]);
     const maskLoaded = ref(false);
-    const compressed = ref(configuration.value.spectrogram_view === "compressed");
+    const compressed = ref(
+      configuration.value.spectrogram_view === "compressed",
+    );
     const errorMessage: Ref<string | null> = ref(null);
     const additionalErrors: Ref<string[]> = ref([]);
     const switchingFileListItem = ref(false);
@@ -164,9 +170,13 @@ export default defineComponent({
         speciesList.value = speciesResponse.data.filter(
           (value, index, self) =>
             value.species_code !== "NOISE" &&
-            index === self.findIndex((t) => t.species_code === value.species_code),
+            index ===
+              self.findIndex((t) => t.species_code === value.species_code),
         );
-        if (viewPulseMetadataLayer.value && pulseMetadataList.value.length === 0) {
+        if (
+          viewPulseMetadataLayer.value &&
+          pulseMetadataList.value.length === 0
+        ) {
           await loadNabatPulseMetadata(props.id);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -203,7 +213,12 @@ export default defineComponent({
         return;
       }
 
-      const centerTime = spectroXToTime(centerX, spectroInfo.value, scaledWidth.value, true);
+      const centerTime = spectroXToTime(
+        centerX,
+        spectroInfo.value,
+        scaledWidth.value,
+        true,
+      );
       pendingCenterTimeMs.value = centerTime >= 0 ? centerTime : null;
     };
     const toggleCompressedView = () => {
@@ -313,10 +328,18 @@ export default defineComponent({
 <template>
   <v-row v-if="!errorMessage" dense>
     <v-dialog v-model="recordingInfo" width="600">
-      <recording-info-dialog :id="id" display-mode="both" @close="recordingInfo = false" />
+      <recording-info-dialog
+        :id="id"
+        display-mode="both"
+        @close="recordingInfo = false"
+      />
     </v-dialog>
     <v-dialog v-model="recordingMap" width="600">
-      <recording-info-dialog :id="id" display-mode="map" @close="recordingMap = false" />
+      <recording-info-dialog
+        :id="id"
+        display-mode="map"
+        @close="recordingMap = false"
+      />
     </v-dialog>
     <v-col>
       <v-toolbar>
@@ -324,7 +347,11 @@ export default defineComponent({
           <v-row align="center">
             <v-tooltip bottom>
               <template #activator="{ props: subProps }">
-                <v-icon v-bind="subProps" size="40" @click="recordingInfo = true">
+                <v-icon
+                  v-bind="subProps"
+                  size="40"
+                  @click="recordingInfo = true"
+                >
                   mdi-information-outline
                 </v-icon>
               </template>
@@ -332,7 +359,12 @@ export default defineComponent({
             </v-tooltip>
             <v-tooltip bottom>
               <template #activator="{ props: subProps }">
-                <v-icon v-bind="subProps" size="40" class="ml-2" @click="recordingMap = true">
+                <v-icon
+                  v-bind="subProps"
+                  size="40"
+                  class="ml-2"
+                  @click="recordingMap = true"
+                >
                   mdi-map
                 </v-icon>
               </template>
@@ -416,7 +448,10 @@ export default defineComponent({
               </template>
               <span> Turn Species Label On/Off</span>
             </v-tooltip>
-            <v-tooltip v-if="!disabledFeatures.includes('endpointLabels')" bottom>
+            <v-tooltip
+              v-if="!disabledFeatures.includes('endpointLabels')"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
@@ -431,7 +466,10 @@ export default defineComponent({
               </template>
               <span> Turn Time Endpoint Labels On/Off</span>
             </v-tooltip>
-            <v-tooltip v-if="!disabledFeatures.includes('durationLabels')" bottom>
+            <v-tooltip
+              v-if="!disabledFeatures.includes('durationLabels')"
+              bottom
+            >
               <template #activator="{ props: subProps }">
                 <v-btn
                   v-bind="subProps"
@@ -475,7 +513,10 @@ export default defineComponent({
               <span> Highlight Compressed Areas</span>
             </v-tooltip>
             <div class="mr-1 mt-5">
-              <pulse-metadata-button :recording-id="id" :compressed="compressed" />
+              <pulse-metadata-button
+                :recording-id="id"
+                :compressed="compressed"
+              />
             </div>
             <div class="mr-1 mt-5">
               <spectrogram-image-content-menu
@@ -488,7 +529,13 @@ export default defineComponent({
             </div>
             <v-menu>
               <template #activator="{ props: subProps }">
-                <v-btn v-bind="subProps" icon size="25" class="mr-5 mt-5" variant="text">
+                <v-btn
+                  v-bind="subProps"
+                  icon
+                  size="25"
+                  class="mr-5 mt-5"
+                  variant="text"
+                >
                   <v-icon> mdi-cog </v-icon>
                 </v-btn>
               </template>

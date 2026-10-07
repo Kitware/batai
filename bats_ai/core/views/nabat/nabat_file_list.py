@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 import json
 import logging
 
@@ -282,7 +282,7 @@ def queue_nabat_file_list_items(
     return {"fileListId": recording_list.pk, "queuedTaskIds": queued_task_ids}
 
 
-class NABatFileListItemStatus(str, Enum):
+class NABatFileListItemStatus(StrEnum):
     EXISTS = "exists"
     QUEUED = "queued"
     FAILED = "failed"

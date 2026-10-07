@@ -72,7 +72,8 @@ export default defineComponent({
         items.value = status.items;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        errorMessage.value = error.response?.data?.error ?? `Failed to load file list: ${error}`;
+        errorMessage.value =
+          error.response?.data?.error ?? `Failed to load file list: ${error}`;
       }
     }
 
@@ -115,7 +116,9 @@ export default defineComponent({
       if (item.status === "exists" && item.nabatRecordingId) {
         switchingPosition.value = null;
         emit("queue-end");
-        router.push(`/nabat/${item.nabatRecordingId}/spectrogram?fileListId=${props.fileListId}`);
+        router.push(
+          `/nabat/${item.nabatRecordingId}/spectrogram?fileListId=${props.fileListId}`,
+        );
         return;
       }
       errorMessage.value = null;
@@ -137,13 +140,16 @@ export default defineComponent({
         if (myToken !== requestToken) {
           return;
         }
-        router.push(`/nabat/${recordingId}/spectrogram?fileListId=${props.fileListId}`);
+        router.push(
+          `/nabat/${recordingId}/spectrogram?fileListId=${props.fileListId}`,
+        );
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (myToken !== requestToken) {
           return;
         }
-        errorMessage.value = error.message ?? `Failed to process item: ${error}`;
+        errorMessage.value =
+          error.message ?? `Failed to process item: ${error}`;
         emit("queue-end");
         await refresh();
       } finally {
@@ -186,12 +192,15 @@ export default defineComponent({
         :class="{
           'nabat-file-list-current':
             switchingPosition === position ||
-            (switchingPosition === null && item.nabatRecordingId?.toString() === currentId),
+            (switchingPosition === null &&
+              item.nabatRecordingId?.toString() === currentId),
         }"
         @click="openItem(item, position)"
       >
         <v-list-item-title>{{ item.fileName }}</v-list-item-title>
-        <v-list-item-subtitle>{{ formatDate(item.recordingTime) }}</v-list-item-subtitle>
+        <v-list-item-subtitle>{{
+          formatDate(item.recordingTime)
+        }}</v-list-item-subtitle>
         <template #append>
           <v-progress-circular
             v-if="switchingPosition === position"

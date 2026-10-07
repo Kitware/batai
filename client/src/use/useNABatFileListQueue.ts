@@ -1,9 +1,11 @@
-import { postNABatFileListCreate, postNABatFileListQueue, getNABatFileList } from "@api/NABatApi";
+import {
+  postNABatFileListCreate,
+  postNABatFileListQueue,
+  getNABatFileList,
+} from "@api/NABatApi";
 import { getProcessingTaskDetails } from "@api/api";
 
 const POLL_INTERVAL_MS = 1000;
-
-export class StaleRequestError extends Error {}
 
 // `isStale` is checked both before issuing the next poll and right after it
 // resolves, so a superseded call stops making requests immediately instead of
@@ -34,11 +36,16 @@ async function waitForTask(
   }
 }
 
-async function resolveRecordingId(fileListId: number, position: number): Promise<number> {
+async function resolveRecordingId(
+  fileListId: number,
+  position: number,
+): Promise<number> {
   const status = await getNABatFileList(fileListId);
   const item = status.items[position];
   if (!item?.nabatRecordingId) {
-    throw new Error(`File list item at position ${position} did not materialize`);
+    throw new Error(
+      `File list item at position ${position} did not materialize`,
+    );
   }
   return item.nabatRecordingId;
 }
@@ -48,8 +55,10 @@ export default function useNABatFileListQueue() {
   // itself to finish processing, and resolves with its local NABatRecording id -
   // what /nabat/:id/spectrogram actually takes. `isStale` lets the caller abandon
   // this mid-wait (e.g. the user clicked a different item) - once it reports true,
-  // polling stops immediately and this throws StaleRequestError rather than
-  // continuing to poll for a result nothing will use.
+  // polling stops immediately and this throws rather than continuing to poll for
+  // a result nothing will use. The caller already discards any error from a
+  // superseded call via its own token check, so the exact error type doesn't
+  // matter here.
   async function queuePositionAndWait(
     fileListId: number,
     position: number,
@@ -62,7 +71,7 @@ export default function useNABatFileListQueue() {
       await waitForTask(taskId, isStale, onProgress);
     }
     if (isStale()) {
-      throw new StaleRequestError("Superseded by a newer request");
+      throw new Error("Superseded by a newer request");
     }
     return resolveRecordingId(fileListId, position);
   }

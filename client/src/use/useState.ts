@@ -28,8 +28,14 @@ import { NABAT_PATH_REGEX } from "@/constants";
 const annotationState: Ref<AnnotationState> = ref("");
 const creationType: Ref<"pulse" | "sequence"> = ref("pulse");
 type LayersVis = "time" | "freq" | "species" | "grid" | "sequence" | "duration";
-const layerVisibility: Ref<LayersVis[]> = ref(["sequence", "species", "duration", "freq"]);
-const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> = ref();
+const layerVisibility: Ref<LayersVis[]> = ref([
+  "sequence",
+  "species",
+  "duration",
+  "freq",
+]);
+const colorScale: Ref<d3.ScaleOrdinal<string, string, never> | undefined> =
+  ref();
 const colorSchemes = [
   { value: "inferno", title: "Inferno", scheme: interpolateInferno },
   { value: "cividis", title: "Cividis", scheme: interpolateCividis },
@@ -59,7 +65,8 @@ const recordingTagList: Ref<string[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
 const scaledVals: Ref<{ x: number; y: number }> = ref({ x: 1, y: 1 });
 const viewCompressedOverlay = ref(false);
-const sideTab: Ref<"annotations" | "recordings" | "fileList"> = ref("annotations");
+const sideTab: Ref<"annotations" | "recordings" | "fileList"> =
+  ref("annotations");
 const configuration: Ref<Configuration> = ref({
   display_pulse_annotations: true,
   display_sequence_annotations: true,
@@ -180,14 +187,19 @@ export default function useState() {
       );
   }
 
-  function setSelectedId(id: number | null, annotationType?: "pulse" | "sequence") {
+  function setSelectedId(
+    id: number | null,
+    annotationType?: "pulse" | "sequence",
+  ) {
     selectedId.value = id;
     if (annotationType) {
       selectedType.value = annotationType;
     }
   }
   watch(sharedList, () => {
-    const filtered = sharedList.value.filter((item) => !item.userMadeAnnotations);
+    const filtered = sharedList.value.filter(
+      (item) => !item.userMadeAnnotations,
+    );
     if (filtered.length > 0) {
       nextShared.value = filtered[0];
     } else {
@@ -221,19 +233,31 @@ export default function useState() {
   }
 
   function saveFilterTags() {
-    localStorage.setItem(FILTER_TAG_STORAGE_KEY, JSON.stringify(filterTags.value));
-    localStorage.setItem(SHARED_FILTER_TAG_STORAGE_KEY, JSON.stringify(sharedFilterTags.value));
+    localStorage.setItem(
+      FILTER_TAG_STORAGE_KEY,
+      JSON.stringify(filterTags.value),
+    );
+    localStorage.setItem(
+      SHARED_FILTER_TAG_STORAGE_KEY,
+      JSON.stringify(sharedFilterTags.value),
+    );
   }
 
   function loadFilterTags() {
-    filterTags.value = JSON.parse(localStorage.getItem(FILTER_TAG_STORAGE_KEY) || "[]");
+    filterTags.value = JSON.parse(
+      localStorage.getItem(FILTER_TAG_STORAGE_KEY) || "[]",
+    );
     sharedFilterTags.value = JSON.parse(
       localStorage.getItem(SHARED_FILTER_TAG_STORAGE_KEY) || "[]",
     );
   }
 
   function saveMapFilterBounds(bounds: [number, number, number, number]) {
-    if (!bounds || bounds.length !== 4 || bounds.some((n) => !Number.isFinite(n))) {
+    if (
+      !bounds ||
+      bounds.length !== 4 ||
+      bounds.some((n) => !Number.isFinite(n))
+    ) {
       return;
     }
     localStorage.setItem(MAP_FILTER_BOUNDS_STORAGE_KEY, JSON.stringify(bounds));
