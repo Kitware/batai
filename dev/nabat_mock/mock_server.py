@@ -7,14 +7,18 @@ variables and no schema. So instead of running a GraphQL server, this
 dispatches on substrings in the query text and returns canned JSON shaped
 like NABat's real responses.
 
-Scope (for now): only the single-recording fetch flow, i.e. the query shapes used by:
+Scope (for now): the single-recording fetch flow and the file-list create flow, i.e.
+the query shapes used by:
   - bats_ai/core/tasks/nabat/nabat_data_retrieval.py (fetchAcousticAndSurveyEventInfo)
   - bats_ai/core/views/nabat/nabat_recording.py (bare presignedUrlFromAcousticFile,
     used as an access check by get_email_if_authorized / generate_nabat_recording;
     and the updateAcousticFileVet mutation, used to push an annotation to NABat)
-Anything else (species sync, NABat file lists) returns a GraphQL-shaped error
-rather than crashing, so it's obvious a handler needs to be added rather than
-failing confusingly downstream.
+  - bats_ai/core/views/nabat/nabat_file_list.py (acousticFileList, used by
+    create_nabat_file_list both to build a new list and to re-check access to an
+    existing one)
+Anything else (species sync) returns a GraphQL-shaped error rather than crashing,
+so it's obvious a handler needs to be added rather than failing confusingly
+downstream.
 
 The combined query's response seeds one already-vetted species for every recording
 fetched (see SEED_ANNOTATION_*), so create_nabat_recording_from_response() picks it
@@ -40,6 +44,7 @@ since only the published port is reachable from there.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import logging
@@ -72,7 +77,18 @@ NOT_FOUND_RECORDING_ID = 0
 SEED_ANNOTATION_SPECIES_ID = int(os.environ.get("SEED_ANNOTATION_SPECIES_ID", "1"))
 SEED_ANNOTATION_EMAIL = os.environ.get("SEED_ANNOTATION_EMAIL", "testuser@example.com")
 
+# nabat-mock's one file list, returned for any file_list_id - lists aren't per-id
+# fixtures any more than recordings are. Item recording_ids start here, counting up
+# (990000001, 990000002, ...) - deliberately a different range than the single-file
+# flow's own default example (scripts/USGS/naBatInfo.py's 190255936), so testing the
+# file-list flow fresh exercises actual materialization instead of instantly reusing
+# a NABatRecording already created by testing the single-file flow.
+FILE_LIST_ITEM_COUNT = int(os.environ.get("FILE_LIST_ITEM_COUNT", "10"))
+FILE_LIST_FIRST_RECORDING_ID = 990000001
+FILE_LIST_ITEM_SURVEY_EVENT_ID = 4768736
+
 ACOUSTIC_FILE_ID_RE = re.compile(r'acousticFileId:\s*"?(\d+)"?')
+ACOUSTIC_FILE_LIST_ID_RE = re.compile(r"acousticFileListById\(id:\s*(\d+)\)")
 
 # Presigning is pure local signing - no network I/O - as long as a region is given
 # (otherwise minio-py falls back to a live GetBucketLocation request). So this never
@@ -157,6 +173,46 @@ def build_update_vet_response(query: str) -> dict:
     return {"data": {"updateAcousticFileVet": {"acousticFileBatchId": 1}}}
 
 
+def build_file_list_response(query: str) -> dict:
+    """Mirrors nabat_file_list.py's QUERY (acousticFileList).
+
+    Always returns the same FILE_LIST_ITEM_COUNT items, for any file_list_id - lists
+    aren't per-id fixtures any more than recordings are. Every item resolves to the
+    same underlying object (see presigned_recording_url) - distinct recording_ids,
+    fileNames, and recordingTimes (5 minutes apart) are enough to exercise sorting
+    and per-item status without needing distinct audio per file.
+    """
+    file_list_id = extract_id(ACOUSTIC_FILE_LIST_ID_RE, query)
+    base_time = datetime(2024, 1, 1, tzinfo=UTC)
+    nodes = []
+    for i in range(FILE_LIST_ITEM_COUNT):
+        recording_id = FILE_LIST_FIRST_RECORDING_ID + i
+        recording_time = base_time + timedelta(minutes=5 * i)
+        nodes.append(
+            {
+                "acousticFileByFileId": {
+                    "id": str(recording_id),
+                    "surveyEventId": FILE_LIST_ITEM_SURVEY_EVENT_ID,
+                    "fileName": f"mock_recording_{recording_id}.wav",
+                    "recordingTime": recording_time.strftime("%Y-%m-%dT%H:%M:%S"),
+                }
+            }
+        )
+    return {
+        "data": {
+            "acousticFileListById": {
+                "name": f"mock_file_list_{file_list_id}.csv",
+                "projectId": 1,
+                "createdBy": SEED_ANNOTATION_EMAIL,
+                "acousticFileAcousticFileListsByListId": {
+                    "totalCount": len(nodes),
+                    "nodes": nodes,
+                },
+            }
+        }
+    }
+
+
 def build_response(query: str) -> dict:
     if "updateAcousticFileVet" in query:
         return build_update_vet_response(query)
@@ -164,6 +220,8 @@ def build_response(query: str) -> dict:
         return build_combined_response(query)
     if "presignedUrlFromAcousticFile" in query:
         return build_presigned_only_response(query)
+    if "acousticFileListById" in query:
+        return build_file_list_response(query)
     return {"errors": [{"message": "nabat-mock has no handler for this query yet"}]}
 
 

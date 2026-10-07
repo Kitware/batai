@@ -15,10 +15,12 @@ type SpectrogramView = "image" | "contour" | "both";
 // need to know "is this NABat-related at all".
 const NABAT_PATH_REGEX = /^\/?nabat(\/|$)/;
 
-// Matches only the two true external NABat entrypoints - a fresh page load of
-// "/nabat/auth/" (NABat's Keycloak redirect target) or "/nabat/:id/" (a direct
-// link) - and not deeper client-side routes like "/nabat/:id/spectrogram".
-const NABAT_ENTRYPOINT_PATH_REGEX = /^\/nabat\/[^/]+\/?$/;
+// Matches only the true external NABat entrypoints - a fresh page load of
+// "/nabat/auth/" or "/nabat/file-list/auth/" (NABat's Keycloak redirect targets) or
+// "/nabat/:id/" (a direct link) - and not deeper client-side routes like
+// "/nabat/:id/spectrogram" or "/nabat/file-list/:id/".
+const NABAT_ENTRYPOINT_PATH_REGEX =
+  /^\/nabat\/(?:(?:file-list\/)?auth|[^/]+)\/?$/;
 
 export {
   RecordingMimeTypes,

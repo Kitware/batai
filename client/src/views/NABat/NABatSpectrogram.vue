@@ -18,6 +18,7 @@ import PulseMetadataButton from "@/components/PulseMetadataButton.vue";
 import SpectrogramImageContentMenu from "@/components/SpectrogramImageContentMenu.vue";
 import RecordingInfoDialog from "@components/RecordingInfoDialog.vue";
 import RecordingAnnotations from "@components/RecordingAnnotations.vue";
+import NABatFileListSidebar from "@components/NABat/NABatFileListSidebar.vue";
 import { usePrompt } from "@use/prompt-service";
 import { useJWTToken } from "@use/useJWTToken";
 
@@ -28,6 +29,7 @@ export default defineComponent({
     ThumbnailViewer,
     RecordingInfoDialog,
     RecordingAnnotations,
+    NABatFileListSidebar,
     ColorSchemeDialog,
     TransparencyFilterControl,
     PulseMetadataButton,
@@ -37,6 +39,11 @@ export default defineComponent({
     id: {
       type: String,
       required: true,
+    },
+    fileListId: {
+      type: Number,
+      required: false,
+      default: undefined,
     },
   },
   setup(props) {
@@ -85,6 +92,8 @@ export default defineComponent({
     );
     const errorMessage: Ref<string | null> = ref(null);
     const additionalErrors: Ref<string[]> = ref([]);
+    const switchingFileListItem = ref(false);
+    const switchingFileListMessage = ref("");
 
     const gridEnabled = ref(false);
     const recordingInfo = ref(false);
@@ -226,6 +235,8 @@ export default defineComponent({
       () => props.id,
       () => {
         pendingCenterTimeMs.value = null;
+        switchingFileListItem.value = false;
+        switchingFileListMessage.value = "";
         loadData();
       },
     );
@@ -269,6 +280,8 @@ export default defineComponent({
     return {
       errorMessage,
       additionalErrors,
+      switchingFileListItem,
+      switchingFileListMessage,
       compressed,
       pendingCenterTimeMs,
       loadedImage,
@@ -554,32 +567,43 @@ export default defineComponent({
           </v-row>
         </v-container>
       </v-toolbar>
-      <spectrogram-viewer
-        v-if="loadedImage && spectroInfo"
-        :images="images"
-        :mask-images="maskImages"
-        :mask-loaded="maskLoaded"
-        :spectro-info="spectroInfo"
-        :recording-id="id"
-        :grid="gridEnabled"
-        :compressed="compressed"
-        :restore-center-time-ms="pendingCenterTimeMs"
-        class="spectro-main"
-        @selected="setSelection($event)"
-        @geo-viewer-ref="setParentGeoViewer($event)"
-        @hover-data="setHoverData($event)"
-        @restore-center-complete="clearPendingCenterRestore()"
-      />
-      <thumbnail-viewer
-        v-if="loadedImage && parentGeoViewerRef"
-        :images="images"
-        :mask-images="maskImages"
-        :mask-loaded="maskLoaded"
-        :spectro-info="spectroInfo"
-        :recording-id="id"
-        :parent-geo-viewer-ref="parentGeoViewerRef"
-        @selected="setSelection($event)"
-      />
+      <div
+        v-if="switchingFileListItem"
+        class="spectro-main d-flex flex-column align-center justify-center"
+      >
+        <v-progress-circular indeterminate size="128" color="primary" />
+        <h3 v-if="switchingFileListMessage" class="mt-4">
+          {{ switchingFileListMessage }}
+        </h3>
+      </div>
+      <template v-else>
+        <spectrogram-viewer
+          v-if="loadedImage && spectroInfo"
+          :images="images"
+          :mask-images="maskImages"
+          :mask-loaded="maskLoaded"
+          :spectro-info="spectroInfo"
+          :recording-id="id"
+          :grid="gridEnabled"
+          :compressed="compressed"
+          :restore-center-time-ms="pendingCenterTimeMs"
+          class="spectro-main"
+          @selected="setSelection($event)"
+          @geo-viewer-ref="setParentGeoViewer($event)"
+          @hover-data="setHoverData($event)"
+          @restore-center-complete="clearPendingCenterRestore()"
+        />
+        <thumbnail-viewer
+          v-if="loadedImage && parentGeoViewerRef"
+          :images="images"
+          :mask-images="maskImages"
+          :mask-loaded="maskLoaded"
+          :spectro-info="spectroInfo"
+          :recording-id="id"
+          :parent-geo-viewer-ref="parentGeoViewerRef"
+          @selected="setSelection($event)"
+        />
+      </template>
     </v-col>
     <v-col style="max-width: 400px">
       <v-card>
@@ -591,18 +615,43 @@ export default defineComponent({
             <v-col cols="4">
               <v-tooltip bottom>
                 <template #activator="{ props: subProps }">
+                  <span v-bind="subProps">
+                    <v-btn
+                      :variant="sideTab === 'annotations' ? 'flat' : 'outlined'"
+                      :color="sideTab === 'annotations' ? 'primary' : ''"
+                      :disabled="switchingFileListItem"
+                      class="mx-2"
+                      size="small"
+                      @click="sideTab = 'annotations'"
+                    >
+                      Annotations
+                    </v-btn>
+                  </span>
+                </template>
+                <span>
+                  {{
+                    switchingFileListItem
+                      ? "Wait for the current file to finish loading"
+                      : "View Annotations in sideTab"
+                  }}
+                </span>
+              </v-tooltip>
+            </v-col>
+            <v-col v-if="fileListId" cols="4">
+              <v-tooltip bottom>
+                <template #activator="{ props: subProps }">
                   <v-btn
                     v-bind="subProps"
-                    :variant="sideTab === 'annotations' ? 'flat' : 'outlined'"
-                    :color="sideTab === 'annotations' ? 'primary' : ''"
+                    :variant="sideTab === 'fileList' ? 'flat' : 'outlined'"
+                    :color="sideTab === 'fileList' ? 'primary' : ''"
                     class="mx-2"
                     size="small"
-                    @click="sideTab = 'annotations'"
+                    @click="sideTab = 'fileList'"
                   >
-                    Annotations
+                    File List
                   </v-btn>
                 </template>
-                <span> View Annotations in sideTab </span>
+                <span> Browse this NABat file list </span>
               </v-tooltip>
             </v-col>
             <v-col>
@@ -618,6 +667,17 @@ export default defineComponent({
               type="nabat"
             />
           </div>
+          <NABatFileListSidebar
+            v-else-if="sideTab === 'fileList' && fileListId"
+            :file-list-id="fileListId"
+            :current-id="id"
+            @queue-start="switchingFileListItem = true"
+            @queue-progress="switchingFileListMessage = $event"
+            @queue-end="
+              switchingFileListItem = false;
+              switchingFileListMessage = '';
+            "
+          />
         </v-card-text>
       </v-card>
     </v-col>

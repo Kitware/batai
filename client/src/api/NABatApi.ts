@@ -73,6 +73,74 @@ async function postNABatRecording(recordingId: number, surveyEventId: number) {
   return response as NABatRecordingDataResponse;
 }
 
+async function postNABatFileListAuth(
+  fileListId: string,
+  iss: string,
+  code: string,
+) {
+  const formData = new FormData();
+  formData.append("iss", iss);
+  formData.append("code", code);
+  formData.append("fileListId", fileListId.toString());
+  const response = await axiosInstance.post(
+    "nabat/file-list/authorize",
+    formData,
+  );
+  return response.data;
+}
+
+export interface NABatFileListQueueResponse {
+  fileListId: number;
+  queuedTaskIds: Record<string, string>;
+}
+
+// Also queues position 0 and its two neighbors, same as postNABatFileListQueue -
+// see _queue_positions on the backend, shared by both.
+async function postNABatFileListCreate(fileListId: number) {
+  const formData = new FormData();
+  formData.append("fileListId", fileListId.toString());
+  const response = await axiosInstance.post<NABatFileListQueueResponse>(
+    "nabat/file-list/create",
+    formData,
+  );
+  return response.data;
+}
+
+export type NABatFileListItemStatus =
+  "exists" | "queued" | "failed" | "does_not_exist";
+
+export interface NABatFileListItemInfo {
+  id: number;
+  recordingId: number;
+  fileName: string | null;
+  recordingTime: string | null;
+  status: NABatFileListItemStatus;
+  // The local NABatRecording id, once materialized - what /nabat/:id/spectrogram
+  // actually takes. null until the item's status is "exists".
+  nabatRecordingId: number | null;
+}
+
+export interface NABatFileListStatusResponse {
+  fileListId: number;
+  items: NABatFileListItemInfo[];
+}
+
+async function getNABatFileList(fileListId: number) {
+  const response = await axiosInstance.get<NABatFileListStatusResponse>(
+    `nabat/file-list/${fileListId}`,
+  );
+  return response.data;
+}
+
+// Queues `position` and its two neighbors (position + 1, position + 2) for
+// materialization - see queue_nabat_file_list_items on the backend.
+async function postNABatFileListQueue(fileListId: number, position: number) {
+  const response = await axiosInstance.post<NABatFileListQueueResponse>(
+    `nabat/file-list/${fileListId}/${position}`,
+  );
+  return response.data;
+}
+
 async function getNABatSpectrogram(id: string) {
   return axiosInstance.get<Spectrogram>(`nabat/recording/${id}/spectrogram`);
 }
@@ -263,7 +331,9 @@ export interface AnnotationExportResponse {
 async function adminNaBatUpdateSpecies(apiToken: string) {
   return axiosInstance.post<{ taskId: string }>(
     "/nabat/configuration/update-species",
-    { params: { apiToken } },
+    {
+      params: { apiToken },
+    },
   );
 }
 
@@ -294,6 +364,10 @@ async function getNabatPulseMetadata(recordingId: string) {
 export {
   postNABatAuth,
   postNABatRecording,
+  postNABatFileListAuth,
+  postNABatFileListCreate,
+  getNABatFileList,
+  postNABatFileListQueue,
   getNABatSpectrogram,
   getNABatSpectrogramCompressed,
   getNABatRecordingFileAnnotations,

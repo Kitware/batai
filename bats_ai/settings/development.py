@@ -34,6 +34,15 @@ MIDDLEWARE += [
 # to add new settings as individual feature flags.
 DEBUG = True
 
+# base.py's 10-minute CONN_MAX_AGE is right for a production WSGI server that reuses
+# worker threads across many requests. runserver_plus (Werkzeug) spawns a new thread
+# per request instead, so each connection's "close if too old" check never gets a
+# second chance to run on that thread - the connection just stays open indefinitely
+# once the thread exits, since nothing else closes it. Under frequent polling this
+# silently exhausts Postgres's max_connections. Closing on every request instead
+# costs a few ms of reconnect overhead, unnoticeable for a single local developer.
+DATABASES["default"]["CONN_MAX_AGE"] = 0
+
 SECRET_KEY = "insecure-secret"
 
 # This is typically only overridden when running from Docker.

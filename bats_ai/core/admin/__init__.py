@@ -9,6 +9,7 @@ from .nabat.admin import (
     NABatCompressedSpectrogramAdmin,
     NABatRecordingAdmin,
     NABatRecordingAnnotationAdmin,
+    NABatRecordingListAdmin,
     NABatSpectrogramAdmin,
 )
 from .processing_task import ProcessingTaskAdmin
@@ -34,6 +35,7 @@ __all__ = [
     "NABatRecordingAdmin",
     # NABat Models
     "NABatRecordingAnnotationAdmin",
+    "NABatRecordingListAdmin",
     "NABatSpectrogramAdmin",
     "ProcessingTaskAdmin",
     "PulseMetadataAdmin",

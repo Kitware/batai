@@ -9,6 +9,8 @@ from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
     NABatRecording,
     NABatRecordingAnnotation,
+    NABatRecordingList,
+    NABatRecordingListItem,
     NABatSpectrogram,
 )
 from bats_ai.core.models.nabat.nabat_pulse_metadata import NABatPulseMetadata
@@ -116,3 +118,28 @@ class NABatPulseMetadataAdmin(admin.ModelAdmin):
         "slopes",
     ]
     list_select_related = True
+
+
+class NABatRecordingListItemInline(admin.TabularInline):
+    model = NABatRecordingListItem
+    extra = 0
+    fields = ["recording_id", "file_name", "recording_time", "nabat_recording"]
+    readonly_fields = ["recording_id", "file_name", "recording_time"]
+
+
+@admin.register(NABatRecordingList)
+class NABatRecordingListAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "nabat_file_list_id",
+        "nabat_project_id",
+        "created_by_email",
+        "item_count",
+    ]
+    search_fields = ["name", "nabat_file_list_id", "created_by_email"]
+    list_filter = ["created_by_email"]
+    inlines = [NABatRecordingListItemInline]
+
+    @admin.display(description="Items")
+    def item_count(self, obj):
+        return obj.items.count()

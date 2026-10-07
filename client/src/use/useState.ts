@@ -65,7 +65,8 @@ const recordingTagList: Ref<string[]> = ref([]);
 const nextShared: Ref<Recording | false> = ref(false);
 const scaledVals: Ref<{ x: number; y: number }> = ref({ x: 1, y: 1 });
 const viewCompressedOverlay = ref(false);
-const sideTab: Ref<"annotations" | "recordings"> = ref("annotations");
+const sideTab: Ref<"annotations" | "recordings" | "fileList"> =
+  ref("annotations");
 const configuration: Ref<Configuration> = ref({
   display_pulse_annotations: true,
   display_sequence_annotations: true,

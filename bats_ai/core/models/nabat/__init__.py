@@ -4,6 +4,7 @@ from .nabat_compressed_spectrogram import NABatCompressedSpectrogram
 from .nabat_pulse_metadata import NABatPulseMetadata
 from .nabat_recording import NABatRecording
 from .nabat_recording_annotation import NABatRecordingAnnotation
+from .nabat_recording_list import NABatRecordingList, NABatRecordingListItem
 from .nabat_spectrogram import NABatSpectrogram
 
 __all__ = [
@@ -11,5 +12,7 @@ __all__ = [
     "NABatPulseMetadata",
     "NABatRecording",
     "NABatRecordingAnnotation",
+    "NABatRecordingList",
+    "NABatRecordingListItem",
     "NABatSpectrogram",
 ]
