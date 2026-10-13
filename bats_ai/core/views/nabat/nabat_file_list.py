@@ -15,7 +15,7 @@ import requests
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingList, NABatRecordingListItem
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
-from bats_ai.core.views.nabat.nabat_recording import get_auth_header
+from bats_ai.core.views.nabat.nabat_recording import decode_jwt, get_auth_header
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -260,6 +260,63 @@ def create_nabat_file_list(
     return {"fileListId": recording_list.pk, "queuedTaskIds": queued_task_ids}
 
 
+def get_email_if_authorized_for_file_list(  # noqa: PLR0911
+    request: HttpRequest,
+    file_list_id: int,
+) -> str | JsonResponse:
+    """Check API token validity with NABat API and return email from JWT if authorized.
+
+    Analog of nabat_recording.get_email_if_authorized, for a file list rather than a
+    single recording - the create() access re-check only ever runs once, at list
+    creation; nothing was re-verifying that a given token's holder still has NABat-side
+    access on every later call, so anyone who could guess/learn a local file_list_id
+    could read its status or trigger processing for it regardless of their own NABat
+    permissions.
+
+    If the user is a superuser, short-circuit and return their email.
+    """
+    # Superuser shortcut
+    if request.user and request.user.is_authenticated and request.user.is_superuser:
+        return request.user.email or "superuser@nabat.org"
+    # Decode JWT token
+    api_token = get_auth_header(request)
+    try:
+        payload = decode_jwt(api_token)
+        email = payload.get("email")
+        if not email:
+            raise ValueError("Email not found in JWT payload")
+    except Exception:
+        logger.exception("Failed to decode JWT")
+        return JsonResponse({"error": "Invalid API token"}, status=400)
+
+    # Verify access with NABat API
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
+    query = QUERY % {"file_list_id": file_list_id}
+    try:
+        response = requests.post(
+            settings.BATAI_NABAT_API_URL, json={"query": query}, headers=headers, timeout=30
+        )
+    except Exception:
+        logger.exception("API request error")
+        return JsonResponse({"error": "Failed to connect to NABat API"}, status=500)
+
+    if response.status_code != 200:
+        logger.error("NABat API rejected access: %s - %s", response.status_code, response.text)
+        return JsonResponse(
+            {"error": "Failed to verify access with NABat API"}, status=response.status_code
+        )
+
+    try:
+        data = response.json()
+        if data["data"]["acousticFileListById"] is None:
+            return JsonResponse({"error": "File list not found or access denied"}, status=403)
+    except (KeyError, TypeError, json.JSONDecodeError):
+        logger.exception("Error decoding NABat API response")
+        return JsonResponse({"error": "Malformed response from NABat API"}, status=500)
+
+    return email
+
+
 @router.post("/{file_list_id}/{position}", auth=None)
 def queue_nabat_file_list_items(
     request: HttpRequest,
@@ -273,10 +330,11 @@ def queue_nabat_file_list_items(
     of items ahead of wherever the user currently is queued up. Silently does
     nothing for any of the three positions that falls past the end of the list.
     """
-    api_token = get_auth_header(request)
-    if not api_token:
-        return JsonResponse({"error": "Missing or invalid Authorization header"}, status=401)
+    email_or_response = get_email_if_authorized_for_file_list(request, file_list_id)
+    if isinstance(email_or_response, JsonResponse):
+        return email_or_response
 
+    api_token = get_auth_header(request)
     recording_list = get_object_or_404(NABatRecordingList, nabat_file_list_id=file_list_id)
     queued_task_ids = _queue_positions(recording_list, position, api_token)
     return {"fileListId": recording_list.pk, "queuedTaskIds": queued_task_ids}
@@ -325,13 +383,14 @@ def _item_status(item: NABatRecordingListItem, task_statuses: list[str]) -> NABa
 def get_nabat_file_list(request: HttpRequest, file_list_id: int):
     """Per-item status for an already-created list: exists / queued / failed / does_not_exist.
 
-    No NABat call happens here - a token just needs to be present, for consistency
-    with every other endpoint on this router, even though nothing here actually
-    uses it.
+    Re-verifies the requester's own NABat access to this specific file list on every
+    call (see get_email_if_authorized_for_file_list) - otherwise anyone who could
+    guess/learn a local file_list_id could read its status regardless of their own
+    NABat permissions.
     """
-    api_token = get_auth_header(request)
-    if not api_token:
-        return JsonResponse({"error": "Missing or invalid Authorization header"}, status=401)
+    email_or_response = get_email_if_authorized_for_file_list(request, file_list_id)
+    if isinstance(email_or_response, JsonResponse):
+        return email_or_response
 
     recording_list = get_object_or_404(NABatRecordingList, nabat_file_list_id=file_list_id)
     items = list(recording_list.items.all())
