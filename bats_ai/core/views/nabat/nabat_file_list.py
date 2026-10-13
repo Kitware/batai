@@ -199,7 +199,7 @@ def _queue_positions(
     items = list(recording_list.items.all())
     queued_task_ids = {}
     for target_position in (position, position + 1, position + 2):
-        if not 0 <= target_position < len(items):
+        if target_position < 0 or target_position >= len(items):
             continue
         task_id = _queue_item(items[target_position], api_token)
         if task_id is not None:
