@@ -166,6 +166,13 @@ export default defineComponent({
 
     onUnmounted(() => {
       stopPolling();
+      // Invalidates any still-in-flight openItem() call too - not just a newer
+      // click, but the component going away for any reason (e.g. navigating off
+      // this view entirely some other way). Without this, an abandoned call's
+      // `isStale` check still reads requestToken === myToken (nothing else ever
+      // changed it) and its eventual router.push would fire into whatever page
+      // the user has since navigated to on their own.
+      requestToken += 1;
     });
 
     return {
