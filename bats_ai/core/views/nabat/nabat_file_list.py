@@ -364,18 +364,26 @@ class NABatFileListStatusSchema(Schema):
     items: list[NABatFileListItemSchema]
 
 
-def _item_status(item: NABatRecordingListItem, task_statuses: list[str]) -> NABatFileListItemStatus:
-    # Checked before nabat_recording_id: that FK gets backfilled by
-    # create_nabat_recording_from_response partway through nabat_recording_initialize,
-    # well before the task actually finishes generating spectrograms - a still-running
-    # task always means "not ready yet," even once the row exists.
-    in_flight = (ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING)
-    if any(s in in_flight for s in task_statuses):
+def _item_status(
+    item: NABatRecordingListItem, latest_task_status: str | None
+) -> NABatFileListItemStatus:
+    """Status is keyed off the most recent task only, not "ever X" over all history.
+
+    nabat_recording_id gets backfilled by create_nabat_recording_from_response
+    partway through nabat_recording_initialize, well before the task actually
+    finishes generating spectrograms - so a still-running task always means "not
+    ready yet," and a failed task always means "broken," even once the row exists
+    (generate_spectrograms can still fail after the backfill already happened).
+    Looking only at the latest task - rather than "ERROR appears anywhere in this
+    recording_id's task history" - keeps a since-succeeded retry from permanently
+    showing FAILED because of an earlier attempt's error.
+    """
+    if latest_task_status in (ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING):
         return NABatFileListItemStatus.QUEUED
+    if latest_task_status == ProcessingTask.Status.ERROR:
+        return NABatFileListItemStatus.FAILED
     if item.nabat_recording_id is not None:
         return NABatFileListItemStatus.EXISTS
-    if ProcessingTask.Status.ERROR in task_statuses:
-        return NABatFileListItemStatus.FAILED
     return NABatFileListItemStatus.DOES_NOT_EXIST
 
 
@@ -395,15 +403,16 @@ def get_nabat_file_list(request: HttpRequest, file_list_id: int):
     recording_list = get_object_or_404(NABatRecordingList, nabat_file_list_id=file_list_id)
     items = list(recording_list.items.all())
 
-    task_statuses_by_recording_id: dict[int, list[str]] = {}
+    # Ordered oldest-first so each recording_id's dict entry ends up holding its
+    # MOST RECENT task's status (later iterations overwrite earlier ones) - see
+    # _item_status for why only the latest task should count.
+    latest_task_status_by_recording_id: dict[int, str] = {}
     tasks = ProcessingTask.objects.filter(
         metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
         metadata__recordingId__in=[item.recording_id for item in items],
-    )
+    ).order_by("created")
     for task in tasks:
-        task_statuses_by_recording_id.setdefault(task.metadata["recordingId"], []).append(
-            task.status
-        )
+        latest_task_status_by_recording_id[task.metadata["recordingId"]] = task.status
 
     return {
         "fileListId": recording_list.pk,
@@ -414,7 +423,7 @@ def get_nabat_file_list(request: HttpRequest, file_list_id: int):
                 "fileName": item.file_name,
                 "recordingTime": item.recording_time,
                 "status": _item_status(
-                    item, task_statuses_by_recording_id.get(item.recording_id, [])
+                    item, latest_task_status_by_recording_id.get(item.recording_id)
                 ),
                 "nabatRecordingId": item.nabat_recording_id,
             }
