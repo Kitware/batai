@@ -42,9 +42,13 @@ GraphQL client - every query is a plain string with literal IDs, POSTed as `{"qu
 - so rather than running an actual GraphQL server, the mock just pattern-matches on substrings
 in the query text and returns canned JSON shaped like NABat's real responses.
 
-It's currently scoped to the single-recording fetch flow only (not NABat's "file list"
-feature). Any `recording_id` resolves successfully except `0`, which is reserved to simulate
-"not found / access denied" and exercise the existing 403 handling.
+It's scoped to the single-recording fetch flow and the file-list create/queue flow. Any
+`recording_id` resolves successfully except `0`, which is reserved to simulate "not found /
+access denied" and exercise the existing 403 handling. Any `file_list_id` resolves to the
+same fixed list of `FILE_LIST_ITEM_COUNT` items (default 10, override via env var) - lists
+aren't per-id fixtures any more than recordings are. Every item in that list resolves to the
+same underlying object as the single-recording flow (see below) - there's no need for
+distinct audio per file just to exercise sorting, queueing, or per-item status.
 
 Every recording fetched this way also gets one already-vetted species seeded onto it, so
 `create_nabat_recording_from_response()` picks it up and creates a matching
@@ -105,3 +109,15 @@ workflow or KC doesn't have an active token for `testuser` you'll need to log in
 Keycloak, and then kicks off a real fetch of the recording (backed by nabat-mock and minio)
 and real spectrogram generation - the same pipeline production runs, driven entirely by
 local infrastructure.
+
+### Testing the file-list flow
+
+Same idea, but via [./print-nabat-file-list-auth-url.sh](./print-nabat-file-list-auth-url.sh)
+instead. This lands on `NABatFileList.vue`, which creates the list (or re-verifies access to
+an already-created one), waits for its first item to finish processing, then redirects into
+the normal spectrogram view - the same one the single-recording flow uses.
+
+From there, the "File List" sidebar tab (alongside the existing Annotations tab) shows every
+item's status (`Ready` / `In progress` / `Failed` / `Not started`) and lets you click any of
+them: an instant jump if it's already `Ready`, otherwise it's queued (along with its next two
+neighbors) and you get a spinner with live progress in the main viewer until it's ready.

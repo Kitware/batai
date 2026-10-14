@@ -44,3 +44,4 @@ api.add_router("/vetting/", views.vetting_router)
 
 api.add_router("/nabat/recording/", nabat.nabat_recording_router)
 api.add_router("/nabat/configuration/", nabat.nabat_configuration_router)
+api.add_router("/nabat/file-list/", nabat.nabat_file_list_router)
