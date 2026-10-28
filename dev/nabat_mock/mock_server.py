@@ -192,9 +192,20 @@ def build_file_list_response(query: str) -> dict:
             {
                 "acousticFileByFileId": {
                     "id": str(recording_id),
-                    "surveyEventId": FILE_LIST_ITEM_SURVEY_EVENT_ID,
                     "fileName": f"mock_recording_{recording_id}.wav",
                     "recordingTime": recording_time.strftime("%Y-%m-%dT%H:%M:%S"),
+                    # Nested under a batch rather than a flat field on the file - matches
+                    # the real schema (confirmed against NABat's actual API; a direct
+                    # surveyEventId field on the file came back null there).
+                    "acousticFileBatchesByFileId": {
+                        "nodes": [
+                            {
+                                "acousticBatchByBatchId": {
+                                    "surveyEventId": FILE_LIST_ITEM_SURVEY_EVENT_ID,
+                                }
+                            }
+                        ]
+                    },
                 }
             }
         )
