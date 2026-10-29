@@ -30,20 +30,29 @@ router = Router()
 # acousticFileByFileId is the schema's real per-node accessor (confirmed via NABat's
 # own query editor) - not `file`, which is what an earlier CSV-export sample response
 # used for the same relation.
+#
+# `first: 500` caps the connection; assumed to be comfortably above any real file list's
+# size rather than handled with real pagination.
 QUERY = """
 query acousticFileList {
   acousticFileListById(id: %(file_list_id)d) {
     name
     projectId
     createdBy
-    acousticFileAcousticFileListsByListId {
+    acousticFileAcousticFileListsByListId(first: 500) {
       totalCount
       nodes {
         acousticFileByFileId {
           id
-          surveyEventId
           fileName
           recordingTime
+          acousticFileBatchesByFileId {
+            nodes {
+              acousticBatchByBatchId {
+                surveyEventId
+              }
+            }
+          }
         }
       }
     }
@@ -130,10 +139,24 @@ def _create_file_list(file_list_id: int, file_list_data: dict) -> NABatRecording
         )
         for node in nodes:
             file_data = node["acousticFileByFileId"]
+            batch_nodes = file_data["acousticFileBatchesByFileId"]["nodes"]
+            if not batch_nodes:
+                # survey_event_id is a required field (see NABatRecordingListItem) - fail
+                # the whole list creation loudly rather than guess, since we don't yet know
+                # what an unclassified/batch-less file should mean for this flow.
+                raise ValueError(
+                    f"Acoustic file {file_data['id']} has no acoustic batches; "
+                    "can't determine its survey event id"
+                )
+            # A file can have more than one batch. Unlike classifier-specific fields,
+            # surveyEventId describes the physical collection event, not the analysis -
+            # confirmed consistent across all of a test file's
+            # batches - so taking the first batch node is fine without a software filter.
+            survey_event_id = batch_nodes[0]["acousticBatchByBatchId"]["surveyEventId"]
             NABatRecordingListItem.objects.create(
                 recording_list=recording_list,
                 recording_id=file_data["id"],
-                survey_event_id=file_data["surveyEventId"],
+                survey_event_id=survey_event_id,
                 file_name=file_data.get("fileName"),
                 recording_time=_parse_recording_time(file_data.get("recordingTime")),
                 nabat_recording=NABatRecording.objects.filter(recording_id=file_data["id"]).first(),
