@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import Any
 
 from django.conf import settings
 from django.contrib.gis.geos import Point
@@ -11,12 +12,20 @@ from django.db.models import Q
 import requests
 
 from bats_ai.celery import app
+from bats_ai.core.errors import (
+    NABatAuthError,
+    NABatGraphQLError,
+    NABatInvalidResponseError,
+    NABatMissingDataError,
+    NABatRequestError,
+)
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
 from bats_ai.core.models.nabat import (
     NABatRecording,
     NABatRecordingAnnotation,
     NABatRecordingListItem,
 )
+from bats_ai.core.tasks.base import ProcessingTaskBase
 
 from .tasks import generate_spectrograms
 
@@ -111,13 +120,60 @@ def get_or_create_processing_task(recording_id, request_id):
         raise
 
 
-@app.task(bind=True)
+def _require(data: dict, *path: str):
+    """Walk `path` into NABat response `data`, raising if any step is null or absent."""
+    node: Any = data
+    for i, key in enumerate(path):
+        node = node.get(key) if isinstance(node, dict) else None
+        if node is None:
+            raise NABatMissingDataError(
+                f"NABat returned no {'.'.join(path[: i + 1])} "
+                "(it may not exist, or this user may not have access to it)"
+            )
+    return node
+
+
+def _fetch_recording_data(batch_query: str, api_token: str) -> dict:
+    """POST the recording query to NABat and return the parsed, error-free response."""
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
+    try:
+        response = requests.post(
+            settings.BATAI_NABAT_API_URL,
+            json={"query": batch_query},
+            headers=headers,
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        raise NABatRequestError(f"Could not reach the NABat API: {type(e).__name__}") from e
+
+    if response.status_code in (401, 403):
+        logger.error("NABat rejected credentials: %s - %s", response.status_code, response.text)
+        raise NABatAuthError(
+            f"NABat rejected this user's credentials (HTTP {response.status_code})"
+        )
+    if response.status_code != 200:
+        logger.error("NABat request failed: %s - %s", response.status_code, response.text)
+        raise NABatRequestError(f"NABat API request failed (HTTP {response.status_code})")
+
+    try:
+        batch_data = response.json()
+    except json.JSONDecodeError as e:
+        raise NABatInvalidResponseError("NABat API returned a response that isn't JSON") from e
+
+    # GraphQL reports errors with HTTP 200, alongside null fields in `data`.
+    if errors := batch_data.get("errors"):
+        messages = "; ".join(str(error.get("message", error)) for error in errors)
+        raise NABatGraphQLError(f"NABat API returned errors: {messages}")
+
+    return batch_data
+
+
+@app.task(bind=True, base=ProcessingTaskBase)
 def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, api_token: str):
     processing_task, _created = get_or_create_processing_task(recording_id, self.request.id)
 
     processing_task.status = ProcessingTask.Status.RUNNING
     processing_task.save()
-    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
     batch_query = QUERY % {
         "acoustic_file_id": recording_id,
         "survey_event_id": survey_event_id,
@@ -127,46 +183,15 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
         state="Progress",
         meta={"description": "Fetching NAbat Recording Data"},
     )
-    try:
-        response = requests.post(
-            settings.BATAI_NABAT_API_URL,
-            json={"query": batch_query},
-            headers=headers,
-            timeout=30,
-        )
-    except Exception as e:
-        processing_task.status = ProcessingTask.Status.ERROR
-        processing_task.error = f"Error with API Request: {e}"
-        processing_task.save()
-        raise
-    batch_data = {}
-
-    if response.status_code == 200:
-        try:
-            batch_data = response.json()
-        except (KeyError, TypeError, json.JSONDecodeError) as e:
-            error_msg = f"Error decoding JSON response: {e}"
-            logger.exception(error_msg)
-            processing_task.status = ProcessingTask.Status.ERROR
-            processing_task.error = error_msg
-            processing_task.save()
-            raise
-    else:
-        error_msg = f"Failed to fetch data: {response.status_code}, {response.text}"
-        logger.error(error_msg)
-        processing_task.status = ProcessingTask.Status.ERROR
-        processing_task.error = error_msg
-        processing_task.save()
-        response.raise_for_status()
+    batch_data = _fetch_recording_data(batch_query, api_token)
 
     self.update_state(
         state="Progress",
         meta={"description": "Fetching Recording File"},
     )
 
+    presigned_url = _require(batch_data, "data", "presignedUrlFromAcousticFile", "s3PresignedUrl")
     logger.info("Presigned URL obtained. Downloading file...")
-
-    presigned_url = batch_data["data"]["presignedUrlFromAcousticFile"]["s3PresignedUrl"]
 
     logger.info("Creating NA Bat Recording...")
     nabat_recording = create_nabat_recording_from_response(
@@ -176,14 +201,13 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
 
 
 def create_nabat_recording_from_response(response_data, recording_id, survey_event_id):
-    # Extract the batch data from the response
-    nabat_recording_data = response_data["data"]
+    survey_event = _require(response_data, "data", "surveyEventById")
+    file_name = _require(response_data, "data", "acousticFileById", "fileName")
 
     # Optional fields
-    recording_location_data = nabat_recording_data["surveyEventById"][
-        "eventGeometryByEventGeometryId"
-    ]["geom"]["geojson"]
-    file_name = nabat_recording_data["acousticFileById"]["fileName"]
+    recording_location_data = (
+        (survey_event.get("eventGeometryByEventGeometryId") or {}).get("geom") or {}
+    ).get("geojson")
 
     # Create geometry for the recording location if available
     if recording_location_data:
@@ -211,9 +235,7 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
         recording_id=recording_id, nabat_recording__isnull=True
     ).update(nabat_recording=nabat_recording)
 
-    acoustic_batches_nodes = nabat_recording_data["surveyEventById"][
-        "acousticBatchesBySurveyEventId"
-    ]["nodes"]
+    acoustic_batches_nodes = survey_event["acousticBatchesBySurveyEventId"]["nodes"]
     if len(acoustic_batches_nodes) > 0:
         batch_data = acoustic_batches_nodes[0]["acousticFileBatchesByBatchId"]["nodes"]
         for node in batch_data:

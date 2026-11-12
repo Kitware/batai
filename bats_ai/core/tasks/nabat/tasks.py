@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.gis.geos import LineString, Point, Polygon
 import requests
 
+from bats_ai.core.errors import RecordingDownloadError, SpectrogramGenerationError
 from bats_ai.core.models import ProcessingTask
 from bats_ai.core.models.nabat import NABatPulseMetadata
 from bats_ai.utils.spectrogram_utils import (
@@ -23,25 +24,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NABatDataRetrieval")
 
 
-def generate_spectrograms(  # noqa: C901, PLR0915
+def generate_spectrograms(  # noqa: C901, PLR0912, PLR0915
     self, nabat_recording: NABatRecording, presigned_url: str, processing_task: ProcessingTask
 ):
     from bats_ai.core.utils.batbot_metadata import generate_spectrogram_assets
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        audio_file = None
+        audio_file = Path(f"{tmpdir}/audio_file.wav")
         try:
             file_response = requests.get(presigned_url, stream=True, timeout=60)
-            if file_response.status_code == 200:
-                audio_file = Path(f"{tmpdir}/audio_file.wav")
-                with open(audio_file, "wb") as temp_file:
-                    temp_file.writelines(file_response.iter_content(chunk_size=8192))
-        except Exception as e:
-            logger.exception("Error Downloading Presigned URL")
-            processing_task.status = ProcessingTask.Status.ERROR
-            processing_task.error = f"Error Downloading Presigned URL: {e}"
-            processing_task.save()
-            raise
+            file_response.raise_for_status()
+            with open(audio_file, "wb") as temp_file:
+                temp_file.writelines(file_response.iter_content(chunk_size=8192))
+        except requests.HTTPError as e:
+            raise RecordingDownloadError(
+                f"Could not download the recording file (HTTP {e.response.status_code})"
+            ) from e
+        except requests.RequestException as e:
+            raise RecordingDownloadError(
+                f"Could not download the recording file: {type(e).__name__}"
+            ) from e
 
         # Generate spectrogram assets
         logger.info("Generating spectrograms...")
@@ -50,7 +52,12 @@ def generate_spectrograms(  # noqa: C901, PLR0915
             meta={"description": "Generating Spectrograms"},
         )
 
-        results = generate_spectrogram_assets(audio_file, tmpdir)
+        try:
+            results = generate_spectrogram_assets(str(audio_file), tmpdir)
+        except Exception as e:
+            raise SpectrogramGenerationError(
+                f"Spectrogram generation failed: {type(e).__name__}"
+            ) from e
 
         self.update_state(
             state="Progress",
@@ -103,7 +110,7 @@ def generate_spectrograms(  # noqa: C901, PLR0915
                     curve = segment.get("curve_hz_ms") or []
                     if not curve:
                         segment_index = segment.get("segment_index")
-                        raise ValueError(
+                        raise SpectrogramGenerationError(
                             f"Missing bbox and curve_hz_ms for segment_index={segment_index}"
                         )
                     times = [pt[1] for pt in curve]
