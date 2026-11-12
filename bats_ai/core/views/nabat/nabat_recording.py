@@ -22,7 +22,10 @@ from bats_ai.core.models.nabat import (
     NABatRecording,
     NABatRecordingAnnotation,
 )
-from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
+from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
+    is_nabat_recording_processed,
+    nabat_recording_initialize,
+)
 
 # Real (not TYPE_CHECKING) import: pydantic needs this at runtime to build NABatPulseMetadataSchema.
 from bats_ai.core.views.recording import PulseMetadataSlopesSchema
@@ -275,8 +278,9 @@ def generate_nabat_recording(  # noqa: PLR0911
     api_token = get_auth_header(request)
     if not api_token:
         return JsonResponse({"error": "Missing or invalid Authorization header"}, status=401)
-    if not nabat_recording.exists():
-        # use a task to start downloading the file using the API key and generate the spectrograms
+    if not is_nabat_recording_processed(payload.recordingId):
+        # use a task to start downloading the file using the API key and generate the
+        # spectrograms - this also retries a recording whose previous processing failed
         task = nabat_recording_initialize.delay(
             payload.recordingId, payload.surveyEventId, api_token
         )

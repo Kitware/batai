@@ -5,11 +5,19 @@ import uuid
 
 import pytest
 
-from bats_ai.core.errors import NABatAuthError, NABatGraphQLError, NABatMissingDataError
+from bats_ai.core.errors import (
+    NABatAuthError,
+    NABatGraphQLError,
+    NABatMissingDataError,
+    SpectrogramGenerationError,
+)
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
 from bats_ai.core.tasks.nabat import nabat_data_retrieval
-from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
+from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
+    is_nabat_recording_processed,
+    nabat_recording_initialize,
+)
 
 RECORDING_ID = 12345
 SURVEY_EVENT_ID = 678
@@ -177,3 +185,100 @@ def test_on_failure_leaves_terminal_tasks_alone():
     processing_task.refresh_from_db()
     assert processing_task.status == ProcessingTask.Status.COMPLETE
     assert processing_task.error == ""
+
+
+def _complete_task(task, nabat_recording, presigned_url, processing_task):
+    """Stand-in for generate_spectrograms that just marks the task COMPLETE, as it does."""
+    processing_task.status = ProcessingTask.Status.COMPLETE
+    processing_task.save()
+
+
+@pytest.mark.django_db
+def test_retry_after_spectrogram_failure_reuses_recording(mocker):
+    species = Species.objects.order_by("pk").first()
+    assert species is not None
+    _mock_nabat_response(
+        mocker,
+        body=_response_body(
+            file_batches=[{"autoId": 1, "manualId": species.pk, "vetter": "a@example.com"}]
+        ),
+    )
+
+    # First attempt imports the metadata, then fails generating spectrograms.
+    first_task = _queued_task()
+    mocker.patch.object(
+        nabat_data_retrieval,
+        "generate_spectrograms",
+        side_effect=SpectrogramGenerationError("Spectrogram generation failed: ValueError"),
+    )
+    _run(first_task)
+
+    assert first_task.status == ProcessingTask.Status.ERROR
+    recording = NABatRecording.objects.get(recording_id=RECORDING_ID)
+    assert not is_nabat_recording_processed(RECORDING_ID)
+
+    # Second attempt reuses that recording instead of failing on its unique recording_id.
+    second_task = _queued_task()
+    generate_spectrograms = mocker.patch.object(
+        nabat_data_retrieval, "generate_spectrograms", side_effect=_complete_task
+    )
+    result = _run(second_task)
+
+    assert result.successful()
+    assert second_task.status == ProcessingTask.Status.COMPLETE
+    assert generate_spectrograms.call_args.args[1] == recording
+    assert NABatRecording.objects.count() == 1
+    assert NABatRecordingAnnotation.objects.filter(nabat_recording=recording).count() == 1
+    assert is_nabat_recording_processed(RECORDING_ID)
+
+
+@pytest.mark.django_db
+def test_metadata_import_is_atomic(mocker):
+    species = Species.objects.order_by("pk").first()
+    assert species is not None
+    processing_task = _queued_task()
+    _mock_nabat_response(
+        mocker,
+        body=_response_body(
+            file_batches=[{"autoId": 1, "manualId": species.pk, "vetter": "a@example.com"}]
+        ),
+    )
+    mocker.patch.object(
+        nabat_data_retrieval.NABatRecordingAnnotation.objects,
+        "create",
+        side_effect=RuntimeError("annotation import failed"),
+    )
+
+    _run(processing_task)
+
+    assert processing_task.status == ProcessingTask.Status.ERROR
+    # The recording was created before the failure, but rolled back with it.
+    assert not NABatRecording.objects.exists()
+
+
+@pytest.mark.parametrize(
+    ("has_recording", "task_statuses", "expected"),
+    [
+        (False, [], False),
+        (False, [ProcessingTask.Status.COMPLETE], False),
+        (True, [], True),
+        (True, [ProcessingTask.Status.COMPLETE], True),
+        (True, [ProcessingTask.Status.ERROR], False),
+        (True, [ProcessingTask.Status.RUNNING], False),
+        (True, [ProcessingTask.Status.COMPLETE, ProcessingTask.Status.ERROR], False),
+        (True, [ProcessingTask.Status.ERROR, ProcessingTask.Status.COMPLETE], True),
+    ],
+)
+@pytest.mark.django_db
+def test_is_nabat_recording_processed(has_recording, task_statuses, expected):
+    if has_recording:
+        NABatRecording.objects.create(
+            recording_id=RECORDING_ID, survey_event_id=SURVEY_EVENT_ID, name="recording.wav"
+        )
+    # Created oldest first, so the last status is the most recent task's.
+    for status in task_statuses:
+        processing_task = _queued_task()
+        processing_task.status = status
+        processing_task.save()
+
+    assert is_nabat_recording_processed(RECORDING_ID) is expected

@@ -14,7 +14,10 @@ import requests
 
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingList, NABatRecordingListItem
-from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
+from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
+    is_nabat_recording_processed,
+    nabat_recording_initialize,
+)
 from bats_ai.core.views.nabat.nabat_recording import decode_jwt, get_auth_header
 
 logger = logging.getLogger(__name__)
@@ -167,23 +170,23 @@ def _create_file_list(file_list_id: int, file_list_data: dict) -> NABatRecording
 def _queue_item(item: NABatRecordingListItem, api_token: str) -> str | None:
     """Ensure `item` is being materialized.
 
-    Dispatches nabat_recording_initialize unless it's already materialized or
+    Dispatches nabat_recording_initialize unless it's already fully processed or
     already has a task in flight. Returns the in-flight task's celery id (whether
-    just dispatched or already running), or None if already materialized.
+    just dispatched or already running), or None if already processed.
 
     No live check against NABat happens here - just a present-looking token gets
     passed through. An invalid/expired token is still caught, just inside the task
     itself when it calls NABat, surfacing as a "failed" status rather than an
     immediate error from this call. A previously-failed item (no ProcessingTask
-    still QUEUED/RUNNING, nothing materialized) gets retried automatically here,
-    which is intentional.
+    still QUEUED/RUNNING, latest one not COMPLETE) gets retried automatically here,
+    which is intentional - including one whose NABatRecording was already created
+    before the failure, which the task reuses.
 
-    Checks for an in-flight task before checking nabat_recording_id: that FK gets
-    backfilled by create_nabat_recording_from_response partway through
-    nabat_recording_initialize, well before the task actually finishes generating
-    spectrograms - callers need the still-running task's id to wait on, not None,
-    even once the row exists (see _item_status, which has the same ordering for
-    the same reason).
+    Checks for an in-flight task first: the NABatRecording row gets created partway
+    through nabat_recording_initialize, well before the task actually finishes
+    generating spectrograms - callers need the still-running task's id to wait on,
+    not None, even once the row exists (see _item_status, which has the same
+    ordering for the same reason).
     """
     existing_task = ProcessingTask.objects.filter(
         metadata__recordingId=item.recording_id,
@@ -192,7 +195,7 @@ def _queue_item(item: NABatRecordingListItem, api_token: str) -> str | None:
     if existing_task:
         return existing_task.celery_id
 
-    if item.nabat_recording_id is not None:
+    if is_nabat_recording_processed(item.recording_id):
         return None
 
     task = nabat_recording_initialize.delay(item.recording_id, item.survey_event_id, api_token)

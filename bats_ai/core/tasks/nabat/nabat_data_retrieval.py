@@ -193,14 +193,47 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
     presigned_url = _require(batch_data, "data", "presignedUrlFromAcousticFile", "s3PresignedUrl")
     logger.info("Presigned URL obtained. Downloading file...")
 
-    logger.info("Creating NA Bat Recording...")
-    nabat_recording = create_nabat_recording_from_response(
-        batch_data, recording_id, survey_event_id
-    )
+    # A previous attempt may have already imported the recording's metadata before
+    # failing (e.g. during spectrogram generation, or a worker restart). That import is
+    # atomic, so an existing row means it completed - reuse it rather than importing
+    # again. Spectrogram generation is itself safe to re-run.
+    nabat_recording = NABatRecording.objects.filter(recording_id=recording_id).first()
+    if nabat_recording is None:
+        logger.info("Creating NA Bat Recording...")
+        nabat_recording = create_nabat_recording_from_response(
+            batch_data, recording_id, survey_event_id
+        )
     generate_spectrograms(self, nabat_recording, presigned_url, processing_task)
 
 
+def is_nabat_recording_processed(recording_id: int) -> bool:
+    """Whether `recording_id` has been fully processed, so needs no (re)processing.
+
+    A NABatRecording row alone isn't enough: it's created before spectrogram
+    generation, which can still fail afterwards. So also require that the most
+    recent processing task for it completed. A recording with no task history at all
+    (e.g. its tasks were deleted) is treated as processed.
+    """
+    if not NABatRecording.objects.filter(recording_id=recording_id).exists():
+        return False
+    latest_task = (
+        ProcessingTask.objects.filter(
+            metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+            metadata__recordingId=recording_id,
+        )
+        .order_by("-created")
+        .first()
+    )
+    return latest_task is None or latest_task.status == ProcessingTask.Status.COMPLETE
+
+
+@transaction.atomic
 def create_nabat_recording_from_response(response_data, recording_id, survey_event_id):
+    """Create the NABatRecording and import its NABat metadata, all or nothing.
+
+    Atomic so that an existing NABatRecording row always has its list-item backfill
+    and annotations in place, which lets a retry skip this step entirely.
+    """
     survey_event = _require(response_data, "data", "surveyEventById")
     file_name = _require(response_data, "data", "acousticFileById", "fileName")
 
