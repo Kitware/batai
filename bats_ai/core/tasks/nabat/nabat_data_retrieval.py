@@ -239,13 +239,17 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
     if len(acoustic_batches_nodes) > 0:
         batch_data = acoustic_batches_nodes[0]["acousticFileBatchesByBatchId"]["nodes"]
         for node in batch_data:
-            species_id = node.get("manualId", False)
-            if species_id is not False:
-                annotation = NABatRecordingAnnotation.objects.create(
-                    nabat_recording=nabat_recording,
-                    user_email=node["vetter"],
-                )
-                species = Species.objects.get(pk=species_id)
-                annotation.species.add(species)
+            species_id = node.get("manualId")
+            if species_id is None:
+                continue  # not vetted in NABat yet
+            species = Species.objects.filter(pk=species_id).first()
+            if species is None:
+                logger.warning("Skipping annotation with unknown NABat species id %s", species_id)
+                continue
+            annotation = NABatRecordingAnnotation.objects.create(
+                nabat_recording=nabat_recording,
+                user_email=node.get("vetter") or "",
+            )
+            annotation.species.add(species)
 
     return nabat_recording

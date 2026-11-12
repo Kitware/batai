@@ -6,8 +6,8 @@ import uuid
 import pytest
 
 from bats_ai.core.errors import NABatAuthError, NABatGraphQLError, NABatMissingDataError
-from bats_ai.core.models import ProcessingTask, ProcessingTaskType
-from bats_ai.core.models.nabat import NABatRecording
+from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
+from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
 from bats_ai.core.tasks.nabat import nabat_data_retrieval
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
 
@@ -45,7 +45,14 @@ def _mock_nabat_response(mocker, *, status_code=200, body=None) -> None:
     mocker.patch.object(nabat_data_retrieval.requests, "post", return_value=response)
 
 
-def _response_body(*, presigned_url="https://example.com/recording.wav", errors=None) -> dict:
+def _response_body(
+    *, presigned_url="https://example.com/recording.wav", errors=None, file_batches=None
+) -> dict:
+    batches = (
+        [{"id": 1, "acousticFileBatchesByBatchId": {"nodes": file_batches}}]
+        if file_batches is not None
+        else []
+    )
     body: dict = {
         "data": {
             "presignedUrlFromAcousticFile": (
@@ -53,7 +60,7 @@ def _response_body(*, presigned_url="https://example.com/recording.wav", errors=
             ),
             "surveyEventById": {
                 "eventGeometryByEventGeometryId": None,
-                "acousticBatchesBySurveyEventId": {"nodes": []},
+                "acousticBatchesBySurveyEventId": {"nodes": batches},
             },
             "acousticFileById": {"fileName": "recording.wav"},
         }
@@ -123,6 +130,38 @@ def test_unexpected_error_stores_only_its_type(mocker):
     assert isinstance(result.result, RuntimeError)
     assert processing_task.status == ProcessingTask.Status.ERROR
     assert processing_task.error == "Unexpected error (RuntimeError)"
+
+
+@pytest.mark.django_db
+def test_annotations_skip_unvetted_and_unknown_species(mocker):
+    processing_task = _queued_task()
+    # Species rows are seeded by a data migration (with explicit pks, so creating new
+    # ones collides with the sequence) - use one of those.
+    species = Species.objects.order_by("pk").first()
+    assert species is not None
+    unknown_species_id = Species.objects.order_by("-pk").values_list("pk", flat=True)[0] + 1000
+    _mock_nabat_response(
+        mocker,
+        body=_response_body(
+            file_batches=[
+                # Unvetted in NABat: no manual ID and no vetter.
+                {"autoId": 1, "manualId": None, "vetter": None},
+                # Vetted with a species that isn't in the local Species table.
+                {"autoId": 1, "manualId": unknown_species_id, "vetter": "a@example.com"},
+                {"autoId": 1, "manualId": species.pk, "vetter": "b@example.com"},
+            ]
+        ),
+    )
+    # Spectrogram generation is out of scope here.
+    mocker.patch.object(nabat_data_retrieval, "generate_spectrograms")
+
+    result = _run(processing_task)
+
+    assert result.successful()
+    recording = NABatRecording.objects.get(recording_id=RECORDING_ID)
+    annotation = NABatRecordingAnnotation.objects.get(nabat_recording=recording)
+    assert annotation.user_email == "b@example.com"
+    assert list(annotation.species.all()) == [species]
 
 
 @pytest.mark.django_db
