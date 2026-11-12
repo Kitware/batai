@@ -15,6 +15,7 @@ import requests
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingList, NABatRecordingListItem
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
+    expire_stale_nabat_processing_tasks,
     is_nabat_recording_processed,
     nabat_recording_initialize,
 )
@@ -188,6 +189,8 @@ def _queue_item(item: NABatRecordingListItem, api_token: str) -> str | None:
     not None, even once the row exists (see _item_status, which has the same
     ordering for the same reason).
     """
+    # So a task the worker killed doesn't count as in flight forever.
+    expire_stale_nabat_processing_tasks([item.recording_id])
     existing_task = ProcessingTask.objects.filter(
         metadata__recordingId=item.recording_id,
         status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING],
@@ -433,6 +436,8 @@ def get_nabat_file_list(request: HttpRequest, file_list_id: int):
     # MOST RECENT task's status (later iterations overwrite earlier ones) - see
     # _item_status for why only the latest task should count.
     latest_task_status_by_recording_id: dict[int, str] = {}
+    # So a task the worker killed shows as failed rather than queued forever.
+    expire_stale_nabat_processing_tasks(item.recording_id for item in items)
     tasks = ProcessingTask.objects.filter(
         metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
         metadata__recordingId__in=[item.recording_id for item in items],

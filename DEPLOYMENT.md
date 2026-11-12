@@ -122,6 +122,9 @@ for a list of environment variables that you'll need to populate for your deploy
 - `AWS_*` and `DJANGO_STORAGE_BUCKET_NAME` are used to make sure the application can connect to your S3 bucket
 - `DJANGO_BATAI_NABAT_API_URL` (optional): the location of the NABat GraphQL endpoint used to
   retrieve information about files in NABat.
+- `DJANGO_BATAI_NABAT_TASK_TIME_LIMIT` (optional, default `300`): the number of seconds a NABat
+  recording processing task may run before Celery stops it and marks it as failed. Raise this if
+  large recordings legitimately take longer on your hardware.
 - `DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS` (optional, default `false`): controls whether Celery
   spectrogram tasks (recording upload and NABat import pipelines) extract contours from compressed
   spectrogram masks and save them to `PulseMetadata.contours`. When `false` or unset, contour

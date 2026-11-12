@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from datetime import timedelta
+import sys
 from unittest.mock import MagicMock
 import uuid
 
+from celery.exceptions import SoftTimeLimitExceeded
+from django.conf import settings
+from django.utils import timezone
 import pytest
 
 from bats_ai.core.errors import (
@@ -14,7 +19,10 @@ from bats_ai.core.errors import (
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingAnnotation
 from bats_ai.core.tasks.nabat import nabat_data_retrieval
+from bats_ai.core.tasks.nabat import tasks as nabat_tasks
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
+    STALE_TASK_ERROR,
+    expire_stale_nabat_processing_tasks,
     is_nabat_recording_processed,
     nabat_recording_initialize,
 )
@@ -282,3 +290,65 @@ def test_is_nabat_recording_processed(has_recording, task_statuses, expected):
         processing_task.save()
 
     assert is_nabat_recording_processed(RECORDING_ID) is expected
+
+
+def _task_with_status(status, *, recording_id=RECORDING_ID, age=timedelta(0)) -> ProcessingTask:
+    processing_task = ProcessingTask.objects.create(
+        status=status,
+        metadata={
+            "type": ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+            "recordingId": recording_id,
+        },
+        celery_id=str(uuid.uuid4()),
+    )
+    # .update() rather than .save(), which would reset `modified` to now.
+    ProcessingTask.objects.filter(pk=processing_task.pk).update(modified=timezone.now() - age)
+    return processing_task
+
+
+def test_time_limits_follow_setting():
+    soft_limit = settings.BATAI_NABAT_TASK_TIME_LIMIT
+    assert nabat_recording_initialize.soft_time_limit == soft_limit
+    assert nabat_recording_initialize.time_limit == soft_limit + 30
+
+
+@pytest.mark.django_db
+def test_expire_stale_nabat_processing_tasks():
+    stale = _task_with_status(ProcessingTask.Status.RUNNING, age=timedelta(hours=1))
+    recent = _task_with_status(ProcessingTask.Status.RUNNING, age=timedelta(seconds=10))
+    old_queued = _task_with_status(ProcessingTask.Status.QUEUED, age=timedelta(hours=1))
+    other_recording = _task_with_status(
+        ProcessingTask.Status.RUNNING, recording_id=RECORDING_ID + 1, age=timedelta(hours=1)
+    )
+
+    assert expire_stale_nabat_processing_tasks([RECORDING_ID]) == 1
+
+    for processing_task in (stale, recent, old_queued, other_recording):
+        processing_task.refresh_from_db()
+    assert stale.status == ProcessingTask.Status.ERROR
+    assert stale.error == STALE_TASK_ERROR
+    assert recent.status == ProcessingTask.Status.RUNNING
+    assert old_queued.status == ProcessingTask.Status.QUEUED
+    assert other_recording.status == ProcessingTask.Status.RUNNING
+
+
+@pytest.mark.django_db
+def test_soft_time_limit_is_reported(mocker):
+    processing_task = _queued_task()
+    _mock_nabat_response(mocker, body=_response_body())
+    download = MagicMock()
+    download.iter_content.return_value = [b"audio"]
+    mocker.patch.object(nabat_tasks.requests, "get", return_value=download)
+    # generate_spectrograms imports this lazily, and the real module needs BatBot,
+    # which the test environment doesn't install.
+    batbot_metadata = MagicMock()
+    batbot_metadata.generate_spectrogram_assets.side_effect = SoftTimeLimitExceeded()
+    mocker.patch.dict(sys.modules, {"bats_ai.core.utils.batbot_metadata": batbot_metadata})
+
+    result = _run(processing_task)
+
+    assert isinstance(result.result, SoftTimeLimitExceeded)
+    assert processing_task.status == ProcessingTask.Status.ERROR
+    assert processing_task.error == (
+        f"Processing exceeded its time limit of {settings.BATAI_NABAT_TASK_TIME_LIMIT} seconds"
+    )

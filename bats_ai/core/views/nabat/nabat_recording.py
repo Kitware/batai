@@ -23,6 +23,7 @@ from bats_ai.core.models.nabat import (
     NABatRecordingAnnotation,
 )
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
+    expire_stale_nabat_processing_tasks,
     is_nabat_recording_processed,
     nabat_recording_initialize,
 )
@@ -259,6 +260,8 @@ def generate_nabat_recording(  # noqa: PLR0911
     request: HttpRequest,
     payload: Form[NABatRecordingGenerateSchema],
 ):
+    # So a task the worker killed doesn't count as in flight forever.
+    expire_stale_nabat_processing_tasks([payload.recordingId])
     existing_task = ProcessingTask.objects.filter(
         metadata__recordingId=payload.recordingId,
         status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING],

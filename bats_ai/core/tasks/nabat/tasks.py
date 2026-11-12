@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 from typing import TYPE_CHECKING
 
+from celery.exceptions import SoftTimeLimitExceeded
 from django.conf import settings
 from django.contrib.gis.geos import LineString, Point, Polygon
 import requests
@@ -54,6 +55,9 @@ def generate_spectrograms(  # noqa: C901, PLR0912, PLR0915
 
         try:
             results = generate_spectrogram_assets(str(audio_file), tmpdir)
+        except SoftTimeLimitExceeded:
+            # Let the task's time limit be reported as such, not as a BatBot failure.
+            raise
         except Exception as e:
             raise SpectrogramGenerationError(
                 f"Spectrogram generation failed: {type(e).__name__}"

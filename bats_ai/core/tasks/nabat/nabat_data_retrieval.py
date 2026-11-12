@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+from datetime import timedelta
 import json
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 import requests
 
 from bats_ai.celery import app
@@ -28,6 +30,9 @@ from bats_ai.core.models.nabat import (
 from bats_ai.core.tasks.base import ProcessingTaskBase
 
 from .tasks import generate_spectrograms
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
@@ -168,7 +173,52 @@ def _fetch_recording_data(batch_query: str, api_token: str) -> dict:
     return batch_data
 
 
-@app.task(bind=True, base=ProcessingTaskBase)
+# At the soft time limit, the task gets a SoftTimeLimitExceeded it can fail cleanly on (marking its
+# ProcessingTask as ERROR). If it's still running HARD_TIME_LIMIT_GRACE later, the worker kills it
+# outright, which skips on_failure and so leaves the ProcessingTask at RUNNING - those get caught
+# by expire_stale_nabat_processing_tasks instead.
+HARD_TIME_LIMIT_GRACE = timedelta(seconds=30)
+# How long past the hard time limit a RUNNING task must be before it's considered dead, to allow
+# for clock skew and the worker's own bookkeeping.
+STALE_TASK_GRACE = timedelta(seconds=60)
+STALE_TASK_ERROR = (
+    "Processing stopped without reporting a result "
+    "(the worker may have restarted or run out of memory)"
+)
+
+
+def _soft_time_limit() -> timedelta:
+    return timedelta(seconds=settings.BATAI_NABAT_TASK_TIME_LIMIT)
+
+
+def expire_stale_nabat_processing_tasks(recording_ids: Iterable[int]) -> int:
+    """Mark RUNNING NABat processing tasks that can no longer be running as ERROR.
+
+    A task the worker killed outright (hard time limit, OOM, restart) never gets to
+    mark its own ProcessingTask, which would otherwise stay RUNNING forever - and
+    callers treat RUNNING as in flight, so never re-dispatch it. Any task RUNNING for
+    longer than the hard time limit can't still be alive, so is safe to expire.
+
+    Called lazily by the views that read or dispatch these tasks, rather than on a
+    schedule. Returns the number of tasks expired.
+    """
+    # `modified` is when the task last saved its ProcessingTask, which is when it set
+    # it to RUNNING (it saves again only on reaching COMPLETE).
+    cutoff = timezone.now() - (_soft_time_limit() + HARD_TIME_LIMIT_GRACE + STALE_TASK_GRACE)
+    return ProcessingTask.objects.filter(
+        metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+        metadata__recordingId__in=list(recording_ids),
+        status=ProcessingTask.Status.RUNNING,
+        modified__lt=cutoff,
+    ).update(status=ProcessingTask.Status.ERROR, error=STALE_TASK_ERROR, modified=timezone.now())
+
+
+@app.task(
+    bind=True,
+    base=ProcessingTaskBase,
+    soft_time_limit=settings.BATAI_NABAT_TASK_TIME_LIMIT,
+    time_limit=int((_soft_time_limit() + HARD_TIME_LIMIT_GRACE).total_seconds()),
+)
 def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, api_token: str):
     processing_task, _created = get_or_create_processing_task(recording_id, self.request.id)
 

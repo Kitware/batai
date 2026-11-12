@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from celery import Task
+from celery.exceptions import SoftTimeLimitExceeded
 
 from bats_ai.core.errors import ProcessingTaskError
 from bats_ai.core.models import ProcessingTask
@@ -23,6 +24,8 @@ class ProcessingTaskBase(Task):
         # details left to logs and Sentry.
         if isinstance(exc, ProcessingTaskError):
             message = str(exc)
+        elif isinstance(exc, SoftTimeLimitExceeded):
+            message = f"Processing exceeded its time limit of {self.soft_time_limit} seconds"
         else:
             message = f"Unexpected error ({type(exc).__name__})"
         # The status filter keeps this from touching a task that already reached a

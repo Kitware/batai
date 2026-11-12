@@ -103,6 +103,10 @@ BATAI_NABAT_API_URL: str = env.str(
     "DJANGO_BATAI_NABAT_API_URL", default="https://api.sciencebase.gov/nabat-graphql/graphql"
 )
 
+# DJANGO_BATAI_NABAT_TASK_TIME_LIMIT: seconds a NABat recording processing task may run before
+# it's stopped and marked as failed.
+BATAI_NABAT_TASK_TIME_LIMIT: int = env.int("DJANGO_BATAI_NABAT_TASK_TIME_LIMIT", default=300)
+
 # DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS: when false (default), spectrogram tasks skip contour
 # extraction and store empty PulseMetadata.contours.
 BATAI_SAVE_SPECTROGRAM_CONTOURS: bool = env.bool(
