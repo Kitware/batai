@@ -21,13 +21,14 @@ http {
 
         # Proxy Django paths with all necessary headers
         location ~ ^/${DJANGO_BATAI_URL_PATH}/(api|oauth|static|admin|accounts) {
+            # Django resolves URLs against PATH_INFO; FORCE_SCRIPT_NAME only affects URL
+            # generation, so strip the subpath before proxying.
+            rewrite ^/${DJANGO_BATAI_URL_PATH}/(.*)$ /$1 break;
             proxy_pass http://django:8000;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
-            # Required for Django subpath handling (especially admin)
-            proxy_set_header X-SCRIPT-NAME /${DJANGO_BATAI_URL_PATH}/;
 
             proxy_redirect off;
         }
