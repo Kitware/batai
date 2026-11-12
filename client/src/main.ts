@@ -39,9 +39,14 @@ Sentry.init({
 // its own `code`/`state` query params, unrelated to this app's login. oauth-client's
 // maybeRestoreLogin() strips those from the URL unconditionally, assuming they're its own
 // callback, so skip it entirely on this one route - it doesn't rely on this app's OAuth anyway.
-const isNabatRecordingEntrypoint = NABAT_ENTRYPOINT_PATH_REGEX.test(
-  window.location.pathname,
-);
+// The regex matches router-relative paths ("/nabat/auth/"), but under a subpath deployment
+// window.location.pathname is "/<subpath>/nabat/auth/", so strip the app base first.
+const appBase = import.meta.env.BASE_URL;
+const { pathname } = window.location;
+const routerPath = pathname.startsWith(appBase)
+  ? `/${pathname.slice(appBase.length)}`
+  : pathname;
+const isNabatRecordingEntrypoint = NABAT_ENTRYPOINT_PATH_REGEX.test(routerPath);
 const restoreLogin = isNabatRecordingEntrypoint
   ? Promise.resolve()
   : maybeRestoreLogin();
