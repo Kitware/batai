@@ -39,12 +39,10 @@ function beforeEach(
   // Explicitly return for clarity, though returning nothing also works
   return;
 }
-const subpath = import.meta.env.VITE_SUBPATH?.replace(/\/+$/, "");
-const routerBase = subpath ? `/${subpath}/` : "/";
-
 function routerInit() {
   const router = createRouter({
-    history: createWebHistory(routerBase),
+    // Vite's `base` (derived from VITE_SUBPATH in vite.config.ts), normalized to "/<subpath>/"
+    history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
       {
         path: "/",
