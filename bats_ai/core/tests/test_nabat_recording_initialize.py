@@ -22,6 +22,7 @@ from bats_ai.core.tasks.nabat import nabat_data_retrieval
 from bats_ai.core.tasks.nabat import tasks as nabat_tasks
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
     STALE_TASK_ERROR,
+    dispatch_nabat_recording_initialize,
     expire_stale_nabat_processing_tasks,
     is_nabat_recording_processed,
     nabat_recording_initialize,
@@ -352,3 +353,47 @@ def test_soft_time_limit_is_reported(mocker):
     assert processing_task.error == (
         f"Processing exceeded its time limit of {settings.BATAI_NABAT_TASK_TIME_LIMIT} seconds"
     )
+
+
+@pytest.mark.django_db
+def test_dispatch_creates_row_before_sending_task(mocker, django_capture_on_commit_callbacks):
+    def assert_row_committed(*, args, task_id):
+        # By the time the task is sent, its row must already exist for it to find.
+        processing_task = ProcessingTask.objects.get(celery_id=task_id)
+        assert processing_task.status == ProcessingTask.Status.QUEUED
+        assert processing_task.metadata == {
+            "type": ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+            "recordingId": RECORDING_ID,
+        }
+
+    apply_async = mocker.patch.object(
+        nabat_recording_initialize, "apply_async", side_effect=assert_row_committed
+    )
+
+    with django_capture_on_commit_callbacks(execute=False) as callbacks:
+        task_id = dispatch_nabat_recording_initialize(RECORDING_ID, SURVEY_EVENT_ID, "fake-token")
+        # Nothing is sent until the row's transaction commits.
+        apply_async.assert_not_called()
+    for callback in callbacks:
+        callback()
+
+    apply_async.assert_called_once_with(
+        args=(RECORDING_ID, SURVEY_EVENT_ID, "fake-token"), task_id=task_id
+    )
+
+
+@pytest.mark.django_db
+def test_dispatch_failure_marks_row_as_error(mocker, django_capture_on_commit_callbacks):
+    mocker.patch.object(
+        nabat_recording_initialize, "apply_async", side_effect=ConnectionError("broker down")
+    )
+
+    with (
+        pytest.raises(ConnectionError),
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        dispatch_nabat_recording_initialize(RECORDING_ID, SURVEY_EVENT_ID, "fake-token")
+
+    processing_task = ProcessingTask.objects.get(metadata__recordingId=RECORDING_ID)
+    assert processing_task.status == ProcessingTask.Status.ERROR
+    assert processing_task.error == "Processing could not be queued"

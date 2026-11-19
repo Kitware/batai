@@ -5,6 +5,7 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any
 
+from celery.utils import uuid
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -254,6 +255,46 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
             batch_data, recording_id, survey_event_id
         )
     generate_spectrograms(self, nabat_recording, presigned_url, processing_task)
+
+
+def dispatch_nabat_recording_initialize(
+    recording_id: int, survey_event_id: int, api_token: str
+) -> str:
+    """Create a QUEUED ProcessingTask for `recording_id`, then dispatch the task for it.
+
+    The row is created (and committed) before the task is sent, so the task always
+    finds it. Dispatching first let the task start before the row existed, create
+    its own, and collide with the caller's insert on the unique celery_id. Returns
+    the task's celery id.
+    """
+    celery_id = uuid()
+    with transaction.atomic():
+        processing_task = ProcessingTask.objects.create(
+            name=f"Processing Recording {recording_id}",
+            status=ProcessingTask.Status.QUEUED,
+            metadata={
+                "type": ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+                "recordingId": recording_id,
+            },
+            celery_id=celery_id,
+        )
+
+        def send():
+            try:
+                nabat_recording_initialize.apply_async(
+                    args=(recording_id, survey_event_id, api_token), task_id=celery_id
+                )
+            except Exception:
+                # Otherwise the row would stay QUEUED with no task behind it.
+                ProcessingTask.objects.filter(pk=processing_task.pk).update(
+                    status=ProcessingTask.Status.ERROR,
+                    error="Processing could not be queued",
+                    modified=timezone.now(),
+                )
+                raise
+
+        transaction.on_commit(send)
+    return celery_id
 
 
 def is_nabat_recording_processed(recording_id: int) -> bool:

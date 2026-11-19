@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from unittest.mock import MagicMock
 import uuid
 
 from django.utils import timezone
@@ -13,6 +12,7 @@ from bats_ai.core.models.nabat import (
     NABatRecordingList,
     NABatRecordingListItem,
 )
+from bats_ai.core.tasks.nabat import nabat_data_retrieval
 from bats_ai.core.views.nabat import nabat_file_list
 
 RECORDING_ID = 12345
@@ -44,47 +44,56 @@ def _processing_task(status: ProcessingTask.Status) -> ProcessingTask:
     )
 
 
+def _mock_apply_async(mocker):
+    return mocker.patch.object(nabat_data_retrieval.nabat_recording_initialize, "apply_async")
+
+
 @pytest.mark.django_db
-def test_queue_item_retries_recording_whose_last_task_failed(mocker):
+def test_queue_item_retries_recording_whose_last_task_failed(
+    mocker, django_capture_on_commit_callbacks
+):
     item = _materialized_item()
     _processing_task(ProcessingTask.Status.ERROR)
-    delay = mocker.patch.object(
-        nabat_file_list.nabat_recording_initialize, "delay", return_value=MagicMock(id="new-task")
+    apply_async = _mock_apply_async(mocker)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        task_id = nabat_file_list._queue_item(item, "fake-token")
+
+    apply_async.assert_called_once_with(
+        args=(RECORDING_ID, SURVEY_EVENT_ID, "fake-token"), task_id=task_id
     )
-
-    task_id = nabat_file_list._queue_item(item, "fake-token")
-
-    assert task_id == "new-task"
-    delay.assert_called_once_with(RECORDING_ID, SURVEY_EVENT_ID, "fake-token")
-    assert ProcessingTask.objects.get(celery_id="new-task").status == ProcessingTask.Status.QUEUED
+    assert ProcessingTask.objects.get(celery_id=task_id).status == ProcessingTask.Status.QUEUED
 
 
 @pytest.mark.django_db
-def test_queue_item_skips_recording_whose_last_task_completed(mocker):
+def test_queue_item_skips_recording_whose_last_task_completed(
+    mocker, django_capture_on_commit_callbacks
+):
     item = _materialized_item()
     _processing_task(ProcessingTask.Status.COMPLETE)
-    delay = mocker.patch.object(nabat_file_list.nabat_recording_initialize, "delay")
+    apply_async = _mock_apply_async(mocker)
 
-    task_id = nabat_file_list._queue_item(item, "fake-token")
+    with django_capture_on_commit_callbacks(execute=True):
+        task_id = nabat_file_list._queue_item(item, "fake-token")
 
     assert task_id is None
-    delay.assert_not_called()
+    apply_async.assert_not_called()
 
 
 @pytest.mark.django_db
-def test_queue_item_redispatches_stale_running_task(mocker):
+def test_queue_item_redispatches_stale_running_task(mocker, django_capture_on_commit_callbacks):
     item = _materialized_item()
     stale_task = _processing_task(ProcessingTask.Status.RUNNING)
     # .update() rather than .save(), which would reset `modified` to now.
     ProcessingTask.objects.filter(pk=stale_task.pk).update(
         modified=timezone.now() - timedelta(hours=1)
     )
-    mocker.patch.object(
-        nabat_file_list.nabat_recording_initialize, "delay", return_value=MagicMock(id="new-task")
-    )
+    apply_async = _mock_apply_async(mocker)
 
-    task_id = nabat_file_list._queue_item(item, "fake-token")
+    with django_capture_on_commit_callbacks(execute=True):
+        task_id = nabat_file_list._queue_item(item, "fake-token")
 
-    assert task_id == "new-task"
+    assert task_id != stale_task.celery_id
+    apply_async.assert_called_once()
     stale_task.refresh_from_db()
     assert stale_task.status == ProcessingTask.Status.ERROR

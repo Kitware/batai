@@ -15,9 +15,9 @@ import requests
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType
 from bats_ai.core.models.nabat import NABatRecording, NABatRecordingList, NABatRecordingListItem
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
+    dispatch_nabat_recording_initialize,
     expire_stale_nabat_processing_tasks,
     is_nabat_recording_processed,
-    nabat_recording_initialize,
 )
 from bats_ai.core.views.nabat.nabat_recording import decode_jwt, get_auth_header
 
@@ -201,18 +201,7 @@ def _queue_item(item: NABatRecordingListItem, api_token: str) -> str | None:
     if is_nabat_recording_processed(item.recording_id):
         return None
 
-    task = nabat_recording_initialize.delay(item.recording_id, item.survey_event_id, api_token)
-    with transaction.atomic():
-        ProcessingTask.objects.create(
-            name=f"Processing Recording {item.recording_id}",
-            status=ProcessingTask.Status.QUEUED,
-            metadata={
-                "type": ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
-                "recordingId": item.recording_id,
-            },
-            celery_id=task.id,
-        )
-    return task.id
+    return dispatch_nabat_recording_initialize(item.recording_id, item.survey_event_id, api_token)
 
 
 def _queue_positions(
