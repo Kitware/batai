@@ -1,7 +1,7 @@
 # ========================
 # Build Stage (Vue + Env)
 # ========================
-FROM node:lts-alpine AS build-stage
+FROM node:lts AS build-stage
 
 # Build-time args
 ARG VITE_API_ROOT
