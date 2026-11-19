@@ -1,24 +1,40 @@
 from __future__ import annotations
 
+from datetime import timedelta
 import json
 import logging
+from typing import TYPE_CHECKING, Any
 
+from celery.utils import uuid
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 import requests
 
 from bats_ai.celery import app
+from bats_ai.core.errors import (
+    FailureCode,
+    NABatAuthError,
+    NABatGraphQLError,
+    NABatInvalidResponseError,
+    NABatMissingDataError,
+    NABatRequestError,
+)
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
 from bats_ai.core.models.nabat import (
     NABatRecording,
     NABatRecordingAnnotation,
     NABatRecordingListItem,
 )
+from bats_ai.core.tasks.base import ProcessingTaskBase, fail_processing_tasks
 
 from .tasks import generate_spectrograms
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
@@ -111,13 +127,138 @@ def get_or_create_processing_task(recording_id, request_id):
         raise
 
 
-@app.task(bind=True)
+def _require(data: dict, *path: str):
+    """Walk `path` into NABat response `data`, raising if any step is null or absent."""
+    node: Any = data
+    for i, key in enumerate(path):
+        node = node.get(key) if isinstance(node, dict) else None
+        if node is None:
+            raise NABatMissingDataError(
+                f"NABat returned no {'.'.join(path[: i + 1])} "
+                "(it may not exist, or this user may not have access to it)"
+            )
+    return node
+
+
+def _fetch_recording_data(batch_query: str, api_token: str) -> dict:
+    """POST the recording query to NABat and return the parsed, error-free response."""
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
+    try:
+        response = requests.post(
+            settings.BATAI_NABAT_API_URL,
+            json={"query": batch_query},
+            headers=headers,
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        raise NABatRequestError(f"Could not reach the NABat API: {type(e).__name__}") from e
+
+    if response.status_code in (401, 403):
+        logger.error("NABat rejected credentials: %s - %s", response.status_code, response.text)
+        raise NABatAuthError(
+            f"NABat rejected this user's credentials (HTTP {response.status_code})"
+        )
+    if response.status_code != 200:
+        logger.error("NABat request failed: %s - %s", response.status_code, response.text)
+        raise NABatRequestError(f"NABat API request failed (HTTP {response.status_code})")
+
+    try:
+        batch_data = response.json()
+    except json.JSONDecodeError as e:
+        raise NABatInvalidResponseError("NABat API returned a response that isn't JSON") from e
+
+    # GraphQL reports errors with HTTP 200, alongside null fields in `data`.
+    if errors := batch_data.get("errors"):
+        messages = "; ".join(str(error.get("message", error)) for error in errors)
+        raise NABatGraphQLError(f"NABat API returned errors: {messages}")
+
+    return batch_data
+
+
+# At the soft time limit, the task gets a SoftTimeLimitExceeded it can fail cleanly on (marking its
+# ProcessingTask as ERROR). If it's still running HARD_TIME_LIMIT_GRACE later, the worker kills it
+# outright, which skips on_failure and so leaves the ProcessingTask at RUNNING - those get caught
+# by expire_stale_nabat_processing_tasks instead.
+HARD_TIME_LIMIT_GRACE = timedelta(seconds=30)
+# How long past its deadline (the hard time limit for a RUNNING task, the queue expiry for a QUEUED
+# one) a task must be before it's considered dead, to allow for clock skew and the worker's own
+# bookkeeping.
+STALE_TASK_GRACE = timedelta(seconds=60)
+STALE_TASK_ERROR = (
+    "Processing stopped without reporting a result "
+    "(the worker may have restarted or run out of memory)"
+)
+
+
+def _soft_time_limit() -> timedelta:
+    return timedelta(seconds=settings.BATAI_NABAT_TASK_TIME_LIMIT)
+
+
+def _queue_timeout() -> timedelta:
+    return timedelta(seconds=settings.BATAI_NABAT_TASK_QUEUE_TIMEOUT)
+
+
+def _queue_timeout_error() -> str:
+    return (
+        "Processing was not started within "
+        f"{settings.BATAI_NABAT_TASK_QUEUE_TIMEOUT} seconds of being queued"
+    )
+
+
+def expire_stale_nabat_processing_tasks(recording_ids: Iterable[int]) -> int:
+    """Mark QUEUED/RUNNING NABat processing tasks that can no longer finish as ERROR.
+
+    Callers treat QUEUED and RUNNING as in flight, so never re-dispatch them; without
+    this, a task that can't finish would block its recording forever:
+
+    - A task the worker killed outright (hard time limit, OOM, restart) never gets to
+      mark its own ProcessingTask, so it stays RUNNING. Any task RUNNING for longer
+      than the hard time limit can't still be alive.
+    - A task whose message never reaches a worker (lost by the broker, or waiting past
+      its `expires` and so discarded by the worker without running) stays QUEUED. Any
+      task QUEUED for longer than the queue timeout will never be started.
+
+    Called lazily by the views that read or dispatch these tasks, rather than on a
+    schedule. Returns the number of tasks expired.
+    """
+    now = timezone.now()
+    nabat_tasks = ProcessingTask.objects.filter(
+        metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+        metadata__recordingId__in=list(recording_ids),
+    )
+    # `modified` is when the task last saved its ProcessingTask, which is when it set
+    # it to RUNNING (it saves again only on reaching COMPLETE).
+    expired = fail_processing_tasks(
+        nabat_tasks.filter(
+            status=ProcessingTask.Status.RUNNING,
+            modified__lt=now - (_soft_time_limit() + HARD_TIME_LIMIT_GRACE + STALE_TASK_GRACE),
+        ),
+        error=STALE_TASK_ERROR,
+        code=FailureCode.WORKER_LOST,
+    )
+    # `created` is just before the task was sent, which is when its expiry starts.
+    expired += fail_processing_tasks(
+        nabat_tasks.filter(
+            status=ProcessingTask.Status.QUEUED,
+            created__lt=now - (_queue_timeout() + STALE_TASK_GRACE),
+        ),
+        error=_queue_timeout_error(),
+        code=FailureCode.QUEUE_TIMEOUT,
+    )
+    return expired
+
+
+@app.task(
+    bind=True,
+    base=ProcessingTaskBase,
+    soft_time_limit=settings.BATAI_NABAT_TASK_TIME_LIMIT,
+    time_limit=int((_soft_time_limit() + HARD_TIME_LIMIT_GRACE).total_seconds()),
+)
 def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, api_token: str):
     processing_task, _created = get_or_create_processing_task(recording_id, self.request.id)
 
     processing_task.status = ProcessingTask.Status.RUNNING
     processing_task.save()
-    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
     batch_query = QUERY % {
         "acoustic_file_id": recording_id,
         "survey_event_id": survey_event_id,
@@ -127,63 +268,146 @@ def nabat_recording_initialize(self, recording_id: int, survey_event_id: int, ap
         state="Progress",
         meta={"description": "Fetching NAbat Recording Data"},
     )
-    try:
-        response = requests.post(
-            settings.BATAI_NABAT_API_URL,
-            json={"query": batch_query},
-            headers=headers,
-            timeout=30,
-        )
-    except Exception as e:
-        processing_task.status = ProcessingTask.Status.ERROR
-        processing_task.error = f"Error with API Request: {e}"
-        processing_task.save()
-        raise
-    batch_data = {}
-
-    if response.status_code == 200:
-        try:
-            batch_data = response.json()
-        except (KeyError, TypeError, json.JSONDecodeError) as e:
-            error_msg = f"Error decoding JSON response: {e}"
-            logger.exception(error_msg)
-            processing_task.status = ProcessingTask.Status.ERROR
-            processing_task.error = error_msg
-            processing_task.save()
-            raise
-    else:
-        error_msg = f"Failed to fetch data: {response.status_code}, {response.text}"
-        logger.error(error_msg)
-        processing_task.status = ProcessingTask.Status.ERROR
-        processing_task.error = error_msg
-        processing_task.save()
-        response.raise_for_status()
+    batch_data = _fetch_recording_data(batch_query, api_token)
 
     self.update_state(
         state="Progress",
         meta={"description": "Fetching Recording File"},
     )
 
+    presigned_url = _require(batch_data, "data", "presignedUrlFromAcousticFile", "s3PresignedUrl")
     logger.info("Presigned URL obtained. Downloading file...")
 
-    presigned_url = batch_data["data"]["presignedUrlFromAcousticFile"]["s3PresignedUrl"]
-
-    logger.info("Creating NA Bat Recording...")
-    nabat_recording = create_nabat_recording_from_response(
-        batch_data, recording_id, survey_event_id
-    )
+    # A previous attempt may have already imported the recording's metadata before
+    # failing (e.g. during spectrogram generation, or a worker restart). That import is
+    # atomic, so an existing row means it completed - reuse it rather than importing
+    # again. Spectrogram generation is itself safe to re-run.
+    nabat_recording = NABatRecording.objects.filter(recording_id=recording_id).first()
+    if nabat_recording is None:
+        logger.info("Creating NA Bat Recording...")
+        nabat_recording = create_nabat_recording_from_response(
+            batch_data, recording_id, survey_event_id
+        )
     generate_spectrograms(self, nabat_recording, presigned_url, processing_task)
 
 
+def dispatch_nabat_recording_initialize(
+    recording_id: int, survey_event_id: int, api_token: str
+) -> str:
+    """Create a QUEUED ProcessingTask for `recording_id`, then dispatch the task for it.
+
+    The row is created (and committed) before the task is sent, so the task always
+    finds it. Dispatching first let the task start before the row existed, create
+    its own, and collide with the caller's insert on the unique celery_id. Returns
+    the task's celery id.
+
+    The task expires if no worker starts it within the queue timeout, so a stale
+    QUEUED row can safely be marked as failed (see expire_stale_nabat_processing_tasks)
+    without the task later running against it.
+    """
+    celery_id = uuid()
+    with transaction.atomic():
+        processing_task = ProcessingTask.objects.create(
+            name=f"Processing Recording {recording_id}",
+            status=ProcessingTask.Status.QUEUED,
+            metadata={
+                "type": ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+                "recordingId": recording_id,
+            },
+            celery_id=celery_id,
+        )
+
+        def send():
+            try:
+                nabat_recording_initialize.apply_async(
+                    args=(recording_id, survey_event_id, api_token),
+                    task_id=celery_id,
+                    expires=settings.BATAI_NABAT_TASK_QUEUE_TIMEOUT,
+                )
+            except Exception:
+                # Otherwise the row would stay QUEUED with no task behind it.
+                fail_processing_tasks(
+                    ProcessingTask.objects.filter(pk=processing_task.pk),
+                    error="Processing could not be queued",
+                    code=FailureCode.DISPATCH_FAILED,
+                )
+                raise
+
+        transaction.on_commit(send)
+    return celery_id
+
+
+def is_nabat_recording_processed(recording_id: int) -> bool:
+    """Whether `recording_id` has been fully processed, so needs no (re)processing.
+
+    A NABatRecording row alone isn't enough: it's created before spectrogram
+    generation, which can still fail afterwards. So also require that the most
+    recent processing task for it completed. A recording with no task history at all
+    (e.g. its tasks were deleted) is treated as processed.
+    """
+    if not NABatRecording.objects.filter(recording_id=recording_id).exists():
+        return False
+    latest_task = (
+        ProcessingTask.objects.filter(
+            metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+            metadata__recordingId=recording_id,
+        )
+        .order_by("-created")
+        .first()
+    )
+    return latest_task is None or latest_task.status == ProcessingTask.Status.COMPLETE
+
+
+# Failures likely to recur on every attempt, because the recording itself is the problem (too
+# large to process in time or within the worker's memory, or audio BatBot can't handle). Others -
+# NABat being unreachable, the user's token or access, the task never starting - say nothing about
+# the recording, so don't count toward the cap.
+RETRY_CAPPED_FAILURE_CODES = frozenset(
+    {FailureCode.TIME_LIMIT, FailureCode.WORKER_LOST, FailureCode.SPECTROGRAM_GENERATION}
+)
+
+
+def has_exhausted_nabat_retries(recording_id: int) -> bool:
+    """Whether `recording_id` has failed too often to be retried automatically.
+
+    Counts failures with a RETRY_CAPPED_FAILURE_CODES code since the recording's
+    last successful processing, against BATAI_NABAT_TASK_MAX_FAILURES. Without a
+    cap, a recording that can never finish would be re-dispatched every time its
+    file list is viewed, tying up the worker each time.
+    """
+    nabat_tasks = ProcessingTask.objects.filter(
+        metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+        metadata__recordingId=recording_id,
+    )
+    failures = nabat_tasks.filter(
+        status=ProcessingTask.Status.ERROR,
+        output_metadata__failureCode__in=[code.value for code in RETRY_CAPPED_FAILURE_CODES],
+    )
+    last_completed = (
+        nabat_tasks.filter(status=ProcessingTask.Status.COMPLETE)
+        .order_by("-created")
+        .values_list("created", flat=True)
+        .first()
+    )
+    if last_completed is not None:
+        failures = failures.filter(created__gt=last_completed)
+    return failures.count() >= settings.BATAI_NABAT_TASK_MAX_FAILURES
+
+
+@transaction.atomic
 def create_nabat_recording_from_response(response_data, recording_id, survey_event_id):
-    # Extract the batch data from the response
-    nabat_recording_data = response_data["data"]
+    """Create the NABatRecording and import its NABat metadata, all or nothing.
+
+    Atomic so that an existing NABatRecording row always has its list-item backfill
+    and annotations in place, which lets a retry skip this step entirely.
+    """
+    survey_event = _require(response_data, "data", "surveyEventById")
+    file_name = _require(response_data, "data", "acousticFileById", "fileName")
 
     # Optional fields
-    recording_location_data = nabat_recording_data["surveyEventById"][
-        "eventGeometryByEventGeometryId"
-    ]["geom"]["geojson"]
-    file_name = nabat_recording_data["acousticFileById"]["fileName"]
+    recording_location_data = (
+        (survey_event.get("eventGeometryByEventGeometryId") or {}).get("geom") or {}
+    ).get("geojson")
 
     # Create geometry for the recording location if available
     if recording_location_data:
@@ -211,19 +435,21 @@ def create_nabat_recording_from_response(response_data, recording_id, survey_eve
         recording_id=recording_id, nabat_recording__isnull=True
     ).update(nabat_recording=nabat_recording)
 
-    acoustic_batches_nodes = nabat_recording_data["surveyEventById"][
-        "acousticBatchesBySurveyEventId"
-    ]["nodes"]
+    acoustic_batches_nodes = survey_event["acousticBatchesBySurveyEventId"]["nodes"]
     if len(acoustic_batches_nodes) > 0:
         batch_data = acoustic_batches_nodes[0]["acousticFileBatchesByBatchId"]["nodes"]
         for node in batch_data:
-            species_id = node.get("manualId", False)
-            if species_id is not False:
-                annotation = NABatRecordingAnnotation.objects.create(
-                    nabat_recording=nabat_recording,
-                    user_email=node["vetter"],
-                )
-                species = Species.objects.get(pk=species_id)
-                annotation.species.add(species)
+            species_id = node.get("manualId")
+            if species_id is None:
+                continue  # not vetted in NABat yet
+            species = Species.objects.filter(pk=species_id).first()
+            if species is None:
+                logger.warning("Skipping annotation with unknown NABat species id %s", species_id)
+                continue
+            annotation = NABatRecordingAnnotation.objects.create(
+                nabat_recording=nabat_recording,
+                user_email=node.get("vetter") or "",
+            )
+            annotation.species.add(species)
 
     return nabat_recording

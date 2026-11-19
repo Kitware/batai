@@ -6,7 +6,6 @@ import logging
 from typing import Any
 
 from django.conf import settings
-from django.db import transaction
 from django.db.models import Q
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -15,14 +14,18 @@ from ninja.pagination import RouterPaginated
 from oauth2_provider.models import AccessToken
 import requests
 
-from bats_ai.core.models import ProcessingTask, ProcessingTaskType, Species
+from bats_ai.core.models import ProcessingTask, Species
 from bats_ai.core.models.nabat import (
     NABatCompressedSpectrogram,
     NABatPulseMetadata,
     NABatRecording,
     NABatRecordingAnnotation,
 )
-from bats_ai.core.tasks.nabat.nabat_data_retrieval import nabat_recording_initialize
+from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
+    dispatch_nabat_recording_initialize,
+    expire_stale_nabat_processing_tasks,
+    is_nabat_recording_processed,
+)
 
 # Real (not TYPE_CHECKING) import: pydantic needs this at runtime to build NABatPulseMetadataSchema.
 from bats_ai.core.views.recording import PulseMetadataSlopesSchema
@@ -256,6 +259,8 @@ def generate_nabat_recording(  # noqa: PLR0911
     request: HttpRequest,
     payload: Form[NABatRecordingGenerateSchema],
 ):
+    # So a task the worker killed doesn't count as in flight forever.
+    expire_stale_nabat_processing_tasks([payload.recordingId])
     existing_task = ProcessingTask.objects.filter(
         metadata__recordingId=payload.recordingId,
         status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING],
@@ -275,22 +280,15 @@ def generate_nabat_recording(  # noqa: PLR0911
     api_token = get_auth_header(request)
     if not api_token:
         return JsonResponse({"error": "Missing or invalid Authorization header"}, status=401)
-    if not nabat_recording.exists():
-        # use a task to start downloading the file using the API key and generate the spectrograms
-        task = nabat_recording_initialize.delay(
+    if not is_nabat_recording_processed(payload.recordingId):
+        # use a task to start downloading the file using the API key and generate the
+        # spectrograms - this also retries a recording whose previous processing failed,
+        # even one that has exhausted its automatic retries (has_exhausted_nabat_retries),
+        # since the user explicitly asked for it
+        task_id = dispatch_nabat_recording_initialize(
             payload.recordingId, payload.surveyEventId, api_token
         )
-        with transaction.atomic():
-            ProcessingTask.objects.create(
-                name=f"Processing Recording {payload.recordingId}",
-                status=ProcessingTask.Status.QUEUED,
-                metadata={
-                    "type": ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
-                    "recordingId": payload.recordingId,
-                },
-                celery_id=task.id,
-            )
-        return {"taskId": task.id}
+        return {"taskId": task_id}
     # we want to check the api token and make sure the user has access to the file
     # before returning it
     recording_id = payload.recordingId

@@ -103,6 +103,20 @@ BATAI_NABAT_API_URL: str = env.str(
     "DJANGO_BATAI_NABAT_API_URL", default="https://api.sciencebase.gov/nabat-graphql/graphql"
 )
 
+# DJANGO_BATAI_NABAT_TASK_TIME_LIMIT: seconds a NABat recording processing task may run before
+# it's stopped and marked as failed.
+BATAI_NABAT_TASK_TIME_LIMIT: int = env.int("DJANGO_BATAI_NABAT_TASK_TIME_LIMIT", default=300)
+# DJANGO_BATAI_NABAT_TASK_QUEUE_TIMEOUT: seconds a queued NABat recording processing task may wait
+# for a worker before it's discarded and marked as failed.
+BATAI_NABAT_TASK_QUEUE_TIMEOUT: int = env.int(
+    "DJANGO_BATAI_NABAT_TASK_QUEUE_TIMEOUT", default=2 * 60 * 60
+)
+
+# DJANGO_BATAI_NABAT_TASK_MAX_FAILURES: how many times processing a NABat recording may fail in a
+# way likely to recur (time limit, worker lost, spectrogram generation) before it stops being
+# retried automatically. Opening the recording directly still retries it.
+BATAI_NABAT_TASK_MAX_FAILURES: int = env.int("DJANGO_BATAI_NABAT_TASK_MAX_FAILURES", default=3)
+
 # DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS: when false (default), spectrogram tasks skip contour
 # extraction and store empty PulseMetadata.contours.
 BATAI_SAVE_SPECTROGRAM_CONTOURS: bool = env.bool(
