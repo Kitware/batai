@@ -125,6 +125,10 @@ for a list of environment variables that you'll need to populate for your deploy
 - `DJANGO_BATAI_NABAT_TASK_TIME_LIMIT` (optional, default `300`): the number of seconds a NABat
   recording processing task may run before Celery stops it and marks it as failed. Raise this if
   large recordings legitimately take longer on your hardware.
+- `DJANGO_BATAI_NABAT_TASK_QUEUE_TIMEOUT` (optional, default `7200`): the number of seconds a
+  queued NABat recording processing task may wait for a worker before it's discarded and marked as
+  failed, so the recording can be queued again. Raise this if large batches legitimately wait
+  longer than that behind each other.
 - `DJANGO_BATAI_SAVE_SPECTROGRAM_CONTOURS` (optional, default `false`): controls whether Celery
   spectrogram tasks (recording upload and NABat import pipelines) extract contours from compressed
   spectrogram masks and save them to `PulseMetadata.contours`. When `false` or unset, contour

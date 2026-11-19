@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 import uuid
 
+from django.conf import settings
 from django.utils import timezone
 import pytest
 
@@ -60,7 +61,9 @@ def test_queue_item_retries_recording_whose_last_task_failed(
         task_id = nabat_file_list._queue_item(item, "fake-token")
 
     apply_async.assert_called_once_with(
-        args=(RECORDING_ID, SURVEY_EVENT_ID, "fake-token"), task_id=task_id
+        args=(RECORDING_ID, SURVEY_EVENT_ID, "fake-token"),
+        task_id=task_id,
+        expires=settings.BATAI_NABAT_TASK_QUEUE_TIMEOUT,
     )
     assert ProcessingTask.objects.get(celery_id=task_id).status == ProcessingTask.Status.QUEUED
 
@@ -97,3 +100,21 @@ def test_queue_item_redispatches_stale_running_task(mocker, django_capture_on_co
     apply_async.assert_called_once()
     stale_task.refresh_from_db()
     assert stale_task.status == ProcessingTask.Status.ERROR
+
+
+@pytest.mark.django_db
+def test_queue_item_redispatches_expired_queued_task(mocker, django_capture_on_commit_callbacks):
+    item = _materialized_item()
+    expired_task = _processing_task(ProcessingTask.Status.QUEUED)
+    ProcessingTask.objects.filter(pk=expired_task.pk).update(
+        created=timezone.now() - timedelta(hours=3)
+    )
+    apply_async = _mock_apply_async(mocker)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        task_id = nabat_file_list._queue_item(item, "fake-token")
+
+    assert task_id != expired_task.celery_id
+    apply_async.assert_called_once()
+    expired_task.refresh_from_db()
+    assert expired_task.status == ProcessingTask.Status.ERROR

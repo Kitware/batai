@@ -35,6 +35,8 @@ class FailureCode(StrEnum):
     TIME_LIMIT = "time_limit"
     # The task stopped without reporting a result, e.g. the worker was killed.
     WORKER_LOST = "worker_lost"
+    # The task waited in the queue past its expiry without a worker starting it.
+    QUEUE_TIMEOUT = "queue_timeout"
     # The task couldn't be sent to the broker.
     DISPATCH_FAILED = "dispatch_failed"
     # Any exception that isn't a ProcessingTaskError.

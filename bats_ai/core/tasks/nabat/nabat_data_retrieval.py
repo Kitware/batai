@@ -180,8 +180,9 @@ def _fetch_recording_data(batch_query: str, api_token: str) -> dict:
 # outright, which skips on_failure and so leaves the ProcessingTask at RUNNING - those get caught
 # by expire_stale_nabat_processing_tasks instead.
 HARD_TIME_LIMIT_GRACE = timedelta(seconds=30)
-# How long past the hard time limit a RUNNING task must be before it's considered dead, to allow
-# for clock skew and the worker's own bookkeeping.
+# How long past its deadline (the hard time limit for a RUNNING task, the queue expiry for a QUEUED
+# one) a task must be before it's considered dead, to allow for clock skew and the worker's own
+# bookkeeping.
 STALE_TASK_GRACE = timedelta(seconds=60)
 STALE_TASK_ERROR = (
     "Processing stopped without reporting a result "
@@ -193,30 +194,58 @@ def _soft_time_limit() -> timedelta:
     return timedelta(seconds=settings.BATAI_NABAT_TASK_TIME_LIMIT)
 
 
-def expire_stale_nabat_processing_tasks(recording_ids: Iterable[int]) -> int:
-    """Mark RUNNING NABat processing tasks that can no longer be running as ERROR.
+def _queue_timeout() -> timedelta:
+    return timedelta(seconds=settings.BATAI_NABAT_TASK_QUEUE_TIMEOUT)
 
-    A task the worker killed outright (hard time limit, OOM, restart) never gets to
-    mark its own ProcessingTask, which would otherwise stay RUNNING forever - and
-    callers treat RUNNING as in flight, so never re-dispatch it. Any task RUNNING for
-    longer than the hard time limit can't still be alive, so is safe to expire.
+
+def _queue_timeout_error() -> str:
+    return (
+        "Processing was not started within "
+        f"{settings.BATAI_NABAT_TASK_QUEUE_TIMEOUT} seconds of being queued"
+    )
+
+
+def expire_stale_nabat_processing_tasks(recording_ids: Iterable[int]) -> int:
+    """Mark QUEUED/RUNNING NABat processing tasks that can no longer finish as ERROR.
+
+    Callers treat QUEUED and RUNNING as in flight, so never re-dispatch them; without
+    this, a task that can't finish would block its recording forever:
+
+    - A task the worker killed outright (hard time limit, OOM, restart) never gets to
+      mark its own ProcessingTask, so it stays RUNNING. Any task RUNNING for longer
+      than the hard time limit can't still be alive.
+    - A task whose message never reaches a worker (lost by the broker, or waiting past
+      its `expires` and so discarded by the worker without running) stays QUEUED. Any
+      task QUEUED for longer than the queue timeout will never be started.
 
     Called lazily by the views that read or dispatch these tasks, rather than on a
     schedule. Returns the number of tasks expired.
     """
+    now = timezone.now()
+    nabat_tasks = ProcessingTask.objects.filter(
+        metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+        metadata__recordingId__in=list(recording_ids),
+    )
     # `modified` is when the task last saved its ProcessingTask, which is when it set
     # it to RUNNING (it saves again only on reaching COMPLETE).
-    cutoff = timezone.now() - (_soft_time_limit() + HARD_TIME_LIMIT_GRACE + STALE_TASK_GRACE)
-    return fail_processing_tasks(
-        ProcessingTask.objects.filter(
-            metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
-            metadata__recordingId__in=list(recording_ids),
+    expired = fail_processing_tasks(
+        nabat_tasks.filter(
             status=ProcessingTask.Status.RUNNING,
-            modified__lt=cutoff,
+            modified__lt=now - (_soft_time_limit() + HARD_TIME_LIMIT_GRACE + STALE_TASK_GRACE),
         ),
         error=STALE_TASK_ERROR,
         code=FailureCode.WORKER_LOST,
     )
+    # `created` is just before the task was sent, which is when its expiry starts.
+    expired += fail_processing_tasks(
+        nabat_tasks.filter(
+            status=ProcessingTask.Status.QUEUED,
+            created__lt=now - (_queue_timeout() + STALE_TASK_GRACE),
+        ),
+        error=_queue_timeout_error(),
+        code=FailureCode.QUEUE_TIMEOUT,
+    )
+    return expired
 
 
 @app.task(
@@ -271,6 +300,10 @@ def dispatch_nabat_recording_initialize(
     finds it. Dispatching first let the task start before the row existed, create
     its own, and collide with the caller's insert on the unique celery_id. Returns
     the task's celery id.
+
+    The task expires if no worker starts it within the queue timeout, so a stale
+    QUEUED row can safely be marked as failed (see expire_stale_nabat_processing_tasks)
+    without the task later running against it.
     """
     celery_id = uuid()
     with transaction.atomic():
@@ -287,7 +320,9 @@ def dispatch_nabat_recording_initialize(
         def send():
             try:
                 nabat_recording_initialize.apply_async(
-                    args=(recording_id, survey_event_id, api_token), task_id=celery_id
+                    args=(recording_id, survey_event_id, api_token),
+                    task_id=celery_id,
+                    expires=settings.BATAI_NABAT_TASK_QUEUE_TIMEOUT,
                 )
             except Exception:
                 # Otherwise the row would stay QUEUED with no task behind it.

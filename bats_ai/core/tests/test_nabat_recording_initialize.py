@@ -309,7 +309,9 @@ def _task_with_status(status, *, recording_id=RECORDING_ID, age=timedelta(0)) ->
         celery_id=str(uuid.uuid4()),
     )
     # .update() rather than .save(), which would reset `modified` to now.
-    ProcessingTask.objects.filter(pk=processing_task.pk).update(modified=timezone.now() - age)
+    ProcessingTask.objects.filter(pk=processing_task.pk).update(
+        created=timezone.now() - age, modified=timezone.now() - age
+    )
     return processing_task
 
 
@@ -321,23 +323,31 @@ def test_time_limits_follow_setting():
 
 @pytest.mark.django_db
 def test_expire_stale_nabat_processing_tasks():
+    # Defaults: 300s time limit, 2h queue timeout.
     stale = _task_with_status(ProcessingTask.Status.RUNNING, age=timedelta(hours=1))
     recent = _task_with_status(ProcessingTask.Status.RUNNING, age=timedelta(seconds=10))
-    old_queued = _task_with_status(ProcessingTask.Status.QUEUED, age=timedelta(hours=1))
+    stale_queued = _task_with_status(ProcessingTask.Status.QUEUED, age=timedelta(hours=3))
+    # Older than the time limit, but a QUEUED task may wait up to the queue timeout.
+    waiting_queued = _task_with_status(ProcessingTask.Status.QUEUED, age=timedelta(hours=1))
     other_recording = _task_with_status(
         ProcessingTask.Status.RUNNING, recording_id=RECORDING_ID + 1, age=timedelta(hours=1)
     )
+    finished = _task_with_status(ProcessingTask.Status.COMPLETE, age=timedelta(hours=3))
 
-    assert expire_stale_nabat_processing_tasks([RECORDING_ID]) == 1
+    assert expire_stale_nabat_processing_tasks([RECORDING_ID]) == 2
 
-    for processing_task in (stale, recent, old_queued, other_recording):
+    for processing_task in (stale, recent, stale_queued, waiting_queued, other_recording, finished):
         processing_task.refresh_from_db()
     assert stale.status == ProcessingTask.Status.ERROR
     assert stale.error == STALE_TASK_ERROR
     assert stale.output_metadata == {"failureCode": FailureCode.WORKER_LOST}
     assert recent.status == ProcessingTask.Status.RUNNING
-    assert old_queued.status == ProcessingTask.Status.QUEUED
+    assert stale_queued.status == ProcessingTask.Status.ERROR
+    assert stale_queued.error == "Processing was not started within 7200 seconds of being queued"
+    assert stale_queued.output_metadata == {"failureCode": FailureCode.QUEUE_TIMEOUT}
+    assert waiting_queued.status == ProcessingTask.Status.QUEUED
     assert other_recording.status == ProcessingTask.Status.RUNNING
+    assert finished.status == ProcessingTask.Status.COMPLETE
 
 
 @pytest.mark.django_db
@@ -365,7 +375,7 @@ def test_soft_time_limit_is_reported(mocker):
 
 @pytest.mark.django_db
 def test_dispatch_creates_row_before_sending_task(mocker, django_capture_on_commit_callbacks):
-    def assert_row_committed(*, args, task_id):
+    def assert_row_committed(*, args, task_id, expires):
         # By the time the task is sent, its row must already exist for it to find.
         processing_task = ProcessingTask.objects.get(celery_id=task_id)
         assert processing_task.status == ProcessingTask.Status.QUEUED
@@ -386,7 +396,9 @@ def test_dispatch_creates_row_before_sending_task(mocker, django_capture_on_comm
         callback()
 
     apply_async.assert_called_once_with(
-        args=(RECORDING_ID, SURVEY_EVENT_ID, "fake-token"), task_id=task_id
+        args=(RECORDING_ID, SURVEY_EVENT_ID, "fake-token"),
+        task_id=task_id,
+        expires=settings.BATAI_NABAT_TASK_QUEUE_TIMEOUT,
     )
 
 
