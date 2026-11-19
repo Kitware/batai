@@ -11,6 +11,7 @@ from django.utils import timezone
 import pytest
 
 from bats_ai.core.errors import (
+    FailureCode,
     NABatAuthError,
     NABatGraphQLError,
     NABatMissingDataError,
@@ -103,6 +104,7 @@ def test_graphql_errors_are_stored(mocker):
     assert isinstance(result.result, NABatGraphQLError)
     assert processing_task.status == ProcessingTask.Status.ERROR
     assert "permission denied for acoustic_file" in processing_task.error
+    assert processing_task.output_metadata == {"failureCode": FailureCode.NABAT_GRAPHQL}
     assert not NABatRecording.objects.exists()
 
 
@@ -117,6 +119,7 @@ def test_null_field_without_graphql_errors(mocker):
     assert processing_task.status == ProcessingTask.Status.ERROR
     assert "presignedUrlFromAcousticFile" in processing_task.error
     assert "may not have access" in processing_task.error
+    assert processing_task.output_metadata == {"failureCode": FailureCode.NABAT_MISSING_DATA}
     assert not NABatRecording.objects.exists()
 
 
@@ -130,6 +133,7 @@ def test_rejected_credentials(mocker):
     assert isinstance(result.result, NABatAuthError)
     assert processing_task.status == ProcessingTask.Status.ERROR
     assert processing_task.error == "NABat rejected this user's credentials (HTTP 401)"
+    assert processing_task.output_metadata == {"failureCode": FailureCode.NABAT_AUTH}
 
 
 @pytest.mark.django_db
@@ -147,6 +151,7 @@ def test_unexpected_error_stores_only_its_type(mocker):
     assert isinstance(result.result, RuntimeError)
     assert processing_task.status == ProcessingTask.Status.ERROR
     assert processing_task.error == "Unexpected error (RuntimeError)"
+    assert processing_task.output_metadata == {"failureCode": FailureCode.UNEXPECTED}
 
 
 @pytest.mark.django_db
@@ -194,6 +199,7 @@ def test_on_failure_leaves_terminal_tasks_alone():
     processing_task.refresh_from_db()
     assert processing_task.status == ProcessingTask.Status.COMPLETE
     assert processing_task.error == ""
+    assert processing_task.output_metadata is None
 
 
 def _complete_task(task, nabat_recording, presigned_url, processing_task):
@@ -328,6 +334,7 @@ def test_expire_stale_nabat_processing_tasks():
         processing_task.refresh_from_db()
     assert stale.status == ProcessingTask.Status.ERROR
     assert stale.error == STALE_TASK_ERROR
+    assert stale.output_metadata == {"failureCode": FailureCode.WORKER_LOST}
     assert recent.status == ProcessingTask.Status.RUNNING
     assert old_queued.status == ProcessingTask.Status.QUEUED
     assert other_recording.status == ProcessingTask.Status.RUNNING
@@ -353,6 +360,7 @@ def test_soft_time_limit_is_reported(mocker):
     assert processing_task.error == (
         f"Processing exceeded its time limit of {settings.BATAI_NABAT_TASK_TIME_LIMIT} seconds"
     )
+    assert processing_task.output_metadata == {"failureCode": FailureCode.TIME_LIMIT}
 
 
 @pytest.mark.django_db
@@ -397,3 +405,4 @@ def test_dispatch_failure_marks_row_as_error(mocker, django_capture_on_commit_ca
     processing_task = ProcessingTask.objects.get(metadata__recordingId=RECORDING_ID)
     assert processing_task.status == ProcessingTask.Status.ERROR
     assert processing_task.error == "Processing could not be queued"
+    assert processing_task.output_metadata == {"failureCode": FailureCode.DISPATCH_FAILED}

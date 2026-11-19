@@ -16,6 +16,7 @@ import requests
 
 from bats_ai.celery import app
 from bats_ai.core.errors import (
+    FailureCode,
     NABatAuthError,
     NABatGraphQLError,
     NABatInvalidResponseError,
@@ -28,7 +29,7 @@ from bats_ai.core.models.nabat import (
     NABatRecordingAnnotation,
     NABatRecordingListItem,
 )
-from bats_ai.core.tasks.base import ProcessingTaskBase
+from bats_ai.core.tasks.base import ProcessingTaskBase, fail_processing_tasks
 
 from .tasks import generate_spectrograms
 
@@ -206,12 +207,16 @@ def expire_stale_nabat_processing_tasks(recording_ids: Iterable[int]) -> int:
     # `modified` is when the task last saved its ProcessingTask, which is when it set
     # it to RUNNING (it saves again only on reaching COMPLETE).
     cutoff = timezone.now() - (_soft_time_limit() + HARD_TIME_LIMIT_GRACE + STALE_TASK_GRACE)
-    return ProcessingTask.objects.filter(
-        metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
-        metadata__recordingId__in=list(recording_ids),
-        status=ProcessingTask.Status.RUNNING,
-        modified__lt=cutoff,
-    ).update(status=ProcessingTask.Status.ERROR, error=STALE_TASK_ERROR, modified=timezone.now())
+    return fail_processing_tasks(
+        ProcessingTask.objects.filter(
+            metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+            metadata__recordingId__in=list(recording_ids),
+            status=ProcessingTask.Status.RUNNING,
+            modified__lt=cutoff,
+        ),
+        error=STALE_TASK_ERROR,
+        code=FailureCode.WORKER_LOST,
+    )
 
 
 @app.task(
@@ -286,10 +291,10 @@ def dispatch_nabat_recording_initialize(
                 )
             except Exception:
                 # Otherwise the row would stay QUEUED with no task behind it.
-                ProcessingTask.objects.filter(pk=processing_task.pk).update(
-                    status=ProcessingTask.Status.ERROR,
+                fail_processing_tasks(
+                    ProcessingTask.objects.filter(pk=processing_task.pk),
                     error="Processing could not be queued",
-                    modified=timezone.now(),
+                    code=FailureCode.DISPATCH_FAILED,
                 )
                 raise
 

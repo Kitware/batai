@@ -1,10 +1,33 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
+from django.utils import timezone
 
-from bats_ai.core.errors import ProcessingTaskError
+from bats_ai.core.errors import FailureCode, ProcessingTaskError
 from bats_ai.core.models import ProcessingTask
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+
+
+def fail_processing_tasks(tasks: QuerySet[ProcessingTask], *, error: str, code: FailureCode) -> int:
+    """Mark any of `tasks` still QUEUED/RUNNING as ERROR, recording why.
+
+    Tasks already in a terminal state are left alone, so this never overwrites a
+    COMPLETE (or an earlier, more specific ERROR). `error` is exposed through the
+    API, so must be safe to show users. Returns the number of tasks marked.
+    """
+    return tasks.filter(
+        status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING]
+    ).update(
+        status=ProcessingTask.Status.ERROR,
+        error=error,
+        output_metadata={"failureCode": code.value},
+        modified=timezone.now(),
+    )
 
 
 class ProcessingTaskBase(Task):
@@ -23,14 +46,12 @@ class ProcessingTaskBase(Task):
         # from our own error classes; anything else gets just its type, with the
         # details left to logs and Sentry.
         if isinstance(exc, ProcessingTaskError):
-            message = str(exc)
+            message, code = str(exc), exc.code
         elif isinstance(exc, SoftTimeLimitExceeded):
             message = f"Processing exceeded its time limit of {self.soft_time_limit} seconds"
+            code = FailureCode.TIME_LIMIT
         else:
-            message = f"Unexpected error ({type(exc).__name__})"
-        # The status filter keeps this from touching a task that already reached a
-        # terminal state.
-        ProcessingTask.objects.filter(
-            celery_id=task_id,
-            status__in=[ProcessingTask.Status.QUEUED, ProcessingTask.Status.RUNNING],
-        ).update(status=ProcessingTask.Status.ERROR, error=message)
+            message, code = f"Unexpected error ({type(exc).__name__})", FailureCode.UNEXPECTED
+        fail_processing_tasks(
+            ProcessingTask.objects.filter(celery_id=task_id), error=message, code=code
+        )
