@@ -17,6 +17,7 @@ from bats_ai.core.models.nabat import NABatRecording, NABatRecordingList, NABatR
 from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
     dispatch_nabat_recording_initialize,
     expire_stale_nabat_processing_tasks,
+    has_exhausted_nabat_retries,
     is_nabat_recording_processed,
 )
 from bats_ai.core.views.nabat.nabat_recording import decode_jwt, get_auth_header
@@ -171,9 +172,10 @@ def _create_file_list(file_list_id: int, file_list_data: dict) -> NABatRecording
 def _queue_item(item: NABatRecordingListItem, api_token: str) -> str | None:
     """Ensure `item` is being materialized.
 
-    Dispatches nabat_recording_initialize unless it's already fully processed or
-    already has a task in flight. Returns the in-flight task's celery id (whether
-    just dispatched or already running), or None if already processed.
+    Dispatches nabat_recording_initialize unless it's already fully processed,
+    already has a task in flight, or has failed too often to retry automatically
+    (see has_exhausted_nabat_retries). Returns the in-flight task's celery id
+    (whether just dispatched or already running), or None if nothing was queued.
 
     No live check against NABat happens here - just a present-looking token gets
     passed through. An invalid/expired token is still caught, just inside the task
@@ -199,6 +201,9 @@ def _queue_item(item: NABatRecordingListItem, api_token: str) -> str | None:
         return existing_task.celery_id
 
     if is_nabat_recording_processed(item.recording_id):
+        return None
+    # Its latest task is then an ERROR, so the item shows as failed.
+    if has_exhausted_nabat_retries(item.recording_id):
         return None
 
     return dispatch_nabat_recording_initialize(item.recording_id, item.survey_event_id, api_token)

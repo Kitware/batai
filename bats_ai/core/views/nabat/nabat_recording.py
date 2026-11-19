@@ -282,7 +282,9 @@ def generate_nabat_recording(  # noqa: PLR0911
         return JsonResponse({"error": "Missing or invalid Authorization header"}, status=401)
     if not is_nabat_recording_processed(payload.recordingId):
         # use a task to start downloading the file using the API key and generate the
-        # spectrograms - this also retries a recording whose previous processing failed
+        # spectrograms - this also retries a recording whose previous processing failed,
+        # even one that has exhausted its automatic retries (has_exhausted_nabat_retries),
+        # since the user explicitly asked for it
         task_id = dispatch_nabat_recording_initialize(
             payload.recordingId, payload.surveyEventId, api_token
         )

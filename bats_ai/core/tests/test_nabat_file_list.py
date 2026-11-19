@@ -7,6 +7,7 @@ from django.conf import settings
 from django.utils import timezone
 import pytest
 
+from bats_ai.core.errors import FailureCode
 from bats_ai.core.models import ProcessingTask, ProcessingTaskType
 from bats_ai.core.models.nabat import (
     NABatRecording,
@@ -118,3 +119,22 @@ def test_queue_item_redispatches_expired_queued_task(mocker, django_capture_on_c
     apply_async.assert_called_once()
     expired_task.refresh_from_db()
     assert expired_task.status == ProcessingTask.Status.ERROR
+
+
+@pytest.mark.django_db
+def test_queue_item_skips_recording_that_exhausted_retries(
+    mocker, django_capture_on_commit_callbacks
+):
+    item = _materialized_item()
+    for _ in range(settings.BATAI_NABAT_TASK_MAX_FAILURES):
+        processing_task = _processing_task(ProcessingTask.Status.ERROR)
+        ProcessingTask.objects.filter(pk=processing_task.pk).update(
+            output_metadata={"failureCode": FailureCode.TIME_LIMIT.value}
+        )
+    apply_async = _mock_apply_async(mocker)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        task_id = nabat_file_list._queue_item(item, "fake-token")
+
+    assert task_id is None
+    apply_async.assert_not_called()

@@ -25,8 +25,13 @@ from bats_ai.core.tasks.nabat.nabat_data_retrieval import (
     STALE_TASK_ERROR,
     dispatch_nabat_recording_initialize,
     expire_stale_nabat_processing_tasks,
+    has_exhausted_nabat_retries,
     is_nabat_recording_processed,
     nabat_recording_initialize,
+)
+from bats_ai.core.views.nabat.nabat_recording import (
+    NABatRecordingGenerateSchema,
+    generate_nabat_recording,
 )
 
 RECORDING_ID = 12345
@@ -299,9 +304,12 @@ def test_is_nabat_recording_processed(has_recording, task_statuses, expected):
     assert is_nabat_recording_processed(RECORDING_ID) is expected
 
 
-def _task_with_status(status, *, recording_id=RECORDING_ID, age=timedelta(0)) -> ProcessingTask:
+def _task_with_status(
+    status, *, recording_id=RECORDING_ID, age=timedelta(0), code: FailureCode | None = None
+) -> ProcessingTask:
     processing_task = ProcessingTask.objects.create(
         status=status,
+        output_metadata={"failureCode": code.value} if code else None,
         metadata={
             "type": ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
             "recordingId": recording_id,
@@ -418,3 +426,86 @@ def test_dispatch_failure_marks_row_as_error(mocker, django_capture_on_commit_ca
     assert processing_task.status == ProcessingTask.Status.ERROR
     assert processing_task.error == "Processing could not be queued"
     assert processing_task.output_metadata == {"failureCode": FailureCode.DISPATCH_FAILED}
+
+
+ERROR = ProcessingTask.Status.ERROR
+COMPLETE = ProcessingTask.Status.COMPLETE
+
+
+@pytest.mark.parametrize(
+    ("history", "exhausted"),
+    [
+        pytest.param([], False, id="no-tasks"),
+        pytest.param([(ERROR, FailureCode.TIME_LIMIT)] * 2, False, id="under-cap"),
+        pytest.param(
+            [
+                (ERROR, FailureCode.TIME_LIMIT),
+                (ERROR, FailureCode.WORKER_LOST),
+                (ERROR, FailureCode.SPECTROGRAM_GENERATION),
+            ],
+            True,
+            id="at-cap",
+        ),
+        pytest.param(
+            [
+                (ERROR, FailureCode.TIME_LIMIT),
+                (ERROR, FailureCode.NABAT_AUTH),
+                (ERROR, FailureCode.QUEUE_TIMEOUT),
+                (ERROR, FailureCode.NABAT_MISSING_DATA),
+                (ERROR, FailureCode.TIME_LIMIT),
+            ],
+            False,
+            id="uncapped-codes-dont-count",
+        ),
+        pytest.param([(ERROR, None)] * 3, False, id="errors-without-code-dont-count"),
+        pytest.param(
+            [(ERROR, FailureCode.TIME_LIMIT)] * 3 + [(COMPLETE, None)],
+            False,
+            id="reset-by-success",
+        ),
+        pytest.param(
+            [(ERROR, FailureCode.TIME_LIMIT)] * 2
+            + [(COMPLETE, None)]
+            + [(ERROR, FailureCode.TIME_LIMIT)] * 3,
+            True,
+            id="at-cap-since-success",
+        ),
+    ],
+)
+@pytest.mark.django_db
+def test_has_exhausted_nabat_retries(history, exhausted):
+    # Oldest first, an hour apart.
+    for index, (status, code) in enumerate(history):
+        _task_with_status(status, code=code, age=timedelta(hours=len(history) - index))
+
+    assert has_exhausted_nabat_retries(RECORDING_ID) is exhausted
+
+
+@pytest.mark.django_db
+def test_has_exhausted_nabat_retries_follows_setting(settings):
+    settings.BATAI_NABAT_TASK_MAX_FAILURES = 1
+    _task_with_status(ERROR, code=FailureCode.TIME_LIMIT)
+
+    assert has_exhausted_nabat_retries(RECORDING_ID)
+
+
+@pytest.mark.django_db
+def test_opening_recording_bypasses_retry_cap(rf, mocker, django_capture_on_commit_callbacks):
+    NABatRecording.objects.create(
+        recording_id=RECORDING_ID, survey_event_id=SURVEY_EVENT_ID, name="recording.wav"
+    )
+    for _ in range(3):
+        _task_with_status(ERROR, code=FailureCode.TIME_LIMIT, age=timedelta(hours=1))
+    assert has_exhausted_nabat_retries(RECORDING_ID)
+    apply_async = mocker.patch.object(nabat_recording_initialize, "apply_async")
+    request = rf.post("/", HTTP_AUTHORIZATION="Bearer fake-token")
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = generate_nabat_recording(
+            request,
+            NABatRecordingGenerateSchema(recordingId=RECORDING_ID, surveyEventId=SURVEY_EVENT_ID),
+        )
+
+    assert isinstance(response, dict)
+    apply_async.assert_called_once()
+    assert apply_async.call_args.kwargs["task_id"] == response["taskId"]

@@ -358,6 +358,42 @@ def is_nabat_recording_processed(recording_id: int) -> bool:
     return latest_task is None or latest_task.status == ProcessingTask.Status.COMPLETE
 
 
+# Failures likely to recur on every attempt, because the recording itself is the problem (too
+# large to process in time or within the worker's memory, or audio BatBot can't handle). Others -
+# NABat being unreachable, the user's token or access, the task never starting - say nothing about
+# the recording, so don't count toward the cap.
+RETRY_CAPPED_FAILURE_CODES = frozenset(
+    {FailureCode.TIME_LIMIT, FailureCode.WORKER_LOST, FailureCode.SPECTROGRAM_GENERATION}
+)
+
+
+def has_exhausted_nabat_retries(recording_id: int) -> bool:
+    """Whether `recording_id` has failed too often to be retried automatically.
+
+    Counts failures with a RETRY_CAPPED_FAILURE_CODES code since the recording's
+    last successful processing, against BATAI_NABAT_TASK_MAX_FAILURES. Without a
+    cap, a recording that can never finish would be re-dispatched every time its
+    file list is viewed, tying up the worker each time.
+    """
+    nabat_tasks = ProcessingTask.objects.filter(
+        metadata__type=ProcessingTaskType.NABAT_RECORDING_PROCESSING.value,
+        metadata__recordingId=recording_id,
+    )
+    failures = nabat_tasks.filter(
+        status=ProcessingTask.Status.ERROR,
+        output_metadata__failureCode__in=[code.value for code in RETRY_CAPPED_FAILURE_CODES],
+    )
+    last_completed = (
+        nabat_tasks.filter(status=ProcessingTask.Status.COMPLETE)
+        .order_by("-created")
+        .values_list("created", flat=True)
+        .first()
+    )
+    if last_completed is not None:
+        failures = failures.filter(created__gt=last_completed)
+    return failures.count() >= settings.BATAI_NABAT_TASK_MAX_FAILURES
+
+
 @transaction.atomic
 def create_nabat_recording_from_response(response_data, recording_id, survey_event_id):
     """Create the NABatRecording and import its NABat metadata, all or nothing.
